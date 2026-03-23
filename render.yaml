@@ -8,9 +8,9 @@ services:
   - type: web
     name: whisper-api
     plan: starter # Whisper requires at least 1GB RAM to process models reliably
-    runtime: docker
+    env: docker
     dockerContext: whisper-service
-    dockerfile: Dockerfile
+    dockerfilePath: Dockerfile
     # Internal port for uvicorn is 10000 by default in Render
     envVars:
       - key: WHISPER_MODEL_SIZE
