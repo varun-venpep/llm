@@ -1,22 +1,39 @@
-# AWS Lambda Container Image for Whisper Transcription Service
-# Base image: official AWS Lambda Python 3.11 image
-FROM public.ecr.aws/lambda/python:3.11
+# Standard Python runtime for Render Web Service
+FROM python:3.11-slim
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+ENV PORT=10000
+
+# Install system dependencies needed for faster-whisper and PyAV
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ffmpeg \
+    pkg-config \
+    gcc \
+    python3-dev \
+    libavformat-dev \
+    libavcodec-dev \
+    libavdevice-dev \
+    libavfilter-dev \
+    libswresample-dev \
+    libswscale-dev \
+    libavutil-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
 
 # Copy requirements and install dependencies
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
 # Pre-download the Whisper model at IMAGE BUILD TIME
-# This avoids cold-start model download delays on Lambda
-# Switch to 'small' for better accuracy at the cost of ~500MB more image size
 ARG WHISPER_MODEL_SIZE=base
 ENV WHISPER_MODEL_SIZE=${WHISPER_MODEL_SIZE}
-
-# Download the model during image build so it's baked in
 RUN python -c "from faster_whisper import WhisperModel; WhisperModel('${WHISPER_MODEL_SIZE}', device='cpu', compute_type='int8')"
 
 # Copy the application code
 COPY main.py .
 
-# Lambda entry point: handler in main.py
-CMD ["main.handler"]
+# Standard uvicorn entry point for Render Web Service
+CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT}"]
