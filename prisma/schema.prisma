@@ -1,0 +1,328 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Tenant {
+  id                   String                @id @default(cuid())
+  name                 String
+  subdomain            String                @unique
+  customDomain         String?               @unique
+  logo                 String?
+  primaryColor         String                @default("#000000")
+  isActive             Boolean               @default(true)
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  plan                 Plan                  @default(STARTER)
+  storageLimit         Int                   @default(10240)
+  stripeCustomerId     String?
+  announcements        Announcement[]
+  certificateTemplates CertificateTemplate[]
+  courses              Course[]
+  users                User[]
+}
+
+model User {
+  id           String              @id @default(cuid())
+  email        String
+  name         String?
+  password     String
+  role         Role                @default(STUDENT)
+  tenantId     String
+  isActive     Boolean             @default(true)
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+  enrollments  Enrollment[]
+  certificates IssuedCertificate[]
+  progress     LessonProgress[]
+  quizAttempts QuizAttempt[]
+  submissions  Submission[]
+  activityLogs ActivityLog[]
+  notes        Note[]
+  reviews      Review[]
+  tenant       Tenant              @relation(fields: [tenantId], references: [id])
+
+  @@unique([email, tenantId])
+}
+
+model Course {
+  id           String              @id @default(cuid())
+  title        String
+  description  String?
+  thumbnail    String?
+  isPublished  Boolean             @default(false)
+  tenantId     String
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+  captions     Boolean             @default(false)
+  languages    String              @default("English")
+  skillLevel   String              @default("All Levels")
+  tenant       Tenant              @relation(fields: [tenantId], references: [id])
+  enrollments  Enrollment[]
+  certificates IssuedCertificate[]
+  modules      Module[]
+  resources    Resource[]
+  notes        Note[]
+  reviews      Review[]
+}
+
+model Module {
+  id        String   @id @default(cuid())
+  title     String
+  order     Int
+  courseId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  isActive  Boolean  @default(true)
+  lessons   Lesson[]
+  resources Resource[]
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+}
+
+model Lesson {
+  id               String           @id @default(cuid())
+  title            String
+  content          String?
+  videoUrl         String?
+  pdfUrl           String?
+  order            Int
+  moduleId         String
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  isActive         Boolean          @default(true)
+  type             LessonType       @default(TEXT)
+  hasCaptions      Boolean          @default(false)
+  transcript       String?
+  transcriptStatus String           @default("NONE")
+  assignments      Assignment[]
+  module           Module           @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  progress         LessonProgress[]
+  quiz             Quiz?
+  resources        Resource[]
+  notes            Note[]
+}
+
+model Quiz {
+  id            String        @id @default(cuid())
+  title         String
+  description   String?
+  passingScore  Int           @default(70)
+  lessonId      String        @unique
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  isRandomized  Boolean       @default(false)
+  maxAttempts   Int           @default(0)
+  randomCount   Int           @default(0)
+  retakeAllowed Boolean       @default(true)
+  questions     Question[]
+  lesson        Lesson        @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  attempts      QuizAttempt[]
+}
+
+model Question {
+  id      String   @id @default(cuid())
+  quizId  String
+  text    String
+  type    String   @default("MULTIPLE_CHOICE")
+  order   Int
+  options Option[]
+  quiz    Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+}
+
+model Option {
+  id         String   @id @default(cuid())
+  questionId String
+  text       String
+  isCorrect  Boolean  @default(false)
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+}
+
+model QuizAttempt {
+  id        String   @id @default(cuid())
+  quizId    String
+  userId    String
+  score     Int
+  passed    Boolean
+  answers   Json?
+  createdAt DateTime @default(now())
+  quiz      Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model Resource {
+  id        String   @id @default(cuid())
+  name      String
+  url       String
+  type      String
+  size      Int?
+  lessonId  String?
+  moduleId  String?
+  courseId  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  lesson    Lesson?  @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  module    Module?  @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  course    Course?  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+}
+
+model LessonProgress {
+  id          String    @id @default(cuid())
+  userId      String
+  lessonId    String
+  completed   Boolean   @default(false)
+  completedAt DateTime?
+  lastPosition String?  // Stores last watched second for videos, or last viewed slide for documents
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  startedAt   DateTime  @default(now())
+  lesson      Lesson    @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id])
+
+  @@unique([userId, lessonId])
+}
+
+model Enrollment {
+  id        String   @id @default(cuid())
+  userId    String
+  courseId  String
+  status    String   @default("ACTIVE")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@unique([userId, courseId])
+}
+
+model Announcement {
+  id          String   @id @default(cuid())
+  title       String
+  body        String
+  imageUrl    String?
+  documentUrl String?
+  tenantId    String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+}
+
+model Assignment {
+  id          String       @id @default(cuid())
+  title       String
+  description String?
+  dueDate     DateTime?
+  lessonId    String
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  lesson      Lesson       @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  submissions Submission[]
+}
+
+model Submission {
+  id           String     @id @default(cuid())
+  content      String?
+  fileUrl      String?
+  grade        Int?
+  feedback     String?
+  userId       String
+  assignmentId String
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  assignment   Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  user         User       @relation(fields: [userId], references: [id])
+
+  @@unique([userId, assignmentId])
+}
+
+model PlatformSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model CertificateTemplate {
+  id           String   @id @default(cuid())
+  name         String
+  designFields Json?
+  isActive     Boolean  @default(true)
+  tenantId     String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  tenant       Tenant   @relation(fields: [tenantId], references: [id])
+}
+
+model IssuedCertificate {
+  id             String   @id @default(cuid())
+  certificateUrl String
+  userId         String
+  courseId       String
+  issuedAt       DateTime @default(now())
+  course         Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  user           User     @relation(fields: [userId], references: [id])
+
+  @@unique([userId, courseId])
+}
+
+enum Role {
+  SUPER_ADMIN
+  TENANT_ADMIN
+  INSTRUCTOR
+  TEACHER
+  STUDENT
+}
+
+enum LessonType {
+  VIDEO
+  PPT
+  QUIZ
+  TEXT
+}
+
+enum Plan {
+  STARTER
+  PROFESSIONAL
+  ENTERPRISE
+}
+
+model ActivityLog {
+  id        String   @id @default(cuid())
+  userId    String
+  action    String   // e.g., "DOWNLOAD_RESOURCE", "VIEW_LESSON", etc.
+  metadata  Json?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Note {
+  id        String   @id @default(cuid())
+  content   String
+  timestamp Float    @default(0)
+  userId    String
+  courseId  String
+  lessonId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lesson    Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  rating    Int      @default(5)
+  content   String?
+  userId    String
+  courseId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId])
+}
