@@ -1,23 +1,22 @@
-services:
-  # 1. PostgreSQL Database
-  - type: database
-    name: lms-db
+databases:
+  - name: lms-db
     plan: free # Change to 'starter' for production
     ipAllowList: [] # Allows all traffic; Render manages internal communication
 
-  # 2. Whisper AI Transcription Service (Dockerized)
+services:
+  # 1. Whisper AI Transcription Service (Dockerized)
   - type: web
     name: whisper-api
     plan: starter # Whisper requires at least 1GB RAM to process models reliably
     runtime: docker
     dockerContext: whisper-service
-    dockerFilePath: Dockerfile
+    dockerfile: Dockerfile
     # Internal port for uvicorn is 10000 by default in Render
     envVars:
       - key: WHISPER_MODEL_SIZE
         value: base
 
-  # 3. Next.js Main Application
+  # 2. Next.js Main Application
   - type: web
     name: lms-app
     plan: free
