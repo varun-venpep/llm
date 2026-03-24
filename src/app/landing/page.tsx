@@ -1,3 +1,5 @@
+'use client';
+
 import Image from 'next/image';
 import { BookOpen, Users, Globe, ChevronRight, CheckCircle } from 'lucide-react';
 
