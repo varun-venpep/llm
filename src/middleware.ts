@@ -45,13 +45,11 @@ export default async function middleware(req: NextRequest) {
     }
 
     // 2. Tenant Auth Guard (Dashboard or Admin)
-    const isTenantDashboard = url.pathname.includes('/dashboard') ||
+    const isTenantArea = url.pathname.includes('/dashboard') ||
         (url.pathname.includes('/admin') && !url.pathname.startsWith('/admin'));
 
-    // Only check if it's NOT a login page
-    if (isTenantDashboard && !url.pathname.endsWith('/login')) {
+    if (isTenantArea && !url.pathname.endsWith('/login')) {
         if (!sessionToken) {
-            // Find current domain from path or hostname to redirect correctly
             const redirectUrl = url.pathname.startsWith('/t/')
                 ? `/t/${url.pathname.split('/')[2]}/login`
                 : '/login';
