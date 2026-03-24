@@ -16,11 +16,19 @@ export default function AdminLogin() {
     // Auto-redirect if already logged in
     useEffect(() => {
         const checkAuth = async () => {
-            const res = await fetch('/api/admin/stats'); // Use an endpoint that requires auth
-            if (res.ok) {
-                router.push('/admin');
-            } else {
+            const timeoutId = setTimeout(() => setIsChecking(false), 500); // Fast fallback
+
+            try {
+                const res = await fetch('/api/admin/stats');
+                if (res.ok) {
+                    router.push('/admin');
+                } else {
+                    setIsChecking(false);
+                }
+            } catch (e) {
                 setIsChecking(false);
+            } finally {
+                clearTimeout(timeoutId);
             }
         };
         checkAuth();
