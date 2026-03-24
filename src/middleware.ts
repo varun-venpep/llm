@@ -59,7 +59,17 @@ export default async function middleware(req: NextRequest) {
         }
     }
 
-    // --- ROUTING LOGIC ---
+    // 3. Login-to-Dashboard Auto-Jump (Redirect AWAY from login if already authenticated)
+    if (url.pathname.endsWith('/login') && sessionToken) {
+        if (url.pathname.startsWith('/admin')) {
+            return NextResponse.redirect(new URL('/admin', req.url));
+        }
+        // For tenants, skip the login and go to dashboard
+        const dashboardUrl = url.pathname.startsWith('/t/')
+            ? `/t/${url.pathname.split('/')[2]}/dashboard`
+            : '/dashboard';
+        return NextResponse.redirect(new URL(dashboardUrl, req.url));
+    }
 
     // Super Admin Subdomain (e.g., admin.llm.com)
     if (hostname === `admin.${rootDomain}`) {
