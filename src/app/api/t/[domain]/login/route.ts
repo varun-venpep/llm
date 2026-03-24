@@ -32,11 +32,20 @@ export async function POST(
             return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
         }
 
-        // In a real app, sign JWT here
-        return NextResponse.json({
+        const response = NextResponse.json({
             success: true,
             user: { id: user.id, name: user.name, email: user.email, role: user.role }
         });
+
+        // Set session cookie for auth persistence
+        response.cookies.set('session-token', user.id, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge: 60 * 60 * 24 * 7 // 1 week
+        });
+
+        return response;
 
     } catch (error) {
         return NextResponse.json({ error: 'Login failed' }, { status: 500 });
