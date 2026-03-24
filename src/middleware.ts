@@ -34,18 +34,46 @@ export default async function middleware(req: NextRequest) {
 
     console.log(`[Middleware] Raw Host: ${rawHost} | Root Domain: ${rootDomain} | Hostname: ${hostname}`);
 
-    // Super Admin check
+    // --- AUTHENTICATION CHECKS ---
+    const sessionToken = req.cookies.get('session-token')?.value;
+
+    // 1. Super Admin Auth Guard
+    if (url.pathname.startsWith('/admin') && !url.pathname.endsWith('/login')) {
+        if (!sessionToken) {
+            return NextResponse.redirect(new URL('/admin/login', req.url));
+        }
+    }
+
+    // 2. Tenant Auth Guard (Dashboard or Admin)
+    const isTenantDashboard = url.pathname.includes('/dashboard') ||
+        (url.pathname.includes('/admin') && !url.pathname.startsWith('/admin'));
+
+    // Only check if it's NOT a login page
+    if (isTenantDashboard && !url.pathname.endsWith('/login')) {
+        if (!sessionToken) {
+            // Find current domain from path or hostname to redirect correctly
+            const redirectUrl = url.pathname.startsWith('/t/')
+                ? `/t/${url.pathname.split('/')[2]}/login`
+                : '/login';
+            return NextResponse.redirect(new URL(redirectUrl, req.url));
+        }
+    }
+
+    // --- ROUTING LOGIC ---
+
+    // Super Admin Subdomain (e.g., admin.llm.com)
     if (hostname === `admin.${rootDomain}`) {
         return NextResponse.rewrite(new URL(`/admin${path}`, req.url));
     }
 
     // Root domain check (Platform Landing Page)
     if (hostname === rootDomain) {
-        // Do NOT rewrite if the path starts with /admin, /api, or /t/
+        // Do NOT rewrite if the path starts with /admin, /api, /t/, or /login
         if (
             url.pathname.startsWith('/admin') ||
             url.pathname.startsWith('/api') ||
-            url.pathname.startsWith('/t/')
+            url.pathname.startsWith('/t/') ||
+            url.pathname.startsWith('/login')
         ) {
             return NextResponse.next();
         }
@@ -58,10 +86,5 @@ export default async function middleware(req: NextRequest) {
         return NextResponse.rewrite(new URL(`/t/${subdomain}${path}`, req.url));
     }
 
-    // Custom Domain logic
-    // Here we would lookup the hostname in our DB. 
-    // For the MVP, we'll rewrite to a special /custom-domain path or handle it via a query param.
-    // Actually, rewriting to /t/[tenantId] where tenantId is looked up from custom domain is best.
-    // For now, let's assume it's mapped.
     return NextResponse.rewrite(new URL(`/t/${hostname}${path}`, req.url));
 }
