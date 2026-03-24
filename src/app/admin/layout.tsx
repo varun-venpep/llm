@@ -23,8 +23,8 @@ export default function AdminLayout({
     const pathname = usePathname();
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
-    // If we are on the login page, don't show the sidebar
-    if (pathname === '/login') {
+    // If we are on the login page (global or tenant), don't show the dashboard layout
+    if (pathname.endsWith('/login')) {
         return <>{children}</>;
     }
 
