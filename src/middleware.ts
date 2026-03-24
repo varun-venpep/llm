@@ -60,6 +60,7 @@ export default async function middleware(req: NextRequest) {
     }
 
     // 3. Login-to-Dashboard Auto-Jump (Redirect AWAY from login if already authenticated)
+    // This applies to both root domain and subdomain users trying to access a login page.
     if (url.pathname.endsWith('/login') && sessionToken) {
         if (url.pathname.startsWith('/admin')) {
             return NextResponse.redirect(new URL('/admin', req.url));

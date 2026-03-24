@@ -11,6 +11,7 @@ export default function AdminLogin() {
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [rememberMe, setRememberMe] = useState(false);
+    const [isChecking, setIsChecking] = useState(true);
 
     // Auto-redirect if already logged in
     useEffect(() => {
@@ -18,6 +19,8 @@ export default function AdminLogin() {
             const res = await fetch('/api/admin/stats'); // Use an endpoint that requires auth
             if (res.ok) {
                 router.push('/admin');
+            } else {
+                setIsChecking(false);
             }
         };
         checkAuth();
@@ -44,6 +47,14 @@ export default function AdminLogin() {
             setLoading(false);
         }
     };
+
+    if (isChecking) {
+        return (
+            <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 bg-[grid-white]/[0.02] relative overflow-hidden">
