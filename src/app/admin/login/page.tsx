@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Lock, Mail, ChevronRight, Loader2, ShieldCheck, Eye, EyeOff } from 'lucide-react';
 
@@ -11,6 +11,17 @@ export default function AdminLogin() {
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [rememberMe, setRememberMe] = useState(false);
+
+    // Auto-redirect if already logged in
+    useEffect(() => {
+        const checkAuth = async () => {
+            const res = await fetch('/api/admin/stats'); // Use an endpoint that requires auth
+            if (res.ok) {
+                router.push('/admin');
+            }
+        };
+        checkAuth();
+    }, [router]);
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -24,7 +35,7 @@ export default function AdminLogin() {
             });
 
             if (res.ok) {
-                router.push('/');
+                router.push('/admin');
             } else {
                 // Handle error visually if needed
                 setLoading(false);
