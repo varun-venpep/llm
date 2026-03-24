@@ -21,7 +21,21 @@ export default function TenantLoginPage() {
         // In a real app, fetch tenant branding details here
         setTenant({ name: domain.charAt(0).toUpperCase() + domain.slice(1) });
         setLoading(false);
-    }, [domain]);
+
+        // Auto-redirect if already logged in
+        const checkAuth = async () => {
+            const res = await fetch('/api/auth/session');
+            if (res.ok) {
+                const data = await res.json();
+                if (data.user.role === 'STUDENT') {
+                    router.push(`/t/${domain}/dashboard`);
+                } else {
+                    router.push(`/t/${domain}/admin`);
+                }
+            }
+        };
+        checkAuth();
+    }, [domain, router]);
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();

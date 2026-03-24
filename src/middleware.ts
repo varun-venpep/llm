@@ -60,16 +60,31 @@ export default async function middleware(req: NextRequest) {
     }
 
     // 3. Login-to-Dashboard Auto-Jump (Redirect AWAY from login if already authenticated)
-    // This applies to both root domain and subdomain users trying to access a login page.
     if (url.pathname.endsWith('/login') && sessionToken) {
         if (url.pathname.startsWith('/admin')) {
             return NextResponse.redirect(new URL('/admin', req.url));
         }
-        // For tenants, skip the login and go to dashboard
-        const dashboardUrl = url.pathname.startsWith('/t/')
-            ? `/t/${url.pathname.split('/')[2]}/dashboard`
-            : '/dashboard';
-        return NextResponse.redirect(new URL(dashboardUrl, req.url));
+
+        // For tenants, check role via session API
+        try {
+            const isAuthRes = await fetch(`${req.nextUrl.origin}/api/auth/session`, {
+                headers: { Cookie: `session-token=${sessionToken}` }
+            });
+
+            if (isAuthRes.ok) {
+                const { user } = await isAuthRes.json();
+                const targetSubdomain = url.pathname.startsWith('/t/') ? url.pathname.split('/')[2] : 'varun';
+
+                if (user.role === 'STUDENT') {
+                    return NextResponse.redirect(new URL(`/t/${targetSubdomain}/dashboard`, req.url));
+                } else {
+                    return NextResponse.redirect(new URL(`/t/${targetSubdomain}/admin`, req.url));
+                }
+            }
+        } catch (e) {
+            // Fallback to basic dashboard if API check fails
+            return NextResponse.next();
+        }
     }
 
     // Super Admin Subdomain (e.g., admin.llm.com)
