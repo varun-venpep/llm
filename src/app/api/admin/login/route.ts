@@ -24,11 +24,20 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Invalid admin credentials' }, { status: 401 });
         }
 
-        // In a real application, you would sign a session/JWT here
-        return NextResponse.json({
+        const response = NextResponse.json({
             success: true,
             user: { id: user.id, name: user.name, email: user.email, role: user.role }
         });
+
+        // Set session cookie for auth persistence
+        response.cookies.set('session-token', user.id, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge: 60 * 60 * 24 * 7 // 1 week
+        });
+
+        return response;
 
     } catch (error) {
         return NextResponse.json({ error: 'Authentication failed' }, { status: 500 });
