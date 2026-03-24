@@ -16,12 +16,17 @@ export default function AdminLogin() {
     // Auto-redirect if already logged in
     useEffect(() => {
         const checkAuth = async () => {
-            const timeoutId = setTimeout(() => setIsChecking(false), 500); // Fast fallback
+            const timeoutId = setTimeout(() => setIsChecking(false), 400); // Snap response
 
             try {
-                const res = await fetch('/api/admin/stats');
+                const res = await fetch('/api/auth/session');
                 if (res.ok) {
-                    router.push('/admin');
+                    const data = await res.json();
+                    if (data.user.role === 'SUPER_ADMIN') {
+                        router.push('/admin');
+                    } else {
+                        setIsChecking(false);
+                    }
                 } else {
                     setIsChecking(false);
                 }
