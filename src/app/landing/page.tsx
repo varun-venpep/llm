@@ -18,7 +18,12 @@ export default function LandingPage() {
           <a href="#pricing" className="hover:text-primary transition-colors">Pricing</a>
         </nav>
         <div className="flex gap-4 items-center">
-          <button className="text-sm font-medium hover:text-primary transition-colors">Sign In</button>
+          <button
+            onClick={() => window.location.href = '/login'}
+            className="text-sm font-medium hover:text-primary transition-colors"
+          >
+            Sign In
+          </button>
           <button className="px-4 py-2 rounded-full bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity">
             Start Free
           </button>
