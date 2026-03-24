@@ -41,8 +41,12 @@ export default async function middleware(req: NextRequest) {
 
     // Root domain check (Platform Landing Page)
     if (hostname === rootDomain) {
-        // Do NOT rewrite if the path starts with /admin or /api
-        if (url.pathname.startsWith('/admin') || url.pathname.startsWith('/api')) {
+        // Do NOT rewrite if the path starts with /admin, /api, or /t/
+        if (
+            url.pathname.startsWith('/admin') ||
+            url.pathname.startsWith('/api') ||
+            url.pathname.startsWith('/t/')
+        ) {
             return NextResponse.next();
         }
         return NextResponse.rewrite(new URL(`/landing${path}`, req.url));
