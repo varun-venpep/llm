@@ -77,13 +77,16 @@ export default function AdminLayout({
                     </div>
 
                     <div className="p-4 border-t border-white/5">
-                        <Link
-                            href="/login"
-                            className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-red-400 hover:bg-red-500/10 hover:text-red-500 transition-all group border border-transparent"
+                        <button
+                            onClick={async () => {
+                                await fetch('/api/logout', { method: 'POST' });
+                                window.location.href = '/admin/login';
+                            }}
+                            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-red-400 hover:bg-red-500/10 hover:text-red-500 transition-all group border border-transparent"
                         >
                             <LogOut className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
                             Sign Out
-                        </Link>
+                        </button>
                     </div>
                 </div>
             </aside>
