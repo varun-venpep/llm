@@ -42,10 +42,10 @@ export default function TenantLoginPage() {
                 if (data.user?.id) {
                     localStorage.setItem(`${domain}_userId`, data.user.id);
                 }
-                if (data.user.role === 'TENANT_ADMIN') {
-                    router.push('/admin');
+                if (data.user.role === 'TENANT_ADMIN' || data.user.role === 'SUPER_ADMIN') {
+                    router.push(`/t/${domain}/admin`);
                 } else {
-                    router.push('/dashboard');
+                    router.push(`/t/${domain}/dashboard`);
                 }
             } else {
                 setError(data.error || 'Login failed');
