@@ -406,7 +406,7 @@ export default function CoursePlayer({ params: paramsPromise }: { params: Promis
     if (!course) return (
         <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 text-center">
             <h1 className="text-3xl font-black mb-4">Course Not Found</h1>
-            <button onClick={() => router.push(`/dashboard`)} className="px-6 py-2 rounded-xl bg-primary text-primary-foreground font-bold">Return to Dashboard</button>
+            <button onClick={() => router.push(`/t/${domain}/dashboard`)} className="px-6 py-2 rounded-xl bg-primary text-primary-foreground font-bold">Return to Dashboard</button>
         </div>
     );
 
@@ -423,7 +423,7 @@ export default function CoursePlayer({ params: paramsPromise }: { params: Promis
                         <Menu className="w-6 h-6" />
                     </button>
                     <div className="flex-1 lg:ml-0 ml-4">
-                        <button onClick={() => router.push(`/dashboard`)} className="flex items-center gap-2 text-xs font-bold text-muted-foreground hover:text-foreground transition-colors group mb-1">
+                        <button onClick={() => router.push(`/t/${domain}/dashboard`)} className="flex items-center gap-2 text-xs font-bold text-muted-foreground hover:text-foreground transition-colors group mb-1">
                             <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> Back to Dashboard
                         </button>
                         <h1 className="font-bold text-xl truncate">{course.title}</h1>

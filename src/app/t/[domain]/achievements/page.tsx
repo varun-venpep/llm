@@ -74,7 +74,7 @@ export default function AchievementsPage() {
     return (
         <div className="min-h-screen bg-background text-foreground flex flex-col">
             <header className="sticky top-0 z-50 glassmorphism px-8 py-4 flex justify-between items-center border-b border-white/5">
-                <div className="flex items-center gap-4 cursor-pointer" onClick={() => router.push(`/dashboard`)}>
+                <div className="flex items-center gap-4 cursor-pointer" onClick={() => router.push(`/t/${domain}/dashboard`)}>
                     <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
                         <BookMarked className="w-6 h-6 text-white" />
                     </div>
@@ -85,12 +85,12 @@ export default function AchievementsPage() {
                 </div>
 
                 <div className="flex items-center gap-6">
-                    <button onClick={() => router.push(`/dashboard`)} className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors bg-secondary/20 px-4 py-2 rounded-full border border-white/5 hover:bg-secondary/40">
+                    <button onClick={() => router.push(`/t/${domain}/dashboard`)} className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors bg-secondary/20 px-4 py-2 rounded-full border border-white/5 hover:bg-secondary/40">
                         <ArrowLeft size={16} />
                         <span className="text-xs font-black uppercase tracking-widest">Back to Dashboard</span>
                     </button>
                     <div className="w-10 h-10 rounded-full border-2 border-primary/20 bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center font-black text-white text-sm">S</div>
-                    <button onClick={() => router.push('/login')} className="text-muted-foreground hover:text-red-400 transition-colors">
+                    <button onClick={() => router.push(`/t/${domain}/login`)} className="text-muted-foreground hover:text-red-400 transition-colors">
                         <LogOut className="w-5 h-5" />
                     </button>
                 </div>
@@ -115,7 +115,7 @@ export default function AchievementsPage() {
                             <Award className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
                             <h3 className="text-xl font-bold">No achievements yet</h3>
                             <p className="text-muted-foreground max-w-sm mx-auto mt-2">Finish your first course to earn your certificate and unlock achievements.</p>
-                            <button onClick={() => router.push(`/dashboard`)} className="mt-8 px-6 py-3 bg-primary text-primary-foreground font-black uppercase tracking-widest text-xs rounded-full hover:scale-105 transition-transform shadow-lg shadow-primary/20">Find a Course</button>
+                            <button onClick={() => router.push(`/t/${domain}/dashboard`)} className="mt-8 px-6 py-3 bg-primary text-primary-foreground font-black uppercase tracking-widest text-xs rounded-full hover:scale-105 transition-transform shadow-lg shadow-primary/20">Find a Course</button>
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -138,7 +138,7 @@ export default function AchievementsPage() {
                                             <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed">{course.description}</p>
                                         </div>
                                         <button 
-                                            onClick={() => window.open(`/certificate/${course.id}`, '_blank')}
+                                            onClick={() => window.open(`/t/${domain}/certificate/${course.id}`, '_blank')}
                                             className="w-full mt-4 flex items-center justify-center gap-2 py-4 bg-yellow-500 hover:bg-yellow-400 text-yellow-950 rounded-xl font-black uppercase tracking-widest text-[11px] transition-all shadow-lg hover:shadow-yellow-500/20"
                                         >
                                             <Download size={14} /> Download Certificate
