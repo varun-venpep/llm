@@ -131,7 +131,7 @@ export default function SuperAdminDashboard() {
             <div className="glassmorphism rounded-2xl overflow-hidden border border-border/50">
                 <div className="p-6 border-b border-border/50 flex justify-between items-center">
                     <h2 className="font-bold flex items-center gap-2"><Building2 className="w-5 h-5 text-blue-500" /> Recent Deployments</h2>
-                    <Link href="/tenants" className="text-xs font-bold text-blue-400 hover:underline">View All →</Link>
+                    <Link href="/admin/tenants" className="text-xs font-bold text-blue-400 hover:underline">View All →</Link>
                 </div>
                 <div className="divide-y divide-border/50">
                     {loading ? (
