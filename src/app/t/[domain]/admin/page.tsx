@@ -112,9 +112,12 @@ export default function ClientAdminDashboard() {
     // Student state
     const [showStudentModal, setShowStudentModal] = useState(false);
     const [studentForm, setStudentForm] = useState({ name: '', email: '', password: '' });
+    const [justCreatedStudent, setJustCreatedStudent] = useState<any>(null); // To show success link
 
     // Edit / Reset Student State
     const [selectedStudent, setSelectedStudent] = useState<any>(null);
+    const [isEditStudentModalOpen, setIsEditStudentModalOpen] = useState(false);
+    const [editingStudent, setEditingStudent] = useState<any>(null);
     const [resetPassword, setResetPassword] = useState('');
     const [resettingPwd, setResettingPwd] = useState(false);
 
@@ -977,8 +980,7 @@ export default function ClientAdminDashboard() {
                 body: JSON.stringify(studentForm)
             });
             if (res.ok) {
-                setShowStudentModal(false);
-                setStudentForm({ name: '', email: '', password: '' });
+                setJustCreatedStudent({ ...studentForm });
                 fetchAll();
                 addToast('Student created successfully');
             } else {
@@ -987,6 +989,53 @@ export default function ClientAdminDashboard() {
         } catch (e) {
             console.error(e);
             addToast('Error saving student', 'error');
+        }
+    };
+
+    const deleteStudent = async (studentId: string) => {
+        if (!(await askConfirmation('Delete Student?', 'Are you sure you want to permanently delete this student? All their progress and data will be lost.'))) return;
+        
+        try {
+            const res = await fetch(`/api/t/${domain}/students?studentId=${studentId}`, {
+                method: 'DELETE'
+            });
+            if (res.ok) {
+                addToast('Student deleted successfully');
+                fetchAll();
+            } else {
+                addToast('Failed to delete student', 'error');
+            }
+        } catch (e) {
+            console.error(e);
+            addToast('Error deleting student', 'error');
+        }
+    };
+
+    const updateStudent = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editingStudent) return;
+
+        try {
+            const res = await fetch(`/api/t/${domain}/students`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    studentId: editingStudent.id,
+                    name: editingStudent.name,
+                    email: editingStudent.email
+                })
+            });
+            if (res.ok) {
+                setIsEditStudentModalOpen(false);
+                setEditingStudent(null);
+                fetchAll();
+                addToast('Student updated successfully');
+            } else {
+                addToast('Failed to update student', 'error');
+            }
+        } catch (e) {
+            console.error(e);
+            addToast('Error updating student', 'error');
         }
     };
 
@@ -1901,10 +1950,29 @@ export default function ClientAdminDashboard() {
                                                     </span>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 text-sm">
-                                                <button onClick={() => { setSelectedStudent(s); setResetPassword(''); }} className="px-3 py-1.5 flex items-center gap-2 bg-primary/10 hover:bg-primary/20 text-primary rounded-lg font-bold text-xs transition-colors">
-                                                    <BarChart3 size={12} /> Insights
-                                                </button>
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-2">
+                                                    <button
+                                                        onClick={() => { setSelectedStudent(s); setResetPassword(''); }}
+                                                        className="px-3 py-1.5 rounded-lg bg-primary/10 border border-primary/20 text-primary hover:bg-primary/20 transition-all flex items-center gap-1.5 text-[10px] font-bold uppercase"
+                                                    >
+                                                        <BarChart3 size={12} /> Insights
+                                                    </button>
+                                                    <button
+                                                        onClick={() => { setEditingStudent(s); setIsEditStudentModalOpen(true); }}
+                                                        className="p-1.5 rounded-lg bg-secondary/50 border border-border/50 text-muted-foreground hover:text-primary hover:border-primary/30 transition-all"
+                                                        title="Edit Student"
+                                                    >
+                                                        <Edit3 size={14} />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => deleteStudent(s.id)}
+                                                        className="p-1.5 rounded-lg bg-secondary/50 border border-border/50 text-muted-foreground hover:text-red-400 hover:border-red-400/30 transition-all"
+                                                        title="Delete Student"
+                                                    >
+                                                        <Trash2 size={14} />
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))}
@@ -2269,37 +2337,111 @@ export default function ClientAdminDashboard() {
                 <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/70 backdrop-blur-sm">
                     <div className="bg-background border border-border w-full max-w-md rounded-3xl p-8 space-y-6 shadow-2xl">
                         <div className="flex justify-between items-center">
-                            <h3 className="text-xl font-black">Onboard Student</h3>
-                            <button onClick={() => setShowStudentModal(false)} className="text-muted-foreground hover:text-foreground"><XCircle size={24} /></button>
+                            <h3 className="text-xl font-black">{justCreatedStudent ? 'Student Enrolled!' : 'Onboard Student'}</h3>
+                            <button onClick={() => { setShowStudentModal(false); setJustCreatedStudent(null); setStudentForm({ name: '', email: '', password: generateRandomPassword() }); }} className="text-muted-foreground hover:text-foreground"><XCircle size={24} /></button>
                         </div>
-                        <form onSubmit={createStudent} className="space-y-4">
-                            {[{ key: 'name', label: 'Full Name', placeholder: 'Jane Doe' }, { key: 'email', label: 'Email', placeholder: 'jane@example.com', type: 'email' }].map(f => (
-                                <div key={f.key} className="space-y-1.5">
-                                    <div className="flex justify-between items-center">
-                                        <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{f.label}</label>
-                                        {validationErrors.student?.[f.key] && <span className="text-[10px] font-bold text-red-500 animate-in fade-in slide-in-from-right-1">{validationErrors.student[f.key]}</span>}
+                        
+                        {justCreatedStudent ? (
+                            <div className="space-y-6">
+                                <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-center">
+                                    <div className="w-12 h-12 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                                        <CheckCircle2 size={24} className="text-emerald-500" />
                                     </div>
-                                    <input
-                                        type={f.type || 'text'}
-                                        placeholder={f.placeholder}
-                                        value={(studentForm as any)[f.key]}
-                                        onChange={e => {
-                                            setStudentForm({ ...studentForm, [f.key]: e.target.value });
-                                            if (validationErrors.student?.[f.key]) {
-                                                setValidationErrors(prev => ({ ...prev, student: { ...prev.student, [f.key]: null } }));
-                                            }
-                                        }}
-                                        className={`w-full bg-secondary/50 border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 transition-all ${validationErrors.student?.[f.key] ? 'border-red-500/50 focus:ring-red-500/50' : 'border-border focus:ring-primary/50'}`} />
+                                    <p className="font-bold text-emerald-400">Success!</p>
+                                    <p className="text-sm text-muted-foreground">Student account created successfully.</p>
                                 </div>
-                            ))}
-                            <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/20">
-                                <p className="text-[10px] font-black uppercase tracking-widest text-blue-400 mb-1">Generated Password</p>
-                                <div className="flex justify-between items-center">
-                                    <code className="font-mono font-bold">{studentForm.password}</code>
-                                    <button type="button" onClick={() => navigator.clipboard.writeText(studentForm.password)} className="text-xs font-bold text-blue-400 hover:underline">Copy</button>
+
+                                <div className="space-y-4">
+                                    <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/20">
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-blue-400 mb-1">Login Path URL</p>
+                                        <div className="flex justify-between items-center gap-4">
+                                            <code className="font-mono text-xs truncate text-blue-300">
+                                                {window.location.origin}/t/{domain}/login
+                                            </code>
+                                            <button type="button" onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/t/${domain}/login`); addToast('Link copied'); }} className="text-[10px] font-bold text-blue-400 hover:underline flex-shrink-0">Copy</button>
+                                        </div>
+                                    </div>
+
+                                    <div className="p-4 rounded-xl bg-secondary/30 border border-border/50">
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">Generated Password</p>
+                                        <div className="flex justify-between items-center">
+                                            <code className="font-mono font-bold">{justCreatedStudent.password}</code>
+                                            <button type="button" onClick={() => { navigator.clipboard.writeText(justCreatedStudent.password); addToast('Password copied'); }} className="text-[10px] font-bold hover:underline">Copy</button>
+                                        </div>
+                                    </div>
                                 </div>
+
+                                <button 
+                                    onClick={() => { setShowStudentModal(false); setJustCreatedStudent(null); setStudentForm({ name: '', email: '', password: generateRandomPassword() }); }}
+                                    className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-bold hover:opacity-90"
+                                >
+                                    Done
+                                </button>
                             </div>
-                            <button type="submit" className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-bold hover:opacity-90">Enroll Student</button>
+                        ) : (
+                            <form onSubmit={createStudent} className="space-y-4">
+                                {[{ key: 'name', label: 'Full Name', placeholder: 'Jane Doe' }, { key: 'email', label: 'Email', placeholder: 'jane@example.com', type: 'email' }].map(f => (
+                                    <div key={f.key} className="space-y-1.5">
+                                        <div className="flex justify-between items-center">
+                                            <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{f.label}</label>
+                                            {validationErrors.student?.[f.key] && <span className="text-[10px] font-bold text-red-500 animate-in fade-in slide-in-from-right-1">{validationErrors.student[f.key]}</span>}
+                                        </div>
+                                        <input
+                                            type={f.type || 'text'}
+                                            placeholder={f.placeholder}
+                                            value={(studentForm as any)[f.key]}
+                                            onChange={e => {
+                                                setStudentForm({ ...studentForm, [f.key]: e.target.value });
+                                                if (validationErrors.student?.[f.key]) {
+                                                    setValidationErrors(prev => ({ ...prev, student: { ...prev.student, [f.key]: null } }));
+                                                }
+                                            }}
+                                            className={`w-full bg-secondary/50 border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 transition-all ${validationErrors.student?.[f.key] ? 'border-red-500/50 focus:ring-red-500/50' : 'border-border focus:ring-primary/50'}`} />
+                                    </div>
+                                ))}
+                                <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/20">
+                                    <div className="flex justify-between items-center mb-1">
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-blue-400">Generated Password</p>
+                                        <button type="button" onClick={() => setStudentForm({ ...studentForm, password: generateRandomPassword() })} className="text-[10px] font-bold text-blue-400 hover:underline">Regenerate</button>
+                                    </div>
+                                    <div className="flex justify-between items-center">
+                                        <code className="font-mono font-bold">{studentForm.password}</code>
+                                        <button type="button" onClick={() => navigator.clipboard.writeText(studentForm.password)} className="text-xs font-bold text-blue-400 hover:underline">Copy</button>
+                                    </div>
+                                </div>
+                                <button type="submit" className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-bold hover:opacity-90">Enroll Student</button>
+                            </form>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {isEditStudentModalOpen && editingStudent && (
+                <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/70 backdrop-blur-sm">
+                    <div className="bg-background border border-border w-full max-w-md rounded-3xl p-8 space-y-6 shadow-2xl">
+                        <div className="flex justify-between items-center">
+                            <h3 className="text-xl font-black">Edit Student</h3>
+                            <button onClick={() => { setIsEditStudentModalOpen(false); setEditingStudent(null); }} className="text-muted-foreground hover:text-foreground"><XCircle size={24} /></button>
+                        </div>
+                        <form onSubmit={updateStudent} className="space-y-4">
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Full Name</label>
+                                <input
+                                    value={editingStudent.name}
+                                    onChange={e => setEditingStudent({ ...editingStudent, name: e.target.value })}
+                                    className="w-full bg-secondary/50 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
+                            </div>
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Email</label>
+                                <input
+                                    type="email"
+                                    value={editingStudent.email}
+                                    onChange={e => setEditingStudent({ ...editingStudent, email: e.target.value })}
+                                    className="w-full bg-secondary/50 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
+                            </div>
+                            <div className="pt-2">
+                                <button type="submit" className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-bold hover:opacity-90">Save Changes</button>
+                            </div>
                         </form>
                     </div>
                 </div>

@@ -108,7 +108,7 @@ export async function PUT(
     try {
         const { domain } = await params;
         const body = await req.json();
-        const { studentId, newPassword, isActive } = body;
+        const { studentId, newPassword, isActive, name, email } = body;
  
         const tenant = await prisma.tenant.findUnique({
             where: { subdomain: domain }
@@ -126,11 +126,46 @@ export async function PUT(
  
         await prisma.user.update({
             where: { id: studentId, tenantId: tenant.id },
-            data: updateData
+            data: {
+                ...(name && { name }),
+                ...(email && { email }),
+                ...(newPassword && { password: await bcrypt.hash(newPassword, 10) }),
+                ...(typeof isActive === 'boolean' && { isActive })
+            }
         });
  
         return NextResponse.json({ success: true, message: 'Student updated successfully' });
     } catch (error) {
-        return NextResponse.json({ error: 'Failed to reset password' }, { status: 500 });
+        return NextResponse.json({ error: 'Failed to update student' }, { status: 500 });
+    }
+}
+
+export async function DELETE(
+    req: NextRequest,
+    { params }: { params: Promise<{ domain: string }> }
+) {
+    try {
+        const { domain } = await params;
+        const studentId = req.nextUrl.searchParams.get('studentId');
+
+        if (!studentId) {
+            return NextResponse.json({ error: 'Student ID required' }, { status: 400 });
+        }
+
+        const tenant = await prisma.tenant.findUnique({
+            where: { subdomain: domain }
+        });
+
+        if (!tenant) return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
+
+        // Delete user (Prisma should handle cascade if configured, but we check here)
+        await prisma.user.delete({
+            where: { id: studentId, tenantId: tenant.id }
+        });
+
+        return NextResponse.json({ success: true, message: 'Student deleted successfully' });
+    } catch (error) {
+        console.error(error);
+        return NextResponse.json({ error: 'Failed to delete student' }, { status: 500 });
     }
 }
