@@ -31,12 +31,12 @@ export async function GET(
         });
         if (!course) return NextResponse.json({ error: 'Course not found' }, { status: 404 });
 
-        const allLessonIds = course.modules.flatMap(m => m.lessons.map(l => l.id));
+        const allLessonIds = course.modules.flatMap((m: any) => m.lessons.map((l: any) => l.id));
         const allProgress = await prisma.lessonProgress.findMany({
             where: { userId, lessonId: { in: allLessonIds } }
         });
         
-        const completedProgress = allProgress.filter(p => p.completed);
+        const completedProgress = allProgress.filter((p: any) => p.completed);
 
         const totalLessons = allLessonIds.length;
         const completedCount = completedProgress.length;
@@ -45,7 +45,7 @@ export async function GET(
         const completedLessonIds = completedProgress.map((p: { lessonId: string }) => p.lessonId);
         
         // Return a map of lessonId -> progress stats
-        const progressMap = allProgress.reduce((acc, p) => {
+        const progressMap = allProgress.reduce((acc: any, p: any) => {
             acc[p.lessonId] = {
                 completed: p.completed,
                 lastPosition: p.lastPosition
@@ -53,15 +53,13 @@ export async function GET(
             return acc;
         }, {} as Record<string, any>);
 
-        // 3. Self-healing: If there's progress but no enrollment record, create it.
-        // This handles cases where old data exists or auto-enrollment failed.
-        if (completedCount > 0) {
-            await prisma.enrollment.upsert({
-                where: { userId_courseId: { userId, courseId } },
-                create: { userId, courseId, status: 'ACTIVE' },
-                update: {}
-            });
-        }
+        // 3. Self-healing: If there's no enrollment record, create it.
+        // This handles auto-enrollment as soon as a student accesses the course.
+        await prisma.enrollment.upsert({
+            where: { userId_courseId: { userId, courseId } },
+            create: { userId, courseId, status: 'ACTIVE' },
+            update: {}
+        });
 
         return NextResponse.json({ percentage, completedLessonIds, progressMap, totalLessons, completedCount });
     } catch (e) {

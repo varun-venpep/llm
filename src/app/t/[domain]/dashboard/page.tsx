@@ -311,7 +311,7 @@ export default function StudentDashboard() {
                             </div>
                             <div className="flex gap-6 shrink-0">
                                 {[
-                                    { label: 'Enrolled', value: inProgress + completedCourses, color: 'text-blue-400' },
+                                    { label: 'Enrolled', value: courses.length, color: 'text-blue-400' },
                                     { label: 'Completed', value: completedCourses, color: 'text-emerald-400' },
                                     { label: 'In Progress', value: inProgress, color: 'text-orange-400' },
                                 ].map(stat => (
