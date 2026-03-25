@@ -1158,6 +1158,7 @@ export default function ClientAdminDashboard() {
                             <button
                                 onClick={async () => {
                                     await fetch(`/api/t/${domain}/logout`, { method: 'POST' }).catch(() => {});
+                                    localStorage.removeItem(`${domain}_userId`);
                                     router.push(`/t/${domain}/login`);
                                 }}
                                 className="p-2 text-muted-foreground hover:text-red-400 hover:bg-red-500/10 rounded-full transition-all"
