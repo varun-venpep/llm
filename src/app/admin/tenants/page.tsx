@@ -165,7 +165,7 @@ export default function TenantsPage() {
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 font-medium text-sm text-blue-400">
-                                        {tenant.subdomain}.lms.com
+                                        /t/{tenant.subdomain}
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className="flex flex-col gap-1">

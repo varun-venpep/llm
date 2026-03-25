@@ -150,7 +150,7 @@ export default function SuperAdminDashboard() {
                                 </div>
                                 <div>
                                     <p className="font-bold text-sm">{t.name}</p>
-                                    <p className="text-xs text-muted-foreground">{t.subdomain}.lms.com</p>
+                                    <p className="text-xs text-muted-foreground italic">/t/{t.subdomain}</p>
                                 </div>
                             </div>
                             <div className="flex items-center gap-4">
@@ -181,10 +181,10 @@ export default function SuperAdminDashboard() {
                                 <p className="text-3xl">🚀</p>
                                 <p className="font-black text-emerald-400 text-lg">Workspace Live!</p>
                                 <p className="text-sm text-muted-foreground">Your client can access their portal at:</p>
-                                <a href={`http://${form.subdomain}.lvh.me:3000/login`}
+                                <a href={`${window.location.origin}/t/${form.subdomain}/login`}
                                     className="block font-mono text-blue-400 hover:underline text-sm"
                                     target="_blank">
-                                    http://{form.subdomain}.lvh.me:3000/login
+                                    {window.location.origin}/t/{form.subdomain}/login
                                 </a>
                                 <button onClick={() => { setShowSpinoff(false); setSpinResult(null); }} className="mt-2 px-4 py-2 bg-emerald-600 text-white font-bold rounded-lg text-sm">Done</button>
                             </div>
