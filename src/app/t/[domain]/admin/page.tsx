@@ -170,8 +170,23 @@ export default function ClientAdminDashboard() {
     const fetchAll = useCallback(async () => {
         setLoading(true);
         try {
-            const storedUserId = localStorage.getItem(`${domain}_userId`);
-            if (storedUserId) setUserId(storedUserId);
+            // VERIFY SESSION FIRST
+            const sessionRes = await fetch('/api/auth/session');
+            if (!sessionRes.ok) {
+                router.push(`/t/${domain}/login`);
+                return;
+            }
+            const { user } = await sessionRes.json();
+            
+            // Double check role
+            if (user.role === 'STUDENT') {
+                router.push(`/t/${domain}/dashboard`);
+                return;
+            }
+
+            setUserId(user.id);
+            setUserName(user.name || 'Admin');
+            setUserEmail(user.email || '');
 
             const [coursesRes, studentsRes, announcementsRes, statsRes] = await Promise.all([
                 fetch(`/api/t/${domain}/courses`),
@@ -190,16 +205,6 @@ export default function ClientAdminDashboard() {
             setStudents(Array.isArray(s) ? s : []);
             setAnnouncements(Array.isArray(a) ? a : []);
 
-            // Fetch profile if userId is available
-            if (storedUserId) {
-                const profileRes = await fetch(`/api/t/${domain}/student/profile?userId=${storedUserId}`);
-                if (profileRes.ok) {
-                    const profileData = await profileRes.json();
-                    setUserName(profileData.name || 'Admin');
-                    setUserEmail(profileData.email || '');
-                }
-            }
-
             if (st.stats) {
                 setStats(st.stats);
                 setRecentActivity(st.recentActivity || []);
@@ -217,7 +222,7 @@ export default function ClientAdminDashboard() {
         } finally {
             setLoading(false);
         }
-    }, [domain]);
+    }, [domain, router]);
 
     const [sharingSettings, setSharingSettings] = useState({ allowSelfRegistration: false, supportEmail: '' });
     const [isUploadingThumbnail, setIsUploadingThumbnail] = useState(false);
