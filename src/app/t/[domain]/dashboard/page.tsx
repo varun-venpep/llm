@@ -94,14 +94,23 @@ export default function StudentDashboard() {
 
     useEffect(() => {
         setTenantName(domain.charAt(0).toUpperCase() + domain.slice(1));
-        // Attempt to read userId from localStorage (set during login)
-        const storedUserId = localStorage.getItem(`${domain}_userId`);
-        setUserId(storedUserId);
-        fetchData(storedUserId);
+        fetchData();
     }, [domain]);
 
-    const fetchData = async (uid: string | null) => {
+    const fetchData = async () => {
         try {
+            // VERIFY SESSION FIRST
+            const sessionRes = await fetch('/api/auth/session');
+            if (!sessionRes.ok) {
+                router.push(`/t/${domain}/login`);
+                return;
+            }
+            const { user } = await sessionRes.json();
+            const uid = user.id;
+            setUserId(uid);
+            setUserName(user.name || 'Learner');
+            setUserEmail(user.email || '');
+
             const [coursesRes, announcementsRes] = await Promise.all([
                 fetch(`/api/t/${domain}/courses?view=student`),
                 fetch(`/api/t/${domain}/announcements`)
@@ -114,8 +123,8 @@ export default function StudentDashboard() {
             setCourses(publishedCourses);
             setAnnouncements(Array.isArray(announcementsData) ? announcementsData : []);
 
-            // Fetch progress for each course if we have a userId
-            if (uid && publishedCourses.length > 0) {
+            // Fetch progress for each course
+            if (publishedCourses.length > 0) {
                 const progressResults = await Promise.all(
                     publishedCourses.map((c: Course) =>
                         fetch(`/api/t/${domain}/progress?userId=${uid}&courseId=${c.id}`).then(r => r.json()).catch(() => ({ percentage: 0, completedCount: 0, totalLessons: 0 }))
@@ -124,16 +133,6 @@ export default function StudentDashboard() {
                 const map: Record<string, Progress> = {};
                 publishedCourses.forEach((c: Course, i: number) => { map[c.id] = progressResults[i]; });
                 setProgressMap(map);
-            }
-
-            // Fetch current user details for profile
-            if (uid) {
-                const profileRes = await fetch(`/api/t/${domain}/student/profile?userId=${uid}`);
-                if (profileRes.ok) {
-                    const profileData = await profileRes.json();
-                    setUserName(profileData.name || 'Learner');
-                    setUserEmail(profileData.email || '');
-                }
             }
         } catch (e) {
             console.error(e);

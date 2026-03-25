@@ -46,7 +46,7 @@ export default function TenantLoginPage() {
             const res = await fetch(`/api/t/${domain}/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password }),
+                body: JSON.stringify({ email, password, rememberMe }),
             });
 
             const data = await res.json();

@@ -9,7 +9,7 @@ export async function POST(
     try {
         const { domain } = await params;
         const body = await req.json();
-        const { email, password } = body;
+        const { email, password, rememberMe } = body;
 
         // Find user by email and tenant subdomain
         const user = await prisma.user.findFirst({
@@ -38,12 +38,18 @@ export async function POST(
         });
 
         // Set session cookie for auth persistence
-        response.cookies.set('session-token', user.id, {
+        const cookieOptions: any = {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'lax',
-            maxAge: 60 * 60 * 24 * 7 // 1 week
-        });
+            path: '/'
+        };
+
+        if (rememberMe) {
+            cookieOptions.maxAge = 60 * 60 * 24 * 7; // 1 week
+        }
+
+        response.cookies.set('session-token', user.id, cookieOptions);
 
         return response;
 

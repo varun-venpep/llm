@@ -5,7 +5,7 @@ import bcrypt from 'bcryptjs';
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
-        const { email, password } = body;
+        const { email, password, rememberMe } = body;
 
         // The super admin user doesn't belong to a tenant.
         const user = await prisma.user.findFirst({
@@ -30,12 +30,18 @@ export async function POST(req: NextRequest) {
         });
 
         // Set session cookie for auth persistence
-        response.cookies.set('session-token', user.id, {
+        const cookieOptions: any = {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'lax',
-            maxAge: 60 * 60 * 24 * 7 // 1 week
-        });
+            path: '/'
+        };
+
+        if (rememberMe) {
+            cookieOptions.maxAge = 60 * 60 * 24 * 7; // 1 week
+        }
+
+        response.cookies.set('session-token', user.id, cookieOptions);
 
         return response;
 
