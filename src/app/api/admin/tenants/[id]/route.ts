@@ -30,24 +30,55 @@ export async function DELETE(
     req: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
-    const { id } = await params;
+    const { id: tenantId } = await params;
     try {
-        // We should check if this is the system platform (don't delete that!)
-        const tenant = await prisma.tenant.findUnique({ where: { id } });
-        if (tenant?.subdomain === 'admin-system') {
+        const tenant = await prisma.tenant.findUnique({ 
+            where: { id: tenantId },
+            include: {
+                users: { select: { id: true } },
+                courses: { select: { id: true } }
+            }
+        });
+
+        if (!tenant) return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
+        if (tenant.subdomain === 'admin-system') {
             return NextResponse.json({ error: 'Cannot delete system core' }, { status: 403 });
         }
 
-        // Deleting a tenant should ideally delete all related data or at least cascade users
-        // But for safety, we'll just try to delete the tenant record and assume prisma handles cascade if configured.
-        await prisma.tenant.delete({ where: { id } });
+        const userIds = tenant.users.map((u: any) => u.id);
+        const courseIds = tenant.courses.map((c: any) => c.id);
 
-        return NextResponse.json({ success: true, message: 'Tenant deleted successfully' });
+        // Perform manual cascade delete in a transaction
+        await prisma.$transaction(async (tx: any) => {
+            // 1. Delete low-level user-related data
+            if (userIds.length > 0) {
+                await tx.lessonProgress.deleteMany({ where: { userId: { in: userIds } } });
+                await tx.quizAttempt.deleteMany({ where: { userId: { in: userIds } } });
+                await tx.enrollment.deleteMany({ where: { userId: { in: userIds } } });
+                await tx.activityLog.deleteMany({ where: { userId: { in: userIds } } });
+                await tx.submission.deleteMany({ where: { userId: { in: userIds } } });
+                await tx.issuedCertificate.deleteMany({ where: { userId: { in: userIds } } });
+                await tx.note.deleteMany({ where: { userId: { in: userIds } } });
+                await tx.review.deleteMany({ where: { userId: { in: userIds } } });
+            }
+
+            // 2. Delete tenant-level entities
+            await tx.announcement.deleteMany({ where: { tenantId } });
+            await tx.certificateTemplate.deleteMany({ where: { tenantId } });
+            
+            // 3. Delete Courses (Modules/Lessons should cascade if defined in schema, but being safe)
+            await tx.course.deleteMany({ where: { tenantId } });
+            
+            // 4. Delete Users
+            await tx.user.deleteMany({ where: { tenantId } });
+
+            // 5. Finally delete the Tenant
+            await tx.tenant.delete({ where: { id: tenantId } });
+        });
+
+        return NextResponse.json({ success: true, message: 'Tenant and all associated data deleted successfully' });
     } catch (error: any) {
         console.error('Tenant deletion error:', error);
-        if (error.code === 'P2003') {
-            return NextResponse.json({ error: 'Cannot delete tenant: it has active courses or students. Please delete those first.' }, { status: 409 });
-        }
-        return NextResponse.json({ error: 'Failed to delete tenant' }, { status: 500 });
+        return NextResponse.json({ error: `Failed to delete tenant: ${error.message}` }, { status: 500 });
     }
 }
