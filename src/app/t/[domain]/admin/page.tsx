@@ -1112,7 +1112,7 @@ export default function ClientAdminDashboard() {
                     ))}
                 </nav>
 
-                <button onClick={() => window.open(`/login`, '_blank')} className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-muted-foreground hover:text-foreground border border-border hover:bg-secondary/50 transition-all">
+                <button onClick={() => window.open(`/t/${domain}/login`, '_blank')} className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-muted-foreground hover:text-foreground border border-border hover:bg-secondary/50 transition-all">
                     <Eye size={14} /> Preview as Student
                 </button>
             </aside>
@@ -1156,7 +1156,7 @@ export default function ClientAdminDashboard() {
                                 <User size={18} />
                             </button>
                             <button 
-                                onClick={() => router.push('/login')} 
+                                onClick={() => router.push(`/t/${domain}/login`)} 
                                 className="p-2 text-muted-foreground hover:text-red-400 hover:bg-red-500/10 rounded-full transition-all"
                                 title="Sign Out"
                             >

@@ -207,7 +207,7 @@ export default function StudentDashboard() {
                 </div>
 
                 <div className="flex items-center gap-6">
-                    <button onClick={() => router.push(`/achievements`)} className="flex items-center gap-2 text-muted-foreground hover:text-yellow-400 transition-colors bg-secondary/20 px-4 py-2 rounded-full border border-border/50 hover:bg-secondary/40">
+                    <button onClick={() => router.push(`/t/${domain}/achievements`)} className="flex items-center gap-2 text-muted-foreground hover:text-yellow-400 transition-colors bg-secondary/20 px-4 py-2 rounded-full border border-border/50 hover:bg-secondary/40">
                         <Award size={16} />
                         <span className="text-xs font-black uppercase tracking-widest">Achievements</span>
                     </button>
@@ -280,7 +280,7 @@ export default function StudentDashboard() {
                             <User size={18} />
                         </button>
                         <button 
-                            onClick={() => router.push('/login')} 
+                            onClick={() => router.push(`/t/${domain}/login`)} 
                             className="p-2 text-muted-foreground hover:text-red-400 hover:bg-red-500/10 rounded-full transition-all"
                             title="Sign Out"
                         >
@@ -300,7 +300,7 @@ export default function StudentDashboard() {
                             <p className="text-muted-foreground max-w-md">Continue your learning journey. You have {inProgress} course{inProgress !== 1 ? 's' : ''} in progress.</p>
                             {inProgress > 0 && (
                                 <button
-                                    onClick={() => { const c = courses.find(c => (progressMap[c.id]?.percentage || 0) > 0 && (progressMap[c.id]?.percentage || 0) < 100); if (c) router.push(`/course/${c.id}`); }}
+                                    onClick={() => { const c = courses.find(c => (progressMap[c.id]?.percentage || 0) > 0 && (progressMap[c.id]?.percentage || 0) < 100); if (c) router.push(`/t/${domain}/course/${c.id}`); }}
                                     className="mt-2 px-6 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-bold flex items-center gap-2 hover:opacity-90 transition-opacity w-fit">
                                     <PlayCircle size={16} /> Continue Learning <ChevronRight size={16} />
                                 </button>
@@ -379,7 +379,7 @@ export default function StudentDashboard() {
                                 return (
                                     <div
                                         key={course.id}
-                                        onClick={() => router.push(`/course/${course.id}`)}
+                                        onClick={() => router.push(`/t/${domain}/course/${course.id}`)}
                                         className="group relative rounded-2xl overflow-hidden border border-border/50 glassmorphism hover:border-primary/30 transition-all cursor-pointer hover:translate-y-[-4px]"
                                     >
                                         <div className="aspect-video bg-gradient-to-br from-secondary to-background relative overflow-hidden flex items-center justify-center">
