@@ -27,22 +27,22 @@ export default function ClientAdminDashboard() {
     const router = useRouter();
     const domain = params.domain as string;
     const [activeTab, setActiveTab] = useState<Tab>('overview');
-    
+
     // Profile State
     const [showProfileModal, setShowProfileModal] = useState(false);
     const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
     const [userName, setUserName] = useState('Admin');
     const [userEmail, setUserEmail] = useState('');
     const [userId, setUserId] = useState<string | null>(null);
-    const [profileForm, setProfileForm] = useState({ 
-        currentPassword: '', 
-        newPassword: '', 
-        confirmPassword: '' 
+    const [profileForm, setProfileForm] = useState({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
     });
 
-    const [stats, setStats] = useState({ 
-        students: 0, 
-        courses: 0, 
+    const [stats, setStats] = useState({
+        students: 0,
+        courses: 0,
         enrollments: 0,
         completionRate: 0,
         avgProgress: 0,
@@ -64,15 +64,15 @@ export default function ClientAdminDashboard() {
     const [newModuleTitle, setNewModuleTitle] = useState('');
     const [newLessonForms, setNewLessonForms] = useState<Record<string, { title: string; content: string; videoUrl: string; pdfUrl?: string; type: 'VIDEO' | 'PPT' | 'QUIZ' | 'TEXT'; isActive: boolean; resources: any[] }>>({});
     const [activeQuizLesson, setActiveQuizLesson] = useState<{ moduleId: string; lessonId?: string } | null>(null);
-    const [quizForm, setQuizForm] = useState<{ title: string; description: string; passingScore: number; retakeAllowed: boolean; maxAttempts: number; isRandomized: boolean; randomCount: number; questions: any[] }>({ 
-        title: '', 
-        description: '', 
-        passingScore: 70, 
-        retakeAllowed: true, 
-        maxAttempts: 0, 
-        isRandomized: false, 
-        randomCount: 0, 
-        questions: [] 
+    const [quizForm, setQuizForm] = useState<{ title: string; description: string; passingScore: number; retakeAllowed: boolean; maxAttempts: number; isRandomized: boolean; randomCount: number; questions: any[] }>({
+        title: '',
+        description: '',
+        passingScore: 70,
+        retakeAllowed: true,
+        maxAttempts: 0,
+        isRandomized: false,
+        randomCount: 0,
+        questions: []
     });
     const [isGeneratingQuiz, setIsGeneratingQuiz] = useState(false);
     const [isSavingGeneratedQuiz, setIsSavingGeneratedQuiz] = useState<Record<string, boolean>>({});
@@ -87,11 +87,11 @@ export default function ClientAdminDashboard() {
 
     // Toast State
     const [toasts, setToasts] = useState<Toast[]>([]);
-    const [confirmModal, setConfirmModal] = useState<{ 
-        title: string; 
-        message: string; 
+    const [confirmModal, setConfirmModal] = useState<{
+        title: string;
+        message: string;
         resolve: (v: boolean) => void;
-        variant?: 'danger' | 'info' 
+        variant?: 'danger' | 'info'
     } | null>(null);
 
     const askConfirmation = (title: string, message: string, variant: 'danger' | 'info' = 'danger') => {
@@ -180,12 +180,12 @@ export default function ClientAdminDashboard() {
                 fetch(`/api/t/${domain}/admin/stats`)
             ]);
             const [c, s, a, st] = await Promise.all([
-                coursesRes.json(), 
-                studentsRes.json(), 
+                coursesRes.json(),
+                studentsRes.json(),
                 announcementsRes.json(),
                 statsRes.json()
             ]);
-            
+
             setCourses(Array.isArray(c) ? c : []);
             setStudents(Array.isArray(s) ? s : []);
             setAnnouncements(Array.isArray(a) ? a : []);
@@ -199,23 +199,23 @@ export default function ClientAdminDashboard() {
                     setUserEmail(profileData.email || '');
                 }
             }
-            
+
             if (st.stats) {
                 setStats(st.stats);
                 setRecentActivity(st.recentActivity || []);
                 setCoursePerformance(st.coursePerformance || []);
             } else {
                 // Fallback for students/courses count if stats API fails
-                setStats(prev => ({ 
-                    ...prev, 
-                    students: (Array.isArray(s) ? s : []).length, 
-                    courses: (Array.isArray(c) ? c : []).length 
+                setStats(prev => ({
+                    ...prev,
+                    students: (Array.isArray(s) ? s : []).length,
+                    courses: (Array.isArray(c) ? c : []).length
                 }));
             }
-        } catch (e) { 
-            console.error(e); 
-        } finally { 
-            setLoading(false); 
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setLoading(false);
         }
     }, [domain]);
 
@@ -246,7 +246,7 @@ export default function ClientAdminDashboard() {
     useEffect(() => {
         if (!selectedCourse || activeTab !== 'courses') return;
 
-        const hasProcessing = selectedCourse.modules?.some((mod: any) => 
+        const hasProcessing = selectedCourse.modules?.some((mod: any) =>
             mod.lessons?.some((lesson: any) => lesson.type === 'VIDEO' && lesson.transcriptStatus === 'PROCESSING')
         );
 
@@ -258,9 +258,9 @@ export default function ClientAdminDashboard() {
                 if (res.ok) {
                     const updated = await res.json();
                     setSelectedCourse(updated);
-                    
+
                     // Check if we can stop polling
-                    const stillProcessing = updated.modules?.some((mod: any) => 
+                    const stillProcessing = updated.modules?.some((mod: any) =>
                         mod.lessons?.some((lesson: any) => lesson.type === 'VIDEO' && lesson.transcriptStatus === 'PROCESSING')
                     );
                     if (!stillProcessing) {
@@ -290,24 +290,24 @@ export default function ClientAdminDashboard() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(courseForm)
             });
-            if (res.ok) { 
-                setShowCourseModal(false); 
-                setCourseForm({ title: '', description: '', thumbnail: '', skillLevel: 'All Levels', languages: 'English', captions: false }); 
+            if (res.ok) {
+                setShowCourseModal(false);
+                setCourseForm({ title: '', description: '', thumbnail: '', skillLevel: 'All Levels', languages: 'English', captions: false });
                 setThumbnailPreview(null);
-                fetchAll(); 
+                fetchAll();
                 addToast('Course created successfully');
             } else {
                 addToast('Failed to create course', 'error');
             }
-        } catch (e) { 
-            console.error(e); 
+        } catch (e) {
+            console.error(e);
             addToast('Error saving course', 'error');
         }
     };
 
     const togglePublish = async (course: any) => {
         const originalStatus = course.isPublished;
-        
+
         // Optimistic Update
         setCourses(prev => prev.map(c => c.id === course.id ? { ...c, isPublished: !originalStatus } : c));
         if (selectedCourse?.id === course.id) {
@@ -372,7 +372,7 @@ export default function ClientAdminDashboard() {
         if (!confirmed) return;
         try {
             const res = await fetch(`/api/t/${domain}/courses/${courseId}`, { method: 'DELETE' });
-            
+
             if (res.ok) {
                 setSelectedCourse(null);
                 fetchAll();
@@ -600,7 +600,7 @@ export default function ClientAdminDashboard() {
                     } else {
                         setSelectedCourse({
                             ...selectedCourse,
-                            modules: selectedCourse.modules.map((m: any) => 
+                            modules: selectedCourse.modules.map((m: any) =>
                                 m.id === managingResources.id ? { ...m, resources: [...(m.resources || []), newResource] } : m
                             )
                         });
@@ -629,7 +629,7 @@ export default function ClientAdminDashboard() {
                     } else {
                         setSelectedCourse({
                             ...selectedCourse,
-                            modules: selectedCourse.modules.map((m: any) => 
+                            modules: selectedCourse.modules.map((m: any) =>
                                 m.id === managingResources.id ? { ...m, resources: (m.resources || []).filter((r: any) => r.id !== resourceId) } : m
                             )
                         });
@@ -646,17 +646,17 @@ export default function ClientAdminDashboard() {
     const deleteLesson = async (e: React.MouseEvent, moduleId: string, lessonId: string) => {
         e.preventDefault();
         e.stopPropagation();
-        
+
         if (!(await askConfirmation('Delete Lesson?', 'Are you sure you want to delete this lesson? This action cannot be undone.'))) return;
-        
+
         try {
             const courseId = selectedCourse?.id;
             if (!courseId) throw new Error('No course selected');
 
-            const resDel = await fetch(`/api/t/${domain}/courses/${courseId}/modules/${moduleId}/lessons/${lessonId}`, { 
-                method: 'DELETE' 
+            const resDel = await fetch(`/api/t/${domain}/courses/${courseId}/modules/${moduleId}/lessons/${lessonId}`, {
+                method: 'DELETE'
             });
-            
+
             if (resDel.ok) {
                 addToast('Lesson deleted successfully', 'success');
                 const res = await fetch(`/api/t/${domain}/courses/${courseId}`);
@@ -772,7 +772,7 @@ export default function ClientAdminDashboard() {
 
     const toggleLessonStatus = async (moduleId: string, lesson: any) => {
         const originalStatus = lesson.isActive;
-        
+
         // Optimistic Update
         if (selectedCourse) {
             const updatedModules = selectedCourse.modules.map((m: any) => {
@@ -819,7 +819,7 @@ export default function ClientAdminDashboard() {
             body: JSON.stringify({ title: module.title, isActive: !module.isActive })
         });
         if (resUpdate.ok) {
-                fetchCourseDetails(courseId);
+            fetchCourseDetails(courseId);
         }
     };
 
@@ -829,7 +829,7 @@ export default function ClientAdminDashboard() {
             return;
         }
         setValidationErrors(prev => ({ ...prev, [`module-${moduleId}`]: null }));
-        
+
         const courseId = selectedCourse?.id;
         try {
             const resUpdate = await fetch(`/api/t/${domain}/courses/${courseId}/modules/${moduleId}`, {
@@ -859,7 +859,7 @@ export default function ClientAdminDashboard() {
         const courseId = selectedCourse?.id;
         try {
             const resDelete = await fetch(`/api/t/${domain}/courses/${courseId}/modules/${moduleId}`, { method: 'DELETE' });
-            
+
             if (resDelete.ok) {
                 fetchCourseDetails(courseId);
                 fetchAll();
@@ -901,11 +901,11 @@ export default function ClientAdminDashboard() {
 
     const saveQuiz = async () => {
         if (!activeQuizLesson) return;
-        
+
         // Validation
         const errors: Record<string, any> = {};
         if (!quizForm.title.trim()) errors.title = 'Quiz title is required';
-        
+
         const questionErrors: Record<number, any> = {};
         quizForm.questions.forEach((q, idx) => {
             const qErr: any = {};
@@ -917,7 +917,7 @@ export default function ClientAdminDashboard() {
             if (Object.keys(optErrors).length > 0) qErr.options = optErrors;
             if (Object.keys(qErr).length > 0) questionErrors[idx] = qErr;
         });
-        
+
         if (Object.keys(questionErrors).length > 0) errors.questions = questionErrors;
 
         if (Object.keys(errors).length > 0) {
@@ -926,10 +926,10 @@ export default function ClientAdminDashboard() {
             return;
         }
         setValidationErrors(prev => ({ ...prev, quiz: null }));
-        
+
         const { moduleId, lessonId } = activeQuizLesson;
         const courseId = selectedCourse?.id;
-        
+
         try {
             const resQuiz = await fetch(`/api/t/${domain}/courses/${courseId}/modules/${moduleId}/lessons/${lessonId}/quiz`, {
                 method: 'POST',
@@ -952,13 +952,13 @@ export default function ClientAdminDashboard() {
 
     const createStudent = async (e: React.FormEvent) => {
         e.preventDefault();
-        
+
         // Validation
         const errors: Record<string, string> = {};
         if (!studentForm.name.trim()) errors.name = 'Name is required';
         if (!studentForm.email.trim()) errors.email = 'Email is required';
         if (!studentForm.password.trim()) errors.password = 'Password is required';
-        
+
         if (Object.keys(errors).length > 0) {
             setValidationErrors(prev => ({ ...prev, student: errors }));
             return;
@@ -971,16 +971,16 @@ export default function ClientAdminDashboard() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(studentForm)
             });
-            if (res.ok) { 
-                setShowStudentModal(false); 
-                setStudentForm({ name: '', email: '', password: '' }); 
-                fetchAll(); 
+            if (res.ok) {
+                setShowStudentModal(false);
+                setStudentForm({ name: '', email: '', password: '' });
+                fetchAll();
                 addToast('Student created successfully');
             } else {
                 addToast('Failed to create student', 'error');
             }
-        } catch (e) { 
-            console.error(e); 
+        } catch (e) {
+            console.error(e);
             addToast('Error saving student', 'error');
         }
     };
@@ -1039,12 +1039,12 @@ export default function ClientAdminDashboard() {
 
     const createAnnouncement = async (e: React.FormEvent) => {
         e.preventDefault();
-        
+
         // Validation
         const errors: Record<string, string> = {};
         if (!announcementForm.title.trim()) errors.title = 'Title is required';
         if (!announcementForm.body.trim()) errors.body = 'Content is required';
-        
+
         if (Object.keys(errors).length > 0) {
             setValidationErrors(prev => ({ ...prev, announcement: errors }));
             return;
@@ -1057,16 +1057,16 @@ export default function ClientAdminDashboard() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(announcementForm)
             });
-            if (res.ok) { 
-                setShowAnnouncementModal(false); 
-                setAnnouncementForm({ title: '', body: '', imageUrl: '', documentUrl: '' }); 
-                fetchAll(); 
+            if (res.ok) {
+                setShowAnnouncementModal(false);
+                setAnnouncementForm({ title: '', body: '', imageUrl: '', documentUrl: '' });
+                fetchAll();
                 addToast('Announcement posted');
             } else {
                 addToast('Failed to post announcement', 'error');
             }
-        } catch (e) { 
-            console.error(e); 
+        } catch (e) {
+            console.error(e);
             addToast('Error saving announcement', 'error');
         }
     };
@@ -1112,7 +1112,7 @@ export default function ClientAdminDashboard() {
                     ))}
                 </nav>
 
-                <button onClick={() => window.open(`/t/${domain}/login`, '_blank')} className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-muted-foreground hover:text-foreground border border-border hover:bg-secondary/50 transition-all">
+                <button onClick={() => window.open(`/t/${domain}/dashboard`, '_blank')} className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-muted-foreground hover:text-foreground border border-border hover:bg-secondary/50 transition-all">
                     <Eye size={14} /> Preview as Student
                 </button>
             </aside>
@@ -1143,20 +1143,23 @@ export default function ClientAdminDashboard() {
                                 <Plus size={16} /> New Announcement
                             </button>
                         )}
-                        
+
                         <div className="h-6 w-px bg-border/50 mx-2" />
                         <ThemeToggle />
-                        
+
                         <div className="flex items-center gap-2">
-                            <button 
+                            <button
                                 onClick={() => setShowProfileModal(true)}
                                 className="w-10 h-10 rounded-full border-2 border-primary/20 bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center font-black text-white text-sm hover:scale-105 transition-transform"
                                 title="Profile Settings"
                             >
                                 <User size={18} />
                             </button>
-                            <button 
-                                onClick={() => router.push(`/t/${domain}/login`)} 
+                            <button
+                                onClick={async () => {
+                                    await fetch(`/api/t/${domain}/logout`, { method: 'POST' }).catch(() => {});
+                                    router.push(`/t/${domain}/login`);
+                                }}
                                 className="p-2 text-muted-foreground hover:text-red-400 hover:bg-red-500/10 rounded-full transition-all"
                                 title="Sign Out"
                             >
@@ -1328,7 +1331,7 @@ export default function ClientAdminDashboard() {
                                             <div className="flex items-center gap-3 p-4 bg-secondary/20 border-b border-border/50">
                                                 <GripVertical size={16} className="text-muted-foreground" />
                                                 <div className="flex-1 flex flex-col">
-                                                     {editingModuleId === mod.id ? (
+                                                    {editingModuleId === mod.id ? (
                                                         <div className="flex flex-col gap-1 flex-1">
                                                             <div className="flex items-center gap-2">
                                                                 <input
@@ -1511,27 +1514,27 @@ export default function ClientAdminDashboard() {
                                                                             {newLessonForms[mod.id]?.videoUrl ? 'Video Ready' : 'Main Lesson Video'}
                                                                         </p>
                                                                         <p className="text-[10px] text-muted-foreground mt-1 max-w-[200px]">
-                                                                            {newLessonForms[mod.id]?.videoUrl 
-                                                                                ? newLessonForms[mod.id]?.videoUrl?.split('/').pop() 
+                                                                            {newLessonForms[mod.id]?.videoUrl
+                                                                                ? newLessonForms[mod.id]?.videoUrl?.split('/').pop()
                                                                                 : "Only MP4 uploads are supported for player playback."}
                                                                         </p>
                                                                     </div>
                                                                     <label className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-[10px] font-black uppercase tracking-widest cursor-pointer hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
                                                                         {newLessonForms[mod.id]?.videoUrl ? 'Replace Video' : 'Upload MP4'}
-                                                                        <input 
-                                                                            type="file" 
-                                                                            className="hidden" 
-                                                                            accept=".mp4" 
+                                                                        <input
+                                                                            type="file"
+                                                                            className="hidden"
+                                                                            accept=".mp4"
                                                                             disabled={!!uploadProgress[mod.id]}
                                                                             onChange={(e) => {
                                                                                 const file = e.target.files?.[0];
                                                                                 if (file) handleMainContentUpload(mod.id, file, 'VIDEO');
-                                                                            }} 
+                                                                            }}
                                                                         />
                                                                     </label>
                                                                     {uploadProgress[mod.id] !== undefined && (
                                                                         <div className="w-full max-w-[200px] h-1.5 bg-secondary/50 rounded-full overflow-hidden mt-1">
-                                                                            <div 
+                                                                            <div
                                                                                 className="h-full bg-primary transition-all duration-300 ease-out"
                                                                                 style={{ width: `${uploadProgress[mod.id]}%` }}
                                                                             />
@@ -1550,27 +1553,27 @@ export default function ClientAdminDashboard() {
                                                                             {newLessonForms[mod.id]?.pdfUrl ? 'Content Ready' : 'Main Lesson Content'}
                                                                         </p>
                                                                         <p className="text-[10px] text-muted-foreground mt-1 max-w-[200px]">
-                                                                            {newLessonForms[mod.id]?.pdfUrl 
-                                                                                ? newLessonForms[mod.id]?.pdfUrl?.split('/').pop() 
+                                                                            {newLessonForms[mod.id]?.pdfUrl
+                                                                                ? newLessonForms[mod.id]?.pdfUrl?.split('/').pop()
                                                                                 : "Upload PDF or PPTX for the player."}
                                                                         </p>
                                                                     </div>
                                                                     <label className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-[10px] font-black uppercase tracking-widest cursor-pointer hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
                                                                         {newLessonForms[mod.id]?.pdfUrl ? 'Replace File' : 'Upload File'}
-                                                                        <input 
-                                                                            type="file" 
-                                                                            className="hidden" 
-                                                                            accept=".pdf,.pptx" 
+                                                                        <input
+                                                                            type="file"
+                                                                            className="hidden"
+                                                                            accept=".pdf,.pptx"
                                                                             disabled={!!uploadProgress[mod.id]}
                                                                             onChange={(e) => {
                                                                                 const file = e.target.files?.[0];
                                                                                 if (file) handleMainContentUpload(mod.id, file, 'PPT');
-                                                                            }} 
+                                                                            }}
                                                                         />
                                                                     </label>
                                                                     {uploadProgress[mod.id] !== undefined && (
                                                                         <div className="w-full max-w-[200px] h-1.5 bg-secondary/50 rounded-full overflow-hidden mt-1">
-                                                                            <div 
+                                                                            <div
                                                                                 className="h-full bg-primary transition-all duration-300 ease-out"
                                                                                 style={{ width: `${uploadProgress[mod.id]}%` }}
                                                                             />
@@ -1588,8 +1591,8 @@ export default function ClientAdminDashboard() {
                                                                 <div className="text-center">
                                                                     <p className="text-sm font-bold">Quiz Configuration</p>
                                                                     <p className="text-[10px] text-muted-foreground line-clamp-1">
-                                                                        {mod.lessons?.find((l: any) => l.id === editingLessonIds[mod.id])?.quiz 
-                                                                            ? 'Quiz already exists' 
+                                                                        {mod.lessons?.find((l: any) => l.id === editingLessonIds[mod.id])?.quiz
+                                                                            ? 'Quiz already exists'
                                                                             : 'Use Whisper AI to generate questions from your lesson transcript.'}
                                                                     </p>
                                                                 </div>
@@ -1598,17 +1601,17 @@ export default function ClientAdminDashboard() {
                                                                         const lesson = mod.lessons.find((l: any) => l.id === editingLessonIds[mod.id]);
                                                                         if (lesson) {
                                                                             setActiveQuizLesson({ moduleId: mod.id, lessonId: lesson.id });
-                                                                             const q = lesson.quiz || { title: lesson.title, questions: [] };
-                                                                             setQuizForm({
-                                                                                 title: q.title || lesson.title,
-                                                                                 description: q.description || '',
-                                                                                 passingScore: q.passingScore || 70,
-                                                                                 questions: q.questions || [],
-                                                                                 retakeAllowed: q.retakeAllowed ?? true,
-                                                                                 maxAttempts: q.maxAttempts || 0,
-                                                                                 isRandomized: q.isRandomized ?? false,
-                                                                                 randomCount: q.randomCount || 0
-                                                                             });
+                                                                            const q = lesson.quiz || { title: lesson.title, questions: [] };
+                                                                            setQuizForm({
+                                                                                title: q.title || lesson.title,
+                                                                                description: q.description || '',
+                                                                                passingScore: q.passingScore || 70,
+                                                                                questions: q.questions || [],
+                                                                                retakeAllowed: q.retakeAllowed ?? true,
+                                                                                maxAttempts: q.maxAttempts || 0,
+                                                                                isRandomized: q.isRandomized ?? false,
+                                                                                randomCount: q.randomCount || 0
+                                                                            });
                                                                         }
                                                                     }}
                                                                     className="px-4 py-2 bg-amber-500 text-white font-bold rounded-lg text-xs hover:bg-amber-600 transition-all shadow-lg shadow-amber-500/20"
@@ -1692,12 +1695,12 @@ export default function ClientAdminDashboard() {
                                                                 <div className="flex items-center justify-between">
                                                                     <label className={`flex items-center gap-2 px-3 py-1.5 bg-secondary hover:bg-secondary/80 border border-border/50 rounded-lg cursor-pointer transition-colors text-xs font-bold text-muted-foreground ${uploadProgress[`res-${mod.id}`] !== undefined ? 'opacity-50 cursor-not-allowed' : ''}`}>
                                                                         <Upload size={14} /> Add Downloadable Resource
-                                                                        <input 
-                                                                            type="file" 
-                                                                            className="hidden" 
-                                                                            accept=".mp4,.pdf,.docx,.pptx" 
+                                                                        <input
+                                                                            type="file"
+                                                                            className="hidden"
+                                                                            accept=".mp4,.pdf,.docx,.pptx"
                                                                             disabled={uploadProgress[`res-${mod.id}`] !== undefined}
-                                                                            onChange={(e) => handleResourceUpload(mod.id, e)} 
+                                                                            onChange={(e) => handleResourceUpload(mod.id, e)}
                                                                         />
                                                                     </label>
                                                                     <div className="flex items-center gap-2">
@@ -1713,7 +1716,7 @@ export default function ClientAdminDashboard() {
                                                                 </div>
                                                                 {uploadProgress[`res-${mod.id}`] !== undefined && (
                                                                     <div className="w-full h-1 bg-secondary/30 rounded-full overflow-hidden">
-                                                                        <div 
+                                                                        <div
                                                                             className="h-full bg-emerald-500 transition-all duration-300 ease-out"
                                                                             style={{ width: `${uploadProgress[`res-${mod.id}`]}%` }}
                                                                         />
@@ -1937,8 +1940,8 @@ export default function ClientAdminDashboard() {
                                                 <p className="text-sm text-muted-foreground line-clamp-2">{a.body}</p>
                                                 {(a.imageUrl || a.documentUrl) && (
                                                     <div className="flex gap-2 mt-2">
-                                                        {a.imageUrl && <span className="text-[10px] font-bold bg-primary/10 text-primary px-2 py-0.5 rounded flex items-center gap-1"><Info size={10}/> Image Attached</span>}
-                                                        {a.documentUrl && <span className="text-[10px] font-bold bg-primary/10 text-primary px-2 py-0.5 rounded flex items-center gap-1"><FileText size={10}/> Doc Attached</span>}
+                                                        {a.imageUrl && <span className="text-[10px] font-bold bg-primary/10 text-primary px-2 py-0.5 rounded flex items-center gap-1"><Info size={10} /> Image Attached</span>}
+                                                        {a.documentUrl && <span className="text-[10px] font-bold bg-primary/10 text-primary px-2 py-0.5 rounded flex items-center gap-1"><FileText size={10} /> Doc Attached</span>}
                                                     </div>
                                                 )}
                                             </div>
@@ -1946,7 +1949,7 @@ export default function ClientAdminDashboard() {
                                     ))}
                                     {totalPages > 1 && (
                                         <div className="flex justify-center items-center gap-4 mt-6">
-                                            <button 
+                                            <button
                                                 disabled={announcementPage === 1}
                                                 onClick={() => setAnnouncementPage(p => Math.max(1, p - 1))}
                                                 className="p-2 rounded-xl bg-secondary hover:bg-secondary/80 disabled:opacity-50 transition-all border border-border/50"
@@ -1956,7 +1959,7 @@ export default function ClientAdminDashboard() {
                                             <span className="text-sm font-bold text-muted-foreground tracking-widest uppercase">
                                                 Page {announcementPage} of {totalPages}
                                             </span>
-                                            <button 
+                                            <button
                                                 disabled={announcementPage === totalPages}
                                                 onClick={() => setAnnouncementPage(p => Math.min(totalPages, p + 1))}
                                                 className="p-2 rounded-xl bg-secondary hover:bg-secondary/80 disabled:opacity-50 transition-all border border-border/50"
@@ -2184,7 +2187,7 @@ export default function ClientAdminDashboard() {
                                     <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Course Title</label>
                                     {validationErrors.course?.title && <span className="text-[10px] font-bold text-red-500 animate-in fade-in slide-in-from-right-1">{validationErrors.course.title}</span>}
                                 </div>
-                                <input placeholder="e.g. Introduction to Python" value={courseForm.title} 
+                                <input placeholder="e.g. Introduction to Python" value={courseForm.title}
                                     onChange={e => {
                                         setCourseForm({ ...courseForm, title: e.target.value });
                                         if (validationErrors.course?.title) {
@@ -2209,16 +2212,16 @@ export default function ClientAdminDashboard() {
                                         )}
                                     </div>
                                     <div className="flex-1">
-                                        <input 
-                                            type="file" 
-                                            accept="image/*" 
-                                            onChange={uploadThumbnail} 
-                                            className="hidden" 
-                                            id="thumbnail-upload" 
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={uploadThumbnail}
+                                            className="hidden"
+                                            id="thumbnail-upload"
                                             disabled={isUploadingThumbnail}
                                         />
-                                        <label 
-                                            htmlFor="thumbnail-upload" 
+                                        <label
+                                            htmlFor="thumbnail-upload"
                                             className="px-4 py-2 bg-secondary hover:bg-secondary/80 text-xs font-bold uppercase tracking-widest rounded-lg cursor-pointer transition-all border border-border flex items-center justify-center gap-2"
                                         >
                                             {isUploadingThumbnail ? <Loader2 className="w-3 h-3 animate-spin" /> : <Upload size={14} />}
@@ -2270,10 +2273,10 @@ export default function ClientAdminDashboard() {
                                         <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{f.label}</label>
                                         {validationErrors.student?.[f.key] && <span className="text-[10px] font-bold text-red-500 animate-in fade-in slide-in-from-right-1">{validationErrors.student[f.key]}</span>}
                                     </div>
-                                    <input 
-                                        type={f.type || 'text'} 
-                                        placeholder={f.placeholder} 
-                                        value={(studentForm as any)[f.key]} 
+                                    <input
+                                        type={f.type || 'text'}
+                                        placeholder={f.placeholder}
+                                        value={(studentForm as any)[f.key]}
                                         onChange={e => {
                                             setStudentForm({ ...studentForm, [f.key]: e.target.value });
                                             if (validationErrors.student?.[f.key]) {
@@ -2299,165 +2302,165 @@ export default function ClientAdminDashboard() {
             {selectedStudent && (
                 <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/70 backdrop-blur-sm">
                     <div className="bg-background border border-border w-full max-w-4xl max-h-[90vh] rounded-3xl p-8 flex flex-col shadow-2xl animate-in zoom-in duration-300">
-                      <div className="flex justify-between items-center mb-6">
-                        <div className="flex items-center gap-4">
-                          <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-xl ${selectedStudent.isActive !== false ? 'bg-blue-500/20 text-blue-400' : 'bg-secondary text-muted-foreground'}`}>
-                            {selectedStudent.name?.charAt(0) || 'S'}
-                          </div>
-                          <div>
-                            <h3 className="text-xl font-black">{selectedStudent.name}</h3>
-                            <p className="text-sm text-muted-foreground">{selectedStudent.email}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-3">
-                           <div
-                                onClick={() => toggleStudentStatus(selectedStudent)}
-                                className="px-4 py-2 rounded-xl bg-secondary/50 border border-border/50 flex items-center gap-3 cursor-pointer hover:bg-secondary transition-all"
-                            >
-                                <div className={`w-10 h-5 rounded-full p-0.5 transition-colors relative ${selectedStudent.isActive !== false ? 'bg-emerald-500/20' : 'bg-secondary'}`}>
-                                    <div className={`w-4 h-4 rounded-full shadow-sm transition-all ${selectedStudent.isActive !== false ? 'translate-x-5 bg-emerald-400' : 'bg-muted-foreground'}`} />
+                        <div className="flex justify-between items-center mb-6">
+                            <div className="flex items-center gap-4">
+                                <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-xl ${selectedStudent.isActive !== false ? 'bg-blue-500/20 text-blue-400' : 'bg-secondary text-muted-foreground'}`}>
+                                    {selectedStudent.name?.charAt(0) || 'S'}
                                 </div>
-                                <span className={`text-xs font-black uppercase tracking-widest ${selectedStudent.isActive !== false ? 'text-emerald-400' : 'text-muted-foreground opacity-50'}`}>
-                                    {selectedStudent.isActive !== false ? 'Active' : 'Account Disabled'}
-                                </span>
+                                <div>
+                                    <h3 className="text-xl font-black">{selectedStudent.name}</h3>
+                                    <p className="text-sm text-muted-foreground">{selectedStudent.email}</p>
+                                </div>
                             </div>
-                            <button onClick={() => { setSelectedStudent(null); setResetPassword(''); }} className="text-muted-foreground hover:text-foreground"><XCircle size={28} /></button>
-                        </div>
-                      </div>
-
-                      <div className="flex-1 overflow-y-auto pr-2 space-y-8 custom-scrollbar">
-                        {/* Summary Grid */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                           <div className="p-5 rounded-2xl bg-secondary/10 border border-border/50">
-                              <div className="flex items-center gap-3 text-primary mb-2">
-                                <BookOpen size={18} />
-                                <span className="text-[10px] font-black uppercase tracking-widest">Learning Progress</span>
-                              </div>
-                              <p className="text-2xl font-black">{selectedStudent.enrollments?.length || 0}</p>
-                              <p className="text-xs text-muted-foreground font-medium italic">Courses Enrolled</p>
-                           </div>
-                           <div className="p-5 rounded-2xl bg-secondary/10 border border-border/50">
-                              <div className="flex items-center gap-3 text-amber-500 mb-2">
-                                <Award size={18} />
-                                <span className="text-[10px] font-black uppercase tracking-widest">Quiz Performance</span>
-                              </div>
-                              <p className="text-2xl font-black">{selectedStudent.quizAttempts?.filter((a: any) => a.passed).length || 0}</p>
-                              <p className="text-xs text-muted-foreground font-medium italic">Quizzes Passed</p>
-                           </div>
-                           <div className="p-5 rounded-2xl bg-secondary/10 border border-border/50">
-                              <div className="flex items-center gap-3 text-emerald-500 mb-2">
-                                <Clock size={18} />
-                                <span className="text-[10px] font-black uppercase tracking-widest">Activity Status</span>
-                              </div>
-                              <p className="text-2xl font-black">{selectedStudent.activityLogs?.length || 0}</p>
-                              <p className="text-xs text-muted-foreground font-medium italic">Total Actions Logged</p>
-                           </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                           {/* Course Progress */}
-                           <div className="space-y-4">
-                              <h4 className="font-black text-sm uppercase tracking-widest text-muted-foreground border-b border-border/50 pb-2">Course Status</h4>
-                              <div className="space-y-4">
-                                 {selectedStudent.enrollments?.length > 0 ? selectedStudent.enrollments.map((env: any) => {
-                                    const totalLessons = env.course.modules?.reduce((sum: number, mod: any) => sum + (mod.lessons?.length || 0), 0) || 0;
-                                    const completedLessons = selectedStudent.progress?.filter((p: any) => p.completed && env.course.modules?.some((m: any) => m.lessons.some((l: any) => l.id === p.lessonId))).length || 0;
-                                    const progressPercent = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
-                                    
-                                    return (
-                                       <div key={env.id} className="p-4 rounded-xl bg-secondary/5 border border-border/50">
-                                          <div className="flex justify-between items-start mb-3">
-                                             <p className="font-bold text-sm leading-tight max-w-[70%]">{env.course.title}</p>
-                                             <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${progressPercent === 100 ? 'bg-emerald-500/10 text-emerald-500' : 'bg-primary/10 text-primary'}`}>
-                                                {progressPercent}%
-                                             </span>
-                                          </div>
-                                          <div className="h-1.5 w-full bg-secondary rounded-full overflow-hidden">
-                                             <div className="h-full bg-primary transition-all duration-500" style={{ width: `${progressPercent}%` }} />
-                                          </div>
-                                          <p className="text-[10px] text-muted-foreground mt-2 italic">{completedLessons} of {totalLessons} lessons completed</p>
-                                       </div>
-                                    )
-                                 }) : (
-                                    <p className="text-sm text-muted-foreground italic py-4">Not enrolled in any courses yet.</p>
-                                 )}
-                              </div>
-
-                              <h4 className="font-black text-sm uppercase tracking-widest text-muted-foreground border-b border-border/50 pb-2 pt-4">Recent Quiz Scores</h4>
-                              <div className="space-y-2">
-                                 {selectedStudent.quizAttempts?.length > 0 ? selectedStudent.quizAttempts.slice(0, 5).map((attempt: any) => (
-                                    <div key={attempt.id} className="flex items-center justify-between p-3 rounded-lg bg-secondary/5 border border-border/30">
-                                       <div>
-                                          <p className="text-xs font-bold">{attempt.quiz.title}</p>
-                                          <p className="text-[9px] text-muted-foreground">{new Date(attempt.createdAt).toLocaleDateString()} {new Date(attempt.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
-                                       </div>
-                                       <div className={`px-2 py-1 rounded text-[10px] font-black ${attempt.score >= attempt.quiz.passingScore ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500'}`}>
-                                          {attempt.score}% - {attempt.score >= attempt.quiz.passingScore ? 'PASSED' : 'FAILED'}
-                                       </div>
+                            <div className="flex items-center gap-3">
+                                <div
+                                    onClick={() => toggleStudentStatus(selectedStudent)}
+                                    className="px-4 py-2 rounded-xl bg-secondary/50 border border-border/50 flex items-center gap-3 cursor-pointer hover:bg-secondary transition-all"
+                                >
+                                    <div className={`w-10 h-5 rounded-full p-0.5 transition-colors relative ${selectedStudent.isActive !== false ? 'bg-emerald-500/20' : 'bg-secondary'}`}>
+                                        <div className={`w-4 h-4 rounded-full shadow-sm transition-all ${selectedStudent.isActive !== false ? 'translate-x-5 bg-emerald-400' : 'bg-muted-foreground'}`} />
                                     </div>
-                                 )) : (
-                                    <p className="text-sm text-muted-foreground italic py-4">No quiz attempts yet.</p>
-                                 )}
-                              </div>
-                           </div>
-
-                           {/* Activity Feed */}
-                           <div className="space-y-4">
-                              <h4 className="font-black text-sm uppercase tracking-widest text-muted-foreground border-b border-border/50 pb-2">Live Activity Log</h4>
-                              <div className="space-y-3">
-                                 {selectedStudent.activityLogs?.length > 0 ? selectedStudent.activityLogs.map((log: any) => (
-                                    <div key={log.id} className="flex gap-4 group">
-                                       <div className="mt-1 flex flex-col items-center">
-                                          <div className={`w-2 h-2 rounded-full mt-1.5 ${log.action === 'DOWNLOAD_RESOURCE' ? 'bg-purple-500' : 'bg-blue-500 focus:ring-4 focus:ring-blue-500/20'}`} />
-                                          <div className="w-px h-full bg-border group-last:hidden" />
-                                       </div>
-                                       <div className="pb-4 flex-1">
-                                          <div className="flex justify-between items-start">
-                                             <p className="text-xs font-bold">
-                                                {log.action === 'VIEW_LESSON' ? `Viewed: ${log.metadata?.lessonTitle || 'Unknown Lesson'}` : 
-                                                 log.action === 'DOWNLOAD_RESOURCE' ? `Downloaded: ${log.metadata?.resourceName || 'Unknown Resource'}` : 
-                                                 log.action}
-                                             </p>
-                                             <span className="text-[9px] text-muted-foreground font-mono whitespace-nowrap ml-2">
-                                                {new Date(log.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                             </span>
-                                          </div>
-                                          <p className="text-[10px] text-muted-foreground italic mt-0.5">{new Date(log.createdAt).toLocaleDateString()}</p>
-                                       </div>
-                                    </div>
-                                 )) : (
-                                    <div className="p-8 text-center glassmorphism border border-dashed border-border/50 rounded-2xl">
-                                      <Info size={24} className="mx-auto text-muted-foreground mb-2 opacity-50" />
-                                      <p className="text-xs text-muted-foreground italic">No student activity recorded yet.</p>
-                                    </div>
-                                 )}
-                              </div>
-                           </div>
-                        </div>
-                      </div>
-
-                      {/* Footer Actions */}
-                      <div className="mt-8 pt-6 border-t border-border flex justify-between items-center">
-                        <div className="flex gap-4">
-                          <button
-                              onClick={handlePasswordReset}
-                              disabled={resettingPwd}
-                              className="px-4 py-2 bg-secondary hover:bg-secondary/80 border border-border rounded-xl font-bold text-xs transition-all flex items-center gap-2"
-                          >
-                              {resettingPwd ? <Loader2 className="w-3 h-3 animate-spin" /> : <Lock className="w-3 h-3" />}
-                              Reset Password
-                          </button>
-                          {resetPassword && (
-                            <div className="px-3 py-2 rounded-lg bg-orange-500/10 border border-orange-500/20 flex items-center gap-3 animate-in slide-in-from-left-2 duration-300">
-                               <p className="text-[10px] font-black text-orange-400 font-mono">{resetPassword}</p>
-                               <button onClick={() => { navigator.clipboard.writeText(resetPassword); addToast('Copied to clipboard'); }} className="text-[10px] font-bold text-orange-500 hover:underline">Copy</button>
+                                    <span className={`text-xs font-black uppercase tracking-widest ${selectedStudent.isActive !== false ? 'text-emerald-400' : 'text-muted-foreground opacity-50'}`}>
+                                        {selectedStudent.isActive !== false ? 'Active' : 'Account Disabled'}
+                                    </span>
+                                </div>
+                                <button onClick={() => { setSelectedStudent(null); setResetPassword(''); }} className="text-muted-foreground hover:text-foreground"><XCircle size={28} /></button>
                             </div>
-                          )}
                         </div>
-                        <button onClick={() => setSelectedStudent(null)} className="px-6 py-2.5 bg-primary text-primary-foreground font-bold rounded-xl text-sm hover:scale-105 transition-transform shadow-lg shadow-primary/20">
-                          Close Insights
-                        </button>
-                      </div>
+
+                        <div className="flex-1 overflow-y-auto pr-2 space-y-8 custom-scrollbar">
+                            {/* Summary Grid */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="p-5 rounded-2xl bg-secondary/10 border border-border/50">
+                                    <div className="flex items-center gap-3 text-primary mb-2">
+                                        <BookOpen size={18} />
+                                        <span className="text-[10px] font-black uppercase tracking-widest">Learning Progress</span>
+                                    </div>
+                                    <p className="text-2xl font-black">{selectedStudent.enrollments?.length || 0}</p>
+                                    <p className="text-xs text-muted-foreground font-medium italic">Courses Enrolled</p>
+                                </div>
+                                <div className="p-5 rounded-2xl bg-secondary/10 border border-border/50">
+                                    <div className="flex items-center gap-3 text-amber-500 mb-2">
+                                        <Award size={18} />
+                                        <span className="text-[10px] font-black uppercase tracking-widest">Quiz Performance</span>
+                                    </div>
+                                    <p className="text-2xl font-black">{selectedStudent.quizAttempts?.filter((a: any) => a.passed).length || 0}</p>
+                                    <p className="text-xs text-muted-foreground font-medium italic">Quizzes Passed</p>
+                                </div>
+                                <div className="p-5 rounded-2xl bg-secondary/10 border border-border/50">
+                                    <div className="flex items-center gap-3 text-emerald-500 mb-2">
+                                        <Clock size={18} />
+                                        <span className="text-[10px] font-black uppercase tracking-widest">Activity Status</span>
+                                    </div>
+                                    <p className="text-2xl font-black">{selectedStudent.activityLogs?.length || 0}</p>
+                                    <p className="text-xs text-muted-foreground font-medium italic">Total Actions Logged</p>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                {/* Course Progress */}
+                                <div className="space-y-4">
+                                    <h4 className="font-black text-sm uppercase tracking-widest text-muted-foreground border-b border-border/50 pb-2">Course Status</h4>
+                                    <div className="space-y-4">
+                                        {selectedStudent.enrollments?.length > 0 ? selectedStudent.enrollments.map((env: any) => {
+                                            const totalLessons = env.course.modules?.reduce((sum: number, mod: any) => sum + (mod.lessons?.length || 0), 0) || 0;
+                                            const completedLessons = selectedStudent.progress?.filter((p: any) => p.completed && env.course.modules?.some((m: any) => m.lessons.some((l: any) => l.id === p.lessonId))).length || 0;
+                                            const progressPercent = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
+
+                                            return (
+                                                <div key={env.id} className="p-4 rounded-xl bg-secondary/5 border border-border/50">
+                                                    <div className="flex justify-between items-start mb-3">
+                                                        <p className="font-bold text-sm leading-tight max-w-[70%]">{env.course.title}</p>
+                                                        <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${progressPercent === 100 ? 'bg-emerald-500/10 text-emerald-500' : 'bg-primary/10 text-primary'}`}>
+                                                            {progressPercent}%
+                                                        </span>
+                                                    </div>
+                                                    <div className="h-1.5 w-full bg-secondary rounded-full overflow-hidden">
+                                                        <div className="h-full bg-primary transition-all duration-500" style={{ width: `${progressPercent}%` }} />
+                                                    </div>
+                                                    <p className="text-[10px] text-muted-foreground mt-2 italic">{completedLessons} of {totalLessons} lessons completed</p>
+                                                </div>
+                                            )
+                                        }) : (
+                                            <p className="text-sm text-muted-foreground italic py-4">Not enrolled in any courses yet.</p>
+                                        )}
+                                    </div>
+
+                                    <h4 className="font-black text-sm uppercase tracking-widest text-muted-foreground border-b border-border/50 pb-2 pt-4">Recent Quiz Scores</h4>
+                                    <div className="space-y-2">
+                                        {selectedStudent.quizAttempts?.length > 0 ? selectedStudent.quizAttempts.slice(0, 5).map((attempt: any) => (
+                                            <div key={attempt.id} className="flex items-center justify-between p-3 rounded-lg bg-secondary/5 border border-border/30">
+                                                <div>
+                                                    <p className="text-xs font-bold">{attempt.quiz.title}</p>
+                                                    <p className="text-[9px] text-muted-foreground">{new Date(attempt.createdAt).toLocaleDateString()} {new Date(attempt.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                                                </div>
+                                                <div className={`px-2 py-1 rounded text-[10px] font-black ${attempt.score >= attempt.quiz.passingScore ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500'}`}>
+                                                    {attempt.score}% - {attempt.score >= attempt.quiz.passingScore ? 'PASSED' : 'FAILED'}
+                                                </div>
+                                            </div>
+                                        )) : (
+                                            <p className="text-sm text-muted-foreground italic py-4">No quiz attempts yet.</p>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Activity Feed */}
+                                <div className="space-y-4">
+                                    <h4 className="font-black text-sm uppercase tracking-widest text-muted-foreground border-b border-border/50 pb-2">Live Activity Log</h4>
+                                    <div className="space-y-3">
+                                        {selectedStudent.activityLogs?.length > 0 ? selectedStudent.activityLogs.map((log: any) => (
+                                            <div key={log.id} className="flex gap-4 group">
+                                                <div className="mt-1 flex flex-col items-center">
+                                                    <div className={`w-2 h-2 rounded-full mt-1.5 ${log.action === 'DOWNLOAD_RESOURCE' ? 'bg-purple-500' : 'bg-blue-500 focus:ring-4 focus:ring-blue-500/20'}`} />
+                                                    <div className="w-px h-full bg-border group-last:hidden" />
+                                                </div>
+                                                <div className="pb-4 flex-1">
+                                                    <div className="flex justify-between items-start">
+                                                        <p className="text-xs font-bold">
+                                                            {log.action === 'VIEW_LESSON' ? `Viewed: ${log.metadata?.lessonTitle || 'Unknown Lesson'}` :
+                                                                log.action === 'DOWNLOAD_RESOURCE' ? `Downloaded: ${log.metadata?.resourceName || 'Unknown Resource'}` :
+                                                                    log.action}
+                                                        </p>
+                                                        <span className="text-[9px] text-muted-foreground font-mono whitespace-nowrap ml-2">
+                                                            {new Date(log.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                        </span>
+                                                    </div>
+                                                    <p className="text-[10px] text-muted-foreground italic mt-0.5">{new Date(log.createdAt).toLocaleDateString()}</p>
+                                                </div>
+                                            </div>
+                                        )) : (
+                                            <div className="p-8 text-center glassmorphism border border-dashed border-border/50 rounded-2xl">
+                                                <Info size={24} className="mx-auto text-muted-foreground mb-2 opacity-50" />
+                                                <p className="text-xs text-muted-foreground italic">No student activity recorded yet.</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Footer Actions */}
+                        <div className="mt-8 pt-6 border-t border-border flex justify-between items-center">
+                            <div className="flex gap-4">
+                                <button
+                                    onClick={handlePasswordReset}
+                                    disabled={resettingPwd}
+                                    className="px-4 py-2 bg-secondary hover:bg-secondary/80 border border-border rounded-xl font-bold text-xs transition-all flex items-center gap-2"
+                                >
+                                    {resettingPwd ? <Loader2 className="w-3 h-3 animate-spin" /> : <Lock className="w-3 h-3" />}
+                                    Reset Password
+                                </button>
+                                {resetPassword && (
+                                    <div className="px-3 py-2 rounded-lg bg-orange-500/10 border border-orange-500/20 flex items-center gap-3 animate-in slide-in-from-left-2 duration-300">
+                                        <p className="text-[10px] font-black text-orange-400 font-mono">{resetPassword}</p>
+                                        <button onClick={() => { navigator.clipboard.writeText(resetPassword); addToast('Copied to clipboard'); }} className="text-[10px] font-bold text-orange-500 hover:underline">Copy</button>
+                                    </div>
+                                )}
+                            </div>
+                            <button onClick={() => setSelectedStudent(null)} className="px-6 py-2.5 bg-primary text-primary-foreground font-bold rounded-xl text-sm hover:scale-105 transition-transform shadow-lg shadow-primary/20">
+                                Close Insights
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
@@ -2520,9 +2523,9 @@ export default function ClientAdminDashboard() {
                             <div className="grid grid-cols-2 gap-6 bg-secondary/5 rounded-2xl p-6 border border-border/30">
                                 <div className="space-y-4">
                                     <div className="flex items-center gap-2">
-                                        <input 
-                                            type="checkbox" id="retake-allowed" 
-                                            checked={quizForm.retakeAllowed} 
+                                        <input
+                                            type="checkbox" id="retake-allowed"
+                                            checked={quizForm.retakeAllowed}
                                             onChange={(e) => setQuizForm({ ...quizForm, retakeAllowed: e.target.checked })}
                                             className="rounded border-border text-primary focus:ring-primary/20"
                                         />
@@ -2542,13 +2545,13 @@ export default function ClientAdminDashboard() {
                                 </div>
                                 <div className="space-y-4 border-l border-border/30 pl-6">
                                     <div className="flex items-center gap-2">
-                                        <input 
-                                            type="checkbox" id="is-randomized" 
-                                            checked={quizForm.isRandomized} 
+                                        <input
+                                            type="checkbox" id="is-randomized"
+                                            checked={quizForm.isRandomized}
                                             onChange={(e) => {
                                                 const checked = e.target.checked;
-                                                setQuizForm(prev => ({ 
-                                                    ...prev, 
+                                                setQuizForm(prev => ({
+                                                    ...prev,
                                                     isRandomized: checked,
                                                     randomCount: (checked && (prev.randomCount === 0 || prev.randomCount > prev.questions.length)) ? prev.questions.length : prev.randomCount
                                                 }));
@@ -2565,8 +2568,8 @@ export default function ClientAdminDashboard() {
                                                     <span className="text-primary font-black">{quizForm.randomCount} OF {quizForm.questions.length || 0}</span>
                                                 </label>
                                                 <p className="text-[9px] text-muted-foreground/60 px-1 italic">
-                                                    {quizForm.questions.length > 0 
-                                                        ? `Each student will see ${quizForm.randomCount} random questions from your pool.` 
+                                                    {quizForm.questions.length > 0
+                                                        ? `Each student will see ${quizForm.randomCount} random questions from your pool.`
                                                         : "Add questions below to build your pool first."}
                                                 </p>
                                             </div>
@@ -2655,21 +2658,20 @@ export default function ClientAdminDashboard() {
                                                             const newQs = [...quizForm.questions];
                                                             const prev = newQs[qIdx].type;
                                                             // Clone the question object to avoid direct mutation
-                                                            newQs[qIdx] = { 
-                                                                ...newQs[qIdx], 
+                                                            newQs[qIdx] = {
+                                                                ...newQs[qIdx],
                                                                 type: t.value as any,
                                                                 // Reset options when switching types
-                                                                options: t.value === 'FILL_BLANK' 
-                                                                    ? [{ text: '', isCorrect: true }] 
+                                                                options: t.value === 'FILL_BLANK'
+                                                                    ? [{ text: '', isCorrect: true }]
                                                                     : (prev === 'FILL_BLANK' ? [{ text: '', isCorrect: true }, { text: '', isCorrect: false }, { text: '', isCorrect: false }, { text: '', isCorrect: false }] : newQs[qIdx].options)
                                                             };
                                                             setQuizForm({ ...quizForm, questions: newQs });
                                                         }}
-                                                        className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${
-                                                            (q.type || 'MULTIPLE_CHOICE') === t.value
+                                                        className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${(q.type || 'MULTIPLE_CHOICE') === t.value
                                                                 ? 'bg-primary/20 border-primary/40 text-primary'
                                                                 : 'border-border/50 text-muted-foreground hover:border-primary/30'
-                                                        }`}
+                                                            }`}
                                                     >
                                                         {t.label}
                                                     </button>
@@ -2715,79 +2717,78 @@ export default function ClientAdminDashboard() {
                                                 {(() => {
                                                     const isMultiSelect = (q.type || 'MULTIPLE_CHOICE') === 'MULTIPLE_SELECT';
                                                     return (<>
-                                                {q.options.map((o: any, oIdx: number) => {
-                                                    return (
-                                                        <div key={oIdx} className="space-y-1">
-                                                            <div className={`flex items-center gap-3 p-3 rounded-xl bg-background/50 border transition-all focus-within:ring-1 ${validationErrors.quiz?.questions?.[qIdx]?.options?.[oIdx] ? 'border-red-500 focus-within:ring-red-500/50' : 'border-border/50 focus-within:ring-primary/50'}`}>
-                                                                <button
-                                                                    onClick={() => {
-                                                                        const newQs = [...quizForm.questions];
-                                                                        if (isMultiSelect) {
-                                                                            // Toggle for multi-select
-                                                                            newQs[qIdx].options[oIdx].isCorrect = !newQs[qIdx].options[oIdx].isCorrect;
-                                                                        } else {
-                                                                            // Single select — only one correct
-                                                                            newQs[qIdx].options = newQs[qIdx].options.map((opt: any, idx: number) => ({ ...opt, isCorrect: idx === oIdx }));
-                                                                        }
-                                                                        setQuizForm({ ...quizForm, questions: newQs });
-                                                                    }}
-                                                                    className={`w-5 h-5 flex-shrink-0 border-2 flex items-center justify-center transition-all ${
-                                                                        isMultiSelect ? 'rounded-md' : 'rounded-full'
-                                                                    } ${o.isCorrect ? 'bg-primary border-primary' : 'border-border'}`}
-                                                                >
-                                                                    {o.isCorrect && <CheckCircle2 size={12} className="text-white" />}
-                                                                </button>
-                                                                <input
-                                                                    placeholder={`Option ${oIdx + 1}`}
-                                                                    className="flex-1 bg-transparent text-sm focus:outline-none font-medium"
-                                                                    value={o.text}
-                                                                    onChange={(e) => {
-                                                                        const newQs = [...quizForm.questions];
-                                                                        newQs[qIdx].options[oIdx].text = e.target.value;
-                                                                        setQuizForm({ ...quizForm, questions: newQs });
-                                                                        if (validationErrors.quiz?.questions?.[qIdx]?.options?.[oIdx]) {
-                                                                            const newErrors = { ...validationErrors.quiz };
-                                                                            delete newErrors.questions[qIdx].options[oIdx];
-                                                                            setValidationErrors(prev => ({ ...prev, quiz: newErrors }));
-                                                                        }
-                                                                    }}
-                                                                />
-                                                                {q.options.length > 2 && (
-                                                                    <button
-                                                                        onClick={() => {
-                                                                            const newQs = [...quizForm.questions];
-                                                                            newQs[qIdx].options.splice(oIdx, 1);
-                                                                            setQuizForm({ ...quizForm, questions: newQs });
-                                                                        }}
-                                                                        className="text-muted-foreground hover:text-red-400"
-                                                                    >
-                                                                        <Trash2 size={14} />
-                                                                    </button>
-                                                                )}
-                                                            </div>
-                                                            {validationErrors.quiz?.questions?.[qIdx]?.options?.[oIdx] && <span className="text-[9px] font-bold text-red-500 animate-in fade-in slide-in-from-top-1 ml-1">{validationErrors.quiz.questions[qIdx].options[oIdx]}</span>}
-                                                        </div>
-                                                    );
-                                                })}
-                                                {q.options.length < 6 && (
-                                                    <button
-                                                        onClick={() => {
-                                                            const newQs = [...quizForm.questions];
-                                                            newQs[qIdx].options.push({ text: '', isCorrect: false });
-                                                            setQuizForm({ ...quizForm, questions: newQs });
-                                                        }}
-                                                        className="col-span-2 py-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors border border-dashed border-border/50 rounded-xl"
-                                                    >
-                                                        + Add Option
-                                                    </button>
-                                                )}
-                                                                <p className="col-span-2 text-[10px] text-muted-foreground italic px-1">
-                                                                    {isMultiSelect
-                                                                        ? 'Check all correct answers — students must select all of them.'
-                                                                        : 'Click the circle to mark the single correct answer.'}
-                                                                </p>
-                                                            </>);
-                                                        })()}
+                                                        {q.options.map((o: any, oIdx: number) => {
+                                                            return (
+                                                                <div key={oIdx} className="space-y-1">
+                                                                    <div className={`flex items-center gap-3 p-3 rounded-xl bg-background/50 border transition-all focus-within:ring-1 ${validationErrors.quiz?.questions?.[qIdx]?.options?.[oIdx] ? 'border-red-500 focus-within:ring-red-500/50' : 'border-border/50 focus-within:ring-primary/50'}`}>
+                                                                        <button
+                                                                            onClick={() => {
+                                                                                const newQs = [...quizForm.questions];
+                                                                                if (isMultiSelect) {
+                                                                                    // Toggle for multi-select
+                                                                                    newQs[qIdx].options[oIdx].isCorrect = !newQs[qIdx].options[oIdx].isCorrect;
+                                                                                } else {
+                                                                                    // Single select — only one correct
+                                                                                    newQs[qIdx].options = newQs[qIdx].options.map((opt: any, idx: number) => ({ ...opt, isCorrect: idx === oIdx }));
+                                                                                }
+                                                                                setQuizForm({ ...quizForm, questions: newQs });
+                                                                            }}
+                                                                            className={`w-5 h-5 flex-shrink-0 border-2 flex items-center justify-center transition-all ${isMultiSelect ? 'rounded-md' : 'rounded-full'
+                                                                                } ${o.isCorrect ? 'bg-primary border-primary' : 'border-border'}`}
+                                                                        >
+                                                                            {o.isCorrect && <CheckCircle2 size={12} className="text-white" />}
+                                                                        </button>
+                                                                        <input
+                                                                            placeholder={`Option ${oIdx + 1}`}
+                                                                            className="flex-1 bg-transparent text-sm focus:outline-none font-medium"
+                                                                            value={o.text}
+                                                                            onChange={(e) => {
+                                                                                const newQs = [...quizForm.questions];
+                                                                                newQs[qIdx].options[oIdx].text = e.target.value;
+                                                                                setQuizForm({ ...quizForm, questions: newQs });
+                                                                                if (validationErrors.quiz?.questions?.[qIdx]?.options?.[oIdx]) {
+                                                                                    const newErrors = { ...validationErrors.quiz };
+                                                                                    delete newErrors.questions[qIdx].options[oIdx];
+                                                                                    setValidationErrors(prev => ({ ...prev, quiz: newErrors }));
+                                                                                }
+                                                                            }}
+                                                                        />
+                                                                        {q.options.length > 2 && (
+                                                                            <button
+                                                                                onClick={() => {
+                                                                                    const newQs = [...quizForm.questions];
+                                                                                    newQs[qIdx].options.splice(oIdx, 1);
+                                                                                    setQuizForm({ ...quizForm, questions: newQs });
+                                                                                }}
+                                                                                className="text-muted-foreground hover:text-red-400"
+                                                                            >
+                                                                                <Trash2 size={14} />
+                                                                            </button>
+                                                                        )}
+                                                                    </div>
+                                                                    {validationErrors.quiz?.questions?.[qIdx]?.options?.[oIdx] && <span className="text-[9px] font-bold text-red-500 animate-in fade-in slide-in-from-top-1 ml-1">{validationErrors.quiz.questions[qIdx].options[oIdx]}</span>}
+                                                                </div>
+                                                            );
+                                                        })}
+                                                        {q.options.length < 6 && (
+                                                            <button
+                                                                onClick={() => {
+                                                                    const newQs = [...quizForm.questions];
+                                                                    newQs[qIdx].options.push({ text: '', isCorrect: false });
+                                                                    setQuizForm({ ...quizForm, questions: newQs });
+                                                                }}
+                                                                className="col-span-2 py-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors border border-dashed border-border/50 rounded-xl"
+                                                            >
+                                                                + Add Option
+                                                            </button>
+                                                        )}
+                                                        <p className="col-span-2 text-[10px] text-muted-foreground italic px-1">
+                                                            {isMultiSelect
+                                                                ? 'Check all correct answers — students must select all of them.'
+                                                                : 'Click the circle to mark the single correct answer.'}
+                                                        </p>
+                                                    </>);
+                                                })()}
                                             </div>
                                         )}
                                     </div>
@@ -2817,9 +2818,9 @@ export default function ClientAdminDashboard() {
                                     <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Title</label>
                                     {validationErrors.announcement?.title && <span className="text-[10px] font-bold text-red-500 animate-in fade-in slide-in-from-right-1">{validationErrors.announcement.title}</span>}
                                 </div>
-                                <input 
-                                    placeholder="Important update" 
-                                    value={announcementForm.title} 
+                                <input
+                                    placeholder="Important update"
+                                    value={announcementForm.title}
                                     onChange={e => {
                                         setAnnouncementForm({ ...announcementForm, title: e.target.value });
                                         if (validationErrors.announcement?.title) {
@@ -2833,10 +2834,10 @@ export default function ClientAdminDashboard() {
                                     <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Message</label>
                                     {validationErrors.announcement?.body && <span className="text-[10px] font-bold text-red-500 animate-in fade-in slide-in-from-right-1">{validationErrors.announcement.body}</span>}
                                 </div>
-                                <textarea 
-                                    placeholder="Write your announcement here..." 
-                                    rows={4} 
-                                    value={announcementForm.body} 
+                                <textarea
+                                    placeholder="Write your announcement here..."
+                                    rows={4}
+                                    value={announcementForm.body}
                                     onChange={e => {
                                         setAnnouncementForm({ ...announcementForm, body: e.target.value });
                                         if (validationErrors.announcement?.body) {
@@ -2865,7 +2866,7 @@ export default function ClientAdminDashboard() {
                                                 setUploadProgress(prev => { const next = { ...prev }; delete next['announcement-img']; return next; });
                                             }
                                         }} />
-                                        {uploadProgress['announcement-img'] ? <Loader2 className="animate-spin text-primary" /> : announcementForm.imageUrl ? <span className="text-emerald-500">✅ Image Added</span> : <><Upload size={16} className="mr-2 text-muted-foreground group-hover:text-primary transition-colors"/> Add Image</>}
+                                        {uploadProgress['announcement-img'] ? <Loader2 className="animate-spin text-primary" /> : announcementForm.imageUrl ? <span className="text-emerald-500">✅ Image Added</span> : <><Upload size={16} className="mr-2 text-muted-foreground group-hover:text-primary transition-colors" /> Add Image</>}
                                     </label>
                                 </div>
                                 <div className="space-y-1.5 flex flex-col">
@@ -2887,7 +2888,7 @@ export default function ClientAdminDashboard() {
                                                 setUploadProgress(prev => { const next = { ...prev }; delete next['announcement-doc']; return next; });
                                             }
                                         }} />
-                                        {uploadProgress['announcement-doc'] ? <Loader2 className="animate-spin text-primary" /> : announcementForm.documentUrl ? <span className="text-emerald-500">✅ Document Added</span> : <><FileText size={16} className="mr-2 text-muted-foreground group-hover:text-primary transition-colors"/> Add Document</>}
+                                        {uploadProgress['announcement-doc'] ? <Loader2 className="animate-spin text-primary" /> : announcementForm.documentUrl ? <span className="text-emerald-500">✅ Document Added</span> : <><FileText size={16} className="mr-2 text-muted-foreground group-hover:text-primary transition-colors" /> Add Document</>}
                                     </label>
                                 </div>
                             </div>
@@ -2918,7 +2919,7 @@ export default function ClientAdminDashboard() {
                         </div>
                         <div className="flex-1 overflow-y-auto pr-2 space-y-6">
                             <p className="text-sm whitespace-pre-wrap leading-relaxed">{selectedAnnouncement.body}</p>
-                            
+
                             {selectedAnnouncement.imageUrl && (
                                 <div className="space-y-2">
                                     <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Attached Image</h4>
@@ -2969,13 +2970,13 @@ export default function ClientAdminDashboard() {
 
                         <div className="space-y-4">
                             <label className="flex flex-col items-center justify-center border-2 border-dashed border-border rounded-3xl p-10 hover:border-primary/30 cursor-pointer hover:bg-primary/5 transition-all group relative overflow-hidden">
-                                <input 
-                                    type="file" 
-                                    className="hidden" 
+                                <input
+                                    type="file"
+                                    className="hidden"
                                     onChange={(e) => {
                                         const file = e.target.files?.[0];
                                         if (file) uploadTargetResource(file);
-                                    }} 
+                                    }}
                                     disabled={isUploadingTargetResource}
                                 />
                                 {isUploadingTargetResource ? (
@@ -3042,7 +3043,7 @@ export default function ClientAdminDashboard() {
                 <div className="fixed inset-0 z-[400] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md animate-in fade-in duration-300">
                     <div className="bg-background border border-border/50 w-full max-w-md rounded-[2rem] p-8 space-y-6 shadow-2xl relative overflow-hidden">
                         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-blue-500" />
-                        
+
                         <div className="flex justify-between items-center">
                             <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
@@ -3078,7 +3079,7 @@ export default function ClientAdminDashboard() {
                                 </h4>
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Current Password</label>
-                                    <input 
+                                    <input
                                         type="password"
                                         value={profileForm.currentPassword}
                                         onChange={e => setProfileForm({ ...profileForm, currentPassword: e.target.value })}
@@ -3089,7 +3090,7 @@ export default function ClientAdminDashboard() {
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
                                         <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">New Password</label>
-                                        <input 
+                                        <input
                                             type="password"
                                             value={profileForm.newPassword}
                                             onChange={e => setProfileForm({ ...profileForm, newPassword: e.target.value })}
@@ -3099,7 +3100,7 @@ export default function ClientAdminDashboard() {
                                     </div>
                                     <div className="space-y-2">
                                         <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Confirm New</label>
-                                        <input 
+                                        <input
                                             type="password"
                                             value={profileForm.confirmPassword}
                                             onChange={e => setProfileForm({ ...profileForm, confirmPassword: e.target.value })}
@@ -3110,7 +3111,7 @@ export default function ClientAdminDashboard() {
                                 </div>
                             </div>
 
-                            <button 
+                            <button
                                 type="submit"
                                 disabled={isUpdatingProfile}
                                 className="w-full py-4 mt-4 bg-primary text-primary-foreground rounded-2xl font-black uppercase tracking-[0.2em] text-xs transition-all shadow-lg hover:shadow-primary/20 active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
@@ -3125,7 +3126,7 @@ export default function ClientAdminDashboard() {
                 <div className="fixed inset-0 z-[300] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md animate-in fade-in duration-300">
                     <div className="bg-background border border-border/50 w-full max-w-sm rounded-[2rem] p-8 space-y-6 shadow-2xl relative overflow-hidden">
                         <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${confirmModal.variant === 'info' ? 'from-indigo-500/50 via-indigo-500 to-indigo-500/50' : 'from-red-500/50 via-red-500 to-red-500/50'}`} />
-                        
+
                         <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 ${confirmModal.variant === 'info' ? 'bg-indigo-500/10' : 'bg-red-500/10'}`}>
                             {confirmModal.variant === 'info' ? <Info className="w-10 h-10 text-indigo-500" /> : <Trash2 className="w-10 h-10 text-red-500" />}
                         </div>
@@ -3138,7 +3139,7 @@ export default function ClientAdminDashboard() {
                         </div>
 
                         <div className="flex gap-4 pt-4">
-                            <button 
+                            <button
                                 onClick={() => {
                                     confirmModal.resolve(false);
                                     setConfirmModal(null);
@@ -3147,7 +3148,7 @@ export default function ClientAdminDashboard() {
                             >
                                 Cancel
                             </button>
-                            <button 
+                            <button
                                 onClick={() => {
                                     confirmModal.resolve(true);
                                     setConfirmModal(null);
