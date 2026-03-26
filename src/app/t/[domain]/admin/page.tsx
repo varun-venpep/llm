@@ -22,6 +22,16 @@ interface Toast {
     type: ToastType;
 }
 
+// Utility function to generate a random password
+const generateRandomPassword = (length = 10) => {
+    const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
+    let retVal = '';
+    for (let i = 0, n = charset.length; i < length; ++i) {
+        retVal += charset.charAt(Math.floor(Math.random() * n));
+    }
+    return retVal;
+};
+
 export default function ClientAdminDashboard() {
     const params = useParams();
     const router = useRouter();
@@ -111,7 +121,7 @@ export default function ClientAdminDashboard() {
 
     // Student state
     const [showStudentModal, setShowStudentModal] = useState(false);
-    const [studentForm, setStudentForm] = useState({ name: '', email: '', password: '' });
+    const [studentForm, setStudentForm] = useState({ name: '', email: '', password: generateRandomPassword() });
     const [justCreatedStudent, setJustCreatedStudent] = useState<any>(null); // To show success link
 
     // Edit / Reset Student State
