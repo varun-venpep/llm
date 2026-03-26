@@ -280,7 +280,7 @@ export default function StudentDashboard() {
                             </button>
                             <button
                                 onClick={async () => {
-                                    await fetch(`/api/t/${domain}/logout`, { method: 'POST' }).catch(() => {});
+                                    await fetch(`/api/logout`, { method: 'POST' }).catch(() => {});
                                     localStorage.removeItem(`${domain}_userId`);
                                     router.push(`/t/${domain}/login`);
                                 }}

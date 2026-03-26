@@ -22,19 +22,8 @@ export default function TenantLoginPage() {
         setTenant({ name: domain.charAt(0).toUpperCase() + domain.slice(1) });
         setLoading(false);
 
-        // Auto-redirect if already logged in
-        const checkAuth = async () => {
-            const res = await fetch('/api/auth/session');
-            if (res.ok) {
-                const data = await res.json();
-                if (data.user.role === 'STUDENT') {
-                    router.push(`/t/${domain}/dashboard`);
-                } else {
-                    router.push(`/t/${domain}/admin`);
-                }
-            }
-        };
-        checkAuth();
+        // Check session, but don't auto-redirect (allows switching accounts)
+        setLoading(false);
     }, [domain, router]);
 
     const handleLogin = async (e: React.FormEvent) => {
