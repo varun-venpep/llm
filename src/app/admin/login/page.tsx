@@ -13,23 +13,15 @@ export default function AdminLogin() {
     const [rememberMe, setRememberMe] = useState(false);
     const [isChecking, setIsChecking] = useState(true);
 
-    // Auto-redirect if already logged in
+    // Check session but don't auto-redirect (allows switching accounts)
     useEffect(() => {
         const checkAuth = async () => {
             const timeoutId = setTimeout(() => setIsChecking(false), 400); // Snap response
 
             try {
                 const res = await fetch('/api/auth/session');
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data.user.role === 'SUPER_ADMIN') {
-                        router.push('/admin');
-                    } else {
-                        setIsChecking(false);
-                    }
-                } else {
-                    setIsChecking(false);
-                }
+                // We just want to know if session check is done
+                setIsChecking(false);
             } catch (e) {
                 setIsChecking(false);
             } finally {
@@ -37,7 +29,7 @@ export default function AdminLogin() {
             }
         };
         checkAuth();
-    }, [router]);
+    }, []);
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
