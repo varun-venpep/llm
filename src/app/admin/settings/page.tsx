@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Settings, Save, UploadCloud, Link as LinkIcon, AlertCircle } from 'lucide-react';
+import { Settings, Save, UploadCloud, Link as LinkIcon, AlertCircle, Bot } from 'lucide-react';
 
 export default function GlobalSettingsPage() {
     const [settings, setSettings] = useState<Record<string, string>>({
@@ -81,7 +81,7 @@ export default function GlobalSettingsPage() {
                             <UploadCloud className="w-5 h-5 text-blue-400" /> Max Upload Size (MB)
                         </h3>
                         <p className="text-sm text-muted-foreground max-w-sm mt-1">
-                            The maximum file size any tenant admin or student can upload per asset.
+                            The maximum file size any tenant admin or learner can upload per asset.
                         </p>
                     </div>
                     <div className="flex items-center gap-4">
@@ -159,6 +159,32 @@ export default function GlobalSettingsPage() {
                             </button>
                         </div>
                         <p className="text-[11px] text-muted-foreground">Deploy the <code className="bg-secondary px-1 rounded">whisper-service/</code> Docker container to AWS Lambda and paste the API Gateway endpoint URL here.</p>
+                    </div>
+
+                    <hr className="border-border/30 my-4" />
+
+                    {/* Chatbot API URL */}
+                    <div className="space-y-2">
+                        <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                            <Bot className="w-4 h-4 text-emerald-400" /> Proprietary Chatbot API Endpoint
+                        </label>
+                        <div className="flex items-center gap-4 w-full">
+                            <input 
+                                type="text" 
+                                placeholder="https://your-proprietary-llm-cluster.com/api/chat"
+                                className="bg-background border border-input rounded-xl px-4 py-2 flex-grow focus:ring-2 focus:ring-emerald-500 outline-none transition-all font-mono text-sm"
+                                value={settings.CHATBOT_API_URL || ''}
+                                onChange={(e) => handleChange('CHATBOT_API_URL', e.target.value)}
+                            />
+                            <button 
+                                onClick={() => handleSave('CHATBOT_API_URL', settings.CHATBOT_API_URL)}
+                                disabled={isSaving === 'CHATBOT_API_URL'}
+                                className="p-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl transition-all disabled:opacity-50 shadow-lg shadow-emerald-500/20 active:scale-95 shrink-0"
+                            >
+                                <Save className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <p className="text-[11px] text-muted-foreground">The HTTP POST URL for your self-hosted LLM (e.g. AWS Bedrock, LLaMA-3 EC2 Instance). The backend will send securely stripped `{"{prompt, system_context, role}"}` JSON payloads here.</p>
                     </div>
                 </div>
 

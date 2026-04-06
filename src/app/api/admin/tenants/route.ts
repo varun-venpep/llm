@@ -63,12 +63,24 @@ export async function GET() {
         const tenants = await prisma.tenant.findMany({
             orderBy: { createdAt: 'desc' },
             include: {
+                users: {
+                    where: { role: 'TENANT_ADMIN' },
+                    take: 1,
+                    select: { email: true }
+                },
                 _count: {
                     select: { users: true, courses: true }
                 }
             }
         });
-        return NextResponse.json(tenants);
+
+        // Add adminEmail to the response for consumption in the UI
+        const formattedTenants = tenants.map(tenant => ({
+            ...tenant,
+            adminEmail: tenant.users[0]?.email || null
+        }));
+
+        return NextResponse.json(formattedTenants);
     } catch (error) {
         return NextResponse.json({ error: 'Failed to fetch tenants' }, { status: 500 });
     }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search, MoreVertical, Building2, CheckCircle2, ShieldCheck, Edit2, Trash2, X, AlertTriangle, Loader2 } from 'lucide-react';
+import { Search, MoreVertical, Building2, CheckCircle2, ShieldCheck, Edit2, Trash2, X, AlertTriangle, Loader2, ExternalLink, Copy, Check, Eye, EyeOff } from 'lucide-react';
 
 interface Tenant {
     id: string;
@@ -14,7 +14,20 @@ interface Tenant {
         users: number;
         courses: number;
     };
+    adminEmail?: string;
+    aiCredits?: number;
+    customRevenue?: number;
+    customRevenueCurrency?: string;
 }
+
+const getCurrencySymbol = (currencyCode?: string) => {
+    switch (currencyCode) {
+        case 'EUR': return '€';
+        case 'GBP': return '£';
+        case 'INR': return '₹';
+        case 'USD': default: return '$';
+    }
+};
 
 export default function TenantsPage() {
     const [tenants, setTenants] = useState<Tenant[]>([]);
@@ -24,8 +37,19 @@ export default function TenantsPage() {
     // Edit Modal State
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editingTenant, setEditingTenant] = useState<Tenant | null>(null);
-    const [editForm, setEditForm] = useState({ name: '', subdomain: '', isActive: true });
+    const [editForm, setEditForm] = useState({ 
+        name: '', 
+        subdomain: '', 
+        isActive: true,
+        adminEmail: '',
+        newPassword: '',
+        aiCredits: 0,
+        customRevenue: 0,
+        customRevenueCurrency: 'USD'
+    });
     const [isUpdating, setIsUpdating] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
+    const [copied, setCopied] = useState(false);
 
     // Delete Modal State
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -55,7 +79,16 @@ export default function TenantsPage() {
 
     const handleEditClick = (tenant: Tenant) => {
         setEditingTenant(tenant);
-        setEditForm({ name: tenant.name, subdomain: tenant.subdomain, isActive: tenant.isActive });
+        setEditForm({ 
+            name: tenant.name, 
+            subdomain: tenant.subdomain, 
+            isActive: tenant.isActive,
+            adminEmail: tenant.adminEmail || '',
+            newPassword: '',
+            aiCredits: tenant.aiCredits || 0,
+            customRevenue: tenant.customRevenue || 0,
+            customRevenueCurrency: tenant.customRevenueCurrency || 'USD'
+        });
         setIsEditModalOpen(true);
         setActiveDropdown(null);
     };
@@ -79,6 +112,7 @@ export default function TenantsPage() {
             if (res.ok) {
                 await fetchTenants();
                 setIsEditModalOpen(false);
+                setEditForm(prev => ({ ...prev, newPassword: '' }));
             } else {
                 const data = await res.json();
                 alert(data.error || 'Failed to update tenant');
@@ -141,6 +175,7 @@ export default function TenantsPage() {
                                 <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest text-muted-foreground">Workspace</th>
                                 <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest text-muted-foreground">Domain</th>
                                 <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest text-muted-foreground">Stats</th>
+                                <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest text-muted-foreground">Financials</th>
                                 <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest text-muted-foreground">Status</th>
                                 <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest text-muted-foreground">Created</th>
                                 <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest text-muted-foreground text-right px-10">Actions</th>
@@ -148,9 +183,9 @@ export default function TenantsPage() {
                         </thead>
                         <tbody className="divide-y divide-border/50">
                             {loading ? (
-                                <tr><td colSpan={6} className="text-center py-20 font-medium text-muted-foreground italic">Syncing with cloud...</td></tr>
+                                <tr><td colSpan={7} className="text-center py-20 font-medium text-muted-foreground italic">Syncing with cloud...</td></tr>
                             ) : tenants.length === 0 ? (
-                                <tr><td colSpan={6} className="text-center py-20 font-medium text-muted-foreground italic">No active deployments found.</td></tr>
+                                <tr><td colSpan={7} className="text-center py-20 font-medium text-muted-foreground italic">No active deployments found.</td></tr>
                             ) : tenants.map((tenant) => (
                                 <tr key={tenant.id} className="hover:bg-secondary/20 transition-colors group">
                                     <td className="px-6 py-4">
@@ -170,7 +205,15 @@ export default function TenantsPage() {
                                     <td className="px-6 py-4">
                                         <div className="flex flex-col gap-1">
                                             <span className="font-mono text-xs font-bold">{tenant._count.users} Users</span>
-                                            <span className="font-mono text-[10px] text-muted-foreground uppercase">{tenant._count.courses} Courses</span>
+                                            <span className="font-mono text-[10px] text-muted-foreground uppercase">{tenant.aiCredits || 0} AI Credits</span>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <div className="flex flex-col gap-1">
+                                            <span className="font-mono text-xs font-bold">
+                                                {getCurrencySymbol(tenant.customRevenueCurrency)}{tenant.customRevenue?.toLocaleString() || '0'}/mo
+                                            </span>
+                                            <span className="font-mono text-[10px] text-muted-foreground uppercase">Revenue</span>
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">
@@ -225,52 +268,180 @@ export default function TenantsPage() {
 
             {/* Edit Modal */}
             {isEditModalOpen && (
-                <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/70 backdrop-blur-sm">
-                    <div className="bg-background border border-border w-full max-w-md rounded-3xl shadow-2xl p-8 space-y-6">
+                <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/70 backdrop-blur-sm overflow-y-auto">
+                    <div className="bg-background border border-border w-full max-w-lg rounded-3xl shadow-2xl p-8 my-auto space-y-6">
                         <div className="flex justify-between items-center">
                             <h3 className="text-xl font-black uppercase tracking-tight flex items-center gap-2"><Edit2 className="w-5 h-5 text-blue-400" /> Edit Workspace</h3>
                             <button onClick={() => setIsEditModalOpen(false)} className="text-muted-foreground hover:text-foreground text-2xl">&times;</button>
                         </div>
-                        <form onSubmit={handleUpdate} className="space-y-4">
+                        
+                        <form onSubmit={handleUpdate} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-6 md:col-span-2">
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Organization Name</label>
+                                    <input 
+                                        type="text" 
+                                        className="w-full bg-secondary/50 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                                        value={editForm.name}
+                                        onChange={e => setEditForm({...editForm, name: e.target.value})}
+                                        required
+                                    />
+                                </div>
+                            </div>
+
                             <div className="space-y-1.5">
-                                <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Organization Name</label>
+                                <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Subdomain</label>
+                                <div className="relative group">
+                                    <input 
+                                        type="text" 
+                                        className="w-full bg-secondary/50 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 font-mono disabled:opacity-50"
+                                        value={editForm.subdomain}
+                                        onChange={e => setEditForm({...editForm, subdomain: e.target.value})}
+                                        disabled={editingTenant?.subdomain === 'admin-system'}
+                                        required
+                                    />
+                                </div>
+                                {editForm.subdomain && (
+                                    <div className="flex items-center justify-between px-1">
+                                        <div className="text-[10px] text-blue-400 font-mono flex items-center gap-1.5 overflow-hidden">
+                                            <span className="truncate">http://{editForm.subdomain}.lvh.me:3000/login</span>
+                                        </div>
+                                        <button 
+                                            type="button"
+                                            onClick={() => {
+                                                const url = `http://${editForm.subdomain}.lvh.me:3000/login`;
+                                                if (navigator.clipboard) {
+                                                    navigator.clipboard.writeText(url);
+                                                } else {
+                                                    // Fallback for non-secure contexts
+                                                    const textArea = document.createElement("textarea");
+                                                    textArea.value = url;
+                                                    document.body.appendChild(textArea);
+                                                    textArea.select();
+                                                    try {
+                                                        document.execCommand('copy');
+                                                    } catch (err) {
+                                                        console.error('Fallback copy failed', err);
+                                                    }
+                                                    document.body.removeChild(textArea);
+                                                }
+                                                setCopied(true);
+                                                setTimeout(() => setCopied(false), 2000);
+                                            }}
+                                            className="text-[10px] font-bold text-muted-foreground hover:text-foreground flex items-center gap-1 whitespace-nowrap transition-colors"
+                                        >
+                                            {copied ? <><Check className="w-3 h-3 text-emerald-400" /> Copied</> : <><Copy className="w-3 h-3" /> Copy URL</>}
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Admin Email Address</label>
                                 <input 
-                                    type="text" 
+                                    type="email" 
                                     className="w-full bg-secondary/50 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30"
-                                    value={editForm.name}
-                                    onChange={e => setEditForm({...editForm, name: e.target.value})}
+                                    value={editForm.adminEmail}
+                                    onChange={e => setEditForm({...editForm, adminEmail: e.target.value})}
                                     required
+                                    placeholder="admin@workspace.com"
                                 />
                             </div>
-                            <div className="space-y-1.5">
-                                <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Subdomain</label>
+
+                            <div className="space-y-1.5 md:col-span-1">
+                                <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Change Admin Password</label>
+                                <div className="relative">
+                                    <input 
+                                        type={showPassword ? "text" : "password"} 
+                                        className="w-full bg-secondary/50 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                                        value={editForm.newPassword}
+                                        onChange={e => setEditForm({...editForm, newPassword: e.target.value})}
+                                        placeholder="Enter new password..."
+                                    />
+                                    <button 
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1 transition-colors"
+                                    >
+                                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                    </button>
+                                </div>
+                                <p className="text-[9px] text-muted-foreground italic px-1 pt-1">Leave blank to keep current password.</p>
+                            </div>
+
+                            <div className="space-y-1.5 md:col-span-1">
+                                <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">AI Transcription Credits</label>
                                 <input 
-                                    type="text" 
-                                    className="w-full bg-secondary/50 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 font-mono"
-                                    value={editForm.subdomain}
-                                    onChange={e => setEditForm({...editForm, subdomain: e.target.value})}
-                                    disabled={editingTenant?.subdomain === 'admin-system'}
-                                    required
+                                    type="number" 
+                                    className="w-full bg-secondary/50 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                                    value={editForm.aiCredits || ''}
+                                    onChange={e => setEditForm({...editForm, aiCredits: parseInt(e.target.value) || 0})}
+                                    placeholder="0"
                                 />
+                                <p className="text-[9px] text-muted-foreground italic px-1 pt-1">Total whisper-service credits for this tenant.</p>
                             </div>
-                            <div className="flex items-center gap-3 p-4 bg-secondary/20 rounded-2xl border border-border/50">
-                                <input 
-                                    type="checkbox" 
-                                    id="isActive"
-                                    className="w-4 h-4 rounded border-border text-blue-500 focus:ring-blue-500"
-                                    checked={editForm.isActive}
-                                    onChange={e => setEditForm({...editForm, isActive: e.target.checked})}
-                                    disabled={editingTenant?.subdomain === 'admin-system'}
-                                />
-                                <label htmlFor="isActive" className="text-sm font-bold cursor-pointer">Workspace Active (Online)</label>
+
+                            <div className="space-y-1.5 md:col-span-1">
+                                <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Monthly Costing</label>
+                                <div className="flex bg-secondary/50 border border-border rounded-xl">
+                                    <select
+                                        className="bg-transparent pl-4 pr-2 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 rounded-l-xl font-medium border-r border-border"
+                                        value={editForm.customRevenueCurrency}
+                                        onChange={e => setEditForm({...editForm, customRevenueCurrency: e.target.value})}
+                                    >
+                                        <option value="USD">USD ($)</option>
+                                        <option value="EUR">EUR (€)</option>
+                                        <option value="GBP">GBP (£)</option>
+                                        <option value="INR">INR (₹)</option>
+                                    </select>
+                                    <input 
+                                        type="number" 
+                                        className="w-full bg-transparent px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 rounded-r-xl"
+                                        value={editForm.customRevenue || ''}
+                                        onChange={e => setEditForm({...editForm, customRevenue: parseInt(e.target.value) || 0})}
+                                        placeholder="0"
+                                    />
+                                </div>
+                                <p className="text-[9px] text-muted-foreground italic px-1 pt-1">Offline costing/value tracked against this workspace.</p>
                             </div>
-                            <button 
-                                type="submit" 
-                                disabled={isUpdating}
-                                className="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white font-black uppercase tracking-widest text-xs rounded-xl transition-all shadow-xl shadow-blue-500/20 disabled:opacity-50 flex items-center justify-center gap-2"
-                            >
-                                {isUpdating ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving...</> : 'Save Changes'}
-                            </button>
+
+                            <div className="flex flex-col gap-3 justify-end pb-1.5">
+                                <a 
+                                    href={`http://${editForm.subdomain}.lvh.me:3000/login`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center justify-center gap-2 px-4 py-2.5 text-[11px] font-bold bg-secondary hover:bg-secondary/70 border border-border rounded-xl transition-all uppercase tracking-wider group"
+                                >
+                                    Visit Workspace <ExternalLink className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                                </a>
+                            </div>
+
+                            <div className="md:col-span-2 space-y-4 pt-2">
+                                <div className="flex items-center gap-3 p-4 bg-secondary/20 rounded-2xl border border-border/50 group cursor-pointer hover:bg-secondary/30 transition-all" onClick={() => editingTenant?.subdomain !== 'admin-system' && setEditForm({...editForm, isActive: !editForm.isActive})}>
+                                    <div className={`w-10 h-6 rounded-full p-1 transition-all flex items-center ${editForm.isActive ? 'bg-emerald-500/20 border-emerald-500/40' : 'bg-red-500/20 border-red-500/40'} border`}>
+                                        <div className={`w-4 h-4 rounded-full shadow-sm transition-all ${editForm.isActive ? 'bg-emerald-500 translate-x-4' : 'bg-red-500 translate-x-0'}`} />
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <span className="text-sm font-bold">Workspace Status</span>
+                                        <span className="text-[10px] text-muted-foreground uppercase font-black">{editForm.isActive ? 'Active & Online' : 'Inactive & Offline'}</span>
+                                    </div>
+                                    <input 
+                                        type="checkbox" 
+                                        className="hidden"
+                                        checked={editForm.isActive}
+                                        onChange={e => setEditForm({...editForm, isActive: e.target.checked})}
+                                        disabled={editingTenant?.subdomain === 'admin-system'}
+                                    />
+                                </div>
+                                
+                                <button 
+                                    type="submit" 
+                                    disabled={isUpdating}
+                                    className="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white font-black uppercase tracking-widest text-xs rounded-xl transition-all shadow-xl shadow-blue-500/20 disabled:opacity-50 flex items-center justify-center gap-2 group"
+                                >
+                                    {isUpdating ? <><Loader2 className="w-4 h-4 animate-spin" /> Syncing Changes...</> : <>Save Workspace Configuration <Check className="w-4 h-4 group-hover:scale-110 transition-transform" /></>}
+                                </button>
+                            </div>
                         </form>
                     </div>
                 </div>

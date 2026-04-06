@@ -426,7 +426,17 @@ export default function CoursePlayer({ params: paramsPromise }: { params: Promis
                         <button onClick={() => router.push(`/t/${domain}/dashboard`)} className="flex items-center gap-2 text-xs font-bold text-muted-foreground hover:text-foreground transition-colors group mb-1">
                             <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> Back to Dashboard
                         </button>
-                        <h1 className="font-bold text-xl truncate">{course.title}</h1>
+                        <div className="flex items-center gap-4">
+                            <h1 className="font-bold text-xl truncate">{course.title}</h1>
+                            {completedLessonIds.length >= allActiveLessons.length && allActiveLessons.length > 0 && course.certificateEnabled && (
+                                <button 
+                                    onClick={() => router.push(`/t/${domain}/certificate/${courseId}`)}
+                                    className="px-4 py-1.5 bg-yellow-500 text-yellow-950 text-[10px] font-black uppercase tracking-widest rounded-full flex items-center gap-2 animate-bounce-subtle shadow-lg shadow-yellow-500/20"
+                                >
+                                    <Award size={12} /> Claim Certificate
+                                </button>
+                            )}
+                        </div>
                     </div>
                 </header>
 
@@ -848,8 +858,24 @@ export default function CoursePlayer({ params: paramsPromise }: { params: Promis
                                                     <span className="font-black text-amber-500 flex items-center gap-1"><Star className="fill-amber-500" size={16} /> {(reviewsData.averageRating || 0).toFixed(1)}</span>
                                                     <span className="text-muted-foreground text-sm">({reviewsData.totalReviews} ratings)</span>
                                                 </div>
-                                                <div className="pl-6 text-sm font-bold">{course._count?.enrollments || 0} Students</div>
-                                                <div className="pl-6 text-sm font-bold flex items-center gap-2"><Trophy size={16} className="text-primary" /> Certificate of Completion</div>
+                                                <div className="pl-6 text-sm font-bold">{course._count?.enrollments || 0} Learners</div>
+                                                <div className="pl-6 text-sm font-bold flex items-center gap-2">
+                                                    <Trophy size={16} className="text-primary" /> 
+                                                    {course.certificateEnabled ? (
+                                                        completedLessonIds.length >= allActiveLessons.length ? (
+                                                            <button 
+                                                                onClick={() => router.push(`/t/${domain}/certificate/${courseId}`)}
+                                                                className="text-primary hover:underline flex items-center gap-1"
+                                                            >
+                                                                Download Certificate <Download size={12} />
+                                                            </button>
+                                                        ) : (
+                                                            <span>Certificate upon completion</span>
+                                                        )
+                                                    ) : (
+                                                        <span className="text-muted-foreground opacity-50">No certificate available</span>
+                                                    )}
+                                                </div>
                                             </div>
 
                                             {/* Schedule learning time widget */}
@@ -857,7 +883,7 @@ export default function CoursePlayer({ params: paramsPromise }: { params: Promis
                                                 <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent pointer-events-none" />
                                                 <div className="z-10">
                                                     <h3 className="font-black text-lg mb-1 flex items-center gap-2"><Clock size={18} className="text-primary" /> Schedule learning time</h3>
-                                                    <p className="text-sm text-muted-foreground max-w-xl">Learning a little each day adds up. Research shows that students who make learning a habit are more likely to reach their goals. Set time aside to learn and get reminders.</p>
+                                                    <p className="text-sm text-muted-foreground max-w-xl">Learning a little each day adds up. Research shows that learners who make learning a habit are more likely to reach their goals. Set time aside to learn and get reminders.</p>
                                                 </div>
                                                 <button className="z-10 px-6 py-2 bg-background border border-border text-foreground font-bold rounded-xl whitespace-nowrap hover:bg-secondary shadow-sm">Get started</button>
                                             </div>
@@ -867,7 +893,7 @@ export default function CoursePlayer({ params: paramsPromise }: { params: Promis
                                                     <h3 className="font-bold text-muted-foreground text-sm tracking-widest uppercase">By the numbers</h3>
                                                     <ul className="space-y-3 text-sm font-medium">
                                                         <li className="flex justify-between border-b border-border/50 pb-2"><span>Skill level:</span> <span className="font-bold">{course.skillLevel || 'All Levels'}</span></li>
-                                                        <li className="flex justify-between border-b border-border/50 pb-2"><span>Students:</span> <span className="font-bold">{course._count?.enrollments || 0}</span></li>
+                                                        <li className="flex justify-between border-b border-border/50 pb-2"><span>Learners:</span> <span className="font-bold">{course._count?.enrollments || 0}</span></li>
                                                         <li className="flex justify-between border-b border-border/50 pb-2"><span>Languages:</span> <span className="font-bold">{course.languages || 'English'}</span></li>
                                                         <li className="flex justify-between border-b border-border/50 pb-2"><span>Captions:</span> <span className="font-bold">{course.captions ? 'Yes' : 'No'}</span></li>
                                                     </ul>
@@ -1112,7 +1138,7 @@ export default function CoursePlayer({ params: paramsPromise }: { params: Promis
                                                 <div className="lg:col-span-2 p-8 rounded-3xl border border-border/50 glassmorphism space-y-6">
                                                     <div>
                                                         <h3 className="text-xl font-black mb-1">How would you rate this course?</h3>
-                                                        <p className="text-sm text-muted-foreground">Your feedback helps us improve and helps other students decide.</p>
+                                                        <p className="text-sm text-muted-foreground">Your feedback helps us improve and helps other learners decide.</p>
                                                     </div>
                                                     
                                                     <div className="flex gap-3">

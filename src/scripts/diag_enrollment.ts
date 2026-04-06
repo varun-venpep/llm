@@ -24,12 +24,12 @@ async function checkData() {
     console.log(`- ${c.title} (ID: ${c.id}): ${c._count.enrollments} enrolled`);
   });
 
-  const students = await prisma.user.findMany({
-    where: { tenantId: tenant.id, role: 'STUDENT' }
+  const learners = await prisma.user.findMany({
+    where: { tenantId: tenant.id, role: 'LEARNER' }
   });
 
-  console.log("\nStudents in venpep:");
-  for (const s of students) {
+  console.log("\nLearners in venpep:");
+  for (const s of learners) {
     const enrollment = await prisma.enrollment.findMany({
         where: { userId: s.id }
     });

@@ -1,5 +1,6 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
 }
 
 datasource db {
@@ -7,79 +8,100 @@ datasource db {
 }
 
 model Tenant {
-  id                   String                @id @default(cuid())
-  name                 String
-  subdomain            String                @unique
-  customDomain         String?               @unique
-  logo                 String?
-  primaryColor         String                @default("#000000")
-  isActive             Boolean               @default(true)
-  createdAt            DateTime              @default(now())
-  updatedAt            DateTime              @updatedAt
-  plan                 Plan                  @default(STARTER)
-  storageLimit         Int                   @default(10240)
-  stripeCustomerId     String?
-  announcements        Announcement[]
-  certificateTemplates CertificateTemplate[]
-  courses              Course[]
-  users                User[]
+  id                    String                @id @default(cuid())
+  name                  String
+  subdomain             String                @unique
+  customDomain          String?               @unique
+  logo                  String?
+  logoLight             String?
+  logoDark              String?
+  favicon               String?
+  primaryColor          String                @default("#000000")
+  isActive              Boolean               @default(true)
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
+  plan                  Plan                  @default(STARTER)
+  storageLimit          Int                   @default(10240)
+  stripeCustomerId      String?
+  aiCredits             Int                   @default(0)
+  customRevenue         Int                   @default(0)
+  customRevenueCurrency String                @default("USD")
+  announcements         Announcement[]
+  users                 User[]
+  certificateTemplates  CertificateTemplate[] @relation("TenantTemplates")
+  courses               Course[]
+  jobRoles              JobRole[]
+  teams                 Team[]
 }
 
 model User {
-  id           String              @id @default(cuid())
-  email        String
-  name         String?
-  password     String
-  role         Role                @default(STUDENT)
-  tenantId     String
-  isActive     Boolean             @default(true)
-  createdAt    DateTime            @default(now())
-  updatedAt    DateTime            @updatedAt
-  enrollments  Enrollment[]
-  certificates IssuedCertificate[]
-  progress     LessonProgress[]
-  quizAttempts QuizAttempt[]
-  submissions  Submission[]
-  activityLogs ActivityLog[]
-  notes        Note[]
-  reviews      Review[]
-  tenant       Tenant              @relation(fields: [tenantId], references: [id])
+  id                String                 @id @default(cuid())
+  email             String
+  name              String?
+  password          String
+  role              Role                   @default(LEARNER)
+  tenantId          String
+  createdAt         DateTime               @default(now())
+  updatedAt         DateTime               @updatedAt
+  isActive          Boolean                @default(true)
+  activityLogs      ActivityLog[]
+  enrollments       Enrollment[]
+  certificates      IssuedCertificate[]
+  progress          LessonProgress[]
+  notes             Note[]
+  quizAttempts      QuizAttempt[]
+  reviews           Review[]
+  submissions       Submission[]
+  assignedCoursesBy TeamCourseAssignment[] @relation("AssignedCourseBy")
+  tenant            Tenant                 @relation(fields: [tenantId], references: [id])
+  managedTeams      Team[]                 @relation("ManagerTeams")
+  teams             Team[]                 @relation("MemberTeams")
+  jobRoles          JobRole[]              @relation("UserJobRoles")
 
   @@unique([email, tenantId])
 }
 
 model Course {
-  id           String              @id @default(cuid())
-  title        String
-  description  String?
-  thumbnail    String?
-  isPublished  Boolean             @default(false)
-  tenantId     String
-  createdAt    DateTime            @default(now())
-  updatedAt    DateTime            @updatedAt
-  captions     Boolean             @default(false)
-  languages    String              @default("English")
-  skillLevel   String              @default("All Levels")
-  tenant       Tenant              @relation(fields: [tenantId], references: [id])
-  enrollments  Enrollment[]
-  certificates IssuedCertificate[]
-  modules      Module[]
-  resources    Resource[]
-  notes        Note[]
-  reviews      Review[]
+  id                    String                 @id @default(cuid())
+  title                 String
+  description           String?
+  thumbnail             String?
+  isPublished           Boolean                @default(false)
+  tenantId              String
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  captions              Boolean                @default(false)
+  languages             String                 @default("English")
+  skillLevel            String                 @default("All Levels")
+  isMarketplace         Boolean                @default(false)
+  exclusiveRoleId       String?
+  exclusiveTeamId       String?
+  exclusiveRole         JobRole?               @relation("ExclusiveCourses", fields: [exclusiveRoleId], references: [id])
+  exclusiveTeam         Team?                  @relation("ExclusiveTeamCourses", fields: [exclusiveTeamId], references: [id])
+  tenant                Tenant                 @relation(fields: [tenantId], references: [id])
+  enrollments           Enrollment[]
+  certificates          IssuedCertificate[]
+  modules               Module[]
+  notes                 Note[]
+  resources             Resource[]
+  reviews               Review[]
+  teamAssignments       TeamCourseAssignment[]
+  certificateEnabled    Boolean                @default(false)
+  certificateTemplateId String?
+  certificateTemplate   CertificateTemplate?   @relation("CourseTemplate", fields: [certificateTemplateId], references: [id])
 }
 
 model Module {
-  id        String   @id @default(cuid())
+  id        String     @id @default(cuid())
   title     String
   order     Int
   courseId  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  isActive  Boolean  @default(true)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  isActive  Boolean    @default(true)
   lessons   Lesson[]
+  course    Course     @relation(fields: [courseId], references: [id], onDelete: Cascade)
   resources Resource[]
-  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
 }
 
 model Lesson {
@@ -92,17 +114,17 @@ model Lesson {
   moduleId         String
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
-  isActive         Boolean          @default(true)
-  type             LessonType       @default(TEXT)
   hasCaptions      Boolean          @default(false)
+  isActive         Boolean          @default(true)
   transcript       String?
   transcriptStatus String           @default("NONE")
+  type             LessonType       @default(TEXT)
   assignments      Assignment[]
   module           Module           @relation(fields: [moduleId], references: [id], onDelete: Cascade)
   progress         LessonProgress[]
+  notes            Note[]
   quiz             Quiz?
   resources        Resource[]
-  notes            Note[]
 }
 
 model Quiz {
@@ -163,23 +185,23 @@ model Resource {
   courseId  String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  course    Course?  @relation(fields: [courseId], references: [id], onDelete: Cascade)
   lesson    Lesson?  @relation(fields: [lessonId], references: [id], onDelete: Cascade)
   module    Module?  @relation(fields: [moduleId], references: [id], onDelete: Cascade)
-  course    Course?  @relation(fields: [courseId], references: [id], onDelete: Cascade)
 }
 
 model LessonProgress {
-  id          String    @id @default(cuid())
-  userId      String
-  lessonId    String
-  completed   Boolean   @default(false)
-  completedAt DateTime?
-  lastPosition String?  // Stores last watched second for videos, or last viewed slide for documents
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  startedAt   DateTime  @default(now())
-  lesson      Lesson    @relation(fields: [lessonId], references: [id], onDelete: Cascade)
-  user        User      @relation(fields: [userId], references: [id])
+  id           String    @id @default(cuid())
+  userId       String
+  lessonId     String
+  completed    Boolean   @default(false)
+  completedAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  lastPosition String?
+  startedAt    DateTime  @default(now())
+  lesson       Lesson    @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  user         User      @relation(fields: [userId], references: [id])
 
   @@unique([userId, lessonId])
 }
@@ -201,11 +223,11 @@ model Announcement {
   id          String   @id @default(cuid())
   title       String
   body        String
-  imageUrl    String?
-  documentUrl String?
   tenantId    String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  documentUrl String?
+  imageUrl    String?
   tenant      Tenant   @relation(fields: [tenantId], references: [id])
 }
 
@@ -246,14 +268,17 @@ model PlatformSetting {
 }
 
 model CertificateTemplate {
-  id           String   @id @default(cuid())
-  name         String
-  designFields Json?
-  isActive     Boolean  @default(true)
-  tenantId     String
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  tenant       Tenant   @relation(fields: [tenantId], references: [id])
+  id              String   @id @default(cuid())
+  name            String
+  backgroundImage String?
+  designFields    Json?
+  isActive        Boolean  @default(true)
+  isGlobal        Boolean  @default(false)
+  tenantId        String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  tenant          Tenant?  @relation("TenantTemplates", fields: [tenantId], references: [id])
+  courses         Course[] @relation("CourseTemplate")
 }
 
 model IssuedCertificate {
@@ -262,37 +287,17 @@ model IssuedCertificate {
   userId         String
   courseId       String
   issuedAt       DateTime @default(now())
+  uniqueCode     String   @unique
   course         Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
   user           User     @relation(fields: [userId], references: [id])
 
   @@unique([userId, courseId])
 }
 
-enum Role {
-  SUPER_ADMIN
-  TENANT_ADMIN
-  INSTRUCTOR
-  TEACHER
-  STUDENT
-}
-
-enum LessonType {
-  VIDEO
-  PPT
-  QUIZ
-  TEXT
-}
-
-enum Plan {
-  STARTER
-  PROFESSIONAL
-  ENTERPRISE
-}
-
 model ActivityLog {
   id        String   @id @default(cuid())
   userId    String
-  action    String   // e.g., "DOWNLOAD_RESOURCE", "VIEW_LESSON", etc.
+  action    String
   metadata  Json?
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -307,9 +312,9 @@ model Note {
   lessonId  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
   lesson    Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Review {
@@ -320,8 +325,71 @@ model Review {
   courseId  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, courseId])
+}
+
+model JobRole {
+  id               String   @id @default(cuid())
+  name             String
+  description      String?
+  tenantId         String
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  isActive         Boolean  @default(true)
+  exclusiveCourses Course[] @relation("ExclusiveCourses")
+  tenant           Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  users            User[]   @relation("UserJobRoles")
+}
+
+model Team {
+  id                String                 @id @default(cuid())
+  name              String
+  description       String?
+  tenantId          String
+  createdAt         DateTime               @default(now())
+  updatedAt         DateTime               @updatedAt
+  isActive          Boolean                @default(true)
+  exclusiveCourses  Course[]               @relation("ExclusiveTeamCourses")
+  tenant            Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  courseAssignments TeamCourseAssignment[]
+  managers          User[]                 @relation("ManagerTeams")
+  members           User[]                 @relation("MemberTeams")
+}
+
+model TeamCourseAssignment {
+  id           String   @id @default(cuid())
+  teamId       String
+  courseId     String
+  assignedById String
+  createdAt    DateTime @default(now())
+  assignedBy   User     @relation("AssignedCourseBy", fields: [assignedById], references: [id])
+  course       Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  team         Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, courseId])
+}
+
+enum Role {
+  SUPER_ADMIN
+  TENANT_ADMIN
+  INSTRUCTOR
+  TEACHER
+  LEARNER
+  PLATFORM_MANAGER
+}
+
+enum LessonType {
+  VIDEO
+  PPT
+  QUIZ
+  TEXT
+}
+
+enum Plan {
+  STARTER
+  PROFESSIONAL
+  ENTERPRISE
 }

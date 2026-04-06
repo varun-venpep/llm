@@ -1,42 +1,220 @@
 'use client';
 
-import { Users, Search, MoreHorizontal } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Users, Search, Building2, ShieldCheck, CheckCircle2, ArrowRight, ExternalLink, Loader2, UserCircle2 } from 'lucide-react';
+
+interface Stats {
+    SUPER_ADMIN: number;
+    PLATFORM_MANAGER: number;
+    TENANT_ADMIN: number;
+    LEARNER: number;
+    INSTRUCTOR: number;
+}
+
+interface GlobalUser {
+    id: string;
+    email: string;
+    name: string | null;
+    role: string;
+    createdAt: string;
+    tenant: {
+        id: string;
+        name: string;
+        subdomain: string;
+    };
+}
 
 export default function UsersPage() {
+    const [stats, setStats] = useState<Stats | null>(null);
+    const [query, setQuery] = useState('');
+    const [results, setResults] = useState<GlobalUser[]>([]);
+    const [isSearching, setIsSearching] = useState(false);
+    const [loadingStats, setLoadingStats] = useState(true);
+
+    useEffect(() => {
+        fetchStats();
+    }, []);
+
+    const fetchStats = async () => {
+        try {
+            const res = await fetch('/api/admin/users?mode=stats');
+            const data = await res.json();
+            setStats(data);
+        } catch (err) {
+            console.error('Failed to fetch stats:', err);
+        } finally {
+            setLoadingStats(false);
+        }
+    };
+
+    const handleSearch = async (e?: React.FormEvent) => {
+        if (e) e.preventDefault();
+        if (!query.trim()) return;
+
+        setIsSearching(true);
+        try {
+            const res = await fetch(`/api/admin/users?mode=search&q=${encodeURIComponent(query)}`);
+            const data = await res.json();
+            setResults(data);
+        } catch (err) {
+            console.error('Search failed:', err);
+        } finally {
+            setIsSearching(false);
+        }
+    };
+
     return (
-        <div className="p-8 space-y-8 animate-in fade-in duration-500">
+        <div className="p-8 space-y-8 animate-in fade-in duration-500 max-w-7xl mx-auto">
             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-xl font-black tracking-tight uppercase flex items-center gap-2">
-                        <Users className="w-6 h-6 text-purple-500" />
+                    <h1 className="text-2xl font-black tracking-tight uppercase flex items-center gap-3">
+                        <div className="bg-purple-500/10 p-2 rounded-xl border border-purple-500/20">
+                            <Users className="w-7 h-7 text-purple-500" />
+                        </div>
                         Global Identity Registry
                     </h1>
-                    <p className="text-muted-foreground text-sm font-medium mt-1">Monitor cross-tenant student and admin activities.</p>
+                    <p className="text-muted-foreground text-sm font-medium mt-1">Cross-tenant auditing and platform-wide user discovery.</p>
                 </div>
             </div>
 
-            <div className="glassmorphism p-12 rounded-3xl border border-white/5 flex flex-col items-center justify-center text-center space-y-4 shadow-xl">
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center mb-2 border border-purple-500/20">
-                    <Search className="w-8 h-8 text-purple-400" />
-                </div>
-                <h3 className="text-xl font-bold">Global User Search Active</h3>
-                <p className="text-muted-foreground max-w-sm">
-                    Enter an email address or user ID in the top search bar to locate identities across all isolated client environments.
-                </p>
+            {/* Quick Stats Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                {[
+                    { label: 'Super Admins', value: stats?.SUPER_ADMIN, color: 'text-purple-400', bg: 'bg-purple-500/10', icon: ShieldCheck },
+                    { label: 'Platform Mgrs', value: stats?.PLATFORM_MANAGER, color: 'text-amber-400', bg: 'bg-amber-500/10', icon: CheckCircle2 },
+                    { label: 'Tenant Admins', value: stats?.TENANT_ADMIN, color: 'text-blue-400', bg: 'bg-blue-500/10', icon: Building2 },
+                    { label: 'Global Learners', value: stats?.LEARNER, color: 'text-emerald-400', bg: 'bg-emerald-500/10', icon: UserCircle2 },
+                    { label: 'Instructors', value: stats?.INSTRUCTOR, color: 'text-pink-400', bg: 'bg-pink-500/10', icon: CheckCircle2 }
+                ].map((item, idx) => (
+                    <div key={idx} className="glassmorphism p-5 rounded-2xl border border-white/5 bg-secondary/10 hover:bg-secondary/20 transition-all group">
+                        <div className="flex justify-between items-start mb-3">
+                            <div className={`${item.bg} p-1.5 rounded-lg border border-white/5`}>
+                                <item.icon className={`w-4 h-4 ${item.color}`} />
+                            </div>
+                        </div>
+                        <p className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground/60 mb-0.5">{item.label}</p>
+                        {loadingStats ? (
+                            <div className="h-8 w-16 bg-white/5 animate-pulse rounded-lg" />
+                        ) : (
+                            <p className={`text-2xl font-black ${item.color}`}>{item.value}</p>
+                        )}
+                    </div>
+                ))}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="p-6 rounded-2xl border border-border/50 bg-secondary/10">
-                    <p className="text-xs font-bold tracking-widest uppercase text-muted-foreground mb-1">Super Admins</p>
-                    <p className="text-3xl font-black text-purple-400">1</p>
+            {/* Search Engine Section */}
+            <div className="glassmorphism rounded-3xl border border-white/5 overflow-hidden shadow-2xl shadow-purple-500/5">
+                <div className="p-8 border-b border-white/5 bg-gradient-to-br from-secondary/40 to-transparent">
+                    <div className="max-w-2xl mx-auto text-center space-y-6">
+                        <div className="space-y-2">
+                            <h2 className="text-xl font-bold tracking-tight">Cloud Identity Search</h2>
+                            <p className="text-sm text-muted-foreground">Scan through isolated client environments to locate a specific user identity.</p>
+                        </div>
+                        <form onSubmit={handleSearch} className="relative group">
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-purple-400 transition-colors" />
+                            <input 
+                                type="text"
+                                value={query}
+                                onChange={(e) => setQuery(e.target.value)}
+                                placeholder="Search by email, name, or global UID..."
+                                className="w-full bg-background/50 border-2 border-white/5 rounded-2xl pl-12 pr-40 py-4 text-sm font-medium focus:outline-none focus:border-purple-500/50 focus:ring-4 focus:ring-purple-500/10 transition-all backdrop-blur-sm"
+                            />
+                            <button 
+                                type="submit"
+                                disabled={isSearching || !query.trim()}
+                                className="absolute right-2 top-1/2 -translate-y-1/2 px-6 py-2.5 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-purple-500/20"
+                            >
+                                {isSearching ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : 'Scan Platform'}
+                            </button>
+                        </form>
+                    </div>
                 </div>
-                <div className="p-6 rounded-2xl border border-border/50 bg-secondary/10">
-                    <p className="text-xs font-bold tracking-widest uppercase text-muted-foreground mb-1">Tenant Admins</p>
-                    <p className="text-3xl font-black text-blue-400">Active Scan...</p>
-                </div>
-                <div className="p-6 rounded-2xl border border-border/50 bg-secondary/10">
-                    <p className="text-xs font-bold tracking-widest uppercase text-muted-foreground mb-1">Global Students</p>
-                    <p className="text-3xl font-black text-emerald-400">Active Scan...</p>
+
+                {/* Search Results */}
+                <div className="min-h-[300px]">
+                    {isSearching ? (
+                        <div className="flex flex-col items-center justify-center h-64 space-y-4">
+                            <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
+                            <p className="text-sm font-bold text-muted-foreground uppercase tracking-widest">Scanning platform databases...</p>
+                        </div>
+                    ) : results.length > 0 ? (
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left">
+                                <thead>
+                                    <tr className="bg-secondary/20 border-b border-white/10">
+                                        <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground">User Identity</th>
+                                        <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Role</th>
+                                        <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Tenant / Workspace</th>
+                                        <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Registered</th>
+                                        <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-white/5">
+                                    {results.map((user) => (
+                                        <tr key={user.id} className="hover:bg-white/5 transition-colors group">
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-white/10 flex items-center justify-center font-bold text-xs">
+                                                        {user.name ? user.name.substring(0, 2).toUpperCase() : user.email.substring(0, 2).toUpperCase()}
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-bold text-sm">{user.name || 'Anonymous User'}</p>
+                                                        <p className="text-xs text-muted-foreground italic">{user.email}</p>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border ${
+                                                    user.role === 'SUPER_ADMIN' ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' :
+                                                    user.role === 'PLATFORM_MANAGER' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
+                                                    user.role === 'TENANT_ADMIN' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
+                                                    'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                                                }`}>
+                                                    {user.role.replace('_', ' ')}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex flex-col">
+                                                    <span className="text-sm font-bold">{user.tenant.name}</span>
+                                                    <span className="text-[10px] text-blue-400 font-mono tracking-tighter">
+                                                        {user.tenant.subdomain}.lvh.me:3000
+                                                    </span>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 text-xs font-mono text-muted-foreground">
+                                                {new Date(user.createdAt).toLocaleDateString()}
+                                            </td>
+                                            <td className="px-6 py-4 text-right">
+                                                <a 
+                                                    href={`http://${user.tenant.subdomain}.lvh.me:3000/login`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-secondary hover:bg-white/10 text-[10px] font-bold uppercase tracking-widest transition-all group-hover:text-blue-400"
+                                                >
+                                                    Visit <ExternalLink className="w-3 h-3" />
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    ) : query && !isSearching ? (
+                        <div className="flex flex-col items-center justify-center h-64 text-center p-8">
+                            <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center mb-4 border border-red-500/20">
+                                <Users className="w-6 h-6 text-red-400" />
+                            </div>
+                            <p className="font-bold text-red-400 uppercase tracking-widest text-xs">No Identities Located</p>
+                            <p className="text-sm text-muted-foreground mt-1">We couldn't find any users matching your query across the cloud registry.</p>
+                        </div>
+                    ) : (
+                        <div className="flex items-center justify-center h-64 text-center p-8 opacity-40">
+                            <div className="space-y-2">
+                                <Users className="w-10 h-10 mx-auto text-muted-foreground" />
+                                <p className="text-xs font-bold uppercase tracking-widest">Cross-Tenant Search Ready</p>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

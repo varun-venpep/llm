@@ -9,7 +9,7 @@ export default function RootLoginPage() {
 
     useEffect(() => {
         // Since we are on the Root Domain, the only valid login is the /admin/login portal
-        // Tenants/Students should use their own subdomain URL to access the site.
+        // Tenants/Learners should use their own subdomain URL to access the site.
         router.replace('/admin/login');
     }, [router]);
 

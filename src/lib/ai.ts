@@ -15,6 +15,40 @@ export async function transcribeMedia(lessonId: string, mediaUrl: string) {
 
     const lambdaUrl = setting?.value || process.env.WHISPER_LAMBDA_URL;
 
+    // 1. Resolve Tenant and Check Credits
+    const lesson = await prisma.lesson.findUnique({
+        where: { id: lessonId },
+        include: {
+            module: {
+                include: {
+                    course: {
+                        select: { tenantId: true }
+                    }
+                }
+            }
+        }
+    });
+
+    const tenantId = lesson?.module?.course?.tenantId;
+    if (!tenantId) {
+        console.error(`[AI] Could not find tenant for lesson ${lessonId}`);
+        return;
+    }
+
+    const tenant = await prisma.tenant.findUnique({
+        where: { id: tenantId },
+        select: { aiCredits: true }
+    });
+
+    if (!tenant || (tenant.aiCredits || 0) <= 0) {
+        console.warn(`[AI] Tenant ${tenantId} has no transcription credits remaining. Skipping AI transcription.`);
+        await prisma.lesson.update({
+            where: { id: lessonId },
+            data: { transcriptStatus: 'FAILED' }
+        });
+        return;
+    }
+
     if (!lambdaUrl) {
         if (process.env.NODE_ENV === 'development') {
             console.log(`[AI] No WHISPER_LAMBDA_URL set. SIMULATING transcription locally for lesson ${lessonId}...`);
@@ -60,6 +94,12 @@ export async function transcribeMedia(lessonId: string, mediaUrl: string) {
     const callbackUrl = `${appUrl}/api/transcript-callback`;
 
     try {
+        // 2. Deduct 1 Credit immediately
+        await prisma.tenant.update({
+            where: { id: tenantId },
+            data: { aiCredits: { decrement: 1 } }
+        });
+
         // Mark lesson as PROCESSING immediately
         await prisma.lesson.update({
             where: { id: lessonId },

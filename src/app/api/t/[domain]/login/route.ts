@@ -51,9 +51,22 @@ export async function POST(
 
         response.cookies.set('session-token', user.id, cookieOptions);
 
+        // Audit Log: User Login
+        await prisma.activityLog.create({
+            data: {
+                userId: user.id,
+                action: 'USER_LOGIN',
+                metadata: {
+                    ip: req.headers.get('x-forwarded-for') || 'unknown',
+                    userAgent: req.headers.get('user-agent') || 'unknown'
+                }
+            }
+        });
+
         return response;
 
-    } catch (error) {
-        return NextResponse.json({ error: 'Login failed' }, { status: 500 });
+    } catch (error: any) {
+        console.error('[Login API Error]:', error);
+        return NextResponse.json({ error: 'Login failed', details: error.message }, { status: 500 });
     }
 }

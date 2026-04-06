@@ -1,5 +1,5 @@
 -- CreateEnum
-CREATE TYPE "Role" AS ENUM ('SUPER_ADMIN', 'TENANT_ADMIN', 'STUDENT');
+CREATE TYPE "Role" AS ENUM ('SUPER_ADMIN', 'TENANT_ADMIN', 'LEARNER');
 
 -- CreateTable
 CREATE TABLE "Tenant" (
@@ -22,7 +22,7 @@ CREATE TABLE "User" (
     "email" TEXT NOT NULL,
     "name" TEXT,
     "password" TEXT NOT NULL,
-    "role" "Role" NOT NULL DEFAULT 'STUDENT',
+    "role" "Role" NOT NULL DEFAULT 'LEARNER',
     "tenantId" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,

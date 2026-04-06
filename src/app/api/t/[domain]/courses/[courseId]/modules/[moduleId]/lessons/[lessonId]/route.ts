@@ -89,7 +89,7 @@ export async function DELETE(
             return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
         }
 
-        // Check for student progress or quiz attempts
+        // Check for learner progress or quiz attempts
         const lessonWithProgress = await prisma.lesson.findUnique({
             where: { id: lessonId },
             include: {
@@ -116,7 +116,7 @@ export async function DELETE(
             
             if (hasProgress) {
                 return NextResponse.json({ 
-                    error: 'Cannot delete lesson with student progress. Please deactivate it instead.',
+                    error: 'Cannot delete lesson with learner progress. Please deactivate it instead.',
                     code: 'HAS_PROGRESS'
                 }, { status: 409 });
             }

@@ -20,6 +20,7 @@ export const metadata: Metadata = {
 };
 
 import { Providers } from "@/components/Providers";
+import ChatWidget from "@/components/chat/ChatWidget";
 
 export default function RootLayout({
   children,
@@ -30,9 +31,11 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        suppressHydrationWarning
       >
         <Providers>
           {children}
+          <ChatWidget />
         </Providers>
       </body>
     </html>

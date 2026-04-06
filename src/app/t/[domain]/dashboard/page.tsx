@@ -5,9 +5,10 @@ import { useParams, useRouter } from 'next/navigation';
 import {
     BookOpen, Search, LogOut, ChevronRight, ChevronLeft,
     BookMarked, LayoutGrid, Megaphone, CheckCircle2,
-    PlayCircle, Loader2, Bell, XCircle, FileText, Upload, Info, Award, User, Settings
+    PlayCircle, Loader2, Bell, XCircle, FileText, Upload, Info, Award, User, Settings, ShieldCheck
 } from 'lucide-react';
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { ManagerHub } from "@/components/learner/ManagerHub";
 
 interface Course {
     id: string;
@@ -33,7 +34,7 @@ interface Progress {
     totalLessons: number;
 }
 
-export default function StudentDashboard() {
+export default function LearnerDashboard() {
     const params = useParams();
     const router = useRouter();
     const domain = params.domain as string;
@@ -58,6 +59,10 @@ export default function StudentDashboard() {
     const [profileForm, setProfileForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
     const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
     const [courseFilter, setCourseFilter] = useState<'all' | 'new' | 'inprogress' | 'completed'>('all');
+    
+    // B2B Manager State
+    const [isManager, setIsManager] = useState(false);
+    const [activeView, setActiveView] = useState<'learning' | 'manager'>('learning');
 
     const notificationsRef = useRef<HTMLDivElement>(null);
     const ANNOUNCEMENTS_PER_PAGE = 5;
@@ -111,13 +116,22 @@ export default function StudentDashboard() {
             setUserName(user.name || 'Learner');
             setUserEmail(user.email || '');
 
-            const [coursesRes, announcementsRes] = await Promise.all([
-                fetch(`/api/t/${domain}/courses?view=student`),
-                fetch(`/api/t/${domain}/announcements`)
+            const [coursesRes, announcementsRes, managerTeamsRes] = await Promise.all([
+                fetch(`/api/t/${domain}/courses?view=learner`),
+                fetch(`/api/t/${domain}/announcements`),
+                fetch(`/api/t/${domain}/manager/teams`) // Check manager status quietly
             ]);
-            const [coursesData, announcementsData] = await Promise.all([
-                coursesRes.json(), announcementsRes.json()
+            
+            const [coursesData, announcementsData, managerTeamsData] = await Promise.all([
+                coursesRes.json(), 
+                announcementsRes.json(), 
+                managerTeamsRes.ok ? managerTeamsRes.json() : []
             ]);
+
+            // If they have teams assigned, activate Manager Hub toggle
+            if (Array.isArray(managerTeamsData) && managerTeamsData.length > 0) {
+                setIsManager(true);
+            }
 
             const publishedCourses = (Array.isArray(coursesData) ? coursesData : []).filter((c: Course) => c.modules !== undefined);
             setCourses(publishedCourses);
@@ -155,7 +169,7 @@ export default function StudentDashboard() {
         }
         setIsUpdatingProfile(true);
         try {
-            const res = await fetch(`/api/t/${domain}/student/profile`, {
+            const res = await fetch(`/api/t/${domain}/learner/profile`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -324,6 +338,31 @@ export default function StudentDashboard() {
                         </div>
                     </section>
 
+                    {/* B2B Manager Toggle Engine */}
+                    {isManager && (
+                        <div className="flex justify-center -mt-6 relative z-20">
+                            <div className="bg-background/80 backdrop-blur-xl border border-border/50 p-1.5 rounded-full flex gap-1 shadow-2xl">
+                                <button 
+                                    onClick={() => setActiveView('learning')}
+                                    className={`px-6 py-2 rounded-full text-xs font-black uppercase tracking-widest transition-all ${activeView === 'learning' ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/20' : 'text-muted-foreground hover:bg-secondary'}`}
+                                >
+                                    My Learning
+                                </button>
+                                <button 
+                                    onClick={() => setActiveView('manager')}
+                                    className={`px-6 py-2 rounded-full text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeView === 'manager' ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/20' : 'text-muted-foreground hover:bg-secondary'}`}
+                                >
+                                    <ShieldCheck size={14} /> Executive Hub
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {activeView === 'manager' ? (
+                        <div className="pt-4 border-t border-border/10">
+                            <ManagerHub domain={domain} onBack={() => setActiveView('learning')} />
+                        </div>
+                    ) : (
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
                         {/* Course Grid */}
                         <section className="lg:col-span-2 space-y-6">
@@ -492,6 +531,7 @@ export default function StudentDashboard() {
                             })()}
                         </section>
                     </div>
+                    )}
                 </main>
             </div>
 

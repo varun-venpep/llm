@@ -1,23 +1,51 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import bcrypt from 'bcryptjs';
 
 export async function PUT(
     req: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
-    const { id } = await params;
+    const { id: tenantId } = await params;
     try {
         const body = await req.json();
-        const { name, subdomain, isActive } = body;
+        const { name, subdomain, isActive, adminEmail, newPassword, aiCredits, customRevenue, customRevenueCurrency } = body;
 
+        // 1. Update Tenant Basic Info
         const updatedTenant = await prisma.tenant.update({
-            where: { id },
+            where: { id: tenantId },
             data: {
                 name,
                 subdomain,
-                isActive
+                isActive,
+                aiCredits: aiCredits !== undefined ? parseInt(String(aiCredits), 10) : undefined,
+                customRevenue: customRevenue !== undefined ? parseInt(String(customRevenue), 10) : undefined,
+                customRevenueCurrency: customRevenueCurrency || undefined
             }
         });
+
+        // 2. Handle Admin User Updates (Email/Password)
+        if (adminEmail || newPassword) {
+            const adminUser = await prisma.user.findFirst({
+                where: {
+                    tenantId: tenantId,
+                    role: 'TENANT_ADMIN'
+                }
+            });
+
+            if (adminUser) {
+                const updateData: any = {};
+                if (adminEmail) updateData.email = adminEmail;
+                if (newPassword) {
+                    updateData.password = await bcrypt.hash(newPassword, 10);
+                }
+
+                await prisma.user.update({
+                    where: { id: adminUser.id },
+                    data: updateData
+                });
+            }
+        }
 
         return NextResponse.json(updatedTenant);
     } catch (error) {

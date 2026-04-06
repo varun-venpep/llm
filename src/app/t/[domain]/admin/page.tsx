@@ -1,7 +1,7 @@
 'use client';
 
 import { ThemeToggle } from "@/components/ThemeToggle";
-
+import { useTheme } from 'next-themes';
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import {
@@ -9,10 +9,20 @@ import {
     Globe, Plus, XCircle, ChevronRight, ChevronLeft, Save, Upload,
     Trash2, Edit3, CheckCircle2, Megaphone, Loader2,
     MoreVertical, GripVertical, Eye, EyeOff, Video, FileText, Lock,
-    BarChart3, Clock, UserCheck, Award, CheckCircle, AlertCircle, Info, Bell, Mic, Archive, LogOut, User
+    BarChart3, Clock, UserCheck, Award, CheckCircle, AlertCircle, Info, Bell, Mic, Archive, LogOut, User, Shield, UsersRound,
+    Filter, TrendingUp, Medal, Calendar, Target, Activity, Users2, Download, ScanSearch, UserCircle, LayoutList, Trash
 } from 'lucide-react';
+import {
+    BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+    AreaChart, Area, PieChart, Pie, Cell, Legend
+} from 'recharts';
+import { RolesManager } from '@/components/admin/roles/RolesManager';
+import { TeamsManager } from '@/components/admin/teams/TeamsManager';
+import { LearnersManager } from '@/components/admin/learners/LearnersManager';
+import CertificateManager from '@/components/admin/certificates/CertificateManager';
+import CertificateDesigner from '@/components/admin/certificates/CertificateDesigner';
 
-type Tab = 'overview' | 'courses' | 'students' | 'announcements' | 'branding' | 'domains' | 'settings' | 'certificates' | 'reports';
+type Tab = 'overview' | 'courses' | 'learners' | 'announcements' | 'branding' | 'domains' | 'settings' | 'certificates' | 'reports' | 'roles' | 'teams' | 'audit';
 
 // Toast Types
 type ToastType = 'success' | 'error' | 'info';
@@ -32,11 +42,33 @@ const generateRandomPassword = (length = 10) => {
     return retVal;
 };
 
+const getMetadataLabel = (key: string) => {
+    const labels: Record<string, string> = {
+        courseId: 'Course Reference',
+        title: 'Display Title',
+        learnerId: 'Subject Identity',
+        email: 'Email Account',
+        name: 'Full Name',
+        teamId: 'Structural Team',
+        roleId: 'Defined Role',
+        subdomain: 'Workspace Domain',
+        visibility: 'Access Status',
+        id: 'System Resource ID'
+    };
+    return labels[key] || key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+};
+
 export default function ClientAdminDashboard() {
     const params = useParams();
     const router = useRouter();
     const domain = params.domain as string;
+    const { resolvedTheme } = useTheme();
+    const [mounted, setMounted] = useState(false);
     const [activeTab, setActiveTab] = useState<Tab>('overview');
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     // Profile State
     const [showProfileModal, setShowProfileModal] = useState(false);
@@ -51,26 +83,58 @@ export default function ClientAdminDashboard() {
     });
 
     const [stats, setStats] = useState({
-        students: 0,
+        learners: 0,
         courses: 0,
         enrollments: 0,
+        completions: 0,
         completionRate: 0,
         avgProgress: 0,
         avgQuizScore: 0
     });
     const [courses, setCourses] = useState<any[]>([]);
-    const [students, setStudents] = useState<any[]>([]);
     const [announcements, setAnnouncements] = useState<any[]>([]);
     const [recentActivity, setRecentActivity] = useState<any[]>([]);
     const [coursePerformance, setCoursePerformance] = useState<any[]>([]);
+    const [teamPerformance, setTeamPerformance] = useState<any[]>([]);
+    const [topLearners, setTopLearners] = useState<any[]>([]);
+    const [enrollmentTrendData, setEnrollmentTrendData] = useState<any[]>([]);
+    const [roleDistribution, setRoleDistribution] = useState<any[]>([]);
+    // Report Filters
+    const [reportStartDate, setReportStartDate] = useState('');
+    const [reportEndDate, setReportEndDate] = useState('');
+    const [reportTeamId, setReportTeamId] = useState('');
+    const [reportRoleId, setReportRoleId] = useState('');
+    const [reportLoading, setReportLoading] = useState(false);
+    const [availableRoles, setAvailableRoles] = useState<any[]>([]);
+    const [availableTeams, setAvailableTeams] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
-    const [branding, setBranding] = useState({ name: domain.charAt(0).toUpperCase() + domain.slice(1), primaryColor: '#3b82f6' });
+    const [branding, setBranding] = useState({ 
+        name: domain.charAt(0).toUpperCase() + domain.slice(1), 
+        primaryColor: '#3b82f6',
+        logoLight: null as string | null,
+        logoDark: null as string | null,
+        favicon: null as string | null
+    });
 
     // Course Builder state
     const [showCourseModal, setShowCourseModal] = useState(false);
     const [courseFilter, setCourseFilter] = useState<'all' | 'published' | 'draft'>('all');
-    const [courseForm, setCourseForm] = useState({ title: '', description: '', thumbnail: '', skillLevel: 'All Levels', languages: 'English', captions: false });
+    const [courseForm, setCourseForm] = useState({ 
+        title: '', 
+        description: '', 
+        thumbnail: '', 
+        skillLevel: 'All Levels', 
+        languages: 'English', 
+        captions: false, 
+        isMarketplace: false, 
+        exclusiveRoleId: '', 
+        exclusiveTeamId: '',
+        certificateEnabled: false,
+        certificateTemplateId: ''
+    });
     const [selectedCourse, setSelectedCourse] = useState<any>(null);
+    const [editingTemplate, setEditingTemplate] = useState<any>(null);
+    const [availableTemplates, setAvailableTemplates] = useState<any[]>([]);
     const [newModuleTitle, setNewModuleTitle] = useState('');
     const [newLessonForms, setNewLessonForms] = useState<Record<string, { title: string; content: string; videoUrl: string; pdfUrl?: string; type: 'VIDEO' | 'PPT' | 'QUIZ' | 'TEXT'; isActive: boolean; resources: any[] }>>({});
     const [activeQuizLesson, setActiveQuizLesson] = useState<{ moduleId: string; lessonId?: string } | null>(null);
@@ -119,24 +183,147 @@ export default function ClientAdminDashboard() {
         }, 3000);
     };
 
-    // Student state
-    const [showStudentModal, setShowStudentModal] = useState(false);
-    const [studentForm, setStudentForm] = useState({ name: '', email: '', password: generateRandomPassword() });
-    const [justCreatedStudent, setJustCreatedStudent] = useState<any>(null); // To show success link
-
-    // Edit / Reset Student State
-    const [selectedStudent, setSelectedStudent] = useState<any>(null);
-    const [isEditStudentModalOpen, setIsEditStudentModalOpen] = useState(false);
-    const [editingStudent, setEditingStudent] = useState<any>(null);
-    const [resetPassword, setResetPassword] = useState('');
-    const [resettingPwd, setResettingPwd] = useState(false);
-
     // Announcement state
     const [showAnnouncementModal, setShowAnnouncementModal] = useState(false);
     const [announcementForm, setAnnouncementForm] = useState({ title: '', body: '', imageUrl: '', documentUrl: '' });
     const [selectedAnnouncement, setSelectedAnnouncement] = useState<any | null>(null);
     const [announcementPage, setAnnouncementPage] = useState(1);
     const ANNOUNCEMENTS_PER_PAGE = 5;
+    
+    // Audit state
+    const [auditLogs, setAuditLogs] = useState<any[]>([]);
+    const [auditPagination, setAuditPagination] = useState({ total: 0, pages: 1, currentPage: 1 });
+    const [auditLoading, setAuditLoading] = useState(false);
+    const [auditSearch, setAuditSearch] = useState('');
+    
+    // Audit Details State
+    const [selectedLogMetadata, setSelectedLogMetadata] = useState<any | null>(null);
+    const [insightsUserId, setInsightsUserId] = useState<string | null>(null);
+    const [insightsUser, setInsightsUser] = useState<any | null>(null);
+    const [isFetchingUserDetail, setIsFetchingUserDetail] = useState(false);
+
+    const fetchUserDetail = async (userId: string) => {
+        setIsFetchingUserDetail(true);
+        setInsightsUserId(userId);
+        try {
+            const res = await fetch(`/api/t/${domain}/admin/audit/user/${userId}`);
+            if (res.ok) {
+                const data = await res.json();
+                setInsightsUser(data);
+            }
+        } catch (e) {
+            console.error('User detail fetch error', e);
+        } finally {
+            setIsFetchingUserDetail(false);
+        }
+    };
+
+    const exportAuditLog = (log: any) => {
+        const data = JSON.stringify(log, null, 2);
+        const blob = new Blob([data], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `audit-log-${log.id}-${new Date().getTime()}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        addToast('Log exported successfully', 'success');
+    };
+
+    const fetchBranding = useCallback(async () => {
+        try {
+            const res = await fetch(`/api/t/${domain}/admin/branding`);
+            if (res.ok) {
+                const data = await res.json();
+                setBranding(data);
+            }
+        } catch (e) {
+            console.error('Fetch branding error', e);
+        }
+    }, [domain]);
+
+    const handleLogoUpload = async (file: File, type: 'logoLight' | 'logoDark' | 'favicon') => {
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        setUploadProgress(prev => ({ ...prev, [type]: 0 }));
+        
+        try {
+            // Simulate progress for smoother UI since fetch doesn't support ProgressEvent easily without XHR
+            const progressInterval = setInterval(() => {
+                setUploadProgress(prev => {
+                    const current = prev[type] || 0;
+                    if (current >= 95) {
+                        clearInterval(progressInterval);
+                        return prev;
+                    }
+                    return { ...prev, [type]: current + 5 };
+                });
+            }, 100);
+
+            const res = await fetch('/api/upload', {
+                method: 'POST',
+                body: formData
+            });
+            
+            clearInterval(progressInterval);
+            
+            if (res.ok) {
+                const data = await res.json();
+                setBranding(prev => ({ ...prev, [type]: data.url }));
+                addToast(`${type.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())} uploaded successfully`, 'success');
+            } else {
+                addToast('Upload failed', 'error');
+            }
+        } catch (e) {
+            addToast('Unexpected error during upload', 'error');
+        } finally {
+            setUploadProgress(prev => {
+                const newProgress = { ...prev };
+                delete newProgress[type];
+                return newProgress;
+            });
+        }
+    };
+
+    const handleSaveBranding = async () => {
+        try {
+            const res = await fetch(`/api/t/${domain}/admin/branding`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(branding)
+            });
+            
+            if (res.ok) {
+                addToast('Branding settings saved', 'success');
+            } else {
+                const err = await res.json();
+                addToast(err.error || 'Failed to save branding', 'error');
+            }
+        } catch (e) {
+            addToast('Unexpected error saving branding', 'error');
+        }
+    };
+
+    const fetchAuditLogs = useCallback(async (page = 1, search = '') => {
+        setAuditLoading(true);
+        try {
+            const params = new URLSearchParams();
+            params.set('page', page.toString());
+            if (search) params.set('search', search);
+
+            const res = await fetch(`/api/t/${domain}/admin/audit?${params}`);
+            if (res.ok) {
+                const data = await res.json();
+                setAuditLogs(data.logs);
+                setAuditPagination(data.pagination);
+            }
+        } catch (e) {
+            addToast('Failed to fetch audit logs', 'error');
+        } finally {
+            setAuditLoading(false);
+        }
+    }, [domain]);
 
     const handleUpdateProfile = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -149,7 +336,7 @@ export default function ClientAdminDashboard() {
 
         setIsUpdatingProfile(true);
         try {
-            const res = await fetch(`/api/t/${domain}/student/profile`, {
+            const res = await fetch(`/api/t/${domain}/learner/profile`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -164,7 +351,7 @@ export default function ClientAdminDashboard() {
                 setShowProfileModal(false);
                 setProfileForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
                 // Refresh profile data
-                const profileRes = await fetch(`/api/t/${domain}/student/profile?userId=${userId}`);
+                const profileRes = await fetch(`/api/t/${domain}/learner/profile?userId=${userId}`);
                 if (profileRes.ok) {
                     const profileData = await profileRes.json();
                     setUserName(profileData.name || 'Admin');
@@ -192,7 +379,7 @@ export default function ClientAdminDashboard() {
             const { user } = await sessionRes.json();
             
             // Double check role
-            if (user.role === 'STUDENT') {
+            if (user.role === 'LEARNER') {
                 router.push(`/t/${domain}/dashboard`);
                 return;
             }
@@ -201,41 +388,68 @@ export default function ClientAdminDashboard() {
             setUserName(user.name || 'Admin');
             setUserEmail(user.email || '');
 
-            const [coursesRes, studentsRes, announcementsRes, statsRes] = await Promise.all([
+            const [statsRes, coursesRes, annRes, rolesRes, teamsRes, certsRes] = await Promise.all([
+                fetch(`/api/t/${domain}/admin/stats`),
                 fetch(`/api/t/${domain}/courses`),
-                fetch(`/api/t/${domain}/students`),
                 fetch(`/api/t/${domain}/announcements`),
-                fetch(`/api/t/${domain}/admin/stats`)
-            ]);
-            const [c, s, a, st] = await Promise.all([
-                coursesRes.json(),
-                studentsRes.json(),
-                announcementsRes.json(),
-                statsRes.json()
+                fetch(`/api/t/${domain}/roles`),
+                fetch(`/api/t/${domain}/teams`),
+                fetch(`/api/t/${domain}/certificates`)
             ]);
 
-            setCourses(Array.isArray(c) ? c : []);
-            setStudents(Array.isArray(s) ? s : []);
-            setAnnouncements(Array.isArray(a) ? a : []);
-
-            if (st.stats) {
-                setStats(st.stats);
-                setRecentActivity(st.recentActivity || []);
-                setCoursePerformance(st.coursePerformance || []);
-            } else {
-                // Fallback for students/courses count if stats API fails
-                setStats(prev => ({
-                    ...prev,
-                    students: (Array.isArray(s) ? s : []).length,
-                    courses: (Array.isArray(c) ? c : []).length
-                }));
+            if (statsRes.ok) {
+                const data = await statsRes.json();
+                setStats(data.stats);
+                setRecentActivity(data.recentActivity || []);
+                setCoursePerformance(data.coursePerformance || []);
+                setTeamPerformance(data.teamPerformance || []);
+                setTopLearners(data.topLearners || []);
+                setEnrollmentTrendData(data.enrollmentTrendData || []);
+                setRoleDistribution(data.roleDistribution || []);
             }
+            if (coursesRes.ok) setCourses(await coursesRes.json());
+            if (annRes.ok) setAnnouncements(await annRes.json());
+            if (rolesRes.ok) setAvailableRoles(await rolesRes.json());
+            if (teamsRes.ok) setAvailableTeams(await teamsRes.json());
+            if (certsRes.ok) setAvailableTemplates(await certsRes.json());
+
         } catch (e) {
             console.error(e);
         } finally {
             setLoading(false);
         }
     }, [domain, router]);
+
+    const fetchAvailableTemplates = async () => {
+        try {
+            const res = await fetch(`/api/t/${domain}/certificates`);
+            if (res.ok) setAvailableTemplates(await res.json());
+        } catch (e) {
+            console.error(e);
+        }
+    };
+
+    const fetchReportStats = useCallback(async (startDate: string, endDate: string, teamId: string, roleId: string) => {
+        setReportLoading(true);
+        try {
+            const params = new URLSearchParams();
+            if (startDate) params.set('startDate', startDate);
+            if (endDate) params.set('endDate', endDate);
+            if (teamId) params.set('teamId', teamId);
+            if (roleId) params.set('roleId', roleId);
+            const res = await fetch(`/api/t/${domain}/admin/stats?${params}`);
+            if (res.ok) {
+                const data = await res.json();
+                setStats(data.stats);
+                setCoursePerformance(data.coursePerformance || []);
+                setTeamPerformance(data.teamPerformance || []);
+                setTopLearners(data.topLearners || []);
+                setEnrollmentTrendData(data.enrollmentTrendData || []);
+                setRoleDistribution(data.roleDistribution || []);
+            }
+        } catch (e) { console.error(e); }
+        finally { setReportLoading(false); }
+    }, [domain]);
 
     const [sharingSettings, setSharingSettings] = useState({ allowSelfRegistration: false, supportEmail: '' });
     const [isUploadingThumbnail, setIsUploadingThumbnail] = useState(false);
@@ -294,6 +508,44 @@ export default function ClientAdminDashboard() {
         return () => clearInterval(interval);
     }, [selectedCourse?.id, selectedCourse?.modules, domain, activeTab, fetchAll]);
 
+    const [brandingFetched, setBrandingFetched] = useState(false);
+
+    // Fetch branding data once on initial mount to ensure sidebar is branded
+    useEffect(() => {
+        fetchBranding();
+    }, [fetchBranding]);
+
+    useEffect(() => {
+        if (activeTab === 'audit') {
+            fetchAuditLogs(1, auditSearch);
+        }
+    }, [activeTab, fetchAuditLogs, auditSearch]);
+
+    // Use debounced search for audit
+    useEffect(() => {
+        if (activeTab !== 'audit') return;
+        const timer = setTimeout(() => {
+            fetchAuditLogs(1, auditSearch);
+        }, 500);
+        return () => clearTimeout(timer);
+    }, [auditSearch]);
+
+    // Update platform identity (Title & Favicon)
+    useEffect(() => {
+        if (branding.name) {
+            document.title = `${branding.name} | Admin Portal`;
+        }
+        if (branding.favicon) {
+            let link: HTMLLinkElement | null = document.querySelector("link[rel~='icon']");
+            if (!link) {
+                link = document.createElement('link');
+                link.rel = 'icon';
+                document.getElementsByTagName('head')[0].appendChild(link);
+            }
+            link.href = branding.favicon;
+        }
+    }, [branding.name, branding.favicon]);
+
     const createCourse = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!courseForm.title.trim()) {
@@ -310,7 +562,19 @@ export default function ClientAdminDashboard() {
             });
             if (res.ok) {
                 setShowCourseModal(false);
-                setCourseForm({ title: '', description: '', thumbnail: '', skillLevel: 'All Levels', languages: 'English', captions: false });
+                setCourseForm({ 
+                    title: '', 
+                    description: '', 
+                    thumbnail: '', 
+                    skillLevel: 'All Levels', 
+                    languages: 'English', 
+                    captions: false, 
+                    isMarketplace: false, 
+                    exclusiveRoleId: '', 
+                    exclusiveTeamId: '',
+                    certificateEnabled: false,
+                    certificateTemplateId: ''
+                });
                 setThumbnailPreview(null);
                 fetchAll();
                 addToast('Course created successfully');
@@ -320,6 +584,29 @@ export default function ClientAdminDashboard() {
         } catch (e) {
             console.error(e);
             addToast('Error saving course', 'error');
+        }
+    };
+
+    const updateCourse = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!selectedCourse) return;
+        try {
+            const res = await fetch(`/api/t/${domain}/courses`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ...courseForm, id: selectedCourse.id })
+            });
+            if (res.ok) {
+                const updated = await res.json();
+                setSelectedCourse({ ...selectedCourse, ...updated });
+                setShowCourseModal(false);
+                fetchAll();
+                addToast('Course updated successfully');
+            } else {
+                addToast('Failed to update course', 'error');
+            }
+        } catch (e) {
+            addToast('Error updating course', 'error');
         }
     };
 
@@ -684,7 +971,7 @@ export default function ClientAdminDashboard() {
                 }
             } else if (resDel.status === 409) {
                 const errorData = await resDel.json();
-                if (await askConfirmation('Deactivate Lesson?', errorData.error + ' Would you like to deactivate it instead to hide it from students?', 'info')) {
+                if (await askConfirmation('Deactivate Lesson?', errorData.error + ' Would you like to deactivate it instead to hide it from learners?', 'info')) {
                     const mod = selectedCourse.modules.find((m: any) => m.id === moduleId);
                     const lesson = mod?.lessons?.find((l: any) => l.id === lessonId);
                     if (lesson) toggleLessonStatus(moduleId, lesson);
@@ -885,7 +1172,7 @@ export default function ClientAdminDashboard() {
             } else {
                 const data = await resDelete.json();
                 if (resDelete.status === 409) {
-                    if (await askConfirmation('Deactivate Module?', 'This module cannot be deleted because students have already started or completed it. Would you like to deactivate it instead to hide it from students?', 'info')) {
+                    if (await askConfirmation('Deactivate Module?', 'This module cannot be deleted because learners have already started or completed it. Would you like to deactivate it instead to hide it from learners?', 'info')) {
                         const mod = selectedCourse.modules.find((m: any) => m.id === moduleId);
                         if (mod) toggleModuleStatus(mod);
                     }
@@ -968,139 +1255,6 @@ export default function ClientAdminDashboard() {
         }
     };
 
-    const createStudent = async (e: React.FormEvent) => {
-        e.preventDefault();
-
-        // Validation
-        const errors: Record<string, string> = {};
-        if (!studentForm.name.trim()) errors.name = 'Name is required';
-        if (!studentForm.email.trim()) errors.email = 'Email is required';
-        if (!studentForm.password.trim()) errors.password = 'Password is required';
-
-        if (Object.keys(errors).length > 0) {
-            setValidationErrors(prev => ({ ...prev, student: errors }));
-            return;
-        }
-        setValidationErrors(prev => ({ ...prev, student: null }));
-
-        try {
-            const res = await fetch(`/api/t/${domain}/students`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(studentForm)
-            });
-            if (res.ok) {
-                setJustCreatedStudent({ ...studentForm });
-                fetchAll();
-                addToast('Student created successfully');
-            } else {
-                addToast('Failed to create student', 'error');
-            }
-        } catch (e) {
-            console.error(e);
-            addToast('Error saving student', 'error');
-        }
-    };
-
-    const deleteStudent = async (studentId: string) => {
-        if (!(await askConfirmation('Delete Student?', 'Are you sure you want to permanently delete this student? All their progress and data will be lost.'))) return;
-        
-        try {
-            const res = await fetch(`/api/t/${domain}/students?studentId=${studentId}`, {
-                method: 'DELETE'
-            });
-            if (res.ok) {
-                addToast('Student deleted successfully');
-                fetchAll();
-            } else {
-                addToast('Failed to delete student', 'error');
-            }
-        } catch (e) {
-            console.error(e);
-            addToast('Error deleting student', 'error');
-        }
-    };
-
-    const updateStudent = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!editingStudent) return;
-
-        try {
-            const res = await fetch(`/api/t/${domain}/students`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    studentId: editingStudent.id,
-                    name: editingStudent.name,
-                    email: editingStudent.email
-                })
-            });
-            if (res.ok) {
-                setIsEditStudentModalOpen(false);
-                setEditingStudent(null);
-                fetchAll();
-                addToast('Student updated successfully');
-            } else {
-                addToast('Failed to update student', 'error');
-            }
-        } catch (e) {
-            console.error(e);
-            addToast('Error updating student', 'error');
-        }
-    };
-
-    const toggleStudentStatus = async (student: any) => {
-        const originalStatus = student.isActive !== false;
-        const newStatus = !originalStatus;
-
-        // Optimistic Update
-        setStudents(prev => prev.map(s => s.id === student.id ? { ...s, isActive: newStatus } : s));
-        if (selectedStudent?.id === student.id) {
-            setSelectedStudent({ ...selectedStudent, isActive: newStatus });
-        }
-
-        try {
-            const res = await fetch(`/api/t/${domain}/students`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ studentId: student.id, isActive: newStatus })
-            });
-
-            if (!res.ok) throw new Error();
-            addToast(`Student ${newStatus ? 'activated' : 'deactivated'} successfully`);
-        } catch (e) {
-            // Rollback
-            setStudents(prev => prev.map(s => s.id === student.id ? { ...s, isActive: originalStatus } : s));
-            if (selectedStudent?.id === student.id) {
-                setSelectedStudent({ ...selectedStudent, isActive: originalStatus });
-            }
-            addToast('Failed to update student status', 'error');
-        }
-    };
-
-    const handlePasswordReset = async () => {
-        if (!selectedStudent) return;
-        setResettingPwd(true);
-        const newPass = Math.random().toString(36).slice(-8);
-        try {
-            const res = await fetch(`/api/t/${domain}/students`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ studentId: selectedStudent.id, newPassword: newPass })
-            });
-            if (res.ok) {
-                setResetPassword(newPass);
-                addToast('Password reset successful');
-            } else {
-                addToast('Failed to reset password', 'error');
-            }
-        } catch (e) {
-            addToast('Error resetting password', 'error');
-        } finally {
-            setResettingPwd(false);
-        }
-    };
-
     const createAnnouncement = async (e: React.FormEvent) => {
         e.preventDefault();
 
@@ -1146,12 +1300,22 @@ export default function ClientAdminDashboard() {
             {/* Sidebar */}
             <aside className="w-64 border-r border-border bg-secondary/10 p-6 flex flex-col gap-8 sticky top-0 h-screen">
                 <div className="flex items-center gap-3 px-2">
-                    <div className="w-8 h-8 rounded-lg flex items-center justify-center font-black text-white text-sm" style={{ backgroundColor: branding.primaryColor }}>
-                        {branding.name.charAt(0)}
-                    </div>
-                    <div>
-                        <p className="font-bold text-sm leading-tight">{branding.name}</p>
-                        <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Admin Portal</p>
+                    {(branding.logoDark || branding.logoLight) ? (
+                        <div className="h-14 w-auto min-w-[3rem] flex items-center justify-center bg-transparent">
+                            <img 
+                                src={mounted ? (resolvedTheme === 'dark' ? (branding.logoDark || branding.logoLight) : (branding.logoLight || branding.logoDark)) : (branding.logoDark || branding.logoLight)} 
+                                alt={branding.name} 
+                                className="h-full w-auto object-contain"
+                            />
+                        </div>
+                    ) : (
+                        <div className="w-10 h-10 rounded-lg flex items-center justify-center font-black text-white text-sm" style={{ backgroundColor: branding.primaryColor }}>
+                            {branding.name.charAt(0)}
+                        </div>
+                    )}
+                    <div className="min-w-0">
+                        <p className="font-bold text-sm leading-tight truncate">{branding.name}</p>
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-widest truncate">Admin Portal</p>
                     </div>
                 </div>
 
@@ -1159,13 +1323,16 @@ export default function ClientAdminDashboard() {
                     {([
                         ['overview', 'Overview', LayoutDashboard],
                         ['courses', 'Courses', BookOpen],
-                        ['students', 'Students', Users],
+                        ['learners', 'Learners', Users],
+                        ['roles', 'Job Roles', Shield],
+                        ['teams', 'Teams', UsersRound],
                         ['announcements', 'Announcements', Megaphone],
                         ['branding', 'Branding', Palette],
                         ['domains', 'Domains', Globe],
                         ['settings', 'Settings', Settings],
                         ['certificates', 'Certificates', Award],
                         ['reports', 'Reports', BarChart3],
+                        ['audit', 'Audit Monitor', Shield],
                     ] as [Tab, string, any][]).map(([tab, label, Icon]) => (
                         <button key={tab} onClick={() => { setActiveTab(tab); setSelectedCourse(null); }}
                             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === tab ? 'bg-primary/10 text-primary border border-primary/20' : 'text-muted-foreground hover:bg-secondary/50 hover:text-foreground'}`}>
@@ -1177,7 +1344,7 @@ export default function ClientAdminDashboard() {
                 </nav>
 
                 <button onClick={() => window.open(`/t/${domain}/dashboard`, '_blank')} className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-muted-foreground hover:text-foreground border border-border hover:bg-secondary/50 transition-all">
-                    <Eye size={14} /> Preview as Student
+                    <Eye size={14} /> Preview as Learner
                 </button>
             </aside>
 
@@ -1191,15 +1358,6 @@ export default function ClientAdminDashboard() {
                         {activeTab === 'courses' && !selectedCourse && (
                             <button onClick={() => setShowCourseModal(true)} className="px-4 py-2 bg-primary text-primary-foreground rounded-xl font-bold text-sm flex items-center gap-2 hover:opacity-90 transition-opacity whitespace-nowrap">
                                 <Plus size={16} /> New Course
-                            </button>
-                        )}
-                        {activeTab === 'students' && (
-                            <button onClick={() => {
-                                const pass = Math.random().toString(36).slice(-8);
-                                setStudentForm({ ...studentForm, password: pass });
-                                setShowStudentModal(true);
-                            }} className="px-4 py-2 bg-primary text-primary-foreground rounded-xl font-bold text-sm flex items-center gap-2 hover:opacity-90 whitespace-nowrap">
-                                <Plus size={16} /> Add Student
                             </button>
                         )}
                         {activeTab === 'announcements' && (
@@ -1239,7 +1397,7 @@ export default function ClientAdminDashboard() {
                     <div className="space-y-8 animate-in fade-in duration-500">
                         <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
                             {[
-                                { label: 'Students', value: stats.students, icon: Users, color: 'blue' },
+                                { label: 'Learners', value: stats.learners, icon: Users, color: 'blue' },
                                 { label: 'Courses', value: stats.courses, icon: BookOpen, color: 'purple' },
                                 { label: 'Enrollments', value: stats.enrollments, icon: UserCheck, color: 'emerald' },
                                 { label: 'Completion', value: `${stats.completionRate}%`, icon: CheckCircle, color: 'emerald' },
@@ -1304,6 +1462,26 @@ export default function ClientAdminDashboard() {
                                         <p className="text-sm text-muted-foreground">{selectedCourse.description}</p>
                                     </div>
                                     <div className="flex flex-wrap gap-2">
+                                        <button onClick={() => {
+                                            setCourseForm({
+                                                title: selectedCourse.title,
+                                                description: selectedCourse.description || '',
+                                                thumbnail: selectedCourse.thumbnail || '',
+                                                skillLevel: selectedCourse.skillLevel || 'All Levels',
+                                                languages: selectedCourse.languages || 'English',
+                                                captions: selectedCourse.captions || false,
+                                                isMarketplace: selectedCourse.isMarketplace || false,
+                                                exclusiveRoleId: selectedCourse.exclusiveRoleId || '',
+                                                exclusiveTeamId: selectedCourse.exclusiveTeamId || '',
+                                                certificateEnabled: selectedCourse.certificateEnabled || false,
+                                                certificateTemplateId: selectedCourse.certificateTemplateId || ''
+                                            });
+                                            setThumbnailPreview(selectedCourse.thumbnail || null);
+                                            setShowCourseModal(true);
+                                        }}
+                                            className="px-4 py-2 rounded-xl font-bold text-xs bg-primary/10 border border-primary/20 text-primary hover:bg-primary/20 transition-all flex items-center gap-2">
+                                            <Settings size={14} /> Course Settings
+                                        </button>
                                         <button onClick={() => fetchCourseStats(selectedCourse.id)}
                                             className="px-4 py-2 rounded-xl font-bold text-xs bg-primary/10 border border-primary/20 text-primary hover:bg-primary/20 transition-all flex items-center gap-2">
                                             <BarChart3 size={14} /> Course Statistics
@@ -1344,20 +1522,20 @@ export default function ClientAdminDashboard() {
 
                                         <div className="glassmorphism rounded-2xl border border-border/50 overflow-hidden">
                                             <div className="p-4 bg-secondary/20 border-b border-border/50">
-                                                <h4 className="text-sm font-bold flex items-center gap-2"><Users size={14} /> Student Progress Detail</h4>
+                                                <h4 className="text-sm font-bold flex items-center gap-2"><Users size={14} /> Learner Progress Detail</h4>
                                             </div>
                                             <div className="overflow-x-auto">
                                                 <table className="w-full text-left text-sm">
                                                     <thead>
                                                         <tr className="text-muted-foreground border-b border-border/50">
-                                                            <th className="p-4 font-bold">Student</th>
+                                                            <th className="p-4 font-bold">Learner</th>
                                                             <th className="p-4 font-bold">Progress</th>
                                                             <th className="p-4 font-bold">Time Taken</th>
                                                             <th className="p-4 font-bold">Status</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody className="divide-y divide-border/50">
-                                                        {courseStats.studentStats.map((s: any) => (
+                                                        {courseStats.learnerStats.map((s: any) => (
                                                             <tr key={s.userId} className="hover:bg-white/[0.02] transition-colors">
                                                                 <td className="p-4">
                                                                     <div className="font-bold">{s.name}</div>
@@ -1871,6 +2049,18 @@ export default function ClientAdminDashboard() {
                                                     ) : (
                                                         <BookOpen className="w-12 h-12 text-blue-400 opacity-40 group-hover:scale-110 transition-transform duration-500" />
                                                     )}
+                                                    <div className="absolute top-3 left-3 flex flex-col gap-1.5 pointer-events-none">
+                                                        {course.exclusiveRole && (
+                                                            <span className="px-2 py-1 text-[10px] font-black uppercase rounded-lg bg-indigo-500/20 border border-indigo-500/30 text-indigo-400 backdrop-blur-md flex items-center gap-1 shadow-2xl">
+                                                                <Lock size={10} /> Exclusive: {course.exclusiveRole.name}
+                                                            </span>
+                                                        )}
+                                                        {course.exclusiveTeam && (
+                                                            <span className="px-2 py-1 text-[10px] font-black uppercase rounded-lg bg-cyan-500/20 border border-cyan-500/30 text-cyan-400 backdrop-blur-md flex items-center gap-1 shadow-2xl">
+                                                                <UsersRound size={10} /> Team: {course.exclusiveTeam.name}
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                     <div className="absolute top-3 right-3">
                                                         <span className={`px-2 py-1 text-[10px] font-black uppercase rounded-full border ${course.isPublished ? 'bg-emerald-500/20 border-emerald-500/30 text-emerald-400' : 'bg-orange-500/20 border-orange-500/30 text-orange-400'}`}>
                                                             {course.isPublished ? 'Published' : 'Draft'}
@@ -1902,94 +2092,9 @@ export default function ClientAdminDashboard() {
                     </div>
                 )}
 
-                {/* ── STUDENTS ── */}
-                {activeTab === 'students' && (
-                    <div className="space-y-6 animate-in fade-in duration-500">
-                        <div className="glassmorphism rounded-2xl overflow-hidden border border-border/50">
-                            <table className="w-full text-left">
-                                <thead>
-                                    <tr className="bg-secondary/20 border-b border-border/50">
-                                        <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest text-muted-foreground">Learner</th>
-                                        <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest text-muted-foreground">Email</th>
-                                        <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest text-muted-foreground">Joined</th>
-                                        <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest text-muted-foreground">Activity</th>
-                                        <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest text-muted-foreground">Status</th>
-                                        <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest text-muted-foreground">Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-border/50">
-                                    {students.length === 0 ? (
-                                        <tr><td colSpan={6} className="py-16 text-center text-muted-foreground italic">No students enrolled yet.</td></tr>
-                                    ) : students.map(s => (
-                                        <tr key={s.id} className={`hover:bg-secondary/10 transition-colors ${s.isActive === false ? 'opacity-60 bg-secondary/5' : ''}`}>
-                                            <td className="px-6 py-4">
-                                                <div className="flex items-center gap-3">
-                                                    <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm ${s.isActive === false ? 'bg-secondary text-muted-foreground' : 'bg-blue-500/20 text-blue-400'}`}>
-                                                        {s.name?.charAt(0) || 'S'}
-                                                    </div>
-                                                    <div>
-                                                        <span className={`font-bold block ${s.isActive === false ? 'line-through' : ''}`}>{s.name}</span>
-                                                        {s.isActive === false && <span className="text-[9px] font-black uppercase text-red-400 tracking-wider">Account Deactivated</span>}
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4 text-sm text-muted-foreground">{s.email}</td>
-                                            <td className="px-6 py-4 text-sm text-muted-foreground">{new Date(s.createdAt).toLocaleDateString()}</td>
-                                            <td className="px-6 py-4 text-sm">
-                                                <div className="flex flex-col gap-1">
-                                                    <span className="font-bold text-foreground text-xs">{s.enrollments?.length || 0} Enrollments</span>
-                                                    {s.enrollments?.length > 0 && (
-                                                        <div className="flex gap-1">
-                                                            <span className="text-[10px] bg-emerald-500/10 text-emerald-500 px-1.5 rounded-full font-bold">
-                                                                {s.progress?.filter((p: any) => p.completed).length || 0} Lessons Done
-                                                            </span>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <div
-                                                    onClick={(e) => { e.stopPropagation(); toggleStudentStatus(s); }}
-                                                    className="inline-flex items-center gap-2 cursor-pointer group"
-                                                >
-                                                    <div className={`w-10 h-5 rounded-full p-0.5 transition-colors relative ${s.isActive !== false ? 'bg-emerald-500/20' : 'bg-secondary'}`}>
-                                                        <div className={`w-4 h-4 rounded-full shadow-sm transition-all ${s.isActive !== false ? 'translate-x-5 bg-emerald-400' : 'bg-muted-foreground'}`} />
-                                                    </div>
-                                                    <span className={`text-[10px] font-black uppercase tracking-widest ${s.isActive !== false ? 'text-emerald-400' : 'text-muted-foreground opacity-50'}`}>
-                                                        {s.isActive !== false ? 'Active' : 'Inactive'}
-                                                    </span>
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <div className="flex items-center gap-2">
-                                                    <button
-                                                        onClick={() => { setSelectedStudent(s); setResetPassword(''); }}
-                                                        className="px-3 py-1.5 rounded-lg bg-primary/10 border border-primary/20 text-primary hover:bg-primary/20 transition-all flex items-center gap-1.5 text-[10px] font-bold uppercase"
-                                                    >
-                                                        <BarChart3 size={12} /> Insights
-                                                    </button>
-                                                    <button
-                                                        onClick={() => { setEditingStudent(s); setIsEditStudentModalOpen(true); }}
-                                                        className="p-1.5 rounded-lg bg-secondary/50 border border-border/50 text-muted-foreground hover:text-primary hover:border-primary/30 transition-all"
-                                                        title="Edit Student"
-                                                    >
-                                                        <Edit3 size={14} />
-                                                    </button>
-                                                    <button
-                                                        onClick={() => deleteStudent(s.id)}
-                                                        className="p-1.5 rounded-lg bg-secondary/50 border border-border/50 text-muted-foreground hover:text-red-400 hover:border-red-400/30 transition-all"
-                                                        title="Delete Student"
-                                                    >
-                                                        <Trash2 size={14} />
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+                {/* ── LEARNERS ── */}
+                {activeTab === 'learners' && (
+                    <LearnersManager domain={domain} addToast={addToast} />
                 )}
 
                 {/* ── ANNOUNCEMENTS ── */}
@@ -1999,7 +2104,7 @@ export default function ClientAdminDashboard() {
                             <div className="text-center py-20">
                                 <Megaphone className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-20" />
                                 <p className="font-bold text-lg">No announcements posted</p>
-                                <p className="text-muted-foreground text-sm">Post a message and all students will see it.</p>
+                                <p className="text-muted-foreground text-sm">Post a message and all learners will see it.</p>
                             </div>
                         ) : (() => {
                             const totalPages = Math.ceil(announcements.length / ANNOUNCEMENTS_PER_PAGE);
@@ -2058,110 +2163,541 @@ export default function ClientAdminDashboard() {
                     </div>
                 )}
 
-                {/* ── REPORTS ── */}
-                {activeTab === 'reports' && (
-                    <div className="space-y-8 animate-in fade-in duration-500">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <div className="p-6 rounded-2xl glassmorphism border border-border/50 shadow-xl">
-                                <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">Completion Rate</p>
-                                <p className="text-3xl font-black text-emerald-400">{stats.completionRate}%</p>
-                                <div className="w-full h-1.5 bg-secondary/30 rounded-full mt-4 overflow-hidden">
-                                    <div className="h-full bg-emerald-500" style={{ width: `${stats.completionRate}%` }} />
-                                </div>
+                {activeTab === 'roles' && (
+                    <RolesManager domain={domain as string} addToast={addToast} />
+                )}
+
+                {activeTab === 'teams' && (
+                    <TeamsManager domain={domain as string} addToast={addToast} />
+                )}
+
+                {activeTab === 'reports' && (() => {
+                    const CHART_COLORS = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#ec4899'];
+                    return (
+                    <div className="space-y-6 animate-in fade-in duration-500 pb-10">
+
+                        {/* ── Filter Bar ── */}
+                        <div className="glassmorphism rounded-2xl border border-border/50 p-4 flex flex-col lg:flex-row items-start lg:items-center gap-4 flex-wrap">
+                            <div className="flex items-center gap-2 text-muted-foreground font-bold text-sm shrink-0">
+                                <Filter size={16} /> Filters
                             </div>
-                            <div className="p-6 rounded-2xl glassmorphism border border-border/50 shadow-xl">
-                                <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">Avg Progress</p>
-                                <p className="text-3xl font-black text-orange-400">{stats.avgProgress}%</p>
-                                <div className="w-full h-1.5 bg-secondary/30 rounded-full mt-4 overflow-hidden">
-                                    <div className="h-full bg-orange-500" style={{ width: `${stats.avgProgress}%` }} />
+                            <div className="flex items-center gap-2 flex-wrap flex-1">
+                                <div className="flex items-center gap-2 bg-secondary/40 border border-border/50 rounded-xl px-3 py-2">
+                                    <Calendar size={14} className="text-muted-foreground" />
+                                    <input type="date" value={reportStartDate} onChange={e => setReportStartDate(e.target.value)}
+                                        className="bg-transparent text-sm focus:outline-none w-32" />
+                                    <span className="text-muted-foreground text-xs">to</span>
+                                    <input type="date" value={reportEndDate} onChange={e => setReportEndDate(e.target.value)}
+                                        className="bg-transparent text-sm focus:outline-none w-32" />
                                 </div>
+                                <select value={reportTeamId} onChange={e => { setReportTeamId(e.target.value); setReportRoleId(''); }}
+                                    className="bg-secondary/40 border border-border/50 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50">
+                                    <option value="">All Teams</option>
+                                    {availableTeams.map((t: any) => <option key={t.id} value={t.id}>{t.name}</option>)}
+                                </select>
+                                <select value={reportRoleId} onChange={e => { setReportRoleId(e.target.value); setReportTeamId(''); }}
+                                    className="bg-secondary/40 border border-border/50 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50">
+                                    <option value="">All Roles</option>
+                                    {availableRoles.map((r: any) => <option key={r.id} value={r.id}>{r.name}</option>)}
+                                </select>
+                                <button onClick={() => fetchReportStats(reportStartDate, reportEndDate, reportTeamId, reportRoleId)}
+                                    className="px-4 py-2 bg-primary text-primary-foreground font-bold rounded-xl text-sm hover:opacity-90 transition-all flex items-center gap-2">
+                                    {reportLoading ? <Loader2 size={14} className="animate-spin" /> : <Activity size={14} />}
+                                    Apply
+                                </button>
+                                {(reportStartDate || reportEndDate || reportTeamId || reportRoleId) && (
+                                    <button onClick={() => { setReportStartDate(''); setReportEndDate(''); setReportTeamId(''); setReportRoleId(''); fetchReportStats('', '', '', ''); }}
+                                        className="text-xs font-bold text-red-400 hover:text-red-300 px-2">
+                                        Clear
+                                    </button>
+                                )}
                             </div>
-                            <div className="p-6 rounded-2xl glassmorphism border border-border/50 shadow-xl">
-                                <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">Avg Quiz Score</p>
-                                <p className="text-3xl font-black text-blue-400">{stats.avgQuizScore}%</p>
-                                <div className="w-full h-1.5 bg-secondary/30 rounded-full mt-4 overflow-hidden">
-                                    <div className="h-full bg-blue-500" style={{ width: `${stats.avgQuizScore}%` }} />
+                            {reportLoading && <span className="text-xs text-muted-foreground animate-pulse">Updating…</span>}
+                        </div>
+
+                        {/* ── KPI Cards ── */}
+                        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
+                            {[
+                                { label: 'Learners', value: stats.learners, icon: Users2, color: 'blue' },
+                                { label: 'Courses', value: stats.courses, icon: BookOpen, color: 'purple' },
+                                { label: 'Enrollments', value: stats.enrollments, icon: Target, color: 'cyan' },
+                                { label: 'Completions', value: stats.completions ?? 0, icon: CheckCircle, color: 'emerald' },
+                                { label: 'Completion Rate', value: `${stats.completionRate}%`, icon: TrendingUp, color: 'green' },
+                                { label: 'Avg Progress', value: `${stats.avgProgress}%`, icon: BarChart3, color: 'orange' },
+                            ].map(({ label, value, icon: Icon, color }) => (
+                                <div key={label} className={`glassmorphism p-4 rounded-2xl border border-${color}-500/20 hover:border-${color}-500/40 transition-colors`}>
+                                    <div className={`w-8 h-8 rounded-xl bg-${color}-500/10 text-${color}-400 flex items-center justify-center mb-3`}>
+                                        <Icon size={16} />
+                                    </div>
+                                    <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{label}</p>
+                                    <p className="text-2xl font-black mt-0.5">{value}</p>
                                 </div>
+                            ))}
+                        </div>
+
+                        {/* ── Charts Row ── */}
+                        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                            {/* Enrollment Trend */}
+                            <div className="xl:col-span-2 glassmorphism rounded-2xl border border-border/50 p-6">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="font-bold flex items-center gap-2 text-sm uppercase tracking-widest text-muted-foreground">
+                                        <TrendingUp size={14} className="text-blue-400" /> Enrollment Trend (6 months)
+                                    </h3>
+                                </div>
+                                {enrollmentTrendData.length > 0 ? (
+                                    <ResponsiveContainer width="100%" height={200}>
+                                        <AreaChart data={enrollmentTrendData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+                                            <defs>
+                                                <linearGradient id="enrollGrad" x1="0" y1="0" x2="0" y2="1">
+                                                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
+                                                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                                                </linearGradient>
+                                            </defs>
+                                            <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" />
+                                            <XAxis dataKey="date" stroke="#ffffff40" fontSize={11} tickLine={false} axisLine={false} />
+                                            <YAxis stroke="#ffffff40" fontSize={11} tickLine={false} axisLine={false} />
+                                            <Tooltip contentStyle={{ backgroundColor: '#09090b', borderRadius: '12px', borderColor: '#ffffff15', fontSize: 12 }} cursor={{ fill: '#ffffff05' }} />
+                                            <Area type="monotone" dataKey="enrollments" name="New Enrollments" stroke="#3b82f6" fill="url(#enrollGrad)" strokeWidth={2} dot={false} />
+                                        </AreaChart>
+                                    </ResponsiveContainer>
+                                ) : (
+                                    <div className="h-48 flex items-center justify-center text-muted-foreground text-sm italic">No enrollment data in the last 6 months</div>
+                                )}
+                            </div>
+
+                            {/* Role Distribution */}
+                            <div className="glassmorphism rounded-2xl border border-border/50 p-6">
+                                <h3 className="font-bold flex items-center gap-2 text-sm uppercase tracking-widest text-muted-foreground mb-4">
+                                    <Users2 size={14} className="text-purple-400" /> Role Distribution
+                                </h3>
+                                {roleDistribution.filter(r => r.value > 0).length > 0 ? (
+                                    <>
+                                        <ResponsiveContainer width="100%" height={140}>
+                                            <PieChart>
+                                                <Pie data={roleDistribution.filter(r => r.value > 0)} cx="50%" cy="50%" innerRadius={40} outerRadius={65} dataKey="value" paddingAngle={4}>
+                                                    {roleDistribution.filter(r => r.value > 0).map((_: any, i: number) => (
+                                                        <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
+                                                    ))}
+                                                </Pie>
+                                                <Tooltip contentStyle={{ backgroundColor: '#09090b', borderRadius: '12px', borderColor: '#ffffff15', fontSize: 11 }} />
+                                            </PieChart>
+                                        </ResponsiveContainer>
+                                        <div className="mt-2 space-y-1.5">
+                                            {roleDistribution.filter(r => r.value > 0).map((r: any, i: number) => (
+                                                <div key={r.name} className="flex items-center justify-between text-xs">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }} />
+                                                        <span className="text-muted-foreground font-medium truncate max-w-[100px]">{r.name}</span>
+                                                    </div>
+                                                    <span className="font-bold">{r.value}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div className="h-48 flex items-center justify-center text-muted-foreground text-sm italic">No roles assigned</div>
+                                )}
                             </div>
                         </div>
 
-                        <div className="glassmorphism rounded-3xl border border-border/50 overflow-hidden shadow-2xl">
-                            <div className="p-6 border-b border-border/50 flex justify-between items-center bg-secondary/10">
-                                <h3 className="font-bold flex items-center gap-2 text-lg"><BarChart3 size={20} className="text-primary" /> Course Performance Report</h3>
-                                <button className="px-4 py-2 bg-secondary/50 hover:bg-secondary border border-border/50 rounded-xl text-xs font-bold flex items-center gap-2 transition-all">
-                                    <Upload size={14} className="rotate-180" /> Export CSV
+                        {/* ── Course Performance ── */}
+                        <div className="glassmorphism rounded-2xl border border-border/50 overflow-hidden">
+                            <div className="p-5 border-b border-border/50 flex justify-between items-center bg-secondary/10">
+                                <h3 className="font-bold flex items-center gap-2 text-sm uppercase tracking-widest text-muted-foreground">
+                                    <BarChart3 size={14} className="text-primary" /> Course Performance
+                                </h3>
+                                <button className="px-3 py-1.5 bg-secondary/60 hover:bg-secondary border border-border/50 rounded-xl text-[10px] font-bold flex items-center gap-1.5 transition-all text-muted-foreground">
+                                    <Download size={11} /> Export CSV
                                 </button>
                             </div>
                             <div className="overflow-x-auto">
                                 <table className="w-full text-left">
                                     <thead>
-                                        <tr className="bg-secondary/20 border-b border-border/50">
-                                            <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest text-muted-foreground">Course</th>
-                                            <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest text-muted-foreground text-center">Enrollments</th>
-                                            <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest text-muted-foreground text-center">Completions</th>
-                                            <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest text-muted-foreground">Avg Progress</th>
+                                        <tr className="bg-secondary/10 border-b border-border/50">
+                                            {['Course', 'Enrollments', 'Completions', 'Completion Rate', 'Avg Progress'].map(h => (
+                                                <th key={h} className="px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-muted-foreground whitespace-nowrap">{h}</th>
+                                            ))}
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-border/50">
+                                    <tbody className="divide-y divide-border/30">
                                         {coursePerformance.length === 0 ? (
-                                            <tr><td colSpan={4} className="py-20 text-center text-muted-foreground italic">No course data available yet.</td></tr>
-                                        ) : coursePerformance.map(course => (
-                                            <tr key={course.id} className="hover:bg-secondary/10 transition-colors">
-                                                <td className="px-6 py-4 font-bold">{course.title}</td>
-                                                <td className="px-6 py-4 text-center font-mono text-sm">{course.enrollments}</td>
-                                                <td className="px-6 py-4 text-center font-mono text-sm">{course.completions}</td>
-                                                <td className="px-6 py-4">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="flex-1 h-1.5 bg-secondary/50 rounded-full overflow-hidden">
-                                                            <div className="h-full bg-primary transition-all duration-500" style={{ width: `${course.avgProgress}%` }} />
+                                            <tr><td colSpan={5} className="py-16 text-center text-muted-foreground italic text-sm">No course data yet</td></tr>
+                                        ) : coursePerformance.map((c: any) => {
+                                            const rate = c.enrollments > 0 ? Math.round((c.completions / c.enrollments) * 100) : 0;
+                                            return (
+                                                <tr key={c.id} className="hover:bg-secondary/10 transition-colors">
+                                                    <td className="px-5 py-3.5 font-bold text-sm">{c.title}</td>
+                                                    <td className="px-5 py-3.5 text-center font-mono text-sm text-muted-foreground">{c.enrollments}</td>
+                                                    <td className="px-5 py-3.5 text-center font-mono text-sm text-emerald-400">{c.completions}</td>
+                                                    <td className="px-5 py-3.5">
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="flex-1 h-1.5 bg-secondary/50 rounded-full overflow-hidden min-w-[60px]">
+                                                                <div className="h-full bg-emerald-500 transition-all" style={{ width: `${rate}%` }} />
+                                                            </div>
+                                                            <span className="text-[11px] font-bold text-emerald-400 w-8">{rate}%</span>
                                                         </div>
-                                                        <span className="text-xs font-bold text-primary w-10">{Math.round(course.avgProgress)}%</span>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        ))}
+                                                    </td>
+                                                    <td className="px-5 py-3.5">
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="flex-1 h-1.5 bg-secondary/50 rounded-full overflow-hidden min-w-[60px]">
+                                                                <div className="h-full bg-primary transition-all" style={{ width: `${c.avgProgress}%` }} />
+                                                            </div>
+                                                            <span className="text-[11px] font-bold text-primary w-8">{c.avgProgress}%</span>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
                                     </tbody>
                                 </table>
                             </div>
                         </div>
-                    </div>
-                )}
 
-                {/* ── BRANDING ── */}
-                {activeTab === 'branding' && (
-                    <div className="max-w-3xl space-y-8 animate-in fade-in duration-500">
-                        <div className="glassmorphism p-8 rounded-3xl border border-border/50 space-y-8">
-                            <div className="space-y-4">
-                                <h3 className="font-bold text-lg">Organization Name</h3>
-                                <input type="text" value={branding.name} onChange={e => setBranding({ ...branding, name: e.target.value })}
-                                    className="w-full bg-secondary/50 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
-                            </div>
-                            <div className="space-y-4">
-                                <h3 className="font-bold text-lg">Brand Color</h3>
-                                <div className="flex items-center gap-4">
-                                    <input type="color" value={branding.primaryColor} onChange={e => setBranding({ ...branding, primaryColor: e.target.value })}
-                                        className="w-14 h-14 rounded-xl cursor-pointer border-none bg-transparent" />
-                                    <div>
-                                        <p className="text-xs text-muted-foreground uppercase tracking-widest font-bold">Selected Color</p>
-                                        <p className="font-mono font-bold text-lg">{branding.primaryColor.toUpperCase()}</p>
-                                    </div>
+                        {/* ── Team Performance + Top Learners ── */}
+                        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                            {/* Team Performance */}
+                            <div className="glassmorphism rounded-2xl border border-border/50 overflow-hidden">
+                                <div className="p-5 border-b border-border/50 bg-secondary/10">
+                                    <h3 className="font-bold flex items-center gap-2 text-sm uppercase tracking-widest text-muted-foreground">
+                                        <UsersRound size={14} className="text-cyan-400" /> Team Performance
+                                    </h3>
                                 </div>
-                                <div className="flex gap-3 flex-wrap">
-                                    {['#3b82f6', '#8b5cf6', '#ef4444', '#10b981', '#f59e0b', '#ec4899', '#14b8a6', '#000000'].map(c => (
-                                        <button key={c} className="w-10 h-10 rounded-full border-2 transition-all hover:scale-110"
-                                            style={{ backgroundColor: c, borderColor: branding.primaryColor === c ? 'white' : 'transparent' }}
-                                            onClick={() => setBranding({ ...branding, primaryColor: c })} />
+                                <div className="divide-y divide-border/30">
+                                    {teamPerformance.length === 0 ? (
+                                        <div className="py-12 text-center text-muted-foreground italic text-sm">No teams configured</div>
+                                    ) : teamPerformance.map((t: any, idx: number) => (
+                                        <div key={t.id} className="flex items-center gap-4 px-5 py-3.5 hover:bg-secondary/10 transition-colors">
+                                            <span className="text-xs font-black text-muted-foreground w-5">#{idx + 1}</span>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="font-bold text-sm truncate">{t.name}</p>
+                                                <p className="text-[10px] text-muted-foreground">{t.members} member{t.members !== 1 ? 's' : ''}</p>
+                                            </div>
+                                            <div className="text-right space-y-1 min-w-[120px]">
+                                                <div className="flex items-center gap-2 justify-end">
+                                                    <div className="w-20 h-1 bg-secondary/50 rounded-full overflow-hidden">
+                                                        <div className="h-full bg-cyan-500 transition-all" style={{ width: `${t.avgProgress}%` }} />
+                                                    </div>
+                                                    <span className="text-[11px] font-bold text-cyan-400 w-7">{t.avgProgress}%</span>
+                                                </div>
+                                                <p className="text-[10px] text-muted-foreground text-right">{t.completionRate}% complete</p>
+                                            </div>
+                                        </div>
                                     ))}
                                 </div>
                             </div>
-                            <div className="p-8 rounded-2xl border border-border bg-secondary/10" style={{ borderColor: branding.primaryColor + '30' }}>
-                                <h4 className="font-bold mb-2" style={{ color: branding.primaryColor }}>Preview: {branding.name} LMS</h4>
-                                <p className="text-sm text-muted-foreground mb-4">This is how your portal header will look to students.</p>
-                                <button className="px-4 py-2 rounded-full text-white text-sm font-bold" style={{ backgroundColor: branding.primaryColor }}>Enter Workspace</button>
+
+                            {/* Top Learners */}
+                            <div className="glassmorphism rounded-2xl border border-border/50 overflow-hidden">
+                                <div className="p-5 border-b border-border/50 bg-secondary/10">
+                                    <h3 className="font-bold flex items-center gap-2 text-sm uppercase tracking-widest text-muted-foreground">
+                                        <Medal size={14} className="text-amber-400" /> Top Learners
+                                    </h3>
+                                </div>
+                                <div className="divide-y divide-border/30">
+                                    {topLearners.length === 0 ? (
+                                        <div className="py-12 text-center text-muted-foreground italic text-sm">No learner data yet</div>
+                                    ) : topLearners.slice(0, 8).map((l: any, idx: number) => (
+                                        <div key={l.id} className="flex items-center gap-3 px-5 py-3 hover:bg-secondary/10 transition-colors">
+                                            <span className={`text-xs font-black w-5 ${idx === 0 ? 'text-amber-400' : idx === 1 ? 'text-slate-300' : idx === 2 ? 'text-amber-700' : 'text-muted-foreground'}`}>#{idx + 1}</span>
+                                            <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-black text-primary shrink-0">
+                                                {(l.name || l.email)[0].toUpperCase()}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="font-bold text-xs truncate">{l.name}</p>
+                                                <p className="text-[10px] text-muted-foreground">{l.completedCourses}/{l.totalCourses} courses</p>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-16 h-1 bg-secondary/50 rounded-full overflow-hidden">
+                                                    <div className="h-full bg-amber-400 transition-all" style={{ width: `${l.avgProgress}%` }} />
+                                                </div>
+                                                <span className="text-[11px] font-bold text-amber-400 w-7">{l.avgProgress}%</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
-                            <button className="flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-xl font-bold text-sm hover:scale-105 transition-transform shadow-xl shadow-primary/20">
-                                <Save size={16} /> Save Branding
-                            </button>
+                        </div>
+
+                    </div>
+                    );
+                })()}
+
+                {activeTab === 'audit' && (
+                    <div className="space-y-6 animate-in fade-in duration-500 pb-20">
+                        {/* Header & Search */}
+                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                            <div>
+                                <h1 className="text-2xl font-black tracking-tight uppercase flex items-center gap-3">
+                                    <Shield className="w-7 h-7 text-primary" /> Audit Monitor
+                                </h1>
+                                <p className="text-muted-foreground text-sm font-medium mt-1">
+                                    Track all administrative and learner activity across the workspace.
+                                </p>
+                            </div>
+                            <div className="relative w-full md:w-96">
+                                <Filter className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                                <input 
+                                    type="text"
+                                    placeholder="Search by action, name or email..."
+                                    value={auditSearch}
+                                    onChange={(e) => setAuditSearch(e.target.value)}
+                                    className="w-full bg-secondary/50 border border-border/50 rounded-2xl pl-12 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all uppercase font-bold tracking-tight"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Logs Table */}
+                        <div className="glassmorphism rounded-[2rem] border border-border/50 overflow-hidden shadow-2xl">
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr className="bg-secondary/20 border-b border-border/50">
+                                            <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Timestamp</th>
+                                            <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground">User</th>
+                                            <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Action</th>
+                                            <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Metadata</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-border/20">
+                                        {auditLoading && auditLogs.length === 0 ? (
+                                            <tr>
+                                                <td colSpan={4} className="py-20 text-center">
+                                                    <Loader2 className="w-8 h-8 animate-spin mx-auto text-primary opacity-50" />
+                                                    <p className="mt-4 text-xs font-bold uppercase tracking-widest text-muted-foreground animate-pulse">Retrieving Logs...</p>
+                                                </td>
+                                            </tr>
+                                        ) : auditLogs.length === 0 ? (
+                                            <tr>
+                                                <td colSpan={4} className="py-20 text-center">
+                                                    <Activity className="w-12 h-12 mx-auto text-muted-foreground opacity-20 mb-4" />
+                                                    <p className="text-sm font-bold uppercase tracking-widest text-muted-foreground">No matching activity logs found.</p>
+                                                </td>
+                                            </tr>
+                                        ) : (
+                                            auditLogs.map((log) => (
+                                                <tr key={log.id} 
+                                                    onClick={() => fetchUserDetail(log.user.id)}
+                                                    className="hover:bg-primary/5 cursor-pointer transition-colors group">
+                                                    <td className="px-6 py-4">
+                                                        <div className="flex flex-col">
+                                                            <span className="text-xs font-bold whitespace-nowrap">{new Date(log.createdAt).toLocaleDateString()}</span>
+                                                            <span className="text-[10px] font-medium text-muted-foreground">{new Date(log.createdAt).toLocaleTimeString()}</span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-black text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-all">
+                                                                {log.user.name?.[0].toUpperCase() || 'U'}
+                                                            </div>
+                                                            <div className="flex flex-col min-w-0">
+                                                                <div className="flex items-center gap-1.5 min-w-0">
+                                                                    <span className="text-sm font-bold truncate max-w-[120px]">{log.user.name}</span>
+                                                                    <UserCircle size={10} className="text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                                </div>
+                                                                <span className="text-[10px] text-muted-foreground truncate">{log.user.email}</span>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black tracking-tight ${
+                                                            log.action.includes('CREATED') ? 'bg-emerald-500/10 text-emerald-500' :
+                                                            log.action.includes('DELETED') ? 'bg-red-500/10 text-red-500' :
+                                                            log.action.includes('UPDATED') ? 'bg-blue-500/10 text-blue-500' :
+                                                            'bg-secondary text-muted-foreground'
+                                                        }`}>
+                                                            {log.action}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-6 py-4 text-right">
+                                                        <button 
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setSelectedLogMetadata(log);
+                                                            }}
+                                                            className="p-2 rounded-xl bg-secondary/50 text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all"
+                                                            title="View Detailed Insight"
+                                                        >
+                                                            <ScanSearch size={16} />
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            {/* Pagination */}
+                            {auditPagination.pages > 1 && (
+                                <div className="p-6 bg-secondary/10 border-t border-border/50 flex items-center justify-between">
+                                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
+                                        Showing {(auditPagination.currentPage - 1) * auditPagination.limit + 1} - {Math.min(auditPagination.currentPage * auditPagination.limit, auditPagination.total)} of {auditPagination.total} logs
+                                    </p>
+                                    <div className="flex items-center gap-2">
+                                        <button 
+                                            disabled={auditPagination.currentPage === 1 || auditLoading}
+                                            onClick={() => fetchAuditLogs(auditPagination.currentPage - 1, auditSearch)}
+                                            className="p-2 rounded-xl bg-background border border-border/50 hover:bg-secondary disabled:opacity-50 transition-all"
+                                        >
+                                            <ChevronLeft size={20} />
+                                        </button>
+                                        <span className="text-sm font-black px-4">
+                                            {auditPagination.currentPage} / {auditPagination.pages}
+                                        </span>
+                                        <button 
+                                            disabled={auditPagination.currentPage === auditPagination.pages || auditLoading}
+                                            onClick={() => fetchAuditLogs(auditPagination.currentPage + 1, auditSearch)}
+                                            className="p-2 rounded-xl bg-background border border-border/50 hover:bg-secondary disabled:opacity-50 transition-all"
+                                        >
+                                            <ChevronRight size={20} />
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
+
+
+
+                {/* ── BRANDING ── */}
+                {activeTab === 'branding' && (
+                    <div className="max-w-4xl space-y-8 animate-in fade-in duration-500 pb-20">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div className="glassmorphism p-8 rounded-3xl border border-border/50 space-y-8">
+                                <div className="space-y-4">
+                                    <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2">
+                                        <Globe size={14} /> Organization Identity
+                                    </h3>
+                                    <div className="space-y-1">
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Platform Display Name</label>
+                                        <input type="text" value={branding.name} onChange={e => setBranding({ ...branding, name: e.target.value })}
+                                            className="w-full bg-secondary/50 border border-border/50 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 font-bold" 
+                                            placeholder="e.g. Acme Academy" />
+                                    </div>
+                                </div>
+
+                                <div className="space-y-4">
+                                    <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2">
+                                        <Palette size={14} /> Platform Theme Color
+                                    </h3>
+                                    <div className="flex items-center gap-6 p-4 rounded-2xl bg-secondary/20 border border-border/30">
+                                        <div className="relative group">
+                                            <input type="color" value={branding.primaryColor} onChange={e => setBranding({ ...branding, primaryColor: e.target.value })}
+                                                className="w-16 h-16 rounded-2xl cursor-pointer border-4 border-background bg-transparent shadow-xl transition-transform active:scale-95" />
+                                            <div className="absolute inset-0 rounded-2xl ring-2 ring-primary/20 pointer-events-none" />
+                                        </div>
+                                        <div>
+                                            <p className="text-[9px] text-muted-foreground uppercase tracking-widest font-black mb-1">Color Token</p>
+                                            <p className="font-mono font-black text-xl text-foreground tracking-tighter">{branding.primaryColor.toUpperCase()}</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-2.5 flex-wrap">
+                                        {['#3b82f6', '#8b5cf6', '#ef4444', '#10b981', '#f59e0b', '#ec4899', '#14b8a6', '#000000'].map(c => (
+                                            <button key={c} 
+                                                className={`w-9 h-9 rounded-xl border-2 transition-all hover:scale-110 shadow-sm ${branding.primaryColor === c ? 'scale-110 shadow-lg shadow-black/20' : 'opacity-80 hover:opacity-100'}`}
+                                                style={{ backgroundColor: c, borderColor: branding.primaryColor === c ? 'white' : 'transparent' }}
+                                                onClick={() => setBranding({ ...branding, primaryColor: c })} />
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="pt-4 flex gap-4">
+                                    <button 
+                                        onClick={handleSaveBranding}
+                                        className="flex-1 flex items-center justify-center gap-3 px-6 py-4 bg-primary text-primary-foreground rounded-[1.25rem] font-black uppercase tracking-widest text-xs hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-primary/20">
+                                        <Save size={16} /> Save Platform Changes
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="space-y-8">
+                                <section className="glassmorphism p-8 rounded-3xl border border-border/50 space-y-6">
+                                    <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2">
+                                        <Upload size={14} /> Brand Assets
+                                    </h3>
+                                    
+                                    {/* Asset Grid */}
+                                    <div className="space-y-6">
+                                        {[
+                                            { id: 'logoLight', label: 'Primary Logo (Light Theme)', sub: 'Transparent PNG/SVG suggested', icon: Globe },
+                                            { id: 'logoDark', label: 'Secondary Logo (Dark Theme)', sub: 'Logo for dark navigation bars', icon: Globe },
+                                            { id: 'favicon', label: 'Site Favicon', sub: 'Square icon (32x32px suggested)', icon: Globe },
+                                        ].map((asset) => (
+                                            <div key={asset.id} className="space-y-3">
+                                                <div className="flex justify-between items-end px-1">
+                                                    <div>
+                                                        <p className="text-[10px] font-black uppercase tracking-widest text-foreground">{asset.label}</p>
+                                                        <p className="text-[9px] text-muted-foreground font-medium">{asset.sub}</p>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div className="relative group">
+                                                    <label className={`block w-full cursor-pointer rounded-[1.25rem] border-2 border-dashed transition-all overflow-hidden ${
+                                                        branding[asset.id as keyof typeof branding] 
+                                                            ? 'border-primary/20 bg-primary/5 h-24' 
+                                                            : 'border-border/60 hover:border-primary/40 bg-secondary/10 hover:bg-secondary/20 h-20'
+                                                    }`}>
+                                                        <input type="file" className="hidden" accept="image/*" onChange={(e) => {
+                                                            const file = e.target.files?.[0];
+                                                            if (file) handleLogoUpload(file, asset.id as any);
+                                                        }} />
+                                                        
+                                                        {branding[asset.id as keyof typeof branding] ? (
+                                                            <div className="w-full h-full flex items-center justify-center p-4">
+                                                                <img src={branding[asset.id as keyof typeof branding]!} alt={asset.label} className="max-w-full max-h-full object-contain" />
+                                                                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity rounded-[1.25rem]">
+                                                                    <Upload size={20} className="text-white" />
+                                                                </div>
+                                                            </div>
+                                                        ) : (
+                                                            <div className="w-full h-full flex flex-col items-center justify-center gap-1 opacity-60">
+                                                                <Plus size={16} />
+                                                                <span className="text-[9px] font-black uppercase tracking-widest">Select Asset</span>
+                                                            </div>
+                                                        )}
+                                                    </label>
+                                                    {uploadProgress[asset.id] !== undefined && (
+                                                        <div className="absolute bottom-0 left-0 right-0 h-1 bg-primary/20 rounded-b-[1.25rem] overflow-hidden">
+                                                            <div className="h-full bg-primary transition-all duration-300" style={{ width: `${uploadProgress[asset.id]}%` }} />
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </section>
+
+                                {/* Real-time Preview */}
+                                <div className="p-8 rounded-[2rem] border-2 border-dashed bg-secondary/5 relative overflow-hidden" 
+                                    style={{ borderColor: branding.primaryColor + '30' }}>
+                                    <div className="absolute -top-12 -right-12 w-32 h-32 rounded-full blur-3xl opacity-20" style={{ backgroundColor: branding.primaryColor }} />
+                                    
+                                    <div className="flex items-center gap-3 mb-6">
+                                        <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-lg" style={{ backgroundColor: branding.primaryColor }}>
+                                            <Globe size={14} className="text-white" />
+                                        </div>
+                                        <h4 className="font-black text-sm" style={{ color: branding.primaryColor }}>Live Platform Preview</h4>
+                                    </div>
+
+                                    <div className="glassmorphism p-6 rounded-2xl border border-border/50 space-y-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-full bg-secondary overflow-hidden border border-border/40">
+                                                {branding.logoLight || branding.logoDark ? (
+                                                    <img src={branding.logoLight || branding.logoDark || ''} className="w-full h-full object-contain p-1" />
+                                                ) : <div className="w-full h-full flex items-center justify-center text-[10px] font-black text-muted-foreground">{branding.name[0]}</div>}
+                                            </div>
+                                            <span className="text-sm font-black tracking-tight">{branding.name} LMS</span>
+                                        </div>
+                                        <div className="h-2 w-3/4 bg-secondary/50 rounded-full" />
+                                        <div className="h-2 w-1/2 bg-secondary/30 rounded-full" />
+                                        <button className="w-full py-2.5 rounded-xl text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-black/5" 
+                                            style={{ backgroundColor: branding.primaryColor }}>
+                                            Join Learning Path
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 )}
@@ -2211,8 +2747,8 @@ export default function ClientAdminDashboard() {
                             </div>
                             <div className="flex items-center justify-between p-4 rounded-xl border border-border/50">
                                 <div>
-                                    <p className="font-bold text-sm">Allow Student Self-Registration</p>
-                                    <p className="text-xs text-muted-foreground">Students can sign up without an invite.</p>
+                                    <p className="font-bold text-sm">Allow Learner Self-Registration</p>
+                                    <p className="text-xs text-muted-foreground">Learners can sign up without an invite.</p>
                                 </div>
                                 <div className="w-12 h-6 rounded-full bg-secondary border border-border relative">
                                     <div className="w-4 h-4 rounded-full bg-muted-foreground absolute top-1 left-1" />
@@ -2233,26 +2769,33 @@ export default function ClientAdminDashboard() {
                 )}
 
                 {activeTab === 'certificates' && (
-                    <div className="max-w-4xl space-y-6 animate-in fade-in duration-500">
-                        <div className="glassmorphism p-8 rounded-3xl border border-border/50">
-                            <h3 className="font-bold text-lg flex items-center gap-2 mb-4">
-                                <Award className="w-5 h-5 text-indigo-400" /> Certificate Templates
-                            </h3>
-                            <p className="text-sm text-muted-foreground mb-6">Design certificates awarded to students upon course completion.</p>
-
-                            <div className="p-12 border-2 border-dashed border-border/50 rounded-2xl flex flex-col items-center justify-center text-center space-y-4">
-                                <div className="w-16 h-16 rounded-full bg-indigo-500/10 flex items-center justify-center text-indigo-400">
-                                    <Award size={32} />
-                                </div>
-                                <div>
-                                    <p className="font-bold">Certificate Engine</p>
-                                    <p className="text-sm text-muted-foreground mt-1">Upload a background template and configure student name placements.</p>
-                                </div>
-                                <button onClick={() => alert('Certificate builder coming soon!')} className="px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl mt-4 transition-colors">
-                                    Create New Template
-                                </button>
-                            </div>
-                        </div>
+                    <div className="space-y-6 animate-in fade-in duration-500 pb-20">
+                        {editingTemplate ? (
+                            <CertificateDesigner 
+                                template={editingTemplate} 
+                                onBack={() => { setEditingTemplate(null); fetchAvailableTemplates(); }}
+                                onSave={async (id, designFields) => {
+                                    try {
+                                        const res = await fetch(`/api/t/${domain}/certificates/${id}`, {
+                                            method: 'PATCH',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({ designFields })
+                                        });
+                                        if (res.ok) {
+                                            addToast({ title: 'Success', message: 'Design saved successfully.', type: 'success' });
+                                        }
+                                    } catch (e) {
+                                        console.error(e);
+                                    }
+                                }}
+                            />
+                        ) : (
+                            <CertificateManager 
+                                domain={domain as string} 
+                                addToast={addToast} 
+                                onEditTemplate={(t) => setEditingTemplate(t)}
+                            />
+                        )}
                     </div>
                 )}
             </main>
@@ -2262,10 +2805,10 @@ export default function ClientAdminDashboard() {
                 <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/70 backdrop-blur-sm">
                     <div className="bg-background border border-border w-full max-w-md rounded-3xl p-8 space-y-6 shadow-2xl">
                         <div className="flex justify-between items-center">
-                            <h3 className="text-xl font-black">Create New Course</h3>
-                            <button onClick={() => setShowCourseModal(false)} className="text-muted-foreground hover:text-foreground"><XCircle size={24} /></button>
+                            <h3 className="text-xl font-black">{selectedCourse && showCourseModal ? 'Edit Course' : 'Create New Course'}</h3>
+                            <button onClick={() => { setShowCourseModal(false); if (selectedCourse) setCourseForm({ title: '', description: '', thumbnail: '', skillLevel: 'All Levels', languages: 'English', captions: false, isMarketplace: false, exclusiveRoleId: '', exclusiveTeamId: '', certificateEnabled: false, certificateTemplateId: '' }); }} className="text-muted-foreground hover:text-foreground"><XCircle size={24} /></button>
                         </div>
-                        <form onSubmit={createCourse} className="space-y-4">
+                        <form onSubmit={selectedCourse ? updateCourse : createCourse} className="space-y-4">
                             <div className="space-y-1.5">
                                 <div className="flex justify-between items-center">
                                     <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Course Title</label>
@@ -2282,7 +2825,7 @@ export default function ClientAdminDashboard() {
                             </div>
                             <div className="space-y-1.5">
                                 <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Description</label>
-                                <textarea placeholder="Brief description of what students will learn..." value={courseForm.description} onChange={e => setCourseForm({ ...courseForm, description: e.target.value })}
+                                <textarea placeholder="Brief description of what learners will learn..." value={courseForm.description} onChange={e => setCourseForm({ ...courseForm, description: e.target.value })}
                                     rows={3} className="w-full bg-secondary/50 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none" />
                             </div>
                             <div className="space-y-1.5">
@@ -2332,296 +2875,71 @@ export default function ClientAdminDashboard() {
                                         className="w-full bg-secondary/50 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
                                 </div>
                             </div>
-                            <div className="flex items-center gap-2 px-1">
-                                <input type="checkbox" id="course-captions" checked={courseForm.captions} onChange={e => setCourseForm({ ...courseForm, captions: e.target.checked })}
-                                    className="rounded border-border/50 bg-secondary/30 text-primary focus:ring-primary/20" />
-                                <label htmlFor="course-captions" className="text-xs font-bold uppercase tracking-widest text-muted-foreground cursor-pointer">Has Closed Captions</label>
-                            </div>
-                            <button type="submit" className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-bold hover:opacity-90">Create Course</button>
-                        </form>
-                    </div>
-                </div>
-            )}
-
-            {showStudentModal && (
-                <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/70 backdrop-blur-sm">
-                    <div className="bg-background border border-border w-full max-w-md rounded-3xl p-8 space-y-6 shadow-2xl">
-                        <div className="flex justify-between items-center">
-                            <h3 className="text-xl font-black">{justCreatedStudent ? 'Student Enrolled!' : 'Onboard Student'}</h3>
-                            <button onClick={() => { setShowStudentModal(false); setJustCreatedStudent(null); setStudentForm({ name: '', email: '', password: generateRandomPassword() }); }} className="text-muted-foreground hover:text-foreground"><XCircle size={24} /></button>
-                        </div>
-                        
-                        {justCreatedStudent ? (
-                            <div className="space-y-6">
-                                <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-center">
-                                    <div className="w-12 h-12 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
-                                        <CheckCircle2 size={24} className="text-emerald-500" />
-                                    </div>
-                                    <p className="font-bold text-emerald-400">Success!</p>
-                                    <p className="text-sm text-muted-foreground">Student account created successfully.</p>
+                            <div className="flex flex-col gap-3 py-2">
+                                <div className="flex items-center gap-2 px-1">
+                                    <input type="checkbox" id="course-captions" checked={courseForm.captions} onChange={e => setCourseForm({ ...courseForm, captions: e.target.checked })}
+                                        className="rounded border-border/50 bg-secondary/30 text-primary focus:ring-primary/20" />
+                                    <label htmlFor="course-captions" className="text-xs font-bold uppercase tracking-widest text-muted-foreground cursor-pointer">Has Closed Captions</label>
                                 </div>
-
-                                <div className="space-y-4">
-                                    <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/20">
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-blue-400 mb-1">Login Path URL</p>
-                                        <div className="flex justify-between items-center gap-4">
-                                            <code className="font-mono text-xs truncate text-blue-300">
-                                                {window.location.origin}/t/{domain}/login
-                                            </code>
-                                            <button type="button" onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/t/${domain}/login`); addToast('Link copied'); }} className="text-[10px] font-bold text-blue-400 hover:underline flex-shrink-0">Copy</button>
-                                        </div>
-                                    </div>
-
-                                    <div className="p-4 rounded-xl bg-secondary/30 border border-border/50">
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">Generated Password</p>
-                                        <div className="flex justify-between items-center">
-                                            <code className="font-mono font-bold">{justCreatedStudent.password}</code>
-                                            <button type="button" onClick={() => { navigator.clipboard.writeText(justCreatedStudent.password); addToast('Password copied'); }} className="text-[10px] font-bold hover:underline">Copy</button>
-                                        </div>
-                                    </div>
+                                <div className="flex items-center gap-2 px-1">
+                                    <input type="checkbox" id="course-marketplace" checked={courseForm.isMarketplace} onChange={e => setCourseForm({ ...courseForm, isMarketplace: e.target.checked })}
+                                        className="rounded border-border/50 bg-secondary/30 text-amber-500 focus:ring-amber-500/20" />
+                                    <label htmlFor="course-marketplace" className="text-xs font-bold uppercase tracking-widest text-amber-600/80 cursor-pointer">Publish to Internal Marketplace</label>
                                 </div>
-
-                                <button 
-                                    onClick={() => { setShowStudentModal(false); setJustCreatedStudent(null); setStudentForm({ name: '', email: '', password: generateRandomPassword() }); }}
-                                    className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-bold hover:opacity-90"
-                                >
-                                    Done
-                                </button>
-                            </div>
-                        ) : (
-                            <form onSubmit={createStudent} className="space-y-4">
-                                {[{ key: 'name', label: 'Full Name', placeholder: 'Jane Doe' }, { key: 'email', label: 'Email', placeholder: 'jane@example.com', type: 'email' }].map(f => (
-                                    <div key={f.key} className="space-y-1.5">
-                                        <div className="flex justify-between items-center">
-                                            <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{f.label}</label>
-                                            {validationErrors.student?.[f.key] && <span className="text-[10px] font-bold text-red-500 animate-in fade-in slide-in-from-right-1">{validationErrors.student[f.key]}</span>}
-                                        </div>
-                                        <input
-                                            type={f.type || 'text'}
-                                            placeholder={f.placeholder}
-                                            value={(studentForm as any)[f.key]}
-                                            onChange={e => {
-                                                setStudentForm({ ...studentForm, [f.key]: e.target.value });
-                                                if (validationErrors.student?.[f.key]) {
-                                                    setValidationErrors(prev => ({ ...prev, student: { ...prev.student, [f.key]: null } }));
-                                                }
-                                            }}
-                                            className={`w-full bg-secondary/50 border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 transition-all ${validationErrors.student?.[f.key] ? 'border-red-500/50 focus:ring-red-500/50' : 'border-border focus:ring-primary/50'}`} />
-                                    </div>
-                                ))}
-                                <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/20">
-                                    <div className="flex justify-between items-center mb-1">
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-blue-400">Generated Password</p>
-                                        <button type="button" onClick={() => setStudentForm({ ...studentForm, password: generateRandomPassword() })} className="text-[10px] font-bold text-blue-400 hover:underline">Regenerate</button>
-                                    </div>
-                                    <div className="flex justify-between items-center">
-                                        <code className="font-mono font-bold">{studentForm.password}</code>
-                                        <button type="button" onClick={() => navigator.clipboard.writeText(studentForm.password)} className="text-xs font-bold text-blue-400 hover:underline">Copy</button>
-                                    </div>
-                                </div>
-                                <button type="submit" className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-bold hover:opacity-90">Enroll Student</button>
-                            </form>
-                        )}
-                    </div>
-                </div>
-            )}
-
-            {isEditStudentModalOpen && editingStudent && (
-                <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/70 backdrop-blur-sm">
-                    <div className="bg-background border border-border w-full max-w-md rounded-3xl p-8 space-y-6 shadow-2xl">
-                        <div className="flex justify-between items-center">
-                            <h3 className="text-xl font-black">Edit Student</h3>
-                            <button onClick={() => { setIsEditStudentModalOpen(false); setEditingStudent(null); }} className="text-muted-foreground hover:text-foreground"><XCircle size={24} /></button>
-                        </div>
-                        <form onSubmit={updateStudent} className="space-y-4">
-                            <div className="space-y-1.5">
-                                <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Full Name</label>
-                                <input
-                                    value={editingStudent.name}
-                                    onChange={e => setEditingStudent({ ...editingStudent, name: e.target.value })}
-                                    className="w-full bg-secondary/50 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
-                            </div>
-                            <div className="space-y-1.5">
-                                <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Email</label>
-                                <input
-                                    type="email"
-                                    value={editingStudent.email}
-                                    onChange={e => setEditingStudent({ ...editingStudent, email: e.target.value })}
-                                    className="w-full bg-secondary/50 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
-                            </div>
-                            <div className="pt-2">
-                                <button type="submit" className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-bold hover:opacity-90">Save Changes</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
-
-            {selectedStudent && (
-                <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/70 backdrop-blur-sm">
-                    <div className="bg-background border border-border w-full max-w-4xl max-h-[90vh] rounded-3xl p-8 flex flex-col shadow-2xl animate-in zoom-in duration-300">
-                        <div className="flex justify-between items-center mb-6">
-                            <div className="flex items-center gap-4">
-                                <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-xl ${selectedStudent.isActive !== false ? 'bg-blue-500/20 text-blue-400' : 'bg-secondary text-muted-foreground'}`}>
-                                    {selectedStudent.name?.charAt(0) || 'S'}
-                                </div>
-                                <div>
-                                    <h3 className="text-xl font-black">{selectedStudent.name}</h3>
-                                    <p className="text-sm text-muted-foreground">{selectedStudent.email}</p>
+                                <div className="flex items-center gap-2 px-1 pt-2 border-t border-border/20 mt-2">
+                                    <input type="checkbox" id="course-certificate" checked={courseForm.certificateEnabled} onChange={e => setCourseForm({ ...courseForm, certificateEnabled: e.target.checked })}
+                                        className="rounded border-border/50 bg-secondary/30 text-indigo-500 focus:ring-indigo-500/20" />
+                                    <label htmlFor="course-certificate" className="text-xs font-bold uppercase tracking-widest text-indigo-400 cursor-pointer flex items-center gap-2">
+                                        <Award size={14} /> Enable Certificate of Achievement
+                                    </label>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-3">
-                                <div
-                                    onClick={() => toggleStudentStatus(selectedStudent)}
-                                    className="px-4 py-2 rounded-xl bg-secondary/50 border border-border/50 flex items-center gap-3 cursor-pointer hover:bg-secondary transition-all"
-                                >
-                                    <div className={`w-10 h-5 rounded-full p-0.5 transition-colors relative ${selectedStudent.isActive !== false ? 'bg-emerald-500/20' : 'bg-secondary'}`}>
-                                        <div className={`w-4 h-4 rounded-full shadow-sm transition-all ${selectedStudent.isActive !== false ? 'translate-x-5 bg-emerald-400' : 'bg-muted-foreground'}`} />
-                                    </div>
-                                    <span className={`text-xs font-black uppercase tracking-widest ${selectedStudent.isActive !== false ? 'text-emerald-400' : 'text-muted-foreground opacity-50'}`}>
-                                        {selectedStudent.isActive !== false ? 'Active' : 'Account Disabled'}
-                                    </span>
+                            
+                            {courseForm.certificateEnabled && (
+                                <div className="space-y-1.5 animate-in slide-in-from-top-2 duration-300">
+                                    <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Select Certificate Template</label>
+                                    <select 
+                                        value={courseForm.certificateTemplateId} 
+                                        onChange={e => setCourseForm({ ...courseForm, certificateTemplateId: e.target.value })}
+                                        className="w-full bg-secondary/50 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                                    >
+                                        <option value="">-- Choose Template --</option>
+                                        {availableTemplates.map((t: any) => (
+                                            <option key={t.id} value={t.id}>{t.name} {t.isGlobal ? '(Global)' : ''}</option>
+                                        ))}
+                                    </select>
                                 </div>
-                                <button onClick={() => { setSelectedStudent(null); setResetPassword(''); }} className="text-muted-foreground hover:text-foreground"><XCircle size={28} /></button>
-                            </div>
-                        </div>
-
-                        <div className="flex-1 overflow-y-auto pr-2 space-y-8 custom-scrollbar">
-                            {/* Summary Grid */}
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div className="p-5 rounded-2xl bg-secondary/10 border border-border/50">
-                                    <div className="flex items-center gap-3 text-primary mb-2">
-                                        <BookOpen size={18} />
-                                        <span className="text-[10px] font-black uppercase tracking-widest">Learning Progress</span>
-                                    </div>
-                                    <p className="text-2xl font-black">{selectedStudent.enrollments?.length || 0}</p>
-                                    <p className="text-xs text-muted-foreground font-medium italic">Courses Enrolled</p>
+                            )}
+                            {/* Exclusive Role/Team Gating */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Exclusive to Role (Optional)</label>
+                                    <select value={courseForm.exclusiveRoleId} onChange={e => setCourseForm({ ...courseForm, exclusiveRoleId: e.target.value, isMarketplace: (e.target.value || courseForm.exclusiveTeamId) ? false : courseForm.isMarketplace })}
+                                        className="w-full bg-secondary/30 border border-border/50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all">
+                                        <option value="">No Restriction — All Learners</option>
+                                        {availableRoles.map((r: any) => <option key={r.id} value={r.id}>{r.name} Only</option>)}
+                                    </select>
                                 </div>
-                                <div className="p-5 rounded-2xl bg-secondary/10 border border-border/50">
-                                    <div className="flex items-center gap-3 text-amber-500 mb-2">
-                                        <Award size={18} />
-                                        <span className="text-[10px] font-black uppercase tracking-widest">Quiz Performance</span>
-                                    </div>
-                                    <p className="text-2xl font-black">{selectedStudent.quizAttempts?.filter((a: any) => a.passed).length || 0}</p>
-                                    <p className="text-xs text-muted-foreground font-medium italic">Quizzes Passed</p>
-                                </div>
-                                <div className="p-5 rounded-2xl bg-secondary/10 border border-border/50">
-                                    <div className="flex items-center gap-3 text-emerald-500 mb-2">
-                                        <Clock size={18} />
-                                        <span className="text-[10px] font-black uppercase tracking-widest">Activity Status</span>
-                                    </div>
-                                    <p className="text-2xl font-black">{selectedStudent.activityLogs?.length || 0}</p>
-                                    <p className="text-xs text-muted-foreground font-medium italic">Total Actions Logged</p>
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Exclusive to Team (Optional)</label>
+                                    <select value={courseForm.exclusiveTeamId} onChange={e => setCourseForm({ ...courseForm, exclusiveTeamId: e.target.value, isMarketplace: (e.target.value || courseForm.exclusiveRoleId) ? false : courseForm.isMarketplace })}
+                                        className="w-full bg-secondary/30 border border-border/50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all">
+                                        <option value="">No Restriction — All Learners</option>
+                                        {availableTeams.map((t: any) => <option key={t.id} value={t.id}>{t.name} Only</option>)}
+                                    </select>
                                 </div>
                             </div>
-
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                                {/* Course Progress */}
-                                <div className="space-y-4">
-                                    <h4 className="font-black text-sm uppercase tracking-widest text-muted-foreground border-b border-border/50 pb-2">Course Status</h4>
-                                    <div className="space-y-4">
-                                        {selectedStudent.enrollments?.length > 0 ? selectedStudent.enrollments.map((env: any) => {
-                                            const totalLessons = env.course.modules?.reduce((sum: number, mod: any) => sum + (mod.lessons?.length || 0), 0) || 0;
-                                            const completedLessons = selectedStudent.progress?.filter((p: any) => p.completed && env.course.modules?.some((m: any) => m.lessons.some((l: any) => l.id === p.lessonId))).length || 0;
-                                            const progressPercent = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
-
-                                            return (
-                                                <div key={env.id} className="p-4 rounded-xl bg-secondary/5 border border-border/50">
-                                                    <div className="flex justify-between items-start mb-3">
-                                                        <p className="font-bold text-sm leading-tight max-w-[70%]">{env.course.title}</p>
-                                                        <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${progressPercent === 100 ? 'bg-emerald-500/10 text-emerald-500' : 'bg-primary/10 text-primary'}`}>
-                                                            {progressPercent}%
-                                                        </span>
-                                                    </div>
-                                                    <div className="h-1.5 w-full bg-secondary rounded-full overflow-hidden">
-                                                        <div className="h-full bg-primary transition-all duration-500" style={{ width: `${progressPercent}%` }} />
-                                                    </div>
-                                                    <p className="text-[10px] text-muted-foreground mt-2 italic">{completedLessons} of {totalLessons} lessons completed</p>
-                                                </div>
-                                            )
-                                        }) : (
-                                            <p className="text-sm text-muted-foreground italic py-4">Not enrolled in any courses yet.</p>
-                                        )}
-                                    </div>
-
-                                    <h4 className="font-black text-sm uppercase tracking-widest text-muted-foreground border-b border-border/50 pb-2 pt-4">Recent Quiz Scores</h4>
-                                    <div className="space-y-2">
-                                        {selectedStudent.quizAttempts?.length > 0 ? selectedStudent.quizAttempts.slice(0, 5).map((attempt: any) => (
-                                            <div key={attempt.id} className="flex items-center justify-between p-3 rounded-lg bg-secondary/5 border border-border/30">
-                                                <div>
-                                                    <p className="text-xs font-bold">{attempt.quiz.title}</p>
-                                                    <p className="text-[9px] text-muted-foreground">{new Date(attempt.createdAt).toLocaleDateString()} {new Date(attempt.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
-                                                </div>
-                                                <div className={`px-2 py-1 rounded text-[10px] font-black ${attempt.score >= attempt.quiz.passingScore ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500'}`}>
-                                                    {attempt.score}% - {attempt.score >= attempt.quiz.passingScore ? 'PASSED' : 'FAILED'}
-                                                </div>
-                                            </div>
-                                        )) : (
-                                            <p className="text-sm text-muted-foreground italic py-4">No quiz attempts yet.</p>
-                                        )}
-                                    </div>
-                                </div>
-
-                                {/* Activity Feed */}
-                                <div className="space-y-4">
-                                    <h4 className="font-black text-sm uppercase tracking-widest text-muted-foreground border-b border-border/50 pb-2">Live Activity Log</h4>
-                                    <div className="space-y-3">
-                                        {selectedStudent.activityLogs?.length > 0 ? selectedStudent.activityLogs.map((log: any) => (
-                                            <div key={log.id} className="flex gap-4 group">
-                                                <div className="mt-1 flex flex-col items-center">
-                                                    <div className={`w-2 h-2 rounded-full mt-1.5 ${log.action === 'DOWNLOAD_RESOURCE' ? 'bg-purple-500' : 'bg-blue-500 focus:ring-4 focus:ring-blue-500/20'}`} />
-                                                    <div className="w-px h-full bg-border group-last:hidden" />
-                                                </div>
-                                                <div className="pb-4 flex-1">
-                                                    <div className="flex justify-between items-start">
-                                                        <p className="text-xs font-bold">
-                                                            {log.action === 'VIEW_LESSON' ? `Viewed: ${log.metadata?.lessonTitle || 'Unknown Lesson'}` :
-                                                                log.action === 'DOWNLOAD_RESOURCE' ? `Downloaded: ${log.metadata?.resourceName || 'Unknown Resource'}` :
-                                                                    log.action}
-                                                        </p>
-                                                        <span className="text-[9px] text-muted-foreground font-mono whitespace-nowrap ml-2">
-                                                            {new Date(log.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                        </span>
-                                                    </div>
-                                                    <p className="text-[10px] text-muted-foreground italic mt-0.5">{new Date(log.createdAt).toLocaleDateString()}</p>
-                                                </div>
-                                            </div>
-                                        )) : (
-                                            <div className="p-8 text-center glassmorphism border border-dashed border-border/50 rounded-2xl">
-                                                <Info size={24} className="mx-auto text-muted-foreground mb-2 opacity-50" />
-                                                <p className="text-xs text-muted-foreground italic">No student activity recorded yet.</p>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Footer Actions */}
-                        <div className="mt-8 pt-6 border-t border-border flex justify-between items-center">
-                            <div className="flex gap-4">
-                                <button
-                                    onClick={handlePasswordReset}
-                                    disabled={resettingPwd}
-                                    className="px-4 py-2 bg-secondary hover:bg-secondary/80 border border-border rounded-xl font-bold text-xs transition-all flex items-center gap-2"
-                                >
-                                    {resettingPwd ? <Loader2 className="w-3 h-3 animate-spin" /> : <Lock className="w-3 h-3" />}
-                                    Reset Password
-                                </button>
-                                {resetPassword && (
-                                    <div className="px-3 py-2 rounded-lg bg-orange-500/10 border border-orange-500/20 flex items-center gap-3 animate-in slide-in-from-left-2 duration-300">
-                                        <p className="text-[10px] font-black text-orange-400 font-mono">{resetPassword}</p>
-                                        <button onClick={() => { navigator.clipboard.writeText(resetPassword); addToast('Copied to clipboard'); }} className="text-[10px] font-bold text-orange-500 hover:underline">Copy</button>
-                                    </div>
-                                )}
-                            </div>
-                            <button onClick={() => setSelectedStudent(null)} className="px-6 py-2.5 bg-primary text-primary-foreground font-bold rounded-xl text-sm hover:scale-105 transition-transform shadow-lg shadow-primary/20">
-                                Close Insights
+                            {(courseForm.exclusiveRoleId || courseForm.exclusiveTeamId) && (
+                                <p className="text-[10px] text-amber-600/80 font-bold">⚠ Exclusive courses are hidden from the Marketplace and invisible to learners without this {courseForm.exclusiveRoleId && courseForm.exclusiveTeamId ? 'role and team' : courseForm.exclusiveRoleId ? 'role' : 'team'}.</p>
+                            )}
+                            <button type="submit" className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-bold hover:opacity-90">
+                                {selectedCourse ? 'Save Changes' : 'Create Course'}
                             </button>
-                        </div>
+                        </form>
                     </div>
                 </div>
             )}
+
 
             {activeQuizLesson && (
                 <div className="fixed inset-0 z-[300] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md">
@@ -2727,7 +3045,7 @@ export default function ClientAdminDashboard() {
                                                 </label>
                                                 <p className="text-[9px] text-muted-foreground/60 px-1 italic">
                                                     {quizForm.questions.length > 0
-                                                        ? `Each student will see ${quizForm.randomCount} random questions from your pool.`
+                                                        ? `Each learner will see ${quizForm.randomCount} random questions from your pool.`
                                                         : "Add questions below to build your pool first."}
                                                 </p>
                                             </div>
@@ -2867,7 +3185,7 @@ export default function ClientAdminDashboard() {
                                                         setQuizForm({ ...quizForm, questions: newQs });
                                                     }}
                                                 />
-                                                <p className="text-[10px] text-muted-foreground italic">Students will type their answer. It will be matched against this text.</p>
+                                                <p className="text-[10px] text-muted-foreground italic">Learners will type their answer. It will be matched against this text.</p>
                                             </div>
                                         ) : (
                                             /* MULTIPLE CHOICE / MULTIPLE SELECT */
@@ -2942,7 +3260,7 @@ export default function ClientAdminDashboard() {
                                                         )}
                                                         <p className="col-span-2 text-[10px] text-muted-foreground italic px-1">
                                                             {isMultiSelect
-                                                                ? 'Check all correct answers — students must select all of them.'
+                                                                ? 'Check all correct answers — learners must select all of them.'
                                                                 : 'Click the circle to mark the single correct answer.'}
                                                         </p>
                                                     </>);
@@ -3192,6 +3510,210 @@ export default function ClientAdminDashboard() {
                         <div className="pt-6 border-t border-border/50">
                             <button onClick={() => setManagingResources(null)} className="w-full py-4 bg-secondary hover:bg-secondary/80 rounded-2xl font-black uppercase tracking-[0.2em] text-xs transition-all shadow-lg hover:shadow-xl active:scale-[0.98]">
                                 Done
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ── AUDIT LOG METADATA PANEL ── */}
+            {selectedLogMetadata && (
+                <div className="fixed inset-0 z-[500] flex justify-end bg-black/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setSelectedLogMetadata(null)}>
+                    <div className="w-full max-w-lg bg-background border-l border-border/50 h-full flex flex-col shadow-2xl animate-in slide-in-from-right duration-300" onClick={e => e.stopPropagation()}>
+                        <div className="px-8 py-6 border-b border-border/50 flex justify-between items-center bg-secondary/10">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                                    <ScanSearch className="w-6 h-6 text-primary" />
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-black uppercase tracking-tight">Log Insight</h3>
+                                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{selectedLogMetadata.id}</p>
+                                </div>
+                            </div>
+                            <button onClick={() => setSelectedLogMetadata(null)} className="p-2 hover:bg-secondary rounded-xl transition-all">
+                                <XCircle size={20} className="text-muted-foreground" />
+                            </button>
+                        </div>
+                        <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+                           <div className="space-y-8">
+                               {/* Human Narrative */}
+                               <div className="p-6 rounded-3xl bg-primary/5 border border-primary/10 relative overflow-hidden group">
+                                   <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
+                                       <Activity size={48} />
+                                   </div>
+                                   <h4 className="text-[10px] font-black uppercase tracking-widest text-primary mb-2">Narrative Context</h4>
+                                   <p className="text-sm font-bold leading-relaxed">
+                                       User <span className="text-primary">{selectedLogMetadata.user.name}</span> performed a <span className="text-primary">{selectedLogMetadata.action.replace(/_/g, ' ')}</span> operation on the workspace entity.
+                                   </p>
+                               </div>
+
+                               <div className="space-y-4">
+                                   <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                                       <Shield size={12} className="text-primary" /> Authority Context
+                                   </h4>
+                                   <div className="p-5 rounded-2xl bg-secondary/20 border border-border/50 divide-y divide-border/30">
+                                       <div className="flex justify-between items-center py-3">
+                                           <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Action Type</span>
+                                           <span className="text-xs font-black text-primary">{selectedLogMetadata.action}</span>
+                                       </div>
+                                       <div className="flex justify-between items-center py-3">
+                                           <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Timestamp</span>
+                                           <span className="text-[11px] font-bold">{new Date(selectedLogMetadata.createdAt).toLocaleString()}</span>
+                                       </div>
+                                   </div>
+                               </div>
+
+                               <div className="space-y-4">
+                                   <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                                       <LayoutList size={12} className="text-primary" /> Resource Properties
+                                   </h4>
+                                   <div className="grid grid-cols-1 gap-3">
+                                       {Object.entries(selectedLogMetadata.metadata || {}).map(([key, value]) => (
+                                           <div key={key} className="p-4 rounded-2xl bg-secondary/10 border border-border/40 hover:border-primary/20 transition-all">
+                                               <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 mb-1">{getMetadataLabel(key)}</p>
+                                               <p className="text-xs font-bold break-all">{typeof value === 'object' ? JSON.stringify(value) : String(value)}</p>
+                                           </div>
+                                       ))}
+                                   </div>
+                               </div>
+                           </div>
+                        </div>
+
+                        <div className="p-8 border-t border-border/50">
+                            <button 
+                                onClick={() => exportAuditLog(selectedLogMetadata)}
+                                className="w-full py-4 bg-primary text-primary-foreground rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] transition-all shadow-lg hover:shadow-primary/20 active:scale-[0.98] flex items-center justify-center gap-2"
+                            >
+                                <Download size={14} /> Export Insight Data
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ── USER INSIGHTS PANEL ── */}
+            {insightsUserId && (
+                <div className="fixed inset-0 z-[500] flex justify-end bg-black/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => { setInsightsUserId(null); setInsightsUser(null); }}>
+                    <div className="w-full max-w-xl bg-background border-l border-border/50 h-full flex flex-col shadow-2xl animate-in slide-in-from-right duration-300" onClick={e => e.stopPropagation()}>
+                        
+                        {/* Header */}
+                        <div className="flex items-start justify-between px-8 py-6 border-b border-border/50 bg-gradient-to-r from-primary/5 to-transparent">
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-black text-xl shadow-lg shadow-primary/5">
+                                    {isFetchingUserDetail ? <Loader2 size={24} className="animate-spin" /> : insightsUser?.name?.[0]?.toUpperCase() || '?'}
+                                </div>
+                                <div>
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-primary mb-0.5">Learner Analytics</p>
+                                    <h2 className="text-2xl font-black truncate max-w-[320px]">{isFetchingUserDetail ? 'Hydrating Detail...' : insightsUser?.name || 'Anonymous User'}</h2>
+                                </div>
+                            </div>
+                            <button onClick={() => { setInsightsUserId(null); setInsightsUser(null); }} className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary transition-all">
+                                <XCircle size={20} />
+                            </button>
+                        </div>
+                        
+                        <div className="flex-1 overflow-y-auto custom-scrollbar">
+                            {!isFetchingUserDetail && insightsUser ? (
+                                <div className="p-8 space-y-10">
+                                    {/* Calculated Metrics */}
+                                    {(() => {
+                                        const totalEnrollments = insightsUser.enrollments?.length || 0;
+                                        const totalLessons = insightsUser.enrollments?.reduce((acc: number, en: any) => acc + (en.totalLessons || 0), 0) || 0;
+                                        const completedLessons = insightsUser.enrollments?.reduce((acc: number, en: any) => acc + (en.completedLessons || 0), 0) || 0;
+                                        const avgProgress = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
+                                        const quizAccuracy = insightsUser.quizAttempts?.length > 0
+                                            ? Math.round(insightsUser.quizAttempts.reduce((acc: any, curr: any) => acc + (curr.score || 0), 0) / insightsUser.quizAttempts.length)
+                                            : 0;
+
+                                        return (
+                                            <>
+                                                {/* KPI Grid */}
+                                                <div className="grid grid-cols-3 gap-4">
+                                                    <div className="p-4 rounded-2xl bg-secondary/20 border border-border/50 space-y-1">
+                                                        <p className="text-[9px] font-black uppercase text-muted-foreground tracking-widest">Enrollments</p>
+                                                        <p className="text-2xl font-black text-foreground">{totalEnrollments}</p>
+                                                    </div>
+                                                    <div className="p-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/10 space-y-1">
+                                                        <p className="text-[9px] font-black uppercase text-emerald-500/70 tracking-widest">Avg Progress</p>
+                                                        <p className="text-2xl font-black text-emerald-400">{avgProgress}%</p>
+                                                    </div>
+                                                    <div className="p-4 rounded-2xl bg-blue-500/5 border border-blue-500/10 space-y-1">
+                                                        <p className="text-[9px] font-black uppercase text-blue-500/70 tracking-widest">Assessment</p>
+                                                        <p className="text-2xl font-black text-blue-400">{quizAccuracy}%</p>
+                                                    </div>
+                                                </div>
+
+                                                {/* Course Breakdown */}
+                                                <section className="space-y-4">
+                                                    <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                                                        <BookOpen size={11} className="text-primary" /> Enrollment Velocity
+                                                    </h3>
+                                                    <div className="grid grid-cols-1 gap-3">
+                                                        {insightsUser.enrollments?.length > 0 ? insightsUser.enrollments.map((en: any) => (
+                                                            <div key={en.id} className="p-4 rounded-2xl bg-secondary/10 border border-border/40 hover:border-primary/30 transition-all group">
+                                                                <div className="flex justify-between items-start mb-3">
+                                                                    <div className="min-w-0">
+                                                                        <p className="text-xs font-bold truncate group-hover:text-primary transition-colors">{en.course?.title}</p>
+                                                                        <p className="text-[9px] text-muted-foreground uppercase font-black tracking-tight mt-0.5">
+                                                                            {en.completedLessons} / {en.totalLessons} Lessons Completed
+                                                                        </p>
+                                                                    </div>
+                                                                    <span className="text-[10px] font-black text-primary">{en.progressPercentage}%</span>
+                                                                </div>
+                                                                <div className="h-1.5 w-full bg-secondary rounded-full overflow-hidden">
+                                                                    <div 
+                                                                        className="h-full bg-primary transition-all duration-1000" 
+                                                                        style={{ width: `${en.progressPercentage}%` }} 
+                                                                    />
+                                                                </div>
+                                                            </div>
+                                                        )) : (
+                                                            <div className="text-center py-6 text-muted-foreground text-xs italic">No active enrollments found.</div>
+                                                        )}
+                                                    </div>
+                                                </section>
+                                            </>
+                                        );
+                                    })()}
+
+                                    {/* Activity Timeline */}
+                                    <section className="space-y-4">
+                                        <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                                            <Clock size={11} className="text-primary" /> Activity Stream
+                                        </h3>
+                                        <div className="relative pl-4 space-y-6 before:absolute before:left-[19px] before:top-2 before:bottom-2 before:w-[1px] before:bg-border/60">
+                                            {insightsUser.activityLogs?.slice(0, 10).map((log: any, idx: number) => (
+                                                <div key={idx} className="relative pl-6">
+                                                    <div className="absolute left-[-1px] top-1.5 w-2 h-2 rounded-full bg-primary border-2 border-background z-10 shadow-sm shadow-primary/20" />
+                                                    <div>
+                                                        <p className="text-xs font-bold leading-none">{log.action.replace(/_/g, ' ')}</p>
+                                                        <p className="text-[10px] text-muted-foreground mt-1.5 font-medium uppercase">
+                                                            {new Date(log.createdAt).toLocaleDateString()} &middot; {new Date(log.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                            {(!insightsUser.activityLogs || insightsUser.activityLogs.length === 0) && (
+                                                <div className="text-muted-foreground text-xs italic pl-2">No recent activity recorded.</div>
+                                            )}
+                                        </div>
+                                    </section>
+                                </div>
+                            ) : (
+                                <div className="h-full flex flex-col items-center justify-center p-8 opacity-40 animate-pulse">
+                                    <Loader2 size={48} className="animate-spin mb-4 text-primary" />
+                                    <p className="text-sm font-bold uppercase tracking-widest">Hydrating User Insight...</p>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Footer */}
+                        <div className="p-6 border-t border-border/50 bg-background/80 backdrop-blur-sm mt-auto">
+                            <button 
+                                onClick={() => { setInsightsUserId(null); setInsightsUser(null); }}
+                                className="w-full py-4 bg-secondary text-foreground rounded-2xl font-black uppercase tracking-widest text-sm hover:bg-secondary/80 transition-all shadow-lg active:scale-[0.98]"
+                            >
+                                Close Insights
                             </button>
                         </div>
                     </div>
