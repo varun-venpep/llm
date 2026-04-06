@@ -112,6 +112,7 @@ export default function CertificateDesigner({ template, onBack, onSave }: Certif
                         <img 
                             src={template.backgroundImage || 'https://images.unsplash.com/photo-1544391682-17fe04257eb0?w=1200&auto=format&fit=crop&q=80'} 
                             alt="Certificate Background"
+                            crossOrigin="anonymous"
                             className="w-full h-full object-cover select-none pointer-events-none"
                         />
 
