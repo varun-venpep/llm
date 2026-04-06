@@ -24,7 +24,7 @@ export async function POST(
         let targetTeamIds: string[] = [];
         if (allTeams) {
             const managedTeams = await prisma.team.findMany({
-                where: { 
+                where: {
                     tenantId: tenant.id,
                     managers: { some: { id: session.id } }
                 },
@@ -34,7 +34,7 @@ export async function POST(
         } else if (teamId) {
             // Verify single team management
             const isManager = await prisma.team.findFirst({
-                where: { 
+                where: {
                     id: teamId,
                     tenantId: tenant.id,
                     managers: { some: { id: session.id } }
@@ -86,9 +86,9 @@ export async function POST(
             });
         }
 
-        return NextResponse.json({ 
-            success: true, 
-            message: `Successfully assigned course to ${newMembersToEnroll.length} new learners and updated team curriculum.` 
+        return NextResponse.json({
+            success: true,
+            message: `Successfully assigned course to ${newIds.length} new learners and updated team curriculum.`
         });
 
     } catch (error) {
