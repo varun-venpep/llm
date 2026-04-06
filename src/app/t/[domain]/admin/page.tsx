@@ -192,7 +192,7 @@ export default function ClientAdminDashboard() {
     
     // Audit state
     const [auditLogs, setAuditLogs] = useState<any[]>([]);
-    const [auditPagination, setAuditPagination] = useState({ total: 0, pages: 1, currentPage: 1 });
+    const [auditPagination, setAuditPagination] = useState({ total: 0, pages: 1, currentPage: 1, limit: 20 });
     const [auditLoading, setAuditLoading] = useState(false);
     const [auditSearch, setAuditSearch] = useState('');
     
@@ -1303,7 +1303,7 @@ export default function ClientAdminDashboard() {
                     {(branding.logoDark || branding.logoLight) ? (
                         <div className="h-14 w-auto min-w-[3rem] flex items-center justify-center bg-transparent">
                             <img 
-                                src={mounted ? (resolvedTheme === 'dark' ? (branding.logoDark || branding.logoLight) : (branding.logoLight || branding.logoDark)) : (branding.logoDark || branding.logoLight)} 
+                                src={mounted ? (resolvedTheme === 'dark' ? (branding.logoDark || branding.logoLight!) : (branding.logoLight || branding.logoDark!)) : (branding.logoDark || branding.logoLight!)} 
                                 alt={branding.name} 
                                 className="h-full w-auto object-contain"
                             />
@@ -2782,7 +2782,7 @@ export default function ClientAdminDashboard() {
                                             body: JSON.stringify({ designFields })
                                         });
                                         if (res.ok) {
-                                            addToast({ title: 'Success', message: 'Design saved successfully.', type: 'success' });
+                                            addToast('Design saved successfully.', 'success');
                                         }
                                     } catch (e) {
                                         console.error(e);
