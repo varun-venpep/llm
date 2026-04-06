@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { checkSession } from '@/lib/auth';
 
 // GET single course
 export async function GET(
@@ -89,6 +90,19 @@ export async function PUT(
                 isPublished: body.isPublished
             }
         });
+
+        // Audit Log: Course Update (Visibility/Details)
+        const session = await checkSession(req, domain);
+        if (session) {
+            await prisma.activityLog.create({
+                data: {
+                    userId: session.id,
+                    action: 'COURSE_UPDATED',
+                    metadata: { courseId: course.id, title: course.title, isPublished: course.isPublished }
+                }
+            });
+        }
+
         return NextResponse.json(course);
     } catch (e) {
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
@@ -111,16 +125,29 @@ export async function DELETE(
         });
         if (!course) return NextResponse.json({ error: 'Course not found' }, { status: 404 });
 
-        // Business rule: courses with enrolled students cannot be deleted.
+        // Business rule: courses with enrolled learners cannot be deleted.
         // They can only be unpublished/deactivated.
         if (course._count.enrollments > 0) {
             return NextResponse.json(
-                { error: 'Cannot delete a course that has enrolled students. Please unpublish it instead.' },
+                { error: 'Cannot delete a course that has enrolled learners. Please unpublish it instead.' },
                 { status: 409 }
             );
         }
 
         await prisma.course.delete({ where: { id: courseId } });
+
+        // Audit Log: Course Deletion
+        const session = await checkSession(req, domain);
+        if (session) {
+            await prisma.activityLog.create({
+                data: {
+                    userId: session.id,
+                    action: 'COURSE_DELETED',
+                    metadata: { courseId: course.id, title: course.title }
+                }
+            });
+        }
+
         return NextResponse.json({ success: true });
     } catch (e) {
         console.error('Course delete error:', e);

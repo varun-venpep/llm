@@ -50,7 +50,7 @@ export default function BillingPage() {
                         <div className="p-4 rounded-xl border border-border/50 flex items-center justify-between">
                             <div>
                                 <h4 className="font-bold text-sm">Growth Tier</h4>
-                                <p className="text-xs text-muted-foreground">Up to 1,000 students</p>
+                                <p className="text-xs text-muted-foreground">Up to 1,000 learners</p>
                             </div>
                             <span className="font-bold">$199/mo</span>
                         </div>

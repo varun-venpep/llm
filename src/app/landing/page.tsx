@@ -48,7 +48,7 @@ export default function LandingPage() {
               in Minutes.
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground max-w-lg leading-relaxed">
-              Empower your staff, engage your students, and scale your brand with the world's most powerful managed learning ecosystem.
+              Empower your staff, engage your learners, and scale your brand with the world's most powerful managed learning ecosystem.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 pt-4">
               <button className="px-8 py-4 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold text-lg hover:scale-105 transition-transform flex items-center justify-center gap-2 shadow-lg shadow-purple-500/20">
@@ -131,7 +131,7 @@ export default function LandingPage() {
                 <Users className="w-6 h-6 text-purple-400" />
               </div>
               <h4 className="text-xl font-bold mb-4">Managed Onboarding</h4>
-              <p className="text-muted-foreground leading-relaxed">Bulk enroll students and generate secure credentials instantly. Zero friction for your learners.</p>
+              <p className="text-muted-foreground leading-relaxed">Bulk enroll learners and generate secure credentials instantly. Zero friction for your learners.</p>
             </div>
             <div className="p-8 rounded-2xl bg-secondary/30 border border-border hover:border-emerald-500/50 transition-colors group">
               <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">

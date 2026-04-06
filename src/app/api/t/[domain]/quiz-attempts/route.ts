@@ -44,7 +44,7 @@ export async function POST(
                     correctCount++;
                 }
             } else if (submittedAns.optionIds !== undefined) {
-                // MULTIPLE_SELECT: student must select exactly all correct options, no more, no less
+                // MULTIPLE_SELECT: learner must select exactly all correct options, no more, no less
                 const correctOptionIds = question.options.filter(o => o.isCorrect).map(o => o.id).sort();
                 const submittedSorted = [...submittedAns.optionIds].sort();
                 const allCorrect = correctOptionIds.length === submittedSorted.length &&

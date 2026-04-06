@@ -14,6 +14,7 @@ interface Course {
     skillLevel: string;
     languages: string;
     captions: string;
+    certificateEnabled: boolean;
     modules: any[];
 }
 
@@ -43,7 +44,7 @@ export default function AchievementsPage() {
 
     const fetchData = async (uid: string | null) => {
         try {
-            const coursesRes = await fetch(`/api/t/${domain}/courses?view=student`);
+            const coursesRes = await fetch(`/api/t/${domain}/courses?view=learner`);
             const coursesData = await coursesRes.json();
             const publishedCourses = (Array.isArray(coursesData) ? coursesData : []).filter((c: Course) => c.modules !== undefined);
             
@@ -65,7 +66,7 @@ export default function AchievementsPage() {
         }
     };
 
-    const completedCourses = courses.filter(c => (progressMap[c.id]?.percentage || 0) === 100);
+    const completedCourses = courses.filter(c => (progressMap[c.id]?.percentage || 0) === 100 && c.certificateEnabled);
 
     if (loading) {
         return <div className="min-h-screen bg-background flex items-center justify-center"><div className="w-8 h-8 rounded-full border-4 border-primary border-t-transparent animate-spin" /></div>;

@@ -31,7 +31,7 @@ export async function DELETE(
 ) {
     const { moduleId } = await params;
     try {
-        // Check if any lesson in this module has student progress or quiz attempts
+        // Check if any lesson in this module has learner progress or quiz attempts
         const moduleWithProgress = await prisma.module.findUnique({
             where: { id: moduleId },
             include: {
@@ -66,7 +66,7 @@ export async function DELETE(
 
         if (hasProgress) {
             return NextResponse.json({ 
-                error: 'Cannot delete module with student progress. Please deactivate it instead.',
+                error: 'Cannot delete module with learner progress. Please deactivate it instead.',
                 code: 'HAS_PROGRESS' 
             }, { status: 409 });
         }

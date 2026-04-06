@@ -32,7 +32,7 @@ export async function GET(
         const allLessonIds = course.modules.flatMap(m => m.lessons.map(l => l.id));
         const totalLessons = allLessonIds.length;
 
-        const studentStats = await Promise.all(enrollments.map(async (enrol) => {
+        const learnerStats = await Promise.all(enrollments.map(async (enrol) => {
             const progress = await prisma.lessonProgress.findMany({
                 where: { userId: enrol.userId, lessonId: { in: allLessonIds }, completed: true }
             });
@@ -61,7 +61,7 @@ export async function GET(
             };
         }));
 
-        const completions = studentStats.filter(s => s.isCompleted);
+        const completions = learnerStats.filter(s => s.isCompleted);
         const avgTime = completions.length > 0
             ? Math.round(completions.reduce((acc, s) => acc + s.timeTakenMinutes, 0) / completions.length)
             : 0;
@@ -71,7 +71,7 @@ export async function GET(
             totalEnrollments: enrollments.length,
             totalCompletions: completions.length,
             averageCompletionTimeMinutes: avgTime,
-            studentStats
+            learnerStats
         });
     } catch (e) {
         console.error('[COURSE_STATS_GET]', e);

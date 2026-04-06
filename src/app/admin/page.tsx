@@ -136,21 +136,21 @@ export default function SuperAdminDashboard() {
                 <div className="divide-y divide-border/50">
                     {loading ? (
                         <div className="py-16 flex justify-center"><Loader2 className="w-8 h-8 animate-spin text-muted-foreground" /></div>
-                    ) : stats?.recentTenants.length === 0 ? (
+                    ) : (stats?.recentTenants?.length ?? 0) === 0 ? (
                         <div className="py-16 text-center text-muted-foreground">
                             <Building2 className="w-12 h-12 mx-auto mb-3 opacity-20" />
                             <p className="font-bold">No client workspaces yet.</p>
                             <p className="text-sm">Use Quick Spin-off to deploy your first client.</p>
                         </div>
-                    ) : stats?.recentTenants.map(t => (
+                    ) : stats?.recentTenants?.map(t => (
                         <div key={t.id} className="px-6 py-4 flex items-center justify-between hover:bg-secondary/10 transition-colors">
                             <div className="flex items-center gap-3">
                                 <div className="w-9 h-9 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center font-black text-blue-400 text-sm">
-                                    {t.name.substring(0, 2).toUpperCase()}
+                                    {(t.name || '??').substring(0, 2).toUpperCase()}
                                 </div>
                                 <div>
                                     <p className="font-bold text-sm">{t.name}</p>
-                                    <p className="text-xs text-muted-foreground italic">/t/{t.subdomain}</p>
+                                    <p className="text-xs text-muted-foreground italic">{t.subdomain}.{process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'lvh.me:3000'}</p>
                                 </div>
                             </div>
                             <div className="flex items-center gap-4">
@@ -181,10 +181,10 @@ export default function SuperAdminDashboard() {
                                 <p className="text-3xl">🚀</p>
                                 <p className="font-black text-emerald-400 text-lg">Workspace Live!</p>
                                 <p className="text-sm text-muted-foreground">Your client can access their portal at:</p>
-                                <a href={`${window.location.origin}/t/${form.subdomain}/login`}
+                                <a href={`http://${form.subdomain}.${process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'lvh.me:3000'}/login`}
                                     className="block font-mono text-blue-400 hover:underline text-sm"
                                     target="_blank">
-                                    {window.location.origin}/t/{form.subdomain}/login
+                                    http://{form.subdomain}.{process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'lvh.me:3000'}/login
                                 </a>
                                 <button onClick={() => { setShowSpinoff(false); setSpinResult(null); }} className="mt-2 px-4 py-2 bg-emerald-600 text-white font-bold rounded-lg text-sm">Done</button>
                             </div>

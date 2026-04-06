@@ -8,7 +8,7 @@ export function Providers({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   
   // Isolate theme storage based on the application area
-  let storageKey = 'theme-student';
+  let storageKey = 'theme-learner';
   if (pathname?.includes('/super-admin')) {
     storageKey = 'theme-super-admin';
   } else if (pathname?.includes('/admin')) {

@@ -7,11 +7,11 @@ export async function POST(req: NextRequest) {
         const body = await req.json();
         const { email, password, rememberMe } = body;
 
-        // The super admin user doesn't belong to a tenant.
+        // Platform staff (SUPER_ADMIN and PLATFORM_MANAGER) are linked to the system-level tenant
         const user = await prisma.user.findFirst({
             where: {
                 email,
-                role: 'SUPER_ADMIN'
+                role: { in: ['SUPER_ADMIN', 'PLATFORM_MANAGER'] }
             }
         });
 
@@ -42,10 +42,10 @@ export async function POST(req: NextRequest) {
         }
 
         response.cookies.set('session-token', user.id, cookieOptions);
-
         return response;
 
     } catch (error) {
+        console.error('CRITICAL LOGIN ERROR:', error);
         return NextResponse.json({ error: 'Authentication failed' }, { status: 500 });
     }
 }

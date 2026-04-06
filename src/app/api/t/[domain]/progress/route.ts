@@ -54,7 +54,7 @@ export async function GET(
         }, {} as Record<string, any>);
 
         // 3. Self-healing: If there's no enrollment record, create it.
-        // This handles auto-enrollment as soon as a student accesses the course.
+        // This handles auto-enrollment as soon as a learner accesses the course.
         await prisma.enrollment.upsert({
             where: { userId_courseId: { userId, courseId } },
             create: { userId, courseId, status: 'ACTIVE' },
@@ -73,6 +73,7 @@ export async function POST(
     { params }: { params: Promise<{ domain: string }> }
 ) {
     try {
+        const { domain } = await params;
         const { userId, lessonId, completed } = await req.json();
 
         // 1. Ensure the user is actually enrolled in the database
@@ -101,10 +102,57 @@ export async function POST(
             },
             update: {
                 completed,
-                completedAt: completed ? new Date() : (undefined as any) // Don't clear if marking as start
+                completedAt: completed ? new Date() : (undefined as any)
             }
         });
-        return NextResponse.json(progress);
+
+        // 3. Automated Certificate Engine (Phase 4)
+        if (completed && lesson) {
+            const courseId = lesson.module.courseId;
+            const course = await prisma.course.findUnique({
+                where: { id: courseId },
+                include: {
+                    certificateEnabled: true,
+                    certificateTemplateId: true,
+                    modules: {
+                        where: { isActive: true },
+                        include: { lessons: { where: { isActive: true } } }
+                    }
+                }
+            });
+
+            if (course && course.certificateEnabled) {
+                const allLessonIds = course.modules.flatMap(m => m.lessons.map(l => l.id));
+                const totalLessons = allLessonIds.length;
+                
+                if (totalLessons > 0) {
+                    const completedProgress = await prisma.lessonProgress.count({
+                        where: { userId, lessonId: { in: allLessonIds }, completed: true }
+                    });
+                    
+                    // Check for 100% completion
+                    if (completedProgress >= totalLessons) {
+                        const existingCert = await prisma.issuedCertificate.findFirst({
+                            where: { userId, courseId }
+                        });
+
+                        if (!existingCert) {
+                            const uniqueCode = `CERT-${Math.random().toString(36).substring(2, 6).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+                            await prisma.issuedCertificate.create({
+                                data: {
+                                    uniqueCode,
+                                    userId,
+                                    courseId,
+                                    certificateUrl: `/api/t/${domain}/certificates/view?userId=${userId}&courseId=${courseId}`
+                                }
+                            });
+                        }
+                    }
+                }
+            }
+        }
+
+        return NextResponse.json({ ...progress });
     } catch (e) {
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
