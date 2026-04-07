@@ -62,14 +62,17 @@ export default $config({
         WHISPER_CLUSTER_NAME: cluster.nodes.cluster.name,
         WHISPER_SERVICE_NAME: whisperTask.nodes.service.name,
       },
-      loadBalancer: {
-        ports: [{ listen: "80/http", forward: "3000/http" }, { listen: "443/https", forward: "3000/http" }],
+      public: {
         domain: {
           name: "lebra.ai",
           dns: sst.aws.dns({
             zone: zone.id,
           }),
         },
+        ports: [
+          { listen: "80/http", forward: "3000/http" },
+          { listen: "443/https", forward: "3000/http" },
+        ],
       },
     });
 
