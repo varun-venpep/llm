@@ -12,7 +12,7 @@ export default $config({
   },
   async run() {
     // 1. Secrets
-    const dbUrl = new sst.Secret("DatabaseUrl");
+    const dbUrl = new sst.Secret("DATABASE_URL");
 
     // 2. Networking (Public Subnets ONLY to avoid $32/mo NAT Gateway costs)
     const vpc = new sst.aws.Vpc("LmsVpc"); 
@@ -43,7 +43,7 @@ export default $config({
     });
 
     // 5. DNS & SSL (Route 53)
-    const dns = sst.aws.dns.route53();
+    const dns = sst.aws.dns.aws();
 
     // 6. Next.js Main Application
     const web = new sst.aws.Nextjs("LmsWeb", {
