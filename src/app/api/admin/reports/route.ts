@@ -62,7 +62,7 @@ export async function GET(req: NextRequest) {
             where: totalUsersFilter,
             _count: { id: true }
         });
-        const usersByRole = usersByRoleRaw.map(r => ({
+        const usersByRole = usersByRoleRaw.map((r: any) => ({
             name: r.role,
             value: r._count.id
         }));
@@ -76,7 +76,7 @@ export async function GET(req: NextRequest) {
         });
         
         const monthlyJoins: Record<string, number> = {};
-        usersForTrend.forEach(u => {
+        usersForTrend.forEach((u: any) => {
             const m = u.createdAt.toLocaleString('default', { month: 'short', year: '2-digit' });
             monthlyJoins[m] = (monthlyJoins[m] || 0) + 1;
         });
@@ -104,7 +104,7 @@ export async function GET(req: NextRequest) {
                 take: 5
             });
             
-            topTenantsByRevenue = tenantsRaw.map(t => ({ 
+            topTenantsByRevenue = tenantsRaw.map((t: any) => ({ 
                 name: t.name, 
                 revenue: t.customRevenue,
                 currency: t.customRevenueCurrency
@@ -117,7 +117,7 @@ export async function GET(req: NextRequest) {
                 take: 5
             });
             
-            topTenantsByUsers = tenantsUsersRaw.map(t => ({ name: t.name, users: t._count.users }));
+            topTenantsByUsers = tenantsUsersRaw.map((t: any) => ({ name: t.name, users: t._count.users }));
         }
 
         return NextResponse.json({

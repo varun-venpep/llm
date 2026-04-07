@@ -11,18 +11,23 @@ export default $config({
     };
   },
   async run() {
-    // 1. Secrets
+    // 1. DNS (Explicitly create Hosted Zone so SST can find it for certificate validation)
+    const zone = new aws.route53.Zone("LmsZone", { 
+      name: "lebra.ai",
+    });
+
+    // 2. Secrets
     const dbUrl = new sst.Secret("DATABASE_URL");
 
-    // 2. Networking (Public Subnets ONLY to avoid $32/mo NAT Gateway costs)
+    // 3. Networking (Public Subnets ONLY to avoid $32/mo NAT Gateway costs)
     const vpc = new sst.aws.Vpc("LmsVpc"); 
 
-    // 3. Storage
+    // 4. Storage
     const bucket = new sst.aws.Bucket("LmsStorage", {
       public: true,
     });
 
-    // 4. Transcription Task (Whisper)
+    // 5. Transcription Task (Whisper)
     const cluster = new sst.aws.Cluster("TranscriptionCluster", { vpc });
     const whisperTask = cluster.addService("WhisperService", {
       cpu: "1 vCPU",
@@ -42,7 +47,7 @@ export default $config({
       }
     });
 
-    // 5. Next.js Main Application
+    // 6. Next.js Main Application
     const web = new sst.aws.Nextjs("LmsWeb", {
       vpc,
       link: [bucket, dbUrl],
@@ -58,6 +63,7 @@ export default $config({
     return {
       WebsiteUrl: web.url,
       S3BucketName: bucket.name,
+      NameServers: zone.nameServers,
     };
   },
 });
