@@ -20,7 +20,7 @@ async function checkData() {
   });
 
   console.log("\nCourses in venpep:");
-  courses.forEach(c => {
+  courses.forEach((c: any) => {
     console.log(`- ${c.title} (ID: ${c.id}): ${c._count.enrollments} enrolled`);
   });
 
@@ -41,7 +41,7 @@ async function checkData() {
     });
     console.log(`  Progress records: ${progress.length}`);
     
-    const distinctCoursesWithProgress = new Set(progress.map(p => p.lesson.module.courseId));
+    const distinctCoursesWithProgress = new Set(progress.map((p: any) => p.lesson.module.courseId));
     console.log(`  Courses with progress: ${distinctCoursesWithProgress.size}`);
     
     for (const cid of distinctCoursesWithProgress) {

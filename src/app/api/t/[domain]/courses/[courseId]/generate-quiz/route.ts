@@ -59,7 +59,7 @@ export async function POST(
             // If lesson context is too short, add course/module context as fallback
             fullContext += `Title: ${course.title}\nDescription: ${course.description}\n\n`;
             for (const mod of course.modules) {
-                if (mod.lessons.some(l => l.id === lessonId)) {
+                if (mod.lessons.some((l: any) => l.id === lessonId)) {
                     fullContext += `Targeting Module: ${mod.title}\n`;
                     for (const l of mod.lessons) {
                         if (l.id !== lessonId) {

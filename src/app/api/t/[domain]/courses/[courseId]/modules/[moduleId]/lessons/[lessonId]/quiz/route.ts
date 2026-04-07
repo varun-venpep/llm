@@ -31,7 +31,7 @@ export async function POST(
         const body = await req.json();
         const { title, description, passingScore, retakeAllowed, maxAttempts, isRandomized, randomCount, questions } = body;
 
-        const result = await prisma.$transaction(async (tx) => {
+        const result = await prisma.$transaction(async (tx: any) => {
             const quiz = await tx.quiz.upsert({
                 where: { lessonId },
                 update: { 
