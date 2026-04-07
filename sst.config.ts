@@ -11,15 +11,18 @@ export default $config({
     };
   },
   async run() {
-    // 1. Networking (Public Subnets ONLY to avoid $32/mo NAT Gateway costs)
+    // 1. Secrets
+    const dbUrl = new sst.aws.Secret("DatabaseUrl");
+
+    // 2. Networking (Public Subnets ONLY to avoid $32/mo NAT Gateway costs)
     const vpc = new sst.aws.Vpc("LmsVpc"); 
 
-    // 2. Storage
+    // 3. Storage
     const bucket = new sst.aws.Bucket("LmsStorage", {
       public: true,
     });
 
-    // 3. Transcription Task (Whisper)
+    // 4. Transcription Task (Whisper)
     const cluster = new sst.aws.Cluster("TranscriptionCluster", { vpc });
     const whisperTask = cluster.addService("WhisperService", {
       cpu: "1 vCPU",
@@ -28,9 +31,9 @@ export default $config({
         context: "./whisper-service",
         dockerfile: "Dockerfile",
       },
-      link: [bucket],
+      link: [bucket, dbUrl],
       environment: {
-        DATABASE_URL: $secret("DATABASE_URL"),
+        DATABASE_URL: dbUrl.value,
         WHISPER_MODEL_SIZE: "base",
       },
       scaling: {
@@ -39,15 +42,15 @@ export default $config({
       }
     });
 
-    // 4. DNS & SSL (Route 53)
+    // 5. DNS & SSL (Route 53)
     const dns = sst.aws.dns.route53();
 
-    // 5. Next.js Main Application
+    // 6. Next.js Main Application
     const web = new sst.aws.Nextjs("LmsWeb", {
       vpc,
-      link: [bucket],
+      link: [bucket, dbUrl],
       environment: {
-        DATABASE_URL: $secret("DATABASE_URL"),
+        DATABASE_URL: dbUrl.value,
         NEXT_PUBLIC_S3_BUCKET: bucket.name,
         WHISPER_CLUSTER_NAME: cluster.nodes.cluster.name,
         WHISPER_SERVICE_NAME: whisperTask.nodes.service.name,
