@@ -16,9 +16,9 @@ export async function GET() {
 
         if (!course) return NextResponse.json({ error: 'Course not found' });
 
-        const audit = course.modules.map(mod => ({
+        const audit = course.modules.map((mod: any) => ({
             module: mod.title,
-            lessons: mod.lessons.map(l => ({
+            lessons: mod.lessons.map((l: any) => ({
                 id: l.id,
                 title: l.title,
                 type: l.type,
