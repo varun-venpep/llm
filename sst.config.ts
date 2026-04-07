@@ -47,9 +47,14 @@ export default $config({
       }
     });
 
-    // 6. Next.js Main Application
-    const web = new sst.aws.Nextjs("LmsWeb", {
-      vpc,
+    // 6. Next.js Main Application (Containerized via Fargate)
+    const web = cluster.addService("LmsWeb", {
+      cpu: "0.5 vCPU",
+      memory: "1 GB",
+      image: {
+        context: ".",
+        dockerfile: "Dockerfile",
+      },
       link: [bucket, dbUrl],
       environment: {
         DATABASE_URL: dbUrl.value,
@@ -57,7 +62,15 @@ export default $config({
         WHISPER_CLUSTER_NAME: cluster.nodes.cluster.name,
         WHISPER_SERVICE_NAME: whisperTask.nodes.service.name,
       },
-      domain: "lebra.ai",
+      loadBalancer: {
+        ports: [{ listen: "80/http", forward: "3000/http" }, { listen: "443/https", forward: "3000/http" }],
+        domain: {
+          name: "lebra.ai",
+          dns: sst.aws.dns({
+            zone: zone.id,
+          }),
+        },
+      },
     });
 
     return {
