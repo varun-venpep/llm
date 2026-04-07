@@ -42,10 +42,7 @@ export default $config({
       }
     });
 
-    // 5. DNS & SSL (Route 53)
-    const dns = sst.aws.dns();
-
-    // 6. Next.js Main Application
+    // 5. Next.js Main Application
     const web = new sst.aws.Nextjs("LmsWeb", {
       vpc,
       link: [bucket, dbUrl],
@@ -55,16 +52,12 @@ export default $config({
         WHISPER_CLUSTER_NAME: cluster.nodes.cluster.name,
         WHISPER_SERVICE_NAME: whisperTask.nodes.service.name,
       },
-      domain: {
-        name: "lebra.ai",
-        dns, 
-      },
+      domain: "lebra.ai",
     });
 
     return {
       WebsiteUrl: web.url,
       S3BucketName: bucket.name,
-      // The Name Servers will be printed in the AWS console under Route 53
     };
   },
 });
