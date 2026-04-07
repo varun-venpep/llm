@@ -36,7 +36,8 @@
     "react-player": "^3.4.0",
     "recharts": "^3.8.1",
     "sst": "4.6.11",
-    "tailwind-merge": "^3.5.0"
+    "tailwind-merge": "^3.5.0",
+    "sharp": "^0.33.5"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
