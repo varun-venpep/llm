@@ -47,10 +47,10 @@ export async function POST(
                 where: { teamId: { in: teamIds } },
                 select: { courseId: true }
             });
-            const uniqueCourseIds = Array.from(new Set(assignedCourses.map(ac => ac.courseId)));
+            const uniqueCourseIds = Array.from(new Set(assignedCourses.map((ac: any) => ac.courseId)));
             if (uniqueCourseIds.length > 0) {
                 await prisma.enrollment.createMany({
-                    data: uniqueCourseIds.map(cid => ({
+                    data: uniqueCourseIds.map((cid: any) => ({
                         userId: learner.id,
                         courseId: cid,
                         status: 'ACTIVE'

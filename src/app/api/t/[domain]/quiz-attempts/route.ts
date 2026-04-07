@@ -34,25 +34,25 @@ export async function POST(
             optionIds?: string[];     // MULTIPLE_SELECT
             fillAnswer?: string;      // FILL_BLANK
         }) => {
-            const question = quiz.questions.find(q => q.id === submittedAns.questionId);
+            const question = quiz.questions.find((q: any) => q.id === submittedAns.questionId);
             if (!question) return;
 
             if (submittedAns.fillAnswer !== undefined) {
                 // FILL_BLANK: case-insensitive match against the correct option's text
-                const correctOption = question.options.find(o => o.isCorrect);
+                const correctOption = question.options.find((o: any) => o.isCorrect);
                 if (correctOption && submittedAns.fillAnswer.trim().toLowerCase() === correctOption.text.trim().toLowerCase()) {
                     correctCount++;
                 }
             } else if (submittedAns.optionIds !== undefined) {
                 // MULTIPLE_SELECT: learner must select exactly all correct options, no more, no less
-                const correctOptionIds = question.options.filter(o => o.isCorrect).map(o => o.id).sort();
+                const correctOptionIds = question.options.filter((o: any) => o.isCorrect).map((o: any) => o.id).sort();
                 const submittedSorted = [...submittedAns.optionIds].sort();
                 const allCorrect = correctOptionIds.length === submittedSorted.length &&
-                    correctOptionIds.every((id, i) => id === submittedSorted[i]);
+                    correctOptionIds.every((id: string, i: number) => id === submittedSorted[i]);
                 if (allCorrect) correctCount++;
             } else if (submittedAns.optionId) {
                 // MULTIPLE_CHOICE: single correct option
-                const option = question.options.find(o => o.id === submittedAns.optionId);
+                const option = question.options.find((o: any) => o.id === submittedAns.optionId);
                 if (option?.isCorrect) correctCount++;
             }
         });

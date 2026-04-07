@@ -44,9 +44,9 @@ export async function GET(
         // Backward compatibility: If a lesson is missing videoUrl or pdfUrl but has resources, populate them
         const processedCourse = {
             ...course,
-            modules: course.modules.map(mod => ({
+            modules: course.modules.map((mod: any) => ({
                 ...mod,
-                lessons: mod.lessons.map(lesson => {
+                lessons: mod.lessons.map((lesson: any) => {
                     let { videoUrl, pdfUrl } = lesson;
                     const lessonResources = (lesson as any).resources || [];
                     if (!videoUrl && lesson.type === 'VIDEO' && lessonResources.some((r: any) => r.type === 'VIDEO')) {

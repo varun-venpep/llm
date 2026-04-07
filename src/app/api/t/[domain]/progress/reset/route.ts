@@ -24,7 +24,7 @@ export async function POST(
             select: { id: true }
         });
 
-        const lessonIds = lessons.map(l => l.id);
+        const lessonIds = lessons.map((l: any) => l.id);
 
         // Delete progress
         await (prisma as any).lessonProgress.deleteMany({
@@ -46,7 +46,7 @@ export async function POST(
             select: { id: true }
         });
 
-        const quizIds = quizzes.map(q => q.id);
+        const quizIds = quizzes.map((q: any) => q.id);
 
         await (prisma as any).quizAttempt.deleteMany({
             where: {

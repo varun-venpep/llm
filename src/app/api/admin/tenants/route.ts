@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
         }
 
         // Create Tenant and Admin User in a transaction
-        const result = await prisma.$transaction(async (tx) => {
+        const result = await prisma.$transaction(async (tx: any) => {
             const tenant = await tx.tenant.create({
                 data: {
                     name,
@@ -75,7 +75,7 @@ export async function GET() {
         });
 
         // Add adminEmail to the response for consumption in the UI
-        const formattedTenants = tenants.map(tenant => ({
+        const formattedTenants = tenants.map((tenant: any) => ({
             ...tenant,
             adminEmail: tenant.users[0]?.email || null
         }));

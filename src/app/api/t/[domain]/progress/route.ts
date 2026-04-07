@@ -120,7 +120,7 @@ export async function POST(
             });
 
             if (course && course.certificateEnabled) {
-                const allLessonIds = course.modules.flatMap(m => m.lessons.map(l => l.id));
+                const allLessonIds = course.modules.flatMap((m: any) => m.lessons.map((l: any) => l.id));
                 const totalLessons = allLessonIds.length;
                 
                 if (totalLessons > 0) {

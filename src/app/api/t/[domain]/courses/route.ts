@@ -34,15 +34,15 @@ export async function GET(
                         role: true
                     }
                 });
-                const userTeamIds = user?.teams.map(t => t.id) || [];
-                const activeJobRoleIds = user?.jobRoles?.map(r => r.id) || [];
+                const userTeamIds = user?.teams.map((t: any) => t.id) || [];
+                const activeJobRoleIds = user?.jobRoles?.map((r: any) => r.id) || [];
 
                 // 2b. If learner, only show Marketplace courses if their team is assigned!
                 const assignments = await prisma.teamCourseAssignment.findMany({
                     where: { teamId: { in: userTeamIds } },
                     select: { courseId: true }
                 });
-                const assignedMarketplaceIds = assignments.map(a => a.courseId);
+                const assignedMarketplaceIds = assignments.map((a: any) => a.courseId);
 
                 // Visible if (role matches OR role is null) AND (team matches OR team is null)
                 // AND (isMarketplace matches assignment OR isMarketplace is false)

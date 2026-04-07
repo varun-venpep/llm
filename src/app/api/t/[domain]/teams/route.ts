@@ -109,14 +109,14 @@ export async function PUT(
         if (!currentTeam) return NextResponse.json({ error: 'Team not found' }, { status: 404 });
 
         // Diff members
-        const currentMemberIds = currentTeam.members.map(m => m.id);
+        const currentMemberIds = currentTeam.members.map((m: any) => m.id);
         const toConnectMembers = memberIds.filter((mid: string) => !currentMemberIds.includes(mid));
-        const toDisconnectMembers = currentMemberIds.filter(mid => !memberIds.includes(mid));
+        const toDisconnectMembers = currentMemberIds.filter((mid: any) => !memberIds.includes(mid));
 
         // Diff managers
-        const currentManagerIds = currentTeam.managers.map(m => m.id);
+        const currentManagerIds = currentTeam.managers.map((m: any) => m.id);
         const toConnectManagers = managerIds.filter((mid: string) => !currentManagerIds.includes(mid));
-        const toDisconnectManagers = currentManagerIds.filter(mid => !managerIds.includes(mid));
+        const toDisconnectManagers = currentManagerIds.filter((mid: any) => !managerIds.includes(mid));
 
         const team = await prisma.team.update({
             where: { id, tenantId: tenant.id },
