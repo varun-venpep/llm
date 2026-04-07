@@ -12,7 +12,7 @@ export default $config({
   },
   async run() {
     // 1. Secrets
-    const dbUrl = new sst.aws.Secret("DatabaseUrl");
+    const dbUrl = new sst.Secret("DatabaseUrl");
 
     // 2. Networking (Public Subnets ONLY to avoid $32/mo NAT Gateway costs)
     const vpc = new sst.aws.Vpc("LmsVpc"); 
