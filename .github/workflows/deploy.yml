@@ -25,6 +25,12 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      # Diagnostic: Check if secrets are actually present
+      - name: Check Secret Presence
+        run: |
+          if [ -z "${{ secrets.AWS_ACCESS_KEY_ID_DEV }}" ]; then echo "❌ AWS_ACCESS_KEY_ID_DEV is MISSING"; else echo "✅ AWS_ACCESS_KEY_ID_DEV is present"; fi
+          if [ -z "${{ secrets.AWS_SECRET_ACCESS_KEY_DEV }}" ]; then echo "❌ AWS_SECRET_ACCESS_KEY_DEV is MISSING"; else echo "✅ AWS_SECRET_ACCESS_KEY_DEV is present"; fi
+
       # 1. Deployment to NEW ACCOUNT (development)
       - name: Configure AWS Credentials (Dev)
         if: github.ref == 'refs/heads/development'
