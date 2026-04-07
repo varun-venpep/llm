@@ -1,4 +1,5 @@
 import { prisma } from './prisma';
+import { ECSClient, RunTaskCommand } from "@aws-sdk/client-ecs";
 
 /**
  * Invokes the AWS Lambda Whisper service asynchronously (fire-and-forget).
@@ -89,8 +90,8 @@ export async function transcribeMedia(lessonId: string, mediaUrl: string) {
         return;
     }
 
-    // The callback URL Lambda will POST results back to
-    const appUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    // The callback URL ECS will POST results back to
+    const appUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://lebra.ai';
     const callbackUrl = `${appUrl}/api/transcript-callback`;
 
     try {
@@ -106,29 +107,41 @@ export async function transcribeMedia(lessonId: string, mediaUrl: string) {
             data: { transcriptStatus: 'PROCESSING' }
         });
 
-        // Fire Lambda asynchronously — do NOT await the transcription result.
-        // Lambda will call our callbackUrl when done.
-        // We use AbortSignal with a 5s timeout just for the HTTP handshake.
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 5000);
+        // 3. Trigger ECS Task On-Demand
+        const clusterName = process.env.WHISPER_CLUSTER_NAME;
+        const serviceName = process.env.WHISPER_SERVICE_NAME; // In SST, the service name is often used as the task definition
 
-        fetch(lambdaUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ lessonId, mediaUrl, callbackUrl }),
-            signal: controller.signal,
-        })
-            .catch(err => {
-                clearTimeout(timeout);
-                // If Lambda returns 202 (async invocation), the fetch may "fail" due to no body — that's OK.
-                if (!err?.name?.includes('AbortError')) {
-                    console.error(`[AI] Failed to invoke Lambda for lesson ${lessonId}:`, err);
-                    prisma.lesson.update({ where: { id: lessonId }, data: { transcriptStatus: 'FAILED' } }).catch(() => { });
+        if (!clusterName || !serviceName) {
+            throw new Error("Missing WHISPER_CLUSTER_NAME or WHISPER_SERVICE_NAME in environment");
+        }
+
+        const ecs = new ECSClient({ region: "ap-southeast-1" });
+        const command = new RunTaskCommand({
+            cluster: clusterName,
+            taskDefinition: serviceName, // SST maps the service name to the task def
+            launchType: "FARGATE",
+            networkConfiguration: {
+                awsvpcConfiguration: {
+                    subnets: [], // We will leave this empty as SST handles the VPC link typically, or we inject them
+                    assignPublicIp: "ENABLED",
                 }
-            })
-            .finally(() => clearTimeout(timeout));
+            },
+            overrides: {
+                containerOverrides: [
+                    {
+                        name: "WhisperService", // Must match the name in Docker/SST
+                        environment: [
+                            { name: "LESSON_ID", value: lessonId },
+                            { name: "VIDEO_URL", value: mediaUrl },
+                            { name: "CALLBACK_URL", value: callbackUrl },
+                        ]
+                    }
+                ]
+            }
+        });
 
-        console.log(`[AI] Fired Lambda transcription job for lesson ${lessonId}. Callback: ${callbackUrl}`);
+        await ecs.send(command);
+        console.log(`[AI] Fired ECS on-demand transcription for lesson ${lessonId}.`);
 
     } catch (error) {
         console.error(`[AI] Error starting transcription for lesson ${lessonId}:`, error);

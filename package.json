@@ -3,12 +3,16 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
     "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
+    "dev": "next dev",
+    "lint": "eslint",
+    "start": "next start"
   },
   "dependencies": {
+    "@aws-sdk/client-ecs": "^3.1025.0",
+    "@aws-sdk/client-s3": "^3.1025.0",
+    "@aws-sdk/client-sqs": "^3.1025.0",
+    "@aws-sdk/s3-request-presigner": "^3.1025.0",
     "@prisma/adapter-pg": "^7.4.2",
     "@prisma/client": "^7.4.2",
     "@types/bcryptjs": "^2.4.6",
@@ -30,6 +34,7 @@
     "react-pdf": "^10.4.1",
     "react-player": "^3.4.0",
     "recharts": "^3.8.1",
+    "sst": "4.6.11",
     "tailwind-merge": "^3.5.0"
   },
   "devDependencies": {

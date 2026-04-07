@@ -105,3 +105,24 @@ async def transcribe(payload: dict):
 
 # Entry point for AWS Lambda via Mangum ASGI adapter
 handler = Mangum(app, lifespan="off")
+
+if __name__ == "__main__":
+    # Allow running as a standalone script (ECS Task Mode)
+    import asyncio
+    
+    video_url = os.environ.get("VIDEO_URL")
+    lesson_id = os.environ.get("LESSON_ID")
+    callback_url = os.environ.get("CALLBACK_URL")
+
+    if video_url and lesson_id and callback_url:
+        print(f"Starting standalone transcription for Lesson: {lesson_id}")
+        asyncio.run(transcribe({
+            "lessonId": lesson_id,
+            "mediaUrl": video_url,
+            "callbackUrl": callback_url
+        }))
+    else:
+        # Standard uvicorn start if no job env vars found
+        import uvicorn
+        port = int(os.environ.get("PORT", 10000))
+        uvicorn.run(app, host="0.0.0.0", port=port)

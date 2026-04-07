@@ -37,6 +37,6 @@
   ],
   "exclude": [
     "node_modules",
-    "*.ts"
+    "*.ts","sst.config.ts"
   ]
 }
