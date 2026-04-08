@@ -7,10 +7,10 @@ import { useParams, useRouter } from 'next/navigation';
 import {
     LayoutDashboard, BookOpen, Users, Settings, Palette,
     Globe, Plus, XCircle, ChevronRight, ChevronLeft, Save, Upload,
-    Trash2, Edit3, CheckCircle2, Megaphone, Loader2,
-    MoreVertical, GripVertical, Eye, EyeOff, Video, FileText, Lock,
-    BarChart3, Clock, UserCheck, Award, CheckCircle, AlertCircle, Info, Bell, Mic, Archive, LogOut, User, Shield, UsersRound,
-    Filter, TrendingUp, Medal, Calendar, Target, Activity, Users2, Download, ScanSearch, UserCircle, LayoutList, Trash
+    Trash2, Edit3, CheckCircle2, Megaphone, Loader2, MoreVertical, GripVertical, Eye, EyeOff, Video, FileText, Lock,
+    BarChart3, Clock, UserCheck, Award, CheckCircle, AlertCircle, Info, Bell, Mic, Archive, 
+    LogOut, User, Shield, UsersRound, Filter, TrendingUp, Medal, Calendar, Target, Activity, 
+    Users2, Download, ScanSearch, UserCircle, LayoutList, Trash, Settings2
 } from 'lucide-react';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -22,7 +22,7 @@ import { LearnersManager } from '@/components/admin/learners/LearnersManager';
 import CertificateManager from '@/components/admin/certificates/CertificateManager';
 import CertificateDesigner from '@/components/admin/certificates/CertificateDesigner';
 
-type Tab = 'overview' | 'courses' | 'learners' | 'announcements' | 'branding' | 'domains' | 'settings' | 'certificates' | 'reports' | 'roles' | 'teams' | 'audit';
+type Tab = 'overview' | 'courses' | 'learners' | 'announcements' | 'branding' | 'domains' | 'settings' | 'certificates' | 'reports' | 'roles' | 'teams' | 'audit' | 'i18n';
 
 // Toast Types
 type ToastType = 'success' | 'error' | 'info';
@@ -116,6 +116,14 @@ export default function ClientAdminDashboard() {
         favicon: null as string | null
     });
 
+    // i18n & AI State
+    const [localesConfig, setLocalesConfig] = useState({
+        availableLocales: ['en'],
+        defaultLocale: 'en',
+        openaiKey: ''
+    });
+    const [isSavingLocales, setIsSavingLocales] = useState(false);
+
     // Course Builder state
     const [showCourseModal, setShowCourseModal] = useState(false);
     const [courseFilter, setCourseFilter] = useState<'all' | 'published' | 'draft'>('all');
@@ -136,7 +144,7 @@ export default function ClientAdminDashboard() {
     const [editingTemplate, setEditingTemplate] = useState<any>(null);
     const [availableTemplates, setAvailableTemplates] = useState<any[]>([]);
     const [newModuleTitle, setNewModuleTitle] = useState('');
-    const [newLessonForms, setNewLessonForms] = useState<Record<string, { title: string; content: string; videoUrl: string; pdfUrl?: string; type: 'VIDEO' | 'PPT' | 'QUIZ' | 'TEXT'; isActive: boolean; resources: any[] }>>({});
+    const [newLessonForms, setNewLessonForms] = useState<Record<string, { title: string; content: string; videoUrl: string; pdfUrl?: string; type: 'VIDEO' | 'PPT' | 'QUIZ' | 'TEXT'; isActive: boolean; resources: any[]; language: string }>>({});
     const [activeQuizLesson, setActiveQuizLesson] = useState<{ moduleId: string; lessonId?: string } | null>(null);
     const [quizForm, setQuizForm] = useState<{ title: string; description: string; passingScore: number; retakeAllowed: boolean; maxAttempts: number; isRandomized: boolean; randomCount: number; questions: any[] }>({
         title: '',
@@ -201,6 +209,12 @@ export default function ClientAdminDashboard() {
     const [insightsUserId, setInsightsUserId] = useState<string | null>(null);
     const [insightsUser, setInsightsUser] = useState<any | null>(null);
     const [isFetchingUserDetail, setIsFetchingUserDetail] = useState(false);
+    
+    // Translation Management State
+    const [showTranslationModal, setShowTranslationModal] = useState(false);
+    const [translatingContent, setTranslatingContent] = useState<{ id: string, type: 'COURSE' | 'LESSON', title: string } | null>(null);
+    const [translations, setTranslations] = useState<any[]>([]);
+    const [isTranslating, setIsTranslating] = useState(false);
 
     const fetchUserDetail = async (userId: string) => {
         setIsFetchingUserDetail(true);
@@ -224,7 +238,7 @@ export default function ClientAdminDashboard() {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `audit-log-${log.id}-${new Date().getTime()}.json`;
+        a.download = `audit-log-${log.id}-${new Date().getTime(</div>.json`;
         a.click();
         URL.revokeObjectURL(url);
         addToast('Log exported successfully', 'success');
@@ -271,7 +285,7 @@ export default function ClientAdminDashboard() {
             if (res.ok) {
                 const data = await res.json();
                 setBranding(prev => ({ ...prev, [type]: data.url }));
-                addToast(`${type.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())} uploaded successfully`, 'success');
+                addToast(`${type.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase()</div> uploaded successfully`, 'success');
             } else {
                 addToast('Upload failed', 'error');
             }
@@ -302,6 +316,38 @@ export default function ClientAdminDashboard() {
             }
         } catch (e) {
             addToast('Unexpected error saving branding', 'error');
+        }
+    };
+
+    const fetchLocalesConfig = useCallback(async () => {
+        try {
+            const res = await fetch(`/api/t/${domain}/admin/settings/i18n`);
+            if (res.ok) {
+                const data = await res.json();
+                setLocalesConfig(data);
+            }
+        } catch (e) {
+            console.error('Fetch i18n error', e);
+        }
+    }, [domain]);
+
+    const handleSaveLocales = async () => {
+        setIsSavingLocales(true);
+        try {
+            const res = await fetch(`/api/t/${domain}/admin/settings/i18n`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(localesConfig)
+            });
+            if (res.ok) {
+                addToast('Localization & AI settings saved', 'success');
+            } else {
+                addToast('Failed to save settings', 'error');
+            }
+        } catch (e) {
+            addToast('Error saving settings', 'error');
+        } finally {
+            setIsSavingLocales(false);
         }
     };
 
@@ -367,6 +413,164 @@ export default function ClientAdminDashboard() {
         }
     };
 
+    const fetchTranslations = async (contentId: string, contentType: 'COURSE' | 'LESSON') => {
+        try {
+            const res = await fetch(`/api/t/${domain}/translate?contentId=${contentId}&contentType=${contentType}`);
+            if (res.ok) {
+                setTranslations(await res.json());
+            }
+        } catch (e) {
+            console.error('Fetch translations error', e);
+        }
+    };
+
+    const requestTranslation = async (contentId: string, contentType: 'COURSE' | 'LESSON', targetLocale: string) => {
+        setIsTranslating(true);
+        try {
+            const res = await fetch(`/api/t/${domain}/translate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contentId, contentType, targetLocale })
+            });
+            if (res.ok) {
+                addToast(`Translation drafted for ${targetLocale.toUpperCase(</div>`, 'success');
+                fetchTranslations(contentId, contentType);
+            } else {
+                addToast('Translation request failed', 'error');
+            }
+        } catch (e) {
+            addToast('AI Translation Error', 'error');
+        } finally {
+            setIsTranslating(false);
+        }
+    };
+
+    const handleUpdateTranslation = async (translationId: string, status: 'APPROVED' | 'PENDING', title?: string, description?: string) => {
+        try {
+            const res = await fetch(`/api/t/${domain}/translate`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: translationId, status, title, description })
+            });
+            if (res.ok) {
+                addToast(`Translation ${status.toLowerCase(</div>`, 'success');
+                if (translatingContent) fetchTranslations(translatingContent.id, translatingContent.type);
+            }
+        } catch (e) {
+            addToast('Update failed', 'error');
+        }
+    };
+
+    const updateCourseStatus = async (courseId: string, updates: Partial<any>) => {
+        try {
+            const res = await fetch(`/api/t/${domain}/admin/courses/${courseId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updates)
+            });
+            if (res.ok) {
+                const updated = await res.json();
+                setCourses(prev => prev.map(c => c.id === courseId ? updated : c));
+                if (selectedCourse?.id === courseId) {
+                    setSelectedCourse(updated);
+                }
+                addToast('Course updated successfully', 'success');
+            } else {
+                addToast('Failed to update course', 'error');
+            }
+        } catch (e) {
+            addToast('Unexpected error updating course', 'error');
+        }
+    };
+
+    const courseSettingsSidebar = (course: any) => {
+        return (
+            <div className="w-80 border-l border-border bg-background/50 backdrop-blur-md flex flex-col h-full animate-in slide-in-from-right duration-300">
+                <div className="p-6 border-b border-border flex items-center justify-between bg-primary/5">
+                    <div>
+                        <h3 className="font-black text-sm uppercase tracking-wider">Course Settings</h3>
+                        <p className="text-[10px] text-muted-foreground font-bold mt-0.5">ID: {course.id.slice(0,8</div></p>
+                    </div>
+                    <button onClick={() => setSelectedCourse(null</div> className="p-2 hover:bg-secondary rounded-full transition-colors"><XCircle size={18} /></button>
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
+                    {/* Status & Translation Status */}
+                    <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-indigo-500/80">Visibility & Status</label>
+                            <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-tighter border ${
+                                course.status === 'PUBLISHED' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 
+                                course.status === 'DRAFT' ? 'bg-orange-500/10 text-orange-400 border-orange-500/20' : 
+                                'bg-red-500/10 text-red-400 border-red-500/20'
+                            }`}>
+                                {course.status}
+                            </span>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-2">
+                            <button 
+                                onClick={() => updateCourseStatus(course.id, { status: 'PUBLISHED' }</div>
+                                disabled={course.status === 'PUBLISHED'}
+                                className="py-2.5 rounded-xl border border-border/50 bg-background hover:bg-secondary/20 transition-all text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 disabled:opacity-30"
+                            >
+                                <CheckCircle2 size={12} /> Publish
+                            </button>
+                            <button 
+                                onClick={() => updateCourseStatus(course.id, { status: 'DRAFT' }</div>
+                                disabled={course.status === 'DRAFT'}
+                                className="py-2.5 rounded-xl border border-border/50 bg-background hover:bg-secondary/20 transition-all text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 disabled:opacity-30"
+                            >
+                                <Loader2 size={12} /> Draft
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* AI Translation Engine */}
+                    <div className="p-5 rounded-2xl bg-indigo-500/5 border border-indigo-500/10 space-y-4 relative overflow-hidden group">
+                        <div className="absolute -top-12 -right-12 w-24 h-24 bg-indigo-500/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700" />
+                        <div className="flex items-center justify-between relative z-10">
+                            <h4 className="text-[10px] font-black uppercase tracking-widest text-indigo-400 flex items-center gap-2">
+                                <Globe size={12} /> AI Localization
+                            </h4>
+                            <Settings2 size={12} className="text-indigo-400/50" />
+                        </div>
+
+                        <p className="text-[11px] text-muted-foreground font-medium leading-relaxed relative z-10">
+                            Manage multi-language metadata and approve AI-drafted content for this course.
+                        </p>
+
+                        <button 
+                            onClick={() => {
+                                setTranslatingContent({ id: course.id, type: 'COURSE', title: course.title });
+                                fetchTranslations(course.id, 'COURSE');
+                                setShowTranslationModal(true);
+                            }}
+                            className="w-full py-3 bg-indigo-600 text-white rounded-xl font-black uppercase tracking-widest text-[9px] shadow-lg shadow-indigo-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all relative z-10"
+                        >
+                            Open Translation Hub
+                        </button>
+                    </div>
+
+                    {/* Danger Zone */}
+                    <div className="pt-4 border-t border-border/50">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-red-500/80 mb-3 block">Danger Zone</label>
+                        <button 
+                           onClick={() => {
+                               if (confirm('Are you sure you want to delete this course? This action is permanent.')) {
+                                   // handleDeleteCourse(course.id);
+                               }
+                           }}
+                           className="w-full py-2.5 rounded-xl bg-red-500/5 hover:bg-red-500/10 border border-red-500/20 text-red-500 text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2"
+                        >
+                            <Trash2 size={12} /> Delete Course
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
     const fetchAll = useCallback(async () => {
         setLoading(true);
         try {
@@ -412,6 +616,8 @@ export default function ClientAdminDashboard() {
             if (rolesRes.ok) setAvailableRoles(await rolesRes.json());
             if (teamsRes.ok) setAvailableTeams(await teamsRes.json());
             if (certsRes.ok) setAvailableTemplates(await certsRes.json());
+            
+            fetchLocalesConfig();
 
         } catch (e) {
             console.error(e);
@@ -1011,11 +1217,11 @@ export default function ClientAdminDashboard() {
         if (resUpdate.ok) {
             const savedLesson = await resUpdate.json();
             if (closeAfter) {
-                setNewLessonForms(prev => ({ ...prev, [moduleId]: { title: '', content: '', videoUrl: '', pdfUrl: '', type: 'TEXT', isActive: true, resources: [] } }));
+                setNewLessonForms(prev => ({ ...prev, [moduleId]: { title: '', content: '', videoUrl: '', pdfUrl: '', type: 'TEXT', isActive: true, resources: [], language: 'en' } }));
                 setActiveLessonForms(prev => ({ ...prev, [moduleId]: false }));
                 setEditingLessonIds(prev => ({ ...prev, [moduleId]: null }));
             } else {
-                setNewLessonForms(prev => ({ ...prev, [moduleId]: { title: '', content: '', videoUrl: '', pdfUrl: '', type: 'TEXT', isActive: true, resources: [] } }));
+                setNewLessonForms(prev => ({ ...prev, [moduleId]: { title: '', content: '', videoUrl: '', pdfUrl: '', type: 'TEXT', isActive: true, resources: [], language: 'en' } }));
                 setEditingLessonIds(prev => ({ ...prev, [moduleId]: null }));
             }
 
@@ -1039,7 +1245,8 @@ export default function ClientAdminDashboard() {
                 pdfUrl: lesson.pdfUrl || '',
                 type: lesson.type || 'TEXT',
                 isActive: lesson.isActive ?? true,
-                resources: lesson.resources || []
+                resources: lesson.resources || [],
+                language: lesson.language || 'en'
             }
         }));
         setEditingLessonIds(prev => ({ ...prev, [moduleId]: lesson.id }));
@@ -1303,16 +1510,16 @@ export default function ClientAdminDashboard() {
                     {(branding.logoDark || branding.logoLight) ? (
                         <div className="h-14 w-auto min-w-[3rem] flex items-center justify-center bg-transparent">
                             <img 
-                                src={mounted ? (resolvedTheme === 'dark' ? (branding.logoDark || branding.logoLight) : (branding.logoLight || branding.logoDark)) : (branding.logoDark || branding.logoLight)} 
+                                src={mounted ? (resolvedTheme === 'dark' ? (branding.logoDark || branding.logoLight) : (branding.logoLight || branding.logoDark)) : (branding.logoDark || branding.logoLight</div> 
                                 alt={branding.name} 
                                 className="h-full w-auto object-contain"
                             />
                         </div>
                     ) : (
                         <div className="w-10 h-10 rounded-lg flex items-center justify-center font-black text-white text-sm" style={{ backgroundColor: branding.primaryColor }}>
-                            {branding.name.charAt(0)}
+                            {branding.name.charAt(0</div>
                         </div>
-                    )}
+                    </div>
                     <div className="min-w-0">
                         <p className="font-bold text-sm leading-tight truncate">{branding.name}</p>
                         <p className="text-[10px] text-muted-foreground uppercase tracking-widest truncate">Admin Portal</p>
@@ -1328,6 +1535,7 @@ export default function ClientAdminDashboard() {
                         ['teams', 'Teams', UsersRound],
                         ['announcements', 'Announcements', Megaphone],
                         ['branding', 'Branding', Palette],
+                        ['i18n', 'i18n & AI', Globe],
                         ['domains', 'Domains', Globe],
                         ['settings', 'Settings', Settings],
                         ['certificates', 'Certificates', Award],
@@ -1340,10 +1548,10 @@ export default function ClientAdminDashboard() {
                             {label}
                             {activeTab === tab && <ChevronRight size={14} className="ml-auto" />}
                         </button>
-                    ))}
+                    )</div>
                 </nav>
 
-                <button onClick={() => window.open(`/t/${domain}/dashboard`, '_blank')} className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-muted-foreground hover:text-foreground border border-border hover:bg-secondary/50 transition-all">
+                <button onClick={() => window.open(`/t/${domain}/dashboard`, '_blank'</div> className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-muted-foreground hover:text-foreground border border-border hover:bg-secondary/50 transition-all">
                     <Eye size={14} /> Preview as Learner
                 </button>
             </aside>
@@ -1352,26 +1560,26 @@ export default function ClientAdminDashboard() {
             <main className="flex-1 p-8 overflow-auto">
                 <header className="flex justify-between items-center mb-8">
                     <h2 className="text-2xl font-black uppercase tracking-tight">
-                        {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
+                        {activeTab.charAt(0).toUpperCase() + activeTab.slice(1</div>
                     </h2>
                     <div className="flex items-center gap-4">
                         {activeTab === 'courses' && !selectedCourse && (
-                            <button onClick={() => setShowCourseModal(true)} className="px-4 py-2 bg-primary text-primary-foreground rounded-xl font-bold text-sm flex items-center gap-2 hover:opacity-90 transition-opacity whitespace-nowrap">
+                            <button onClick={() => setShowCourseModal(true</div> className="px-4 py-2 bg-primary text-primary-foreground rounded-xl font-bold text-sm flex items-center gap-2 hover:opacity-90 transition-opacity whitespace-nowrap">
                                 <Plus size={16} /> New Course
                             </button>
-                        )}
+                        </div>
                         {activeTab === 'announcements' && (
-                            <button onClick={() => setShowAnnouncementModal(true)} className="px-4 py-2 bg-primary text-primary-foreground rounded-xl font-bold text-sm flex items-center gap-2 hover:opacity-90 whitespace-nowrap">
+                            <button onClick={() => setShowAnnouncementModal(true</div> className="px-4 py-2 bg-primary text-primary-foreground rounded-xl font-bold text-sm flex items-center gap-2 hover:opacity-90 whitespace-nowrap">
                                 <Plus size={16} /> New Announcement
                             </button>
-                        )}
+                        </div>
 
                         <div className="h-6 w-px bg-border/50 mx-2" />
                         <ThemeToggle />
 
                         <div className="flex items-center gap-2">
                             <button
-                                onClick={() => setShowProfileModal(true)}
+                                onClick={() => setShowProfileModal(true</div>
                                 className="w-10 h-10 rounded-full border-2 border-primary/20 bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center font-black text-white text-sm hover:scale-105 transition-transform"
                                 title="Profile Settings"
                             >
@@ -1411,7 +1619,7 @@ export default function ClientAdminDashboard() {
                                     <p className="text-2xl font-black mb-0.5">{loading ? '...' : card.value}</p>
                                     <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{card.label}</p>
                                 </div>
-                            ))}
+                            )</div>
                         </div>
 
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -1424,7 +1632,7 @@ export default function ClientAdminDashboard() {
                                         <p className="font-bold">{a.title}</p>
                                         <p className="text-sm text-muted-foreground line-clamp-1">{a.body}</p>
                                     </div>
-                                ))}
+                                )</div>
                             </div>
 
                             <div className="glassmorphism p-8 rounded-3xl border border-border/50">
@@ -1438,14 +1646,14 @@ export default function ClientAdminDashboard() {
                                                 <p className="text-xs font-bold">{activity.user.name}</p>
                                                 <p className="text-[11px] text-muted-foreground">{activity.action}</p>
                                             </div>
-                                            <span className="text-[10px] text-muted-foreground whitespace-nowrap">{new Date(activity.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                            <span className="text-[10px] text-muted-foreground whitespace-nowrap">{new Date(activity.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }</div></span>
                                         </div>
-                                    ))}
+                                    )</div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                )}
+                </div>
 
                 {/* ── COURSES ── */}
                 {activeTab === 'courses' && (
@@ -1453,7 +1661,7 @@ export default function ClientAdminDashboard() {
                         {selectedCourse ? (
                             // Course Builder View
                             <div className="space-y-6">
-                                <button onClick={() => setSelectedCourse(null)} className="flex items-center gap-2 text-sm font-bold text-muted-foreground hover:text-foreground transition-colors">
+                                <button onClick={() => setSelectedCourse(null</div> className="flex items-center gap-2 text-sm font-bold text-muted-foreground hover:text-foreground transition-colors">
                                     ← Back to Courses
                                 </button>
                                 <div className="flex items-center justify-between">
@@ -1482,19 +1690,27 @@ export default function ClientAdminDashboard() {
                                             className="px-4 py-2 rounded-xl font-bold text-xs bg-primary/10 border border-primary/20 text-primary hover:bg-primary/20 transition-all flex items-center gap-2">
                                             <Settings size={14} /> Course Settings
                                         </button>
-                                        <button onClick={() => fetchCourseStats(selectedCourse.id)}
+                                        <button onClick={() => {
+                                            setTranslatingContent({ id: selectedCourse.id, type: 'COURSE', title: selectedCourse.title });
+                                            fetchTranslations(selectedCourse.id, 'COURSE');
+                                            setShowTranslationModal(true);
+                                        }}
+                                            className="px-4 py-2 rounded-xl font-bold text-xs bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 hover:bg-indigo-500/20 transition-all flex items-center gap-2">
+                                            <Globe size={14} /> Manage Translations
+                                        </button>
+                                        <button onClick={() => fetchCourseStats(selectedCourse.id</div>
                                             className="px-4 py-2 rounded-xl font-bold text-xs bg-primary/10 border border-primary/20 text-primary hover:bg-primary/20 transition-all flex items-center gap-2">
                                             <BarChart3 size={14} /> Course Statistics
                                         </button>
-                                        <button onClick={() => togglePublish(selectedCourse)}
+                                        <button onClick={() => togglePublish(selectedCourse</div>
                                             className={`px-4 py-2 rounded-xl font-bold text-xs border transition-all flex items-center gap-2 ${selectedCourse.isPublished ? 'border-orange-500/30 text-orange-400 bg-orange-500/10 hover:bg-orange-500/20' : 'border-emerald-500/30 text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20'}`}>
                                             {selectedCourse.isPublished ? <><EyeOff size={14} /> Unpublish Course</> : <><Eye size={14} /> Publish Course</>}
                                         </button>
-                                        <button onClick={() => setManagingResources({ id: selectedCourse.id, type: 'COURSE', name: selectedCourse.title, resources: selectedCourse.resources || [] })}
+                                        <button onClick={() => setManagingResources({ id: selectedCourse.id, type: 'COURSE', name: selectedCourse.title, resources: selectedCourse.resources || [] }</div>
                                             className="px-4 py-2 rounded-xl font-bold text-xs bg-blue-500/10 border border-blue-500/20 text-blue-400 hover:bg-blue-500/20 transition-all flex items-center gap-2">
                                             <Archive size={14} /> Course Resources
                                         </button>
-                                        <button onClick={(e) => deleteCourse(e, selectedCourse.id)}
+                                        <button onClick={(e) => deleteCourse(e, selectedCourse.id</div>
                                             className="px-4 py-2 rounded-xl font-bold text-xs bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 transition-all flex items-center gap-2">
                                             <Trash2 size={14} /> Delete Course
                                         </button>
@@ -1517,7 +1733,7 @@ export default function ClientAdminDashboard() {
                                                     </div>
                                                     <p className="text-2xl font-black">{stat.value}</p>
                                                 </div>
-                                            ))}
+                                            )</div>
                                         </div>
 
                                         <div className="glassmorphism rounded-2xl border border-border/50 overflow-hidden">
@@ -1556,16 +1772,16 @@ export default function ClientAdminDashboard() {
                                                                         <span className="px-2 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-bold uppercase">Completed</span>
                                                                     ) : (
                                                                         <span className="px-2 py-1 rounded-full bg-secondary text-muted-foreground text-[10px] font-bold uppercase">In Progress</span>
-                                                                    )}
+                                                                    </div>
                                                                 </td>
                                                             </tr>
-                                                        ))}
+                                                        )</div>
                                                     </tbody>
                                                 </table>
                                             </div>
                                         </div>
                                     </div>
-                                )}
+                                </div>
 
                                 {/* Module Builder */}
                                 <div className="space-y-4">
@@ -1590,8 +1806,8 @@ export default function ClientAdminDashboard() {
                                                                     autoFocus
                                                                     onKeyDown={(e) => { if (e.key === 'Enter') updateModuleTitle(mod.id); if (e.key === 'Escape') setEditingModuleId(null); }}
                                                                 />
-                                                                <button onClick={() => updateModuleTitle(mod.id)} className="p-1 text-emerald-400 hover:text-emerald-300 transition-colors"><CheckCircle2 size={16} /></button>
-                                                                <button onClick={() => setEditingModuleId(null)} className="p-1 text-red-400 hover:text-red-300 transition-colors"><XCircle size={16} /></button>
+                                                                <button onClick={() => updateModuleTitle(mod.id</div> className="p-1 text-emerald-400 hover:text-emerald-300 transition-colors"><CheckCircle2 size={16} /></button>
+                                                                <button onClick={() => setEditingModuleId(null</div> className="p-1 text-red-400 hover:text-red-300 transition-colors"><XCircle size={16} /></button>
                                                             </div>
                                                             {validationErrors[`module-${mod.id}`]?.title && <span className="text-[10px] font-bold text-red-500 animate-in fade-in slide-in-from-top-1 ml-1">{validationErrors[`module-${mod.id}`].title}</span>}
                                                         </div>
@@ -1600,13 +1816,13 @@ export default function ClientAdminDashboard() {
                                                             <p className={`font-bold ${!mod.isActive ? 'text-muted-foreground line-through' : ''}`}>{mod.title}</p>
                                                             {!mod.isActive && <span className="text-[9px] text-red-400 font-bold uppercase tracking-tighter">Deactivated Module</span>}
                                                         </>
-                                                    )}
+                                                    </div>
                                                 </div>
 
                                                 <div className="ml-auto flex items-center gap-2">
                                                     <span className="text-xs text-muted-foreground mr-2 font-mono">{mod.lessons?.length || 0} Lessons</span>
                                                     <button
-                                                        onClick={() => setManagingResources({ id: mod.id, type: 'MODULE', name: mod.title, resources: mod.resources || [] })}
+                                                        onClick={() => setManagingResources({ id: mod.id, type: 'MODULE', name: mod.title, resources: mod.resources || [] }</div>
                                                         className="px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all bg-background border border-border/50 text-muted-foreground hover:text-blue-400 hover:border-blue-400/30 flex items-center gap-1.5"
                                                     >
                                                         <Archive size={12} /> Resources
@@ -1629,7 +1845,7 @@ export default function ClientAdminDashboard() {
                                                         </span>
                                                     </div>
                                                     <button
-                                                        onClick={(e) => deleteModule(e, mod.id)}
+                                                        onClick={(e) => deleteModule(e, mod.id</div>
                                                         className="p-1.5 rounded-lg transition-all bg-background border border-border/50 text-red-500/70 hover:text-red-400 hover:bg-red-500/10"
                                                         title="Delete Module"
                                                     >
@@ -1649,13 +1865,13 @@ export default function ClientAdminDashboard() {
                                                         {/* Transcript Status Badge */}
                                                         {lesson.type === 'VIDEO' && lesson.transcriptStatus === 'PROCESSING' && (
                                                             <span className="text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-full px-2 py-0.5 font-bold uppercase animate-pulse">⏳ Generating Transcript...</span>
-                                                        )}
+                                                        </div>
                                                         {lesson.type === 'VIDEO' && lesson.transcriptStatus === 'READY' && (
                                                             <span className="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full px-2 py-0.5 font-bold uppercase">✅ Transcript Ready</span>
-                                                        )}
+                                                        </div>
                                                         {lesson.type === 'VIDEO' && lesson.transcriptStatus === 'FAILED' && (
                                                             <span className="text-[10px] bg-red-500/10 text-red-400 border border-red-500/20 rounded-full px-2 py-0.5 font-bold uppercase">❌ Transcript Failed</span>
-                                                        )}
+                                                        </div>
                                                         <div className="ml-auto flex items-center gap-2">
                                                             {lesson.type === 'VIDEO' && lesson.transcriptStatus === 'READY' && (
                                                                 <button
@@ -1680,7 +1896,7 @@ export default function ClientAdminDashboard() {
                                                                     <Mic size={12} />
                                                                     <span className="text-[9px] font-black uppercase tracking-widest">AI Quiz</span>
                                                                 </button>
-                                                            )}
+                                                            </div>
                                                             <div
                                                                 onClick={(e) => { e.stopPropagation(); toggleLessonStatus(mod.id, lesson); }}
                                                                 className="px-3 py-1.5 rounded-lg bg-background border border-border/50 flex items-center gap-2 cursor-pointer hover:bg-secondary/20 transition-all select-none"
@@ -1693,14 +1909,14 @@ export default function ClientAdminDashboard() {
                                                                 </span>
                                                             </div>
                                                             <button
-                                                                onClick={() => startEditingLesson(mod.id, lesson)}
+                                                                onClick={() => startEditingLesson(mod.id, lesson</div>
                                                                 className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-secondary rounded-lg bg-background border border-border/50 transition-all"
                                                                 title="Edit Lesson"
                                                             >
                                                                 <Edit3 size={14} />
                                                             </button>
                                                             <button
-                                                                onClick={(e) => deleteLesson(e, mod.id, lesson.id)}
+                                                                onClick={(e) => deleteLesson(e, mod.id, lesson.id</div>
                                                                 className="p-1.5 text-red-500/70 hover:text-red-400 hover:bg-red-500/10 rounded-lg bg-background border border-border/50 transition-all"
                                                                 title="Delete Lesson"
                                                             >
@@ -1708,7 +1924,7 @@ export default function ClientAdminDashboard() {
                                                             </button>
                                                         </div>
                                                     </div>
-                                                ))}
+                                                )</div>
                                                 {/* Add Lesson Form */}
                                                 {activeLessonForms[mod.id] ? (
                                                     <div className="mt-2 p-4 rounded-xl bg-secondary/10 border border-primary/20 space-y-3">
@@ -1722,30 +1938,46 @@ export default function ClientAdminDashboard() {
                                                             {(['VIDEO', 'PPT', 'QUIZ', 'TEXT'] as const).map((t) => (
                                                                 <button
                                                                     key={t}
-                                                                    onClick={() => setNewLessonForms(prev => ({ ...prev, [mod.id]: { ...prev[mod.id], type: t } }))}
+                                                                    onClick={() => setNewLessonForms(prev => ({ ...prev, [mod.id]: { ...prev[mod.id], type: t } })</div>
                                                                     className={`flex-1 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${newLessonForms[mod.id]?.type === t || (!newLessonForms[mod.id]?.type && t === 'TEXT') ? 'bg-background shadow-sm text-primary' : 'text-muted-foreground hover:text-foreground'}`}
                                                                 >
                                                                     {t}
                                                                 </button>
-                                                            ))}
+                                                            )</div>
                                                         </div>
 
-                                                        <div className="space-y-1">
-                                                            <div className="flex justify-between items-center">
-                                                                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Lesson Title</label>
-                                                                {validationErrors[`lesson-${mod.id}`]?.title && <span className="text-[10px] font-bold text-red-500 animate-in fade-in slide-in-from-right-1">{validationErrors[`lesson-${mod.id}`].title}</span>}
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                            <div className="space-y-1">
+                                                                <div className="flex justify-between items-center">
+                                                                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Lesson Title</label>
+                                                                    {validationErrors[`lesson-${mod.id}`]?.title && <span className="text-[10px] font-bold text-red-500 animate-in fade-in slide-in-from-right-1">{validationErrors[`lesson-${mod.id}`].title}</span>}
+                                                                </div>
+                                                                <input
+                                                                    placeholder="e.g. Introduction to React..."
+                                                                    className={`w-full bg-secondary/30 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 transition-all font-bold ${validationErrors[`lesson-${mod.id}`]?.title ? 'border-red-500/50 focus:ring-red-500/50' : 'border-border/50 focus:ring-primary/50'}`}
+                                                                    value={newLessonForms[mod.id]?.title || ''}
+                                                                    onChange={e => {
+                                                                        setNewLessonForms(prev => ({ ...prev, [mod.id]: { ...prev[mod.id], title: e.target.value } }));
+                                                                        if (validationErrors[`lesson-${mod.id}`]?.title) {
+                                                                            setValidationErrors(prev => ({ ...prev, [`lesson-${mod.id}`]: null }));
+                                                                        }
+                                                                    }}
+                                                                />
                                                             </div>
-                                                            <input
-                                                                placeholder="e.g. Introduction to React..."
-                                                                className={`w-full bg-secondary/30 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 transition-all font-bold ${validationErrors[`lesson-${mod.id}`]?.title ? 'border-red-500/50 focus:ring-red-500/50' : 'border-border/50 focus:ring-primary/50'}`}
-                                                                value={newLessonForms[mod.id]?.title || ''}
-                                                                onChange={e => {
-                                                                    setNewLessonForms(prev => ({ ...prev, [mod.id]: { ...prev[mod.id], title: e.target.value } }));
-                                                                    if (validationErrors[`lesson-${mod.id}`]?.title) {
-                                                                        setValidationErrors(prev => ({ ...prev, [`lesson-${mod.id}`]: null }));
-                                                                    }
-                                                                }}
-                                                            />
+                                                            <div className="space-y-1">
+                                                                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Content Language</label>
+                                                                <select
+                                                                    value={newLessonForms[mod.id]?.language || 'en'}
+                                                                    onChange={e => setNewLessonForms(prev => ({ ...prev, [mod.id]: { ...prev[mod.id], language: e.target.value } })</div>
+                                                                    className="w-full bg-secondary/30 border border-border/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all font-bold"
+                                                                >
+                                                                    {localesConfig.availableLocales.map(code => (
+                                                                        <option key={code} value={code}>
+                                                                            {code === 'en' ? 'English' : 'Arabic'}
+                                                                        </option>
+                                                                    )</div>
+                                                                </select>
+                                                            </div>
                                                         </div>
 
                                                         {newLessonForms[mod.id]?.type === 'VIDEO' && (
@@ -1782,10 +2014,10 @@ export default function ClientAdminDashboard() {
                                                                                 style={{ width: `${uploadProgress[mod.id]}%` }}
                                                                             />
                                                                         </div>
-                                                                    )}
+                                                                    </div>
                                                                 </div>
                                                             </div>
-                                                        )}
+                                                        </div>
 
                                                         {newLessonForms[mod.id]?.type === 'PPT' && (
                                                             <div className="space-y-3 animate-in fade-in duration-300">
@@ -1821,10 +2053,10 @@ export default function ClientAdminDashboard() {
                                                                                 style={{ width: `${uploadProgress[mod.id]}%` }}
                                                                             />
                                                                         </div>
-                                                                    )}
+                                                                    </div>
                                                                 </div>
                                                             </div>
-                                                        )}
+                                                        </div>
 
                                                         {newLessonForms[mod.id]?.type === 'QUIZ' && editingLessonIds[mod.id] && (
                                                             <div className="p-4 rounded-xl border border-amber-500/20 bg-amber-500/5 flex flex-col items-center gap-3 animate-in fade-in duration-300">
@@ -1862,7 +2094,7 @@ export default function ClientAdminDashboard() {
                                                                     Manage Quiz Questions
                                                                 </button>
                                                             </div>
-                                                        )}
+                                                        </div>
 
                                                         {newLessonForms[mod.id]?.type === 'QUIZ' && !editingLessonIds[mod.id] && (
                                                             <div className="p-4 rounded-xl border border-dashed border-indigo-500/30 bg-indigo-500/5 flex flex-col items-center gap-3 animate-in fade-in duration-300">
@@ -1893,7 +2125,7 @@ export default function ClientAdminDashboard() {
                                                                     {isSavingGeneratedQuiz[mod.id] ? 'Saving...' : 'Save & Generate with Whisper AI'}
                                                                 </button>
                                                             </div>
-                                                        )}
+                                                        </div>
 
                                                         {newLessonForms[mod.id]?.type === 'TEXT' && (
                                                             <textarea
@@ -1901,16 +2133,16 @@ export default function ClientAdminDashboard() {
                                                                 rows={4}
                                                                 className="w-full bg-secondary/30 border border-border/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50 resize-none animate-in slide-in-from-top-2 duration-300"
                                                                 value={newLessonForms[mod.id]?.content || ''}
-                                                                onChange={e => setNewLessonForms(prev => ({ ...prev, [mod.id]: { ...prev[mod.id], content: e.target.value } }))}
+                                                                onChange={e => setNewLessonForms(prev => ({ ...prev, [mod.id]: { ...prev[mod.id], content: e.target.value } })</div>
                                                             />
-                                                        )}
+                                                        </div>
 
                                                         <div className="flex items-center gap-2 px-1">
                                                             <input
                                                                 type="checkbox"
                                                                 id={`lesson-active-${mod.id}`}
                                                                 checked={newLessonForms[mod.id]?.isActive ?? true}
-                                                                onChange={e => setNewLessonForms(prev => ({ ...prev, [mod.id]: { ...prev[mod.id], isActive: e.target.checked } }))}
+                                                                onChange={e => setNewLessonForms(prev => ({ ...prev, [mod.id]: { ...prev[mod.id], isActive: e.target.checked } })</div>
                                                                 className="rounded border-border/50 bg-secondary/30 text-primary focus:ring-primary/20"
                                                             />
                                                             <label htmlFor={`lesson-active-${mod.id}`} className="text-xs font-medium text-muted-foreground cursor-pointer">Lesson is Active</label>
@@ -1929,9 +2161,9 @@ export default function ClientAdminDashboard() {
                                                                             setNewLessonForms(prev => ({ ...prev, [mod.id]: { ...prev[mod.id], resources: newRes } }));
                                                                         }} className="text-red-400 hover:text-red-300 ml-1"><XCircle size={10} /></button>
                                                                     </div>
-                                                                ))}
+                                                                )</div>
                                                             </div>
-                                                        )}
+                                                        </div>
 
                                                         <div className="flex items-center justify-between mt-4">
                                                             <div className="flex flex-col gap-2 w-full">
@@ -1943,16 +2175,16 @@ export default function ClientAdminDashboard() {
                                                                             className="hidden"
                                                                             accept=".mp4,.pdf,.docx,.pptx"
                                                                             disabled={uploadProgress[`res-${mod.id}`] !== undefined}
-                                                                            onChange={(e) => handleResourceUpload(mod.id, e)}
+                                                                            onChange={(e) => handleResourceUpload(mod.id, e</div>
                                                                         />
                                                                     </label>
                                                                     <div className="flex items-center gap-2">
                                                                         {!editingLessonIds[mod.id] && (
-                                                                            <button onClick={() => addOrUpdateLesson(mod.id, false)} className="px-3 py-1.5 bg-secondary/50 hover:bg-secondary font-bold rounded-lg text-xs transition-colors">
+                                                                            <button onClick={() => addOrUpdateLesson(mod.id, false</div> className="px-3 py-1.5 bg-secondary/50 hover:bg-secondary font-bold rounded-lg text-xs transition-colors">
                                                                                 Save & Add Next
                                                                             </button>
-                                                                        )}
-                                                                        <button onClick={() => addOrUpdateLesson(mod.id, true)} className="px-4 py-1.5 bg-primary/20 border border-primary/30 text-primary font-bold rounded-lg text-xs hover:bg-primary/30 transition-colors">
+                                                                        </div>
+                                                                        <button onClick={() => addOrUpdateLesson(mod.id, true</div> className="px-4 py-1.5 bg-primary/20 border border-primary/30 text-primary font-bold rounded-lg text-xs hover:bg-primary/30 transition-colors">
                                                                             <Save size={14} className="inline mr-1" /> {editingLessonIds[mod.id] ? 'Save Changes' : 'Save'}
                                                                         </button>
                                                                     </div>
@@ -1964,7 +2196,7 @@ export default function ClientAdminDashboard() {
                                                                             style={{ width: `${uploadProgress[`res-${mod.id}`]}%` }}
                                                                         />
                                                                     </div>
-                                                                )}
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -1972,10 +2204,10 @@ export default function ClientAdminDashboard() {
                                                     <button onClick={() => { setActiveLessonForms(prev => ({ ...prev, [mod.id]: true })); setNewLessonForms(prev => ({ ...prev, [mod.id]: { title: '', content: '', videoUrl: '', pdfUrl: '', type: 'TEXT', isActive: true, resources: [] } })); setEditingLessonIds(prev => ({ ...prev, [mod.id]: null })); }} className="w-full mt-2 px-4 py-3 border border-dashed border-border/50 hover:border-primary/50 hover:bg-primary/5 text-muted-foreground hover:text-primary font-bold rounded-xl text-sm transition-colors flex items-center justify-center gap-2">
                                                         <Plus size={16} /> Add Lesson
                                                     </button>
-                                                )}
+                                                </div>
                                             </div>
                                         </div>
-                                    ))}
+                                    )</div>
 
                                     <div className="space-y-2">
                                         <div className="flex gap-3">
@@ -1987,18 +2219,90 @@ export default function ClientAdminDashboard() {
                                                     setNewModuleTitle(e.target.value);
                                                     if (validationErrors.newModule) setValidationErrors(prev => ({ ...prev, newModule: null }));
                                                 }}
-                                                onKeyDown={e => e.key === 'Enter' && addModule(selectedCourse.id)}
+                                                onKeyDown={e => e.key === 'Enter' && addModule(selectedCourse.id</div>
                                             />
-                                            <button onClick={() => addModule(selectedCourse.id)} className="px-6 py-3 bg-primary text-primary-foreground rounded-xl font-bold text-sm hover:opacity-90 flex items-center gap-2">
+                                            <button onClick={() => addModule(selectedCourse.id</div> className="px-6 py-3 bg-primary text-primary-foreground rounded-xl font-bold text-sm hover:opacity-90 flex items-center gap-2">
                                                 <Plus size={16} /> Add Module
                                             </button>
                                         </div>
                                         {validationErrors.newModule && <p className="text-[10px] font-bold text-red-500 animate-in fade-in slide-in-from-right-1 ml-1">{validationErrors.newModule}</p>}
+                                    <div className="glassmorphism p-6 rounded-3xl border border-border/50 space-y-6">
+                                        <div className="space-y-4">
+                                            <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                                                <Globe size={12} className="text-primary" /> Visibility & Status
+                                            </h4>
+                                            
+                                            <div className="flex items-center justify-between p-3 rounded-2xl bg-secondary/20 border border-border/50">
+                                                <div className="space-y-0.5">
+                                                    <p className="text-[10px] font-black uppercase tracking-tighter">Published</p>
+                                                    <p className="text-[9px] text-muted-foreground">Visible to learners</p>
+                                                </div>
+                                                <button
+                                                    onClick={() => updateCourseStatus(selectedCourse.id, !selectedCourse.isPublished</div>
+                                                    className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${selectedCourse.isPublished ? 'bg-emerald-500' : 'bg-secondary-foreground/20'}`}
+                                                >
+                                                    <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${selectedCourse.isPublished ? 'translate-x-5' : 'translate-x-0'}`} />
+                                                </button>
+                                            </div>
+
+                                            <div className="flex items-center justify-between p-3 rounded-2xl bg-secondary/20 border border-border/50">
+                                                <div className="space-y-0.5">
+                                                    <p className="text-[10px] font-black uppercase tracking-tighter">Marketplace</p>
+                                                    <p className="text-[9px] text-muted-foreground">List in internal store</p>
+                                                </div>
+                                                <button
+                                                    onClick={() => setCourseForm(prev => ({ ...prev, isMarketplace: !prev.isMarketplace })</div>
+                                                    className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${courseForm.isMarketplace ? 'bg-amber-500' : 'bg-secondary-foreground/20'}`}
+                                                >
+                                                    <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${courseForm.isMarketplace ? 'translate-x-5' : 'translate-x-0'}`} />
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-4 pt-4 border-t border-border/30">
+                                            <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                                                <Settings2 size={12} className="text-blue-400" /> Advanced Control
+                                            </h4>
+                                            
+                                            <button 
+                                                onClick={() => {
+                                                    setTranslatingContent({ id: selectedCourse.id, type: 'COURSE', title: selectedCourse.title });
+                                                    setShowTranslationModal(true);
+                                                }}
+                                                className="w-full py-4 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-indigo-500 hover:text-white transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/5 group"
+                                            >
+                                                <Globe size={14} className="group-hover:rotate-12 transition-transform" /> Manage Translations
+                                            </button>
+
+                                            <button 
+                                                onClick={() => deleteCourse(selectedCourse.id</div>
+                                                className="w-full py-4 bg-red-500/5 text-red-500 border border-red-500/20 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all flex items-center justify-center gap-2 shadow-lg shadow-red-500/5"
+                                            >
+                                                <Trash2 size={14} /> Delete Course
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* AI Insight Card */}
+                                    <div className="p-6 rounded-3xl bg-gradient-to-br from-indigo-600 to-purple-700 text-white space-y-4 shadow-xl">
+                                        <div className="flex items-center gap-2 opacity-80">
+                                            <Activity size={14} />
+                                            <span className="text-[10px] font-black uppercase tracking-widest">Growth Engine</span>
+                                        </div>
+                                        <p className="text-sm font-bold leading-relaxed">
+                                            Drafting this course in multiple languages could increase your workspace engagement by up to <span className="text-amber-400">45%</span>.
+                                        </p>
+                                        <div className="pt-2">
+                                            <div className="h-1 w-full bg-white/20 rounded-full overflow-hidden">
+                                                <div className="h-full bg-amber-400" style={{ width: '65%' }} />
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
+                            </div> {/* End Flex Row (Div 7) */}
+                                </div></div></div></div>
                         ) : (
-                            // Courses View
+                            // ── Courses View ──
                             <div className="space-y-6">
                                 <div className="flex items-center justify-between">
                                     <div className="flex p-1 bg-secondary/20 rounded-xl border border-border/50 w-fit">
@@ -2009,7 +2313,7 @@ export default function ClientAdminDashboard() {
                                         ].map((tab) => (
                                             <button
                                                 key={tab.id}
-                                                onClick={() => setCourseFilter(tab.id as any)}
+                                                onClick={() => setCourseFilter(tab.id as any</div>
                                                 className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${courseFilter === tab.id ? 'bg-primary text-primary-foreground shadow-lg' : 'text-muted-foreground hover:text-foreground hover:bg-border/50'}`}
                                             >
                                                 {tab.label}
@@ -2017,7 +2321,7 @@ export default function ClientAdminDashboard() {
                                                     {tab.count}
                                                 </span>
                                             </button>
-                                        ))}
+                                        )</div>
                                     </div>
                                 </div>
 
@@ -2048,18 +2352,18 @@ export default function ClientAdminDashboard() {
                                                         <img src={course.thumbnail} alt={course.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                                                     ) : (
                                                         <BookOpen className="w-12 h-12 text-blue-400 opacity-40 group-hover:scale-110 transition-transform duration-500" />
-                                                    )}
+                                                    </div>
                                                     <div className="absolute top-3 left-3 flex flex-col gap-1.5 pointer-events-none">
                                                         {course.exclusiveRole && (
                                                             <span className="px-2 py-1 text-[10px] font-black uppercase rounded-lg bg-indigo-500/20 border border-indigo-500/30 text-indigo-400 backdrop-blur-md flex items-center gap-1 shadow-2xl">
                                                                 <Lock size={10} /> Exclusive: {course.exclusiveRole.name}
                                                             </span>
-                                                        )}
+                                                        </div>
                                                         {course.exclusiveTeam && (
                                                             <span className="px-2 py-1 text-[10px] font-black uppercase rounded-lg bg-cyan-500/20 border border-cyan-500/30 text-cyan-400 backdrop-blur-md flex items-center gap-1 shadow-2xl">
                                                                 <UsersRound size={10} /> Team: {course.exclusiveTeam.name}
                                                             </span>
-                                                        )}
+                                                        </div>
                                                     </div>
                                                     <div className="absolute top-3 right-3">
                                                         <span className={`px-2 py-1 text-[10px] font-black uppercase rounded-full border ${course.isPublished ? 'bg-emerald-500/20 border-emerald-500/30 text-emerald-400' : 'bg-orange-500/20 border-orange-500/30 text-orange-400'}`}>
@@ -2075,27 +2379,28 @@ export default function ClientAdminDashboard() {
                                                         <span>{course._count?.enrollments || 0} enrolled</span>
                                                     </div>
                                                     <div className="flex gap-2">
-                                                        <button onClick={() => fetchCourseDetails(course.id)} className="flex-1 py-2 bg-primary/10 border border-primary/20 text-primary font-bold rounded-lg text-sm hover:bg-primary/20 transition-colors flex items-center justify-center gap-1">
+                                                        <button onClick={() => fetchCourseDetails(course.id</div> className="flex-1 py-2 bg-primary/10 border border-primary/20 text-primary font-bold rounded-lg text-sm hover:bg-primary/20 transition-colors flex items-center justify-center gap-1">
                                                             <Edit3 size={14} /> Build Content
                                                         </button>
-                                                        <button onClick={() => togglePublish(course)} className="p-2 rounded-lg border border-border hover:bg-secondary/50 transition-colors text-muted-foreground">
+                                                        <button onClick={() => togglePublish(course</div> className="p-2 rounded-lg border border-border hover:bg-secondary/50 transition-colors text-muted-foreground">
                                                             {course.isPublished ? <EyeOff size={16} /> : <Eye size={16} />}
                                                         </button>
                                                     </div>
                                                 </div>
                                             </div>
                                         ))
-                                    )}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                        )}
+                        </div>
                     </div>
-                )}
+                </div>
 
                 {/* ── LEARNERS ── */}
                 {activeTab === 'learners' && (
                     <LearnersManager domain={domain} addToast={addToast} />
-                )}
+                </div>
 
                 {/* ── ANNOUNCEMENTS ── */}
                 {activeTab === 'announcements' && (
@@ -2112,7 +2417,7 @@ export default function ClientAdminDashboard() {
                             return (
                                 <>
                                     {paginatedAnnouncements.map(a => (
-                                        <div key={a.id} className="p-6 glassmorphism rounded-2xl border border-border/50 flex gap-6 hover:border-primary/20 transition-all cursor-pointer group relative" onClick={() => setSelectedAnnouncement(a)}>
+                                        <div key={a.id} className="p-6 glassmorphism rounded-2xl border border-border/50 flex gap-6 hover:border-primary/20 transition-all cursor-pointer group relative" onClick={() => setSelectedAnnouncement(a</div>>
                                             <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                                                 <Megaphone size={20} className="text-primary" />
                                             </div>
@@ -2120,7 +2425,7 @@ export default function ClientAdminDashboard() {
                                                 <div className="flex justify-between items-start">
                                                     <h3 className="font-bold">{a.title}</h3>
                                                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                                        <span>{new Date(a.createdAt).toLocaleDateString()}</span>
+                                                        <span>{new Date(a.createdAt).toLocaleDateString(</div></span>
                                                         <button onClick={(e) => { e.stopPropagation(); deleteAnnouncement(a.id); }} className="p-1.5 hover:bg-red-500/10 hover:text-red-500 rounded-lg transition-colors z-10">
                                                             <Trash2 size={14} />
                                                         </button>
@@ -2132,15 +2437,15 @@ export default function ClientAdminDashboard() {
                                                         {a.imageUrl && <span className="text-[10px] font-bold bg-primary/10 text-primary px-2 py-0.5 rounded flex items-center gap-1"><Info size={10} /> Image Attached</span>}
                                                         {a.documentUrl && <span className="text-[10px] font-bold bg-primary/10 text-primary px-2 py-0.5 rounded flex items-center gap-1"><FileText size={10} /> Doc Attached</span>}
                                                     </div>
-                                                )}
+                                                </div>
                                             </div>
                                         </div>
-                                    ))}
+                                    )</div>
                                     {totalPages > 1 && (
                                         <div className="flex justify-center items-center gap-4 mt-6">
                                             <button
                                                 disabled={announcementPage === 1}
-                                                onClick={() => setAnnouncementPage(p => Math.max(1, p - 1))}
+                                                onClick={() => setAnnouncementPage(p => Math.max(1, p - 1)</div>
                                                 className="p-2 rounded-xl bg-secondary hover:bg-secondary/80 disabled:opacity-50 transition-all border border-border/50"
                                             >
                                                 <ChevronLeft size={20} />
@@ -2150,31 +2455,31 @@ export default function ClientAdminDashboard() {
                                             </span>
                                             <button
                                                 disabled={announcementPage === totalPages}
-                                                onClick={() => setAnnouncementPage(p => Math.min(totalPages, p + 1))}
+                                                onClick={() => setAnnouncementPage(p => Math.min(totalPages, p + 1)</div>
                                                 className="p-2 rounded-xl bg-secondary hover:bg-secondary/80 disabled:opacity-50 transition-all border border-border/50"
                                             >
                                                 <ChevronRight size={20} />
                                             </button>
                                         </div>
-                                    )}
+                                    </div>
                                 </>
                             );
-                        })()}
+                        })(</div>
                     </div>
-                )}
+                </div>
 
                 {activeTab === 'roles' && (
                     <RolesManager domain={domain as string} addToast={addToast} />
-                )}
+                </div>
 
                 {activeTab === 'teams' && (
                     <TeamsManager domain={domain as string} addToast={addToast} />
-                )}
+                </div>
 
                 {activeTab === 'reports' && (() => {
                     const CHART_COLORS = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#ec4899'];
                     return (
-                    <div className="space-y-6 animate-in fade-in duration-500 pb-10">
+                        <div className="space-y-6 animate-in fade-in duration-500 pb-10">
 
                         {/* ── Filter Bar ── */}
                         <div className="glassmorphism rounded-2xl border border-border/50 p-4 flex flex-col lg:flex-row items-start lg:items-center gap-4 flex-wrap">
@@ -2184,23 +2489,23 @@ export default function ClientAdminDashboard() {
                             <div className="flex items-center gap-2 flex-wrap flex-1">
                                 <div className="flex items-center gap-2 bg-secondary/40 border border-border/50 rounded-xl px-3 py-2">
                                     <Calendar size={14} className="text-muted-foreground" />
-                                    <input type="date" value={reportStartDate} onChange={e => setReportStartDate(e.target.value)}
+                                    <input type="date" value={reportStartDate} onChange={e => setReportStartDate(e.target.value</div>
                                         className="bg-transparent text-sm focus:outline-none w-32" />
                                     <span className="text-muted-foreground text-xs">to</span>
-                                    <input type="date" value={reportEndDate} onChange={e => setReportEndDate(e.target.value)}
+                                    <input type="date" value={reportEndDate} onChange={e => setReportEndDate(e.target.value</div>
                                         className="bg-transparent text-sm focus:outline-none w-32" />
                                 </div>
                                 <select value={reportTeamId} onChange={e => { setReportTeamId(e.target.value); setReportRoleId(''); }}
                                     className="bg-secondary/40 border border-border/50 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50">
                                     <option value="">All Teams</option>
-                                    {availableTeams.map((t: any) => <option key={t.id} value={t.id}>{t.name}</option>)}
+                                    {availableTeams.map((t: any) => <option key={t.id} value={t.id}>{t.name}</option></div>
                                 </select>
                                 <select value={reportRoleId} onChange={e => { setReportRoleId(e.target.value); setReportTeamId(''); }}
                                     className="bg-secondary/40 border border-border/50 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50">
                                     <option value="">All Roles</option>
-                                    {availableRoles.map((r: any) => <option key={r.id} value={r.id}>{r.name}</option>)}
+                                    {availableRoles.map((r: any) => <option key={r.id} value={r.id}>{r.name}</option></div>
                                 </select>
-                                <button onClick={() => fetchReportStats(reportStartDate, reportEndDate, reportTeamId, reportRoleId)}
+                                <button onClick={() => fetchReportStats(reportStartDate, reportEndDate, reportTeamId, reportRoleId</div>
                                     className="px-4 py-2 bg-primary text-primary-foreground font-bold rounded-xl text-sm hover:opacity-90 transition-all flex items-center gap-2">
                                     {reportLoading ? <Loader2 size={14} className="animate-spin" /> : <Activity size={14} />}
                                     Apply
@@ -2210,7 +2515,7 @@ export default function ClientAdminDashboard() {
                                         className="text-xs font-bold text-red-400 hover:text-red-300 px-2">
                                         Clear
                                     </button>
-                                )}
+                                </div>
                             </div>
                             {reportLoading && <span className="text-xs text-muted-foreground animate-pulse">Updating…</span>}
                         </div>
@@ -2232,7 +2537,7 @@ export default function ClientAdminDashboard() {
                                     <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{label}</p>
                                     <p className="text-2xl font-black mt-0.5">{value}</p>
                                 </div>
-                            ))}
+                            )</div>
                         </div>
 
                         {/* ── Charts Row ── */}
@@ -2262,7 +2567,7 @@ export default function ClientAdminDashboard() {
                                     </ResponsiveContainer>
                                 ) : (
                                     <div className="h-48 flex items-center justify-center text-muted-foreground text-sm italic">No enrollment data in the last 6 months</div>
-                                )}
+                                </div>
                             </div>
 
                             {/* Role Distribution */}
@@ -2274,10 +2579,10 @@ export default function ClientAdminDashboard() {
                                     <>
                                         <ResponsiveContainer width="100%" height={140}>
                                             <PieChart>
-                                                <Pie data={roleDistribution.filter(r => r.value > 0)} cx="50%" cy="50%" innerRadius={40} outerRadius={65} dataKey="value" paddingAngle={4}>
+                                                <Pie data={roleDistribution.filter(r => r.value > 0</div> cx="50%" cy="50%" innerRadius={40} outerRadius={65} dataKey="value" paddingAngle={4}>
                                                     {roleDistribution.filter(r => r.value > 0).map((_: any, i: number) => (
                                                         <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
-                                                    ))}
+                                                    )</div>
                                                 </Pie>
                                                 <Tooltip contentStyle={{ backgroundColor: '#09090b', borderRadius: '12px', borderColor: '#ffffff15', fontSize: 11 }} />
                                             </PieChart>
@@ -2291,12 +2596,12 @@ export default function ClientAdminDashboard() {
                                                     </div>
                                                     <span className="font-bold">{r.value}</span>
                                                 </div>
-                                            ))}
+                                            )</div>
                                         </div>
                                     </>
                                 ) : (
                                     <div className="h-48 flex items-center justify-center text-muted-foreground text-sm italic">No roles assigned</div>
-                                )}
+                                </div>
                             </div>
                         </div>
 
@@ -2316,7 +2621,7 @@ export default function ClientAdminDashboard() {
                                         <tr className="bg-secondary/10 border-b border-border/50">
                                             {['Course', 'Enrollments', 'Completions', 'Completion Rate', 'Avg Progress'].map(h => (
                                                 <th key={h} className="px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-muted-foreground whitespace-nowrap">{h}</th>
-                                            ))}
+                                            )</div>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-border/30">
@@ -2347,7 +2652,7 @@ export default function ClientAdminDashboard() {
                                                     </td>
                                                 </tr>
                                             );
-                                        })}
+                                        }</div>
                                     </tbody>
                                 </table>
                             </div>
@@ -2382,7 +2687,7 @@ export default function ClientAdminDashboard() {
                                                 <p className="text-[10px] text-muted-foreground text-right">{t.completionRate}% complete</p>
                                             </div>
                                         </div>
-                                    ))}
+                                    )</div>
                                 </div>
                             </div>
 
@@ -2400,7 +2705,7 @@ export default function ClientAdminDashboard() {
                                         <div key={l.id} className="flex items-center gap-3 px-5 py-3 hover:bg-secondary/10 transition-colors">
                                             <span className={`text-xs font-black w-5 ${idx === 0 ? 'text-amber-400' : idx === 1 ? 'text-slate-300' : idx === 2 ? 'text-amber-700' : 'text-muted-foreground'}`}>#{idx + 1}</span>
                                             <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-black text-primary shrink-0">
-                                                {(l.name || l.email)[0].toUpperCase()}
+                                                {(l.name || l.email)[0].toUpperCase(</div>
                                             </div>
                                             <div className="flex-1 min-w-0">
                                                 <p className="font-bold text-xs truncate">{l.name}</p>
@@ -2413,14 +2718,145 @@ export default function ClientAdminDashboard() {
                                                 <span className="text-[11px] font-bold text-amber-400 w-7">{l.avgProgress}%</span>
                                             </div>
                                         </div>
-                                    ))}
+                                    )</div>
+                                </div>
+                            </div>
+                        </div>
+                    );
+                })(</div>
+                </div>
+            </div>
+
+                {/* ── i18n & AI ── */}
+                {activeTab === 'i18n' && (
+                    <div className="space-y-8 animate-in fade-in duration-500">
+                        <div className="flex flex-col gap-1">
+                            <h3 className="text-xl font-black flex items-center gap-2">
+                                <Globe className="w-6 h-6 text-primary" /> Localization & AI Engine
+                            </h3>
+                            <p className="text-sm text-muted-foreground">Manage your workspace languages and configure private AI translation settings.</p>
+                        </div>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                            {/* AI Configuration */}
+                            <div className="glassmorphism p-8 rounded-3xl border border-border/50 space-y-6">
+                                <div className="flex items-center justify-between">
+                                    <h4 className="font-bold flex items-center gap-2">
+                                        <Shield className="w-5 h-5 text-emerald-400" /> AI Translation Engine
+                                    </h4>
+                                    <div className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-bold uppercase tracking-widest">
+                                        Privacy Protected
+                                    </div>
+                                </div>
+
+                                <div className="space-y-4">
+                                    <div className="p-4 rounded-2xl bg-secondary/20 border border-border/50">
+                                        <p className="text-xs font-bold mb-2 uppercase tracking-tight text-muted-foreground">Your OpenAI API Key (Optional)</p>
+                                        <input
+                                            type="password"
+                                            placeholder="sk-..."
+                                            value={localesConfig.openaiKey}
+                                            onChange={(e) => setLocalesConfig(prev => ({ ...prev, openaiKey: e.target.value })</div>
+                                            className="w-full bg-background border border-border/50 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-mono"
+                                        />
+                                        <p className="text-[10px] text-muted-foreground mt-2 italic leading-relaxed">
+                                            Providing your own key ensures your data remains isolated to your OpenAI account. 
+                                            If left empty, the platform will use the <span className="text-primary font-bold">TranslateGemma</span> system fallback.
+                                        </p>
+                                    </div>
+
+                                    <div className="flex items-start gap-3 p-4 rounded-2xl bg-blue-500/5 border border-blue-500/20">
+                                        <Info className="w-4 h-4 text-blue-400 mt-0.5 shrink-0" />
+                                        <div className="space-y-1">
+                                            <p className="text-xs font-bold text-blue-400">Hierarchical Dispatch</p>
+                                            <p className="text-[10px] text-muted-foreground leading-relaxed">
+                                                1. **Tenant Key**: Primary choice for privacy & cost control.<br/>
+                                                2. **TranslateGemma**: High-quality, self-hosted system fallback.<br/>
+                                                3. **Platform Key**: Global fallback (Usage limits may apply).
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Locale Management */}
+                            <div className="glassmorphism p-8 rounded-3xl border border-border/50 space-y-6">
+                                <h4 className="font-bold flex items-center gap-2">
+                                    <Globe className="w-5 h-5 text-blue-400" /> Platform Languages
+                                </h4>
+
+                                <div className="space-y-6">
+                                    <div className="space-y-3">
+                                        <p className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1">Available Locales</p>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            {[
+                                                { code: 'en', name: 'English', flag: '🇺🇸' },
+                                                { code: 'ar', name: 'Arabic', flag: '🇸🇦', isRTL: true }
+                                            ].map(lang => (
+                                                <button
+                                                    key={lang.code}
+                                                    onClick={() => {
+                                                        const isEnabled = localesConfig.availableLocales.includes(lang.code);
+                                                        if (isEnabled && localesConfig.availableLocales.length > 1) {
+                                                            setLocalesConfig(prev => ({
+                                                                ...prev,
+                                                                availableLocales: prev.availableLocales.filter(l => l !== lang.code),
+                                                                defaultLocale: prev.defaultLocale === lang.code ? prev.availableLocales.find(l => l !== lang.code) || 'en' : prev.defaultLocale
+                                                            }));
+                                                        } else if (!isEnabled) {
+                                                            setLocalesConfig(prev => ({
+                                                                ...prev,
+                                                                availableLocales: [...prev.availableLocales, lang.code]
+                                                            }));
+                                                        }
+                                                    }}
+                                                    className={`p-4 rounded-2xl flex items-center gap-3 border transition-all text-left ${localesConfig.availableLocales.includes(lang.code)
+                                                        ? 'bg-primary/10 border-primary/30 text-primary'
+                                                        : 'bg-secondary/20 border-border/50 text-muted-foreground grayscale hover:grayscale-0'
+                                                        }`}
+                                                >
+                                                    <span className="text-xl">{lang.flag}</span>
+                                                    <div>
+                                                        <p className="text-sm font-bold">{lang.name}</p>
+                                                        <p className="text-[10px] opacity-70 font-mono uppercase">{lang.code}{lang.isRTL ? ' (RTL)' : ''}</p>
+                                                    </div>
+                                                    {localesConfig.availableLocales.includes(lang.code) && <CheckCircle2 className="ml-auto w-4 h-4" />}
+                                                </button>
+                                            )</div>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-3">
+                                        <p className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1">Default Landing Language</p>
+                                        <select
+                                            value={localesConfig.defaultLocale}
+                                            onChange={(e) => setLocalesConfig(prev => ({ ...prev, defaultLocale: e.target.value })</div>
+                                            className="w-full bg-secondary/20 border border-border/50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-bold"
+                                        >
+                                            {localesConfig.availableLocales.map(code => (
+                                                <option key={code} value={code}>
+                                                    {code === 'en' ? 'English (US)' : 'Arabic (SA)'}
+                                                </option>
+                                            )</div>
+                                        </select>
+                                        <p className="text-[10px] text-muted-foreground italic ml-1">Users will see this language by default if no preference is set.</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
+                        <div className="flex justify-end pt-4">
+                            <button
+                                onClick={handleSaveLocales}
+                                disabled={isSavingLocales}
+                                className="px-8 py-4 bg-primary text-primary-foreground rounded-2xl font-black flex items-center gap-3 hover:scale-105 transition-transform shadow-xl disabled:opacity-50"
+                            >
+                                {isSavingLocales ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+                                Save i18n & AI Configuration
+                            </button>
+                        </div>
                     </div>
-                    );
-                })()}
+                </div>
 
                 {activeTab === 'audit' && (
                     <div className="space-y-6 animate-in fade-in duration-500 pb-20">
@@ -2440,7 +2876,7 @@ export default function ClientAdminDashboard() {
                                     type="text"
                                     placeholder="Search by action, name or email..."
                                     value={auditSearch}
-                                    onChange={(e) => setAuditSearch(e.target.value)}
+                                    onChange={(e) => setAuditSearch(e.target.value</div>
                                     className="w-full bg-secondary/50 border border-border/50 rounded-2xl pl-12 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all uppercase font-bold tracking-tight"
                                 />
                             </div>
@@ -2476,12 +2912,12 @@ export default function ClientAdminDashboard() {
                                         ) : (
                                             auditLogs.map((log) => (
                                                 <tr key={log.id} 
-                                                    onClick={() => fetchUserDetail(log.user.id)}
+                                                    onClick={() => fetchUserDetail(log.user.id</div>
                                                     className="hover:bg-primary/5 cursor-pointer transition-colors group">
                                                     <td className="px-6 py-4">
                                                         <div className="flex flex-col">
-                                                            <span className="text-xs font-bold whitespace-nowrap">{new Date(log.createdAt).toLocaleDateString()}</span>
-                                                            <span className="text-[10px] font-medium text-muted-foreground">{new Date(log.createdAt).toLocaleTimeString()}</span>
+                                                            <span className="text-xs font-bold whitespace-nowrap">{new Date(log.createdAt).toLocaleDateString(</div></span>
+                                                            <span className="text-[10px] font-medium text-muted-foreground">{new Date(log.createdAt).toLocaleTimeString(</div></span>
                                                         </div>
                                                     </td>
                                                     <td className="px-6 py-4">
@@ -2522,7 +2958,7 @@ export default function ClientAdminDashboard() {
                                                     </td>
                                                 </tr>
                                             ))
-                                        )}
+                                        </div>
                                     </tbody>
                                 </table>
                             </div>
@@ -2531,12 +2967,12 @@ export default function ClientAdminDashboard() {
                             {auditPagination.pages > 1 && (
                                 <div className="p-6 bg-secondary/10 border-t border-border/50 flex items-center justify-between">
                                     <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
-                                        Showing {(auditPagination.currentPage - 1) * auditPagination.limit + 1} - {Math.min(auditPagination.currentPage * auditPagination.limit, auditPagination.total)} of {auditPagination.total} logs
+                                        Showing {(auditPagination.currentPage - 1) * auditPagination.limit + 1} - {Math.min(auditPagination.currentPage * auditPagination.limit, auditPagination.total</div> of {auditPagination.total} logs
                                     </p>
                                     <div className="flex items-center gap-2">
                                         <button 
                                             disabled={auditPagination.currentPage === 1 || auditLoading}
-                                            onClick={() => fetchAuditLogs(auditPagination.currentPage - 1, auditSearch)}
+                                            onClick={() => fetchAuditLogs(auditPagination.currentPage - 1, auditSearch</div>
                                             className="p-2 rounded-xl bg-background border border-border/50 hover:bg-secondary disabled:opacity-50 transition-all"
                                         >
                                             <ChevronLeft size={20} />
@@ -2546,17 +2982,17 @@ export default function ClientAdminDashboard() {
                                         </span>
                                         <button 
                                             disabled={auditPagination.currentPage === auditPagination.pages || auditLoading}
-                                            onClick={() => fetchAuditLogs(auditPagination.currentPage + 1, auditSearch)}
+                                            onClick={() => fetchAuditLogs(auditPagination.currentPage + 1, auditSearch</div>
                                             className="p-2 rounded-xl bg-background border border-border/50 hover:bg-secondary disabled:opacity-50 transition-all"
                                         >
                                             <ChevronRight size={20} />
                                         </button>
                                     </div>
                                 </div>
-                            )}
+                            </div>
                         </div>
                     </div>
-                )}
+                </div>
 
 
 
@@ -2571,7 +3007,7 @@ export default function ClientAdminDashboard() {
                                     </h3>
                                     <div className="space-y-1">
                                         <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Platform Display Name</label>
-                                        <input type="text" value={branding.name} onChange={e => setBranding({ ...branding, name: e.target.value })}
+                                        <input type="text" value={branding.name} onChange={e => setBranding({ ...branding, name: e.target.value }</div>
                                             className="w-full bg-secondary/50 border border-border/50 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 font-bold" 
                                             placeholder="e.g. Acme Academy" />
                                     </div>
@@ -2583,13 +3019,13 @@ export default function ClientAdminDashboard() {
                                     </h3>
                                     <div className="flex items-center gap-6 p-4 rounded-2xl bg-secondary/20 border border-border/30">
                                         <div className="relative group">
-                                            <input type="color" value={branding.primaryColor} onChange={e => setBranding({ ...branding, primaryColor: e.target.value })}
+                                            <input type="color" value={branding.primaryColor} onChange={e => setBranding({ ...branding, primaryColor: e.target.value }</div>
                                                 className="w-16 h-16 rounded-2xl cursor-pointer border-4 border-background bg-transparent shadow-xl transition-transform active:scale-95" />
                                             <div className="absolute inset-0 rounded-2xl ring-2 ring-primary/20 pointer-events-none" />
                                         </div>
                                         <div>
                                             <p className="text-[9px] text-muted-foreground uppercase tracking-widest font-black mb-1">Color Token</p>
-                                            <p className="font-mono font-black text-xl text-foreground tracking-tighter">{branding.primaryColor.toUpperCase()}</p>
+                                            <p className="font-mono font-black text-xl text-foreground tracking-tighter">{branding.primaryColor.toUpperCase(</div></p>
                                         </div>
                                     </div>
                                     <div className="flex gap-2.5 flex-wrap">
@@ -2597,8 +3033,8 @@ export default function ClientAdminDashboard() {
                                             <button key={c} 
                                                 className={`w-9 h-9 rounded-xl border-2 transition-all hover:scale-110 shadow-sm ${branding.primaryColor === c ? 'scale-110 shadow-lg shadow-black/20' : 'opacity-80 hover:opacity-100'}`}
                                                 style={{ backgroundColor: c, borderColor: branding.primaryColor === c ? 'white' : 'transparent' }}
-                                                onClick={() => setBranding({ ...branding, primaryColor: c })} />
-                                        ))}
+                                                onClick={() => setBranding({ ...branding, primaryColor: c }</div> />
+                                        )</div>
                                     </div>
                                 </div>
 
@@ -2620,9 +3056,9 @@ export default function ClientAdminDashboard() {
                                     {/* Asset Grid */}
                                     <div className="space-y-6">
                                         {[
-                                            { id: 'logoLight', label: 'Primary Logo (Light Theme)', sub: 'Wide suggested (Min 400x100px)', icon: Globe },
-                                            { id: 'logoDark', label: 'Secondary Logo (Dark Theme)', sub: 'Wide suggested (Min 400x100px)', icon: Globe },
-                                            { id: 'favicon', label: 'Site Favicon', sub: 'Square icon (512x512px preferred)', icon: Globe },
+                                            { id: 'logoLight', label: 'Primary Logo (Light Theme)', sub: 'Transparent PNG/SVG suggested', icon: Globe },
+                                            { id: 'logoDark', label: 'Secondary Logo (Dark Theme)', sub: 'Logo for dark navigation bars', icon: Globe },
+                                            { id: 'favicon', label: 'Site Favicon', sub: 'Square icon (32x32px suggested)', icon: Globe },
                                         ].map((asset) => (
                                             <div key={asset.id} className="space-y-3">
                                                 <div className="flex justify-between items-end px-1">
@@ -2655,16 +3091,16 @@ export default function ClientAdminDashboard() {
                                                                 <Plus size={16} />
                                                                 <span className="text-[9px] font-black uppercase tracking-widest">Select Asset</span>
                                                             </div>
-                                                        )}
+                                                        </div>
                                                     </label>
                                                     {uploadProgress[asset.id] !== undefined && (
                                                         <div className="absolute bottom-0 left-0 right-0 h-1 bg-primary/20 rounded-b-[1.25rem] overflow-hidden">
                                                             <div className="h-full bg-primary transition-all duration-300" style={{ width: `${uploadProgress[asset.id]}%` }} />
                                                         </div>
-                                                    )}
+                                                    </div>
                                                 </div>
                                             </div>
-                                        ))}
+                                        )</div>
                                     </div>
                                 </section>
 
@@ -2693,14 +3129,10 @@ export default function ClientAdminDashboard() {
                                         <div className="h-2 w-1/2 bg-secondary/30 rounded-full" />
                                         <button className="w-full py-2.5 rounded-xl text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-black/5" 
                                             style={{ backgroundColor: branding.primaryColor }}>
-                                            Join Learning Path
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
                     </div>
-                )}
+                    </div>
+                    </div>
+                </div>
 
                 {/* ── DOMAINS ── */}
                 {activeTab === 'domains' && (
@@ -2733,7 +3165,7 @@ export default function ClientAdminDashboard() {
                             </div>
                         </div>
                     </div>
-                )}
+                </div>
 
                 {/* ── SETTINGS ── */}
                 {activeTab === 'settings' && (
@@ -2766,7 +3198,7 @@ export default function ClientAdminDashboard() {
                             </button>
                         </div>
                     </div>
-                )}
+                </div>
 
                 {activeTab === 'certificates' && (
                     <div className="space-y-6 animate-in fade-in duration-500 pb-20">
@@ -2774,17 +3206,15 @@ export default function ClientAdminDashboard() {
                             <CertificateDesigner 
                                 template={editingTemplate} 
                                 onBack={() => { setEditingTemplate(null); fetchAvailableTemplates(); }}
-                                onSave={async (id, designFields, backgroundImage) => {
+                                onSave={async (id, designFields) => {
                                     try {
                                         const res = await fetch(`/api/t/${domain}/certificates/${id}`, {
                                             method: 'PATCH',
                                             headers: { 'Content-Type': 'application/json' },
-                                            body: JSON.stringify({ designFields, backgroundImage })
+                                            body: JSON.stringify({ designFields })
                                         });
                                         if (res.ok) {
                                             addToast({ title: 'Success', message: 'Design saved successfully.', type: 'success' });
-                                            // Refresh local state if needed
-                                            fetchAvailableTemplates();
                                         }
                                     } catch (e) {
                                         console.error(e);
@@ -2795,12 +3225,11 @@ export default function ClientAdminDashboard() {
                             <CertificateManager 
                                 domain={domain as string} 
                                 addToast={addToast} 
-                                onEditTemplate={(t) => setEditingTemplate(t)}
+                                onEditTemplate={(t) => setEditingTemplate(t</div>
                             />
-                        )}
+                        </div>
                     </div>
-                )}
-            </main>
+                </div>
 
             {/* Modals */}
             {showCourseModal && (
@@ -2827,7 +3256,7 @@ export default function ClientAdminDashboard() {
                             </div>
                             <div className="space-y-1.5">
                                 <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Description</label>
-                                <textarea placeholder="Brief description of what learners will learn..." value={courseForm.description} onChange={e => setCourseForm({ ...courseForm, description: e.target.value })}
+                                <textarea placeholder="Brief description of what learners will learn..." value={courseForm.description} onChange={e => setCourseForm({ ...courseForm, description: e.target.value }</div>
                                     rows={3} className="w-full bg-secondary/50 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none" />
                             </div>
                             <div className="space-y-1.5">
@@ -2838,7 +3267,7 @@ export default function ClientAdminDashboard() {
                                             <img src={thumbnailPreview} alt="Thumbnail preview" className="w-full h-full object-cover" />
                                         ) : (
                                             <Upload className="w-6 h-6 text-muted-foreground opacity-30" />
-                                        )}
+                                        </div>
                                     </div>
                                     <div className="flex-1">
                                         <input
@@ -2863,7 +3292,7 @@ export default function ClientAdminDashboard() {
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-1.5">
                                     <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Skill Level</label>
-                                    <select value={courseForm.skillLevel} onChange={e => setCourseForm({ ...courseForm, skillLevel: e.target.value })}
+                                    <select value={courseForm.skillLevel} onChange={e => setCourseForm({ ...courseForm, skillLevel: e.target.value }</div>
                                         className="w-full bg-secondary/50 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50">
                                         <option value="All Levels">All Levels</option>
                                         <option value="Beginner">Beginner</option>
@@ -2873,74 +3302,84 @@ export default function ClientAdminDashboard() {
                                 </div>
                                 <div className="space-y-1.5">
                                     <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Languages</label>
-                                    <input placeholder="e.g. English, Spanish" value={courseForm.languages} onChange={e => setCourseForm({ ...courseForm, languages: e.target.value })}
+                                    <input placeholder="e.g. English, Spanish" value={courseForm.languages} onChange={e => setCourseForm({ ...courseForm, languages: e.target.value }</div>
                                         className="w-full bg-secondary/50 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
                                 </div>
                             </div>
+                            {/* Certificate Section - Moved Higher & Highlighted */}
+                            <div className={`p-4 rounded-2xl border-2 transition-all duration-300 ${courseForm.certificateEnabled ? 'bg-indigo-500/5 border-indigo-500/20 shadow-lg shadow-indigo-500/5' : 'bg-secondary/20 border-border/50 opacity-80'}`}>
+                                <div className="flex items-center justify-between mb-2">
+                                    <label className="text-xs font-black uppercase tracking-widest text-indigo-500 flex items-center gap-2">
+                                        <Award size={16} /> Certificate of Achievement
+                                    </label>
+                                    <button 
+                                        type="button"
+                                        onClick={() => setCourseForm({ ...courseForm, certificateEnabled: !courseForm.certificateEnabled }</div>
+                                        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none bg-secondary ${courseForm.certificateEnabled ? 'bg-indigo-600' : ''}`}
+                                    >
+                                        <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${courseForm.certificateEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
+                                    </button>
+                                </div>
+                                <p className="text-[10px] text-muted-foreground mb-3 font-medium">Issue a professional certificate to learners upon course completion.</p>
+                                
+                                {courseForm.certificateEnabled && (
+                                    <div className="space-y-1.5 animate-in slide-in-from-top-2 duration-300 pt-2 border-t border-indigo-500/10">
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-indigo-400/70">Design Template</label>
+                                        <select 
+                                            value={courseForm.certificateTemplateId} 
+                                            onChange={e => setCourseForm({ ...courseForm, certificateTemplateId: e.target.value }</div>
+                                            className="w-full bg-background border border-indigo-500/20 rounded-xl px-4 py-2.5 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all appearance-none cursor-pointer"
+                                        >
+                                            <option value="">-- Use Default Template --</option>
+                                            {availableTemplates.map((t: any) => (
+                                                <option key={t.id} value={t.id}>{t.name} {t.isGlobal ? '🌍' : '🏠'}</option>
+                                            )</div>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div className="flex flex-col gap-3 py-2">
                                 <div className="flex items-center gap-2 px-1">
-                                    <input type="checkbox" id="course-captions" checked={courseForm.captions} onChange={e => setCourseForm({ ...courseForm, captions: e.target.checked })}
+                                    <input type="checkbox" id="course-captions" checked={courseForm.captions} onChange={e => setCourseForm({ ...courseForm, captions: e.target.checked }</div>
                                         className="rounded border-border/50 bg-secondary/30 text-primary focus:ring-primary/20" />
                                     <label htmlFor="course-captions" className="text-xs font-bold uppercase tracking-widest text-muted-foreground cursor-pointer">Has Closed Captions</label>
                                 </div>
                                 <div className="flex items-center gap-2 px-1">
-                                    <input type="checkbox" id="course-marketplace" checked={courseForm.isMarketplace} onChange={e => setCourseForm({ ...courseForm, isMarketplace: e.target.checked })}
+                                    <input type="checkbox" id="course-marketplace" checked={courseForm.isMarketplace} onChange={e => setCourseForm({ ...courseForm, isMarketplace: e.target.checked }</div>
                                         className="rounded border-border/50 bg-secondary/30 text-amber-500 focus:ring-amber-500/20" />
                                     <label htmlFor="course-marketplace" className="text-xs font-bold uppercase tracking-widest text-amber-600/80 cursor-pointer">Publish to Internal Marketplace</label>
                                 </div>
-                                <div className="flex items-center gap-2 px-1 pt-2 border-t border-border/20 mt-2">
-                                    <input type="checkbox" id="course-certificate" checked={courseForm.certificateEnabled} onChange={e => setCourseForm({ ...courseForm, certificateEnabled: e.target.checked })}
-                                        className="rounded border-border/50 bg-secondary/30 text-indigo-500 focus:ring-indigo-500/20" />
-                                    <label htmlFor="course-certificate" className="text-xs font-bold uppercase tracking-widest text-indigo-400 cursor-pointer flex items-center gap-2">
-                                        <Award size={14} /> Enable Certificate of Achievement
-                                    </label>
-                                </div>
                             </div>
-                            
-                            {courseForm.certificateEnabled && (
-                                <div className="space-y-1.5 animate-in slide-in-from-top-2 duration-300">
-                                    <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Select Certificate Template</label>
-                                    <select 
-                                        value={courseForm.certificateTemplateId} 
-                                        onChange={e => setCourseForm({ ...courseForm, certificateTemplateId: e.target.value })}
-                                        className="w-full bg-secondary/50 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                                    >
-                                        <option value="">-- Choose Template --</option>
-                                        {availableTemplates.map((t: any) => (
-                                            <option key={t.id} value={t.id}>{t.name} {t.isGlobal ? '(Global)' : ''}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                            )}
                             {/* Exclusive Role/Team Gating */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-1.5">
                                     <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Exclusive to Role (Optional)</label>
-                                    <select value={courseForm.exclusiveRoleId} onChange={e => setCourseForm({ ...courseForm, exclusiveRoleId: e.target.value, isMarketplace: (e.target.value || courseForm.exclusiveTeamId) ? false : courseForm.isMarketplace })}
+                                    <select value={courseForm.exclusiveRoleId} onChange={e => setCourseForm({ ...courseForm, exclusiveRoleId: e.target.value, isMarketplace: (e.target.value || courseForm.exclusiveTeamId) ? false : courseForm.isMarketplace }</div>
                                         className="w-full bg-secondary/30 border border-border/50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all">
                                         <option value="">No Restriction — All Learners</option>
-                                        {availableRoles.map((r: any) => <option key={r.id} value={r.id}>{r.name} Only</option>)}
+                                        {availableRoles.map((r: any) => <option key={r.id} value={r.id}>{r.name} Only</option></div>
                                     </select>
                                 </div>
                                 <div className="space-y-1.5">
                                     <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Exclusive to Team (Optional)</label>
-                                    <select value={courseForm.exclusiveTeamId} onChange={e => setCourseForm({ ...courseForm, exclusiveTeamId: e.target.value, isMarketplace: (e.target.value || courseForm.exclusiveRoleId) ? false : courseForm.isMarketplace })}
+                                    <select value={courseForm.exclusiveTeamId} onChange={e => setCourseForm({ ...courseForm, exclusiveTeamId: e.target.value, isMarketplace: (e.target.value || courseForm.exclusiveRoleId) ? false : courseForm.isMarketplace }</div>
                                         className="w-full bg-secondary/30 border border-border/50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all">
                                         <option value="">No Restriction — All Learners</option>
-                                        {availableTeams.map((t: any) => <option key={t.id} value={t.id}>{t.name} Only</option>)}
+                                        {availableTeams.map((t: any) => <option key={t.id} value={t.id}>{t.name} Only</option></div>
                                     </select>
                                 </div>
                             </div>
                             {(courseForm.exclusiveRoleId || courseForm.exclusiveTeamId) && (
                                 <p className="text-[10px] text-amber-600/80 font-bold">⚠ Exclusive courses are hidden from the Marketplace and invisible to learners without this {courseForm.exclusiveRoleId && courseForm.exclusiveTeamId ? 'role and team' : courseForm.exclusiveRoleId ? 'role' : 'team'}.</p>
-                            )}
+                            </div>
                             <button type="submit" className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-bold hover:opacity-90">
                                 {selectedCourse ? 'Save Changes' : 'Create Course'}
                             </button>
                         </form>
                     </div>
                 </div>
-            )}
+            </div>
 
 
             {activeQuizLesson && (
@@ -2951,7 +3390,7 @@ export default function ClientAdminDashboard() {
                                 <h3 className="text-2xl font-black">Quiz Builder</h3>
                                 <p className="text-sm text-muted-foreground">Creating quiz for: <span className="text-foreground font-bold">{selectedCourse?.modules?.find((m: any) => m.id === activeQuizLesson.moduleId)?.lessons?.find((l: any) => l.id === activeQuizLesson.lessonId)?.title || quizForm.title}</span></p>
                             </div>
-                            <button onClick={() => setActiveQuizLesson(null)} className="p-2 hover:bg-secondary rounded-full transition-colors"><XCircle size={28} className="text-muted-foreground" /></button>
+                            <button onClick={() => setActiveQuizLesson(null</div> className="p-2 hover:bg-secondary rounded-full transition-colors"><XCircle size={28} className="text-muted-foreground" /></button>
                         </div>
 
                         <div className="flex-1 overflow-y-auto pr-4 space-y-8 custom-scrollbar">
@@ -2982,7 +3421,7 @@ export default function ClientAdminDashboard() {
                                         placeholder="Briefly explain what this quiz covers..."
                                         rows={2}
                                         value={quizForm.description || ''}
-                                        onChange={(e) => setQuizForm({ ...quizForm, description: e.target.value })}
+                                        onChange={(e) => setQuizForm({ ...quizForm, description: e.target.value }</div>
                                         className="w-full bg-secondary/30 border border-border/50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
                                     />
                                 </div>
@@ -2992,7 +3431,7 @@ export default function ClientAdminDashboard() {
                                         type="number"
                                         min="0" max="100"
                                         value={quizForm.passingScore}
-                                        onChange={(e) => setQuizForm({ ...quizForm, passingScore: parseInt(e.target.value) || 0 })}
+                                        onChange={(e) => setQuizForm({ ...quizForm, passingScore: parseInt(e.target.value) || 0 }</div>
                                         className="w-full bg-secondary/30 border border-border/50 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/50"
                                     />
                                 </div>
@@ -3004,7 +3443,7 @@ export default function ClientAdminDashboard() {
                                         <input
                                             type="checkbox" id="retake-allowed"
                                             checked={quizForm.retakeAllowed}
-                                            onChange={(e) => setQuizForm({ ...quizForm, retakeAllowed: e.target.checked })}
+                                            onChange={(e) => setQuizForm({ ...quizForm, retakeAllowed: e.target.checked }</div>
                                             className="rounded border-border text-primary focus:ring-primary/20"
                                         />
                                         <label htmlFor="retake-allowed" className="text-xs font-bold uppercase tracking-widest text-muted-foreground cursor-pointer">Allow Retakes</label>
@@ -3015,11 +3454,11 @@ export default function ClientAdminDashboard() {
                                             <input
                                                 type="number" min="0"
                                                 value={quizForm.maxAttempts}
-                                                onChange={(e) => setQuizForm({ ...quizForm, maxAttempts: parseInt(e.target.value) || 0 })}
+                                                onChange={(e) => setQuizForm({ ...quizForm, maxAttempts: parseInt(e.target.value) || 0 }</div>
                                                 className="w-full bg-secondary/30 border border-border/50 rounded-xl px-4 py-2 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/50"
                                             />
                                         </div>
-                                    )}
+                                    </div>
                                 </div>
                                 <div className="space-y-4 border-l border-border/30 pl-6">
                                     <div className="flex items-center gap-2">
@@ -3059,7 +3498,7 @@ export default function ClientAdminDashboard() {
                                                         min="1"
                                                         max={quizForm.questions.length}
                                                         value={quizForm.randomCount}
-                                                        onChange={(e) => setQuizForm({ ...quizForm, randomCount: parseInt(e.target.value) })}
+                                                        onChange={(e) => setQuizForm({ ...quizForm, randomCount: parseInt(e.target.value) }</div>
                                                         className="flex-1 accent-primary cursor-pointer h-1.5 bg-secondary rounded-lg appearance-none"
                                                     />
                                                     <input
@@ -3078,9 +3517,9 @@ export default function ClientAdminDashboard() {
                                                 <div className="text-[10px] font-bold text-amber-500/80 bg-amber-500/5 border border-amber-500/20 rounded-lg p-3 flex items-center gap-2">
                                                     <AlertCircle size={14} /> <span>Your question pool is currently empty.</span>
                                                 </div>
-                                            )}
+                                            </div>
                                         </div>
-                                    )}
+                                    </div>
                                 </div>
                             </div>
 
@@ -3097,7 +3536,7 @@ export default function ClientAdminDashboard() {
                                             {isGeneratingQuiz ? 'Whisper generating...' : 'Whisper AI Generate'}
                                         </button>
                                         <button
-                                            onClick={() => setQuizForm({ ...quizForm, questions: [...quizForm.questions, { text: '', type: 'MULTIPLE_CHOICE', options: [{ text: '', isCorrect: true }, { text: '', isCorrect: false }, { text: '', isCorrect: false }, { text: '', isCorrect: false }] }] })}
+                                            onClick={() => setQuizForm({ ...quizForm, questions: [...quizForm.questions, { text: '', type: 'MULTIPLE_CHOICE', options: [{ text: '', isCorrect: true }, { text: '', isCorrect: false }, { text: '', isCorrect: false }, { text: '', isCorrect: false }] }] }</div>
                                             className="px-4 py-2 bg-primary text-primary-foreground rounded-xl font-bold text-xs hover:scale-105 transition-transform"
                                         >
                                             Add Question
@@ -3153,7 +3592,7 @@ export default function ClientAdminDashboard() {
                                                     >
                                                         {t.label}
                                                     </button>
-                                                ))}
+                                                )</div>
                                             </div>
 
                                             <input
@@ -3242,12 +3681,12 @@ export default function ClientAdminDashboard() {
                                                                             >
                                                                                 <Trash2 size={14} />
                                                                             </button>
-                                                                        )}
+                                                                        </div>
                                                                     </div>
                                                                     {validationErrors.quiz?.questions?.[qIdx]?.options?.[oIdx] && <span className="text-[9px] font-bold text-red-500 animate-in fade-in slide-in-from-top-1 ml-1">{validationErrors.quiz.questions[qIdx].options[oIdx]}</span>}
                                                                 </div>
                                                             );
-                                                        })}
+                                                        }</div>
                                                         {q.options.length < 6 && (
                                                             <button
                                                                 onClick={() => {
@@ -3259,36 +3698,36 @@ export default function ClientAdminDashboard() {
                                                             >
                                                                 + Add Option
                                                             </button>
-                                                        )}
+                                                        </div>
                                                         <p className="col-span-2 text-[10px] text-muted-foreground italic px-1">
                                                             {isMultiSelect
                                                                 ? 'Check all correct answers — learners must select all of them.'
                                                                 : 'Click the circle to mark the single correct answer.'}
                                                         </p>
                                                     </>);
-                                                })()}
+                                                })(</div>
                                             </div>
-                                        )}
+                                        </div>
                                     </div>
-                                ))}
+                                )</div>
 
                             </div>
                         </div>
 
                         <div className="flex gap-4 mt-8 pt-6 border-t border-border/50">
-                            <button onClick={() => setActiveQuizLesson(null)} className="flex-1 py-4 bg-secondary hover:bg-secondary/80 rounded-2xl font-black uppercase tracking-[0.2em] text-xs transition-all">Discard Changes</button>
+                            <button onClick={() => setActiveQuizLesson(null</div> className="flex-1 py-4 bg-secondary hover:bg-secondary/80 rounded-2xl font-black uppercase tracking-[0.2em] text-xs transition-all">Discard Changes</button>
                             <button onClick={saveQuiz} className="flex-1 py-4 bg-primary text-primary-foreground rounded-2xl font-black uppercase tracking-[0.2em] text-xs shadow-xl shadow-primary/20 hover:scale-[1.02] transition-all">Save Quiz Configuration</button>
                         </div>
                     </div>
                 </div>
-            )}
+            </div>
 
             {showAnnouncementModal && (
                 <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/70 backdrop-blur-sm">
                     <div className="bg-background border border-border w-full max-w-md rounded-3xl p-8 space-y-6 shadow-2xl">
                         <div className="flex justify-between items-center">
                             <h3 className="text-xl font-black">Post Announcement</h3>
-                            <button onClick={() => setShowAnnouncementModal(false)} className="text-muted-foreground hover:text-foreground"><XCircle size={24} /></button>
+                            <button onClick={() => setShowAnnouncementModal(false</div> className="text-muted-foreground hover:text-foreground"><XCircle size={24} /></button>
                         </div>
                         <form onSubmit={createAnnouncement} className="space-y-4">
                             <div className="space-y-1.5">
@@ -3376,12 +3815,12 @@ export default function ClientAdminDashboard() {
                         </form>
                     </div>
                 </div>
-            )}
+            </div>
 
             {selectedAnnouncement && (
                 <div className="fixed inset-0 z-[300] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md animate-in fade-in duration-300">
                     <div className="bg-background border border-border/50 w-full max-w-2xl rounded-[2rem] p-8 space-y-6 shadow-2xl relative overflow-hidden flex flex-col max-h-[90vh]">
-                        <button onClick={() => setSelectedAnnouncement(null)} className="absolute top-6 right-6 p-2 bg-secondary/80 hover:bg-secondary rounded-full transition-all">
+                        <button onClick={() => setSelectedAnnouncement(null</div> className="absolute top-6 right-6 p-2 bg-secondary/80 hover:bg-secondary rounded-full transition-all">
                             <XCircle size={24} className="text-muted-foreground" />
                         </button>
                         <div className="flex items-center gap-4 border-b border-border/50 pb-6">
@@ -3391,7 +3830,7 @@ export default function ClientAdminDashboard() {
                             <div>
                                 <h3 className="text-xl font-black">{selectedAnnouncement.title}</h3>
                                 <div className="text-xs text-muted-foreground tracking-widest uppercase font-bold mt-1">
-                                    {new Date(selectedAnnouncement.createdAt).toLocaleDateString()}
+                                    {new Date(selectedAnnouncement.createdAt).toLocaleDateString(</div>
                                 </div>
                             </div>
                         </div>
@@ -3405,7 +3844,7 @@ export default function ClientAdminDashboard() {
                                         <img src={selectedAnnouncement.imageUrl} alt="Announcement Attachment" className="w-full h-auto max-h-[400px] object-contain" />
                                     </div>
                                 </div>
-                            )}
+                            </div>
 
                             {selectedAnnouncement.documentUrl && (
                                 <div className="space-y-2">
@@ -3421,16 +3860,15 @@ export default function ClientAdminDashboard() {
                                         <Upload size={16} className="text-muted-foreground group-hover:text-primary transition-colors transform rotate-90" />
                                     </a>
                                 </div>
-                            )}
-                        </div>
+                            </div>
                     </div>
                 </div>
-            )}
+            </div>
             {/* Target Resource Management Dialog */}
             {managingResources && (
                 <div className="fixed inset-0 z-[250] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md animate-in fade-in duration-300">
                     <div className="bg-background border border-border w-full max-w-xl rounded-[2.5rem] p-10 space-y-8 shadow-2xl relative overflow-hidden flex flex-col max-h-[90vh]">
-                        <button onClick={() => setManagingResources(null)} className="absolute top-8 right-8 p-2 bg-secondary/50 hover:bg-secondary rounded-full transition-all group">
+                        <button onClick={() => setManagingResources(null</div> className="absolute top-8 right-8 p-2 bg-secondary/50 hover:bg-secondary rounded-full transition-all group">
                             <XCircle size={28} className="text-muted-foreground group-hover:text-foreground transition-colors" />
                         </button>
 
@@ -3472,7 +3910,7 @@ export default function ClientAdminDashboard() {
                                             <p className="text-sm text-muted-foreground">PDF, DOCX, ZIP or other resources</p>
                                         </div>
                                     </div>
-                                )}
+                                </div>
                             </label>
                         </div>
 
@@ -3492,36 +3930,36 @@ export default function ClientAdminDashboard() {
                                                 </div>
                                                 <div className="min-w-0">
                                                     <p className="font-bold text-sm truncate">{res.name}</p>
-                                                    <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-black">{res.type} &middot; {res.size ? `${(res.size / 1024).toFixed(0)} KB` : 'N/A'}</p>
+                                                    <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-black">{res.type} &middot; {res.size ? `${(res.size / 1024).toFixed(0</div> KB` : 'N/A'}</p>
                                                 </div>
                                             </div>
                                             <div className="flex gap-2">
                                                 <a href={res.url} target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg bg-background border border-border/50 hover:bg-primary/10 hover:text-primary transition-all">
                                                     <Eye size={16} />
                                                 </a>
-                                                <button onClick={() => deleteTargetResource(res.id)} className="p-2 rounded-lg bg-background border border-border/50 hover:bg-red-500/10 hover:text-red-400 transition-all">
+                                                <button onClick={() => deleteTargetResource(res.id</div> className="p-2 rounded-lg bg-background border border-border/50 hover:bg-red-500/10 hover:text-red-400 transition-all">
                                                     <Trash2 size={16} />
                                                 </button>
                                             </div>
                                         </div>
                                     ))
-                                )}
+                                </div>
                             </div>
                         </div>
 
                         <div className="pt-6 border-t border-border/50">
-                            <button onClick={() => setManagingResources(null)} className="w-full py-4 bg-secondary hover:bg-secondary/80 rounded-2xl font-black uppercase tracking-[0.2em] text-xs transition-all shadow-lg hover:shadow-xl active:scale-[0.98]">
+                            <button onClick={() => setManagingResources(null</div> className="w-full py-4 bg-secondary hover:bg-secondary/80 rounded-2xl font-black uppercase tracking-[0.2em] text-xs transition-all shadow-lg hover:shadow-xl active:scale-[0.98]">
                                 Done
                             </button>
                         </div>
                     </div>
                 </div>
-            )}
+            </div>
 
             {/* ── AUDIT LOG METADATA PANEL ── */}
             {selectedLogMetadata && (
-                <div className="fixed inset-0 z-[500] flex justify-end bg-black/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setSelectedLogMetadata(null)}>
-                    <div className="w-full max-w-lg bg-background border-l border-border/50 h-full flex flex-col shadow-2xl animate-in slide-in-from-right duration-300" onClick={e => e.stopPropagation()}>
+                <div className="fixed inset-0 z-[500] flex justify-end bg-black/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setSelectedLogMetadata(null</div>>
+                    <div className="w-full max-w-lg bg-background border-l border-border/50 h-full flex flex-col shadow-2xl animate-in slide-in-from-right duration-300" onClick={e => e.stopPropagation(</div>>
                         <div className="px-8 py-6 border-b border-border/50 flex justify-between items-center bg-secondary/10">
                             <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
@@ -3532,7 +3970,7 @@ export default function ClientAdminDashboard() {
                                     <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{selectedLogMetadata.id}</p>
                                 </div>
                             </div>
-                            <button onClick={() => setSelectedLogMetadata(null)} className="p-2 hover:bg-secondary rounded-xl transition-all">
+                            <button onClick={() => setSelectedLogMetadata(null</div> className="p-2 hover:bg-secondary rounded-xl transition-all">
                                 <XCircle size={20} className="text-muted-foreground" />
                             </button>
                         </div>
@@ -3545,7 +3983,7 @@ export default function ClientAdminDashboard() {
                                    </div>
                                    <h4 className="text-[10px] font-black uppercase tracking-widest text-primary mb-2">Narrative Context</h4>
                                    <p className="text-sm font-bold leading-relaxed">
-                                       User <span className="text-primary">{selectedLogMetadata.user.name}</span> performed a <span className="text-primary">{selectedLogMetadata.action.replace(/_/g, ' ')}</span> operation on the workspace entity.
+                                       User <span className="text-primary">{selectedLogMetadata.user.name}</span> performed a <span className="text-primary">{selectedLogMetadata.action.replace(/_/g, ' '</div></span> operation on the workspace entity.
                                    </p>
                                </div>
 
@@ -3560,7 +3998,7 @@ export default function ClientAdminDashboard() {
                                        </div>
                                        <div className="flex justify-between items-center py-3">
                                            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Timestamp</span>
-                                           <span className="text-[11px] font-bold">{new Date(selectedLogMetadata.createdAt).toLocaleString()}</span>
+                                           <span className="text-[11px] font-bold">{new Date(selectedLogMetadata.createdAt).toLocaleString(</div></span>
                                        </div>
                                    </div>
                                </div>
@@ -3572,10 +4010,10 @@ export default function ClientAdminDashboard() {
                                    <div className="grid grid-cols-1 gap-3">
                                        {Object.entries(selectedLogMetadata.metadata || {}).map(([key, value]) => (
                                            <div key={key} className="p-4 rounded-2xl bg-secondary/10 border border-border/40 hover:border-primary/20 transition-all">
-                                               <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 mb-1">{getMetadataLabel(key)}</p>
-                                               <p className="text-xs font-bold break-all">{typeof value === 'object' ? JSON.stringify(value) : String(value)}</p>
+                                               <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 mb-1">{getMetadataLabel(key</div></p>
+                                               <p className="text-xs font-bold break-all">{typeof value === 'object' ? JSON.stringify(value) : String(value</div></p>
                                            </div>
-                                       ))}
+                                       )</div>
                                    </div>
                                </div>
                            </div>
@@ -3583,7 +4021,7 @@ export default function ClientAdminDashboard() {
 
                         <div className="p-8 border-t border-border/50">
                             <button 
-                                onClick={() => exportAuditLog(selectedLogMetadata)}
+                                onClick={() => exportAuditLog(selectedLogMetadata</div>
                                 className="w-full py-4 bg-primary text-primary-foreground rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] transition-all shadow-lg hover:shadow-primary/20 active:scale-[0.98] flex items-center justify-center gap-2"
                             >
                                 <Download size={14} /> Export Insight Data
@@ -3591,12 +4029,12 @@ export default function ClientAdminDashboard() {
                         </div>
                     </div>
                 </div>
-            )}
+            </div>
 
             {/* ── USER INSIGHTS PANEL ── */}
             {insightsUserId && (
                 <div className="fixed inset-0 z-[500] flex justify-end bg-black/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => { setInsightsUserId(null); setInsightsUser(null); }}>
-                    <div className="w-full max-w-xl bg-background border-l border-border/50 h-full flex flex-col shadow-2xl animate-in slide-in-from-right duration-300" onClick={e => e.stopPropagation()}>
+                    <div className="w-full max-w-xl bg-background border-l border-border/50 h-full flex flex-col shadow-2xl animate-in slide-in-from-right duration-300" onClick={e => e.stopPropagation(</div>>
                         
                         {/* Header */}
                         <div className="flex items-start justify-between px-8 py-6 border-b border-border/50 bg-gradient-to-r from-primary/5 to-transparent">
@@ -3671,12 +4109,12 @@ export default function ClientAdminDashboard() {
                                                             </div>
                                                         )) : (
                                                             <div className="text-center py-6 text-muted-foreground text-xs italic">No active enrollments found.</div>
-                                                        )}
+                                                        </div>
                                                     </div>
                                                 </section>
                                             </>
                                         );
-                                    })()}
+                                    })(</div>
 
                                     {/* Activity Timeline */}
                                     <section className="space-y-4">
@@ -3688,16 +4126,16 @@ export default function ClientAdminDashboard() {
                                                 <div key={idx} className="relative pl-6">
                                                     <div className="absolute left-[-1px] top-1.5 w-2 h-2 rounded-full bg-primary border-2 border-background z-10 shadow-sm shadow-primary/20" />
                                                     <div>
-                                                        <p className="text-xs font-bold leading-none">{log.action.replace(/_/g, ' ')}</p>
+                                                        <p className="text-xs font-bold leading-none">{log.action.replace(/_/g, ' '</div></p>
                                                         <p className="text-[10px] text-muted-foreground mt-1.5 font-medium uppercase">
-                                                            {new Date(log.createdAt).toLocaleDateString()} &middot; {new Date(log.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                            {new Date(log.createdAt).toLocaleDateString(</div> &middot; {new Date(log.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }</div>
                                                         </p>
                                                     </div>
                                                 </div>
-                                            ))}
+                                            )</div>
                                             {(!insightsUser.activityLogs || insightsUser.activityLogs.length === 0) && (
                                                 <div className="text-muted-foreground text-xs italic pl-2">No recent activity recorded.</div>
-                                            )}
+                                            </div>
                                         </div>
                                     </section>
                                 </div>
@@ -3706,7 +4144,7 @@ export default function ClientAdminDashboard() {
                                     <Loader2 size={48} className="animate-spin mb-4 text-primary" />
                                     <p className="text-sm font-bold uppercase tracking-widest">Hydrating User Insight...</p>
                                 </div>
-                            )}
+                            </div>
                         </div>
 
                         {/* Footer */}
@@ -3720,7 +4158,7 @@ export default function ClientAdminDashboard() {
                         </div>
                     </div>
                 </div>
-            )}
+            </div>
             {showProfileModal && (
                 <div className="fixed inset-0 z-[400] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md animate-in fade-in duration-300">
                     <div className="bg-background border border-border/50 w-full max-w-md rounded-[2rem] p-8 space-y-6 shadow-2xl relative overflow-hidden">
@@ -3733,7 +4171,7 @@ export default function ClientAdminDashboard() {
                                 </div>
                                 <h3 className="text-xl font-black">Admin Profile</h3>
                             </div>
-                            <button onClick={() => setShowProfileModal(false)} className="p-2 hover:bg-secondary rounded-full transition-all">
+                            <button onClick={() => setShowProfileModal(false</div> className="p-2 hover:bg-secondary rounded-full transition-all">
                                 <XCircle size={20} className="text-muted-foreground" />
                             </button>
                         </div>
@@ -3742,7 +4180,7 @@ export default function ClientAdminDashboard() {
                             <div className="p-4 rounded-2xl bg-secondary/20 border border-border/50 space-y-3">
                                 <div className="flex items-center gap-3">
                                     <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center font-black text-primary border border-primary/20">
-                                        {userName.charAt(0).toUpperCase()}
+                                        {userName.charAt(0).toUpperCase(</div>
                                     </div>
                                     <div className="flex flex-col">
                                         <span className="text-sm font-black text-foreground">{userName}</span>
@@ -3764,7 +4202,7 @@ export default function ClientAdminDashboard() {
                                     <input
                                         type="password"
                                         value={profileForm.currentPassword}
-                                        onChange={e => setProfileForm({ ...profileForm, currentPassword: e.target.value })}
+                                        onChange={e => setProfileForm({ ...profileForm, currentPassword: e.target.value }</div>
                                         placeholder="••••••••"
                                         className="w-full bg-secondary/30 border border-border/50 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all text-foreground placeholder:text-muted-foreground/30"
                                     />
@@ -3775,7 +4213,7 @@ export default function ClientAdminDashboard() {
                                         <input
                                             type="password"
                                             value={profileForm.newPassword}
-                                            onChange={e => setProfileForm({ ...profileForm, newPassword: e.target.value })}
+                                            onChange={e => setProfileForm({ ...profileForm, newPassword: e.target.value }</div>
                                             placeholder="••••••••"
                                             className="w-full bg-secondary/30 border border-border/50 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all text-foreground placeholder:text-muted-foreground/30"
                                         />
@@ -3785,7 +4223,7 @@ export default function ClientAdminDashboard() {
                                         <input
                                             type="password"
                                             value={profileForm.confirmPassword}
-                                            onChange={e => setProfileForm({ ...profileForm, confirmPassword: e.target.value })}
+                                            onChange={e => setProfileForm({ ...profileForm, confirmPassword: e.target.value }</div>
                                             placeholder="••••••••"
                                             className="w-full bg-secondary/30 border border-border/50 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all text-foreground placeholder:text-muted-foreground/30"
                                         />
@@ -3803,7 +4241,7 @@ export default function ClientAdminDashboard() {
                         </form>
                     </div>
                 </div>
-            )}
+            </div>
             {confirmModal && (
                 <div className="fixed inset-0 z-[300] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md animate-in fade-in duration-300">
                     <div className="bg-background border border-border/50 w-full max-w-sm rounded-[2rem] p-8 space-y-6 shadow-2xl relative overflow-hidden">
@@ -3842,7 +4280,126 @@ export default function ClientAdminDashboard() {
                         </div>
                     </div>
                 </div>
-            )}
+            </div>
+            {/* ── TRANSLATION MODAL ── */}
+            {showTranslationModal && translatingContent && (
+                <div className="fixed inset-0 z-[400] flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowTranslationModal(false</div> />
+                    <div className="relative w-full max-w-4xl glassmorphism rounded-[2.5rem] border border-white/10 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+                        <div className="p-8 border-b border-white/5 flex items-center justify-between bg-gradient-to-r from-indigo-500/10 to-purple-500/10">
+                            <div>
+                                <div className="flex items-center gap-3 mb-1">
+                                    <div className="w-10 h-10 rounded-2xl bg-indigo-500/20 flex items-center justify-center text-indigo-400">
+                                        <Globe size={20} />
+                                    </div>
+                                    <h3 className="text-2xl font-black tracking-tight">Content Translation</h3>
+                                </div>
+                                <p className="text-sm text-muted-foreground font-medium">Managing localization for: <span className="text-foreground font-bold">{translatingContent.title}</span></p>
+                            </div>
+                            <button onClick={() => setShowTranslationModal(false</div> className="p-3 rounded-2xl hover:bg-white/5 transition-all text-muted-foreground hover:text-foreground">
+                                <XCircle size={24} />
+                            </button>
+                        </div>
+
+                        <div className="flex-1 overflow-auto p-8 space-y-8 text-foreground">
+                            {/* Translation Request Area */}
+                            <div className="space-y-4">
+                                <h4 className="text-xs font-black uppercase tracking-[0.2em] text-indigo-400">Request New Translation</h4>
+                                <div className="flex flex-wrap gap-3">
+                                    {localesConfig.availableLocales.filter(l => l !== 'en').map(locale => {
+                                        const existing = translations.find(t => t.locale === locale);
+                                        return (
+                                            <button
+                                                key={locale}
+                                                disabled={isTranslating || (existing && existing.status === 'APPROVED'</div>
+                                                onClick={() => requestTranslation(translatingContent.id, translatingContent.type, locale</div>
+                                                className="px-6 py-3 rounded-2xl bg-indigo-600 text-white font-black text-xs flex items-center gap-2 hover:scale-105 active:scale-95 transition-all shadow-lg shadow-indigo-500/20 disabled:opacity-50 disabled:grayscale"
+                                            >
+                                                {isTranslating ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
+                                                Draft AI Translation ({locale.toUpperCase(</div>)
+                                            </button>
+                                        );
+                                    }</div>
+                                </div>
+                            </div>
+
+                            {/* Existing Translations List */}
+                            <div className="space-y-6">
+                                <h4 className="text-xs font-black uppercase tracking-[0.2em] text-indigo-400">Verified & Drafted Content</h4>
+                                <div className="space-y-4">
+                                    {translations.length === 0 ? (
+                                        <div className="p-12 rounded-[2rem] border border-dashed border-white/10 text-center flex flex-col items-center gap-4 bg-white/5">
+                                            <Globe className="w-12 h-12 text-muted-foreground opacity-20" />
+                                            <p className="text-muted-foreground italic text-sm">No translations found. Start by drafting one with AI above.</p>
+                                        </div>
+                                    ) : translations.map(t => (
+                                        <div key={t.id} className="p-6 rounded-3xl bg-secondary/20 border border-white/5 space-y-4">
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-3">
+                                                    <span className="text-lg">{t.locale === 'ar' ? '🇸🇦' : '🇺🇸'}</span>
+                                                    <span className="font-bold uppercase tracking-widest text-xs">{t.locale === 'ar' ? 'Arabic' : 'English'}</span>
+                                                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-tighter border ${t.status === 'APPROVED' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-orange-500/10 text-orange-400 border-orange-500/20'}`}>
+                                                        {t.status}
+                                                    </span>
+                                                </div>
+                                                <div className="flex gap-2">
+                                                    {t.status === 'PENDING' && (
+                                                        <button 
+                                                            onClick={() => handleUpdateTranslation(t.id, 'APPROVED'</div>
+                                                            className="px-4 py-1.5 rounded-xl bg-emerald-500 text-white font-bold text-[10px] hover:scale-105 transition-all shadow-lg shadow-emerald-500/20"
+                                                        >
+                                                            Approve Draft
+                                                        </button>
+                                                    </div>
+                                                    {t.status === 'APPROVED' && (
+                                                        <button 
+                                                            onClick={() => handleUpdateTranslation(t.id, 'PENDING'</div>
+                                                            className="px-4 py-1.5 rounded-xl bg-orange-500/10 text-orange-400 border border-orange-500/20 font-bold text-[10px] hover:bg-orange-500/20 transition-all font-mono"
+                                                        >
+                                                            Revoke Approval
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-2">
+                                                <div className="space-y-1">
+                                                    <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground ml-1">Translated Title</label>
+                                                    <input 
+                                                        type="text" 
+                                                        value={t.title || ''} 
+                                                        dir={t.locale === 'ar' ? 'rtl' : 'ltr'}
+                                                        onChange={(e) => {
+                                                            const newTitle = e.target.value;
+                                                            setTranslations(prev => prev.map(item => item.id === t.id ? { ...item, title: newTitle } : item));
+                                                        }}
+                                                        onBlur={() => handleUpdateTranslation(t.id, t.status, t.title</div>
+                                                        className="w-full bg-background border border-border/50 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500/50 outline-none font-bold placeholder:text-muted-foreground/30"
+                                                    />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground ml-1">Translated Description / Metadata</label>
+                                                    <textarea 
+                                                        value={t.description || ''} 
+                                                        dir={t.locale === 'ar' ? 'rtl' : 'ltr'}
+                                                        onChange={(e) => {
+                                                            const newDesc = e.target.value;
+                                                            setTranslations(prev => prev.map(item => item.id === t.id ? { ...item, description: newDesc } : item));
+                                                        }}
+                                                        onBlur={() => handleUpdateTranslation(t.id, t.status, t.title, t.description</div>
+                                                        className="w-full bg-background border border-border/50 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500/50 outline-none min-h-[80px]"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            </main>
         </div>
     );
 }

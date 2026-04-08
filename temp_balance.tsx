@@ -7,10 +7,10 @@ import { useParams, useRouter } from 'next/navigation';
 import {
     LayoutDashboard, BookOpen, Users, Settings, Palette,
     Globe, Plus, XCircle, ChevronRight, ChevronLeft, Save, Upload,
-    Trash2, Edit3, CheckCircle2, Megaphone, Loader2,
-    MoreVertical, GripVertical, Eye, EyeOff, Video, FileText, Lock,
-    BarChart3, Clock, UserCheck, Award, CheckCircle, AlertCircle, Info, Bell, Mic, Archive, LogOut, User, Shield, UsersRound,
-    Filter, TrendingUp, Medal, Calendar, Target, Activity, Users2, Download, ScanSearch, UserCircle, LayoutList, Trash
+    Trash2, Edit3, CheckCircle2, Megaphone, Loader2, MoreVertical, GripVertical, Eye, EyeOff, Video, FileText, Lock,
+    BarChart3, Clock, UserCheck, Award, CheckCircle, AlertCircle, Info, Bell, Mic, Archive, 
+    LogOut, User, Shield, UsersRound, Filter, TrendingUp, Medal, Calendar, Target, Activity, 
+    Users2, Download, ScanSearch, UserCircle, LayoutList, Trash, Settings2
 } from 'lucide-react';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -22,7 +22,7 @@ import { LearnersManager } from '@/components/admin/learners/LearnersManager';
 import CertificateManager from '@/components/admin/certificates/CertificateManager';
 import CertificateDesigner from '@/components/admin/certificates/CertificateDesigner';
 
-type Tab = 'overview' | 'courses' | 'learners' | 'announcements' | 'branding' | 'domains' | 'settings' | 'certificates' | 'reports' | 'roles' | 'teams' | 'audit';
+type Tab = 'overview' | 'courses' | 'learners' | 'announcements' | 'branding' | 'domains' | 'settings' | 'certificates' | 'reports' | 'roles' | 'teams' | 'audit' | 'i18n';
 
 // Toast Types
 type ToastType = 'success' | 'error' | 'info';
@@ -116,6 +116,14 @@ export default function ClientAdminDashboard() {
         favicon: null as string | null
     });
 
+    // i18n & AI State
+    const [localesConfig, setLocalesConfig] = useState({
+        availableLocales: ['en'],
+        defaultLocale: 'en',
+        openaiKey: ''
+    });
+    const [isSavingLocales, setIsSavingLocales] = useState(false);
+
     // Course Builder state
     const [showCourseModal, setShowCourseModal] = useState(false);
     const [courseFilter, setCourseFilter] = useState<'all' | 'published' | 'draft'>('all');
@@ -136,7 +144,7 @@ export default function ClientAdminDashboard() {
     const [editingTemplate, setEditingTemplate] = useState<any>(null);
     const [availableTemplates, setAvailableTemplates] = useState<any[]>([]);
     const [newModuleTitle, setNewModuleTitle] = useState('');
-    const [newLessonForms, setNewLessonForms] = useState<Record<string, { title: string; content: string; videoUrl: string; pdfUrl?: string; type: 'VIDEO' | 'PPT' | 'QUIZ' | 'TEXT'; isActive: boolean; resources: any[] }>>({});
+    const [newLessonForms, setNewLessonForms] = useState<Record<string, { title: string; content: string; videoUrl: string; pdfUrl?: string; type: 'VIDEO' | 'PPT' | 'QUIZ' | 'TEXT'; isActive: boolean; resources: any[]; language: string }>>({});
     const [activeQuizLesson, setActiveQuizLesson] = useState<{ moduleId: string; lessonId?: string } | null>(null);
     const [quizForm, setQuizForm] = useState<{ title: string; description: string; passingScore: number; retakeAllowed: boolean; maxAttempts: number; isRandomized: boolean; randomCount: number; questions: any[] }>({
         title: '',
@@ -201,6 +209,12 @@ export default function ClientAdminDashboard() {
     const [insightsUserId, setInsightsUserId] = useState<string | null>(null);
     const [insightsUser, setInsightsUser] = useState<any | null>(null);
     const [isFetchingUserDetail, setIsFetchingUserDetail] = useState(false);
+    
+    // Translation Management State
+    const [showTranslationModal, setShowTranslationModal] = useState(false);
+    const [translatingContent, setTranslatingContent] = useState<{ id: string, type: 'COURSE' | 'LESSON', title: string } | null>(null);
+    const [translations, setTranslations] = useState<any[]>([]);
+    const [isTranslating, setIsTranslating] = useState(false);
 
     const fetchUserDetail = async (userId: string) => {
         setIsFetchingUserDetail(true);
@@ -305,6 +319,38 @@ export default function ClientAdminDashboard() {
         }
     };
 
+    const fetchLocalesConfig = useCallback(async () => {
+        try {
+            const res = await fetch(`/api/t/${domain}/admin/settings/i18n`);
+            if (res.ok) {
+                const data = await res.json();
+                setLocalesConfig(data);
+            }
+        } catch (e) {
+            console.error('Fetch i18n error', e);
+        }
+    }, [domain]);
+
+    const handleSaveLocales = async () => {
+        setIsSavingLocales(true);
+        try {
+            const res = await fetch(`/api/t/${domain}/admin/settings/i18n`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(localesConfig)
+            });
+            if (res.ok) {
+                addToast('Localization & AI settings saved', 'success');
+            } else {
+                addToast('Failed to save settings', 'error');
+            }
+        } catch (e) {
+            addToast('Error saving settings', 'error');
+        } finally {
+            setIsSavingLocales(false);
+        }
+    };
+
     const fetchAuditLogs = useCallback(async (page = 1, search = '') => {
         setAuditLoading(true);
         try {
@@ -367,6 +413,164 @@ export default function ClientAdminDashboard() {
         }
     };
 
+    const fetchTranslations = async (contentId: string, contentType: 'COURSE' | 'LESSON') => {
+        try {
+            const res = await fetch(`/api/t/${domain}/translate?contentId=${contentId}&contentType=${contentType}`);
+            if (res.ok) {
+                setTranslations(await res.json());
+            }
+        } catch (e) {
+            console.error('Fetch translations error', e);
+        }
+    };
+
+    const requestTranslation = async (contentId: string, contentType: 'COURSE' | 'LESSON', targetLocale: string) => {
+        setIsTranslating(true);
+        try {
+            const res = await fetch(`/api/t/${domain}/translate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contentId, contentType, targetLocale })
+            });
+            if (res.ok) {
+                addToast(`Translation drafted for ${targetLocale.toUpperCase()}`, 'success');
+                fetchTranslations(contentId, contentType);
+            } else {
+                addToast('Translation request failed', 'error');
+            }
+        } catch (e) {
+            addToast('AI Translation Error', 'error');
+        } finally {
+            setIsTranslating(false);
+        }
+    };
+
+    const handleUpdateTranslation = async (translationId: string, status: 'APPROVED' | 'PENDING', title?: string, description?: string) => {
+        try {
+            const res = await fetch(`/api/t/${domain}/translate`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: translationId, status, title, description })
+            });
+            if (res.ok) {
+                addToast(`Translation ${status.toLowerCase()}`, 'success');
+                if (translatingContent) fetchTranslations(translatingContent.id, translatingContent.type);
+            }
+        } catch (e) {
+            addToast('Update failed', 'error');
+        }
+    };
+
+    const updateCourseStatus = async (courseId: string, updates: Partial<any>) => {
+        try {
+            const res = await fetch(`/api/t/${domain}/admin/courses/${courseId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updates)
+            });
+            if (res.ok) {
+                const updated = await res.json();
+                setCourses(prev => prev.map(c => c.id === courseId ? updated : c));
+                if (selectedCourse?.id === courseId) {
+                    setSelectedCourse(updated);
+                }
+                addToast('Course updated successfully', 'success');
+            } else {
+                addToast('Failed to update course', 'error');
+            }
+        } catch (e) {
+            addToast('Unexpected error updating course', 'error');
+        }
+    };
+
+    const courseSettingsSidebar = (course: any) => {
+        return (
+            <div className="w-80 border-l border-border bg-background/50 backdrop-blur-md flex flex-col h-full animate-in slide-in-from-right duration-300">
+                <div className="p-6 border-b border-border flex items-center justify-between bg-primary/5">
+                    <div>
+                        <h3 className="font-black text-sm uppercase tracking-wider">Course Settings</h3>
+                        <p className="text-[10px] text-muted-foreground font-bold mt-0.5">ID: {course.id.slice(0,8)}</p>
+                    </div>
+                    <button onClick={() => setSelectedCourse(null)} className="p-2 hover:bg-secondary rounded-full transition-colors"><XCircle size={18} /></button>
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
+                    {/* Status & Translation Status */}
+                    <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-indigo-500/80">Visibility & Status</label>
+                            <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-tighter border ${
+                                course.status === 'PUBLISHED' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 
+                                course.status === 'DRAFT' ? 'bg-orange-500/10 text-orange-400 border-orange-500/20' : 
+                                'bg-red-500/10 text-red-400 border-red-500/20'
+                            }`}>
+                                {course.status}
+                            </span>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-2">
+                            <button 
+                                onClick={() => updateCourseStatus(course.id, { status: 'PUBLISHED' })}
+                                disabled={course.status === 'PUBLISHED'}
+                                className="py-2.5 rounded-xl border border-border/50 bg-background hover:bg-secondary/20 transition-all text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 disabled:opacity-30"
+                            >
+                                <CheckCircle2 size={12} /> Publish
+                            </button>
+                            <button 
+                                onClick={() => updateCourseStatus(course.id, { status: 'DRAFT' })}
+                                disabled={course.status === 'DRAFT'}
+                                className="py-2.5 rounded-xl border border-border/50 bg-background hover:bg-secondary/20 transition-all text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 disabled:opacity-30"
+                            >
+                                <Loader2 size={12} /> Draft
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* AI Translation Engine */}
+                    <div className="p-5 rounded-2xl bg-indigo-500/5 border border-indigo-500/10 space-y-4 relative overflow-hidden group">
+                        <div className="absolute -top-12 -right-12 w-24 h-24 bg-indigo-500/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700" />
+                        <div className="flex items-center justify-between relative z-10">
+                            <h4 className="text-[10px] font-black uppercase tracking-widest text-indigo-400 flex items-center gap-2">
+                                <Globe size={12} /> AI Localization
+                            </h4>
+                            <Settings2 size={12} className="text-indigo-400/50" />
+                        </div>
+
+                        <p className="text-[11px] text-muted-foreground font-medium leading-relaxed relative z-10">
+                            Manage multi-language metadata and approve AI-drafted content for this course.
+                        </p>
+
+                        <button 
+                            onClick={() => {
+                                setTranslatingContent({ id: course.id, type: 'COURSE', title: course.title });
+                                fetchTranslations(course.id, 'COURSE');
+                                setShowTranslationModal(true);
+                            }}
+                            className="w-full py-3 bg-indigo-600 text-white rounded-xl font-black uppercase tracking-widest text-[9px] shadow-lg shadow-indigo-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all relative z-10"
+                        >
+                            Open Translation Hub
+                        </button>
+                    </div>
+
+                    {/* Danger Zone */}
+                    <div className="pt-4 border-t border-border/50">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-red-500/80 mb-3 block">Danger Zone</label>
+                        <button 
+                           onClick={() => {
+                               if (confirm('Are you sure you want to delete this course? This action is permanent.')) {
+                                   // handleDeleteCourse(course.id);
+                               }
+                           }}
+                           className="w-full py-2.5 rounded-xl bg-red-500/5 hover:bg-red-500/10 border border-red-500/20 text-red-500 text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2"
+                        >
+                            <Trash2 size={12} /> Delete Course
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
     const fetchAll = useCallback(async () => {
         setLoading(true);
         try {
@@ -412,6 +616,8 @@ export default function ClientAdminDashboard() {
             if (rolesRes.ok) setAvailableRoles(await rolesRes.json());
             if (teamsRes.ok) setAvailableTeams(await teamsRes.json());
             if (certsRes.ok) setAvailableTemplates(await certsRes.json());
+            
+            fetchLocalesConfig();
 
         } catch (e) {
             console.error(e);
@@ -1011,11 +1217,11 @@ export default function ClientAdminDashboard() {
         if (resUpdate.ok) {
             const savedLesson = await resUpdate.json();
             if (closeAfter) {
-                setNewLessonForms(prev => ({ ...prev, [moduleId]: { title: '', content: '', videoUrl: '', pdfUrl: '', type: 'TEXT', isActive: true, resources: [] } }));
+                setNewLessonForms(prev => ({ ...prev, [moduleId]: { title: '', content: '', videoUrl: '', pdfUrl: '', type: 'TEXT', isActive: true, resources: [], language: 'en' } }));
                 setActiveLessonForms(prev => ({ ...prev, [moduleId]: false }));
                 setEditingLessonIds(prev => ({ ...prev, [moduleId]: null }));
             } else {
-                setNewLessonForms(prev => ({ ...prev, [moduleId]: { title: '', content: '', videoUrl: '', pdfUrl: '', type: 'TEXT', isActive: true, resources: [] } }));
+                setNewLessonForms(prev => ({ ...prev, [moduleId]: { title: '', content: '', videoUrl: '', pdfUrl: '', type: 'TEXT', isActive: true, resources: [], language: 'en' } }));
                 setEditingLessonIds(prev => ({ ...prev, [moduleId]: null }));
             }
 
@@ -1039,7 +1245,8 @@ export default function ClientAdminDashboard() {
                 pdfUrl: lesson.pdfUrl || '',
                 type: lesson.type || 'TEXT',
                 isActive: lesson.isActive ?? true,
-                resources: lesson.resources || []
+                resources: lesson.resources || [],
+                language: lesson.language || 'en'
             }
         }));
         setEditingLessonIds(prev => ({ ...prev, [moduleId]: lesson.id }));
@@ -1328,6 +1535,7 @@ export default function ClientAdminDashboard() {
                         ['teams', 'Teams', UsersRound],
                         ['announcements', 'Announcements', Megaphone],
                         ['branding', 'Branding', Palette],
+                        ['i18n', 'i18n & AI', Globe],
                         ['domains', 'Domains', Globe],
                         ['settings', 'Settings', Settings],
                         ['certificates', 'Certificates', Award],
@@ -1481,6 +1689,14 @@ export default function ClientAdminDashboard() {
                                         }}
                                             className="px-4 py-2 rounded-xl font-bold text-xs bg-primary/10 border border-primary/20 text-primary hover:bg-primary/20 transition-all flex items-center gap-2">
                                             <Settings size={14} /> Course Settings
+                                        </button>
+                                        <button onClick={() => {
+                                            setTranslatingContent({ id: selectedCourse.id, type: 'COURSE', title: selectedCourse.title });
+                                            fetchTranslations(selectedCourse.id, 'COURSE');
+                                            setShowTranslationModal(true);
+                                        }}
+                                            className="px-4 py-2 rounded-xl font-bold text-xs bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 hover:bg-indigo-500/20 transition-all flex items-center gap-2">
+                                            <Globe size={14} /> Manage Translations
                                         </button>
                                         <button onClick={() => fetchCourseStats(selectedCourse.id)}
                                             className="px-4 py-2 rounded-xl font-bold text-xs bg-primary/10 border border-primary/20 text-primary hover:bg-primary/20 transition-all flex items-center gap-2">
@@ -1730,22 +1946,38 @@ export default function ClientAdminDashboard() {
                                                             ))}
                                                         </div>
 
-                                                        <div className="space-y-1">
-                                                            <div className="flex justify-between items-center">
-                                                                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Lesson Title</label>
-                                                                {validationErrors[`lesson-${mod.id}`]?.title && <span className="text-[10px] font-bold text-red-500 animate-in fade-in slide-in-from-right-1">{validationErrors[`lesson-${mod.id}`].title}</span>}
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                            <div className="space-y-1">
+                                                                <div className="flex justify-between items-center">
+                                                                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Lesson Title</label>
+                                                                    {validationErrors[`lesson-${mod.id}`]?.title && <span className="text-[10px] font-bold text-red-500 animate-in fade-in slide-in-from-right-1">{validationErrors[`lesson-${mod.id}`].title}</span>}
+                                                                </div>
+                                                                <input
+                                                                    placeholder="e.g. Introduction to React..."
+                                                                    className={`w-full bg-secondary/30 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 transition-all font-bold ${validationErrors[`lesson-${mod.id}`]?.title ? 'border-red-500/50 focus:ring-red-500/50' : 'border-border/50 focus:ring-primary/50'}`}
+                                                                    value={newLessonForms[mod.id]?.title || ''}
+                                                                    onChange={e => {
+                                                                        setNewLessonForms(prev => ({ ...prev, [mod.id]: { ...prev[mod.id], title: e.target.value } }));
+                                                                        if (validationErrors[`lesson-${mod.id}`]?.title) {
+                                                                            setValidationErrors(prev => ({ ...prev, [`lesson-${mod.id}`]: null }));
+                                                                        }
+                                                                    }}
+                                                                />
                                                             </div>
-                                                            <input
-                                                                placeholder="e.g. Introduction to React..."
-                                                                className={`w-full bg-secondary/30 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 transition-all font-bold ${validationErrors[`lesson-${mod.id}`]?.title ? 'border-red-500/50 focus:ring-red-500/50' : 'border-border/50 focus:ring-primary/50'}`}
-                                                                value={newLessonForms[mod.id]?.title || ''}
-                                                                onChange={e => {
-                                                                    setNewLessonForms(prev => ({ ...prev, [mod.id]: { ...prev[mod.id], title: e.target.value } }));
-                                                                    if (validationErrors[`lesson-${mod.id}`]?.title) {
-                                                                        setValidationErrors(prev => ({ ...prev, [`lesson-${mod.id}`]: null }));
-                                                                    }
-                                                                }}
-                                                            />
+                                                            <div className="space-y-1">
+                                                                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Content Language</label>
+                                                                <select
+                                                                    value={newLessonForms[mod.id]?.language || 'en'}
+                                                                    onChange={e => setNewLessonForms(prev => ({ ...prev, [mod.id]: { ...prev[mod.id], language: e.target.value } }))}
+                                                                    className="w-full bg-secondary/30 border border-border/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all font-bold"
+                                                                >
+                                                                    {localesConfig.availableLocales.map(code => (
+                                                                        <option key={code} value={code}>
+                                                                            {code === 'en' ? 'English' : 'Arabic'}
+                                                                        </option>
+                                                                    ))}
+                                                                </select>
+                                                            </div>
                                                         </div>
 
                                                         {newLessonForms[mod.id]?.type === 'VIDEO' && (
@@ -1994,11 +2226,83 @@ export default function ClientAdminDashboard() {
                                             </button>
                                         </div>
                                         {validationErrors.newModule && <p className="text-[10px] font-bold text-red-500 animate-in fade-in slide-in-from-right-1 ml-1">{validationErrors.newModule}</p>}
+                                    <div className="glassmorphism p-6 rounded-3xl border border-border/50 space-y-6">
+                                        <div className="space-y-4">
+                                            <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                                                <Globe size={12} className="text-primary" /> Visibility & Status
+                                            </h4>
+                                            
+                                            <div className="flex items-center justify-between p-3 rounded-2xl bg-secondary/20 border border-border/50">
+                                                <div className="space-y-0.5">
+                                                    <p className="text-[10px] font-black uppercase tracking-tighter">Published</p>
+                                                    <p className="text-[9px] text-muted-foreground">Visible to learners</p>
+                                                </div>
+                                                <button
+                                                    onClick={() => updateCourseStatus(selectedCourse.id, !selectedCourse.isPublished)}
+                                                    className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${selectedCourse.isPublished ? 'bg-emerald-500' : 'bg-secondary-foreground/20'}`}
+                                                >
+                                                    <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${selectedCourse.isPublished ? 'translate-x-5' : 'translate-x-0'}`} />
+                                                </button>
+                                            </div>
+
+                                            <div className="flex items-center justify-between p-3 rounded-2xl bg-secondary/20 border border-border/50">
+                                                <div className="space-y-0.5">
+                                                    <p className="text-[10px] font-black uppercase tracking-tighter">Marketplace</p>
+                                                    <p className="text-[9px] text-muted-foreground">List in internal store</p>
+                                                </div>
+                                                <button
+                                                    onClick={() => setCourseForm(prev => ({ ...prev, isMarketplace: !prev.isMarketplace }))}
+                                                    className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${courseForm.isMarketplace ? 'bg-amber-500' : 'bg-secondary-foreground/20'}`}
+                                                >
+                                                    <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${courseForm.isMarketplace ? 'translate-x-5' : 'translate-x-0'}`} />
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-4 pt-4 border-t border-border/30">
+                                            <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                                                <Settings2 size={12} className="text-blue-400" /> Advanced Control
+                                            </h4>
+                                            
+                                            <button 
+                                                onClick={() => {
+                                                    setTranslatingContent({ id: selectedCourse.id, type: 'COURSE', title: selectedCourse.title });
+                                                    setShowTranslationModal(true);
+                                                }}
+                                                className="w-full py-4 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-indigo-500 hover:text-white transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/5 group"
+                                            >
+                                                <Globe size={14} className="group-hover:rotate-12 transition-transform" /> Manage Translations
+                                            </button>
+
+                                            <button 
+                                                onClick={() => deleteCourse(selectedCourse.id)}
+                                                className="w-full py-4 bg-red-500/5 text-red-500 border border-red-500/20 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all flex items-center justify-center gap-2 shadow-lg shadow-red-500/5"
+                                            >
+                                                <Trash2 size={14} /> Delete Course
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* AI Insight Card */}
+                                    <div className="p-6 rounded-3xl bg-gradient-to-br from-indigo-600 to-purple-700 text-white space-y-4 shadow-xl">
+                                        <div className="flex items-center gap-2 opacity-80">
+                                            <Activity size={14} />
+                                            <span className="text-[10px] font-black uppercase tracking-widest">Growth Engine</span>
+                                        </div>
+                                        <p className="text-sm font-bold leading-relaxed">
+                                            Drafting this course in multiple languages could increase your workspace engagement by up to <span className="text-amber-400">45%</span>.
+                                        </p>
+                                        <div className="pt-2">
+                                            <div className="h-1 w-full bg-white/20 rounded-full overflow-hidden">
+                                                <div className="h-full bg-amber-400" style={{ width: '65%' }} />
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
+                            </div> {/* End Flex Row (Div 7) */}
+                                </div></div></div></div>
                         ) : (
-                            // Courses View
+                            // ── Courses View ──
                             <div className="space-y-6">
                                 <div className="flex items-center justify-between">
                                     <div className="flex p-1 bg-secondary/20 rounded-xl border border-border/50 w-fit">
@@ -2085,6 +2389,7 @@ export default function ClientAdminDashboard() {
                                                 </div>
                                             </div>
                                         ))
+                                        </div>
                                     )}
                                 </div>
                             </div>
@@ -2174,7 +2479,7 @@ export default function ClientAdminDashboard() {
                 {activeTab === 'reports' && (() => {
                     const CHART_COLORS = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#ec4899'];
                     return (
-                    <div className="space-y-6 animate-in fade-in duration-500 pb-10">
+                        <div className="space-y-6 animate-in fade-in duration-500 pb-10">
 
                         {/* ── Filter Bar ── */}
                         <div className="glassmorphism rounded-2xl border border-border/50 p-4 flex flex-col lg:flex-row items-start lg:items-center gap-4 flex-wrap">
@@ -2417,10 +2722,141 @@ export default function ClientAdminDashboard() {
                                 </div>
                             </div>
                         </div>
-
-                    </div>
                     );
                 })()}
+                </div>
+            )}
+
+                {/* ── i18n & AI ── */}
+                {activeTab === 'i18n' && (
+                    <div className="space-y-8 animate-in fade-in duration-500">
+                        <div className="flex flex-col gap-1">
+                            <h3 className="text-xl font-black flex items-center gap-2">
+                                <Globe className="w-6 h-6 text-primary" /> Localization & AI Engine
+                            </h3>
+                            <p className="text-sm text-muted-foreground">Manage your workspace languages and configure private AI translation settings.</p>
+                        </div>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                            {/* AI Configuration */}
+                            <div className="glassmorphism p-8 rounded-3xl border border-border/50 space-y-6">
+                                <div className="flex items-center justify-between">
+                                    <h4 className="font-bold flex items-center gap-2">
+                                        <Shield className="w-5 h-5 text-emerald-400" /> AI Translation Engine
+                                    </h4>
+                                    <div className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-bold uppercase tracking-widest">
+                                        Privacy Protected
+                                    </div>
+                                </div>
+
+                                <div className="space-y-4">
+                                    <div className="p-4 rounded-2xl bg-secondary/20 border border-border/50">
+                                        <p className="text-xs font-bold mb-2 uppercase tracking-tight text-muted-foreground">Your OpenAI API Key (Optional)</p>
+                                        <input
+                                            type="password"
+                                            placeholder="sk-..."
+                                            value={localesConfig.openaiKey}
+                                            onChange={(e) => setLocalesConfig(prev => ({ ...prev, openaiKey: e.target.value }))}
+                                            className="w-full bg-background border border-border/50 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-mono"
+                                        />
+                                        <p className="text-[10px] text-muted-foreground mt-2 italic leading-relaxed">
+                                            Providing your own key ensures your data remains isolated to your OpenAI account. 
+                                            If left empty, the platform will use the <span className="text-primary font-bold">TranslateGemma</span> system fallback.
+                                        </p>
+                                    </div>
+
+                                    <div className="flex items-start gap-3 p-4 rounded-2xl bg-blue-500/5 border border-blue-500/20">
+                                        <Info className="w-4 h-4 text-blue-400 mt-0.5 shrink-0" />
+                                        <div className="space-y-1">
+                                            <p className="text-xs font-bold text-blue-400">Hierarchical Dispatch</p>
+                                            <p className="text-[10px] text-muted-foreground leading-relaxed">
+                                                1. **Tenant Key**: Primary choice for privacy & cost control.<br/>
+                                                2. **TranslateGemma**: High-quality, self-hosted system fallback.<br/>
+                                                3. **Platform Key**: Global fallback (Usage limits may apply).
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Locale Management */}
+                            <div className="glassmorphism p-8 rounded-3xl border border-border/50 space-y-6">
+                                <h4 className="font-bold flex items-center gap-2">
+                                    <Globe className="w-5 h-5 text-blue-400" /> Platform Languages
+                                </h4>
+
+                                <div className="space-y-6">
+                                    <div className="space-y-3">
+                                        <p className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1">Available Locales</p>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            {[
+                                                { code: 'en', name: 'English', flag: '🇺🇸' },
+                                                { code: 'ar', name: 'Arabic', flag: '🇸🇦', isRTL: true }
+                                            ].map(lang => (
+                                                <button
+                                                    key={lang.code}
+                                                    onClick={() => {
+                                                        const isEnabled = localesConfig.availableLocales.includes(lang.code);
+                                                        if (isEnabled && localesConfig.availableLocales.length > 1) {
+                                                            setLocalesConfig(prev => ({
+                                                                ...prev,
+                                                                availableLocales: prev.availableLocales.filter(l => l !== lang.code),
+                                                                defaultLocale: prev.defaultLocale === lang.code ? prev.availableLocales.find(l => l !== lang.code) || 'en' : prev.defaultLocale
+                                                            }));
+                                                        } else if (!isEnabled) {
+                                                            setLocalesConfig(prev => ({
+                                                                ...prev,
+                                                                availableLocales: [...prev.availableLocales, lang.code]
+                                                            }));
+                                                        }
+                                                    }}
+                                                    className={`p-4 rounded-2xl flex items-center gap-3 border transition-all text-left ${localesConfig.availableLocales.includes(lang.code)
+                                                        ? 'bg-primary/10 border-primary/30 text-primary'
+                                                        : 'bg-secondary/20 border-border/50 text-muted-foreground grayscale hover:grayscale-0'
+                                                        }`}
+                                                >
+                                                    <span className="text-xl">{lang.flag}</span>
+                                                    <div>
+                                                        <p className="text-sm font-bold">{lang.name}</p>
+                                                        <p className="text-[10px] opacity-70 font-mono uppercase">{lang.code}{lang.isRTL ? ' (RTL)' : ''}</p>
+                                                    </div>
+                                                    {localesConfig.availableLocales.includes(lang.code) && <CheckCircle2 className="ml-auto w-4 h-4" />}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-3">
+                                        <p className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1">Default Landing Language</p>
+                                        <select
+                                            value={localesConfig.defaultLocale}
+                                            onChange={(e) => setLocalesConfig(prev => ({ ...prev, defaultLocale: e.target.value }))}
+                                            className="w-full bg-secondary/20 border border-border/50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-bold"
+                                        >
+                                            {localesConfig.availableLocales.map(code => (
+                                                <option key={code} value={code}>
+                                                    {code === 'en' ? 'English (US)' : 'Arabic (SA)'}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <p className="text-[10px] text-muted-foreground italic ml-1">Users will see this language by default if no preference is set.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex justify-end pt-4">
+                            <button
+                                onClick={handleSaveLocales}
+                                disabled={isSavingLocales}
+                                className="px-8 py-4 bg-primary text-primary-foreground rounded-2xl font-black flex items-center gap-3 hover:scale-105 transition-transform shadow-xl disabled:opacity-50"
+                            >
+                                {isSavingLocales ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+                                Save i18n & AI Configuration
+                            </button>
+                        </div>
+                    </div>
+                )}
 
                 {activeTab === 'audit' && (
                     <div className="space-y-6 animate-in fade-in duration-500 pb-20">
@@ -2620,9 +3056,9 @@ export default function ClientAdminDashboard() {
                                     {/* Asset Grid */}
                                     <div className="space-y-6">
                                         {[
-                                            { id: 'logoLight', label: 'Primary Logo (Light Theme)', sub: 'Wide suggested (Min 400x100px)', icon: Globe },
-                                            { id: 'logoDark', label: 'Secondary Logo (Dark Theme)', sub: 'Wide suggested (Min 400x100px)', icon: Globe },
-                                            { id: 'favicon', label: 'Site Favicon', sub: 'Square icon (512x512px preferred)', icon: Globe },
+                                            { id: 'logoLight', label: 'Primary Logo (Light Theme)', sub: 'Transparent PNG/SVG suggested', icon: Globe },
+                                            { id: 'logoDark', label: 'Secondary Logo (Dark Theme)', sub: 'Logo for dark navigation bars', icon: Globe },
+                                            { id: 'favicon', label: 'Site Favicon', sub: 'Square icon (32x32px suggested)', icon: Globe },
                                         ].map((asset) => (
                                             <div key={asset.id} className="space-y-3">
                                                 <div className="flex justify-between items-end px-1">
@@ -2693,12 +3129,8 @@ export default function ClientAdminDashboard() {
                                         <div className="h-2 w-1/2 bg-secondary/30 rounded-full" />
                                         <button className="w-full py-2.5 rounded-xl text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-black/5" 
                                             style={{ backgroundColor: branding.primaryColor }}>
-                                            Join Learning Path
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                    </div>
+                    </div>
                     </div>
                 )}
 
@@ -2774,17 +3206,15 @@ export default function ClientAdminDashboard() {
                             <CertificateDesigner 
                                 template={editingTemplate} 
                                 onBack={() => { setEditingTemplate(null); fetchAvailableTemplates(); }}
-                                onSave={async (id, designFields, backgroundImage) => {
+                                onSave={async (id, designFields) => {
                                     try {
                                         const res = await fetch(`/api/t/${domain}/certificates/${id}`, {
                                             method: 'PATCH',
                                             headers: { 'Content-Type': 'application/json' },
-                                            body: JSON.stringify({ designFields, backgroundImage })
+                                            body: JSON.stringify({ designFields })
                                         });
                                         if (res.ok) {
                                             addToast({ title: 'Success', message: 'Design saved successfully.', type: 'success' });
-                                            // Refresh local state if needed
-                                            fetchAvailableTemplates();
                                         }
                                     } catch (e) {
                                         console.error(e);
@@ -2800,7 +3230,6 @@ export default function ClientAdminDashboard() {
                         )}
                     </div>
                 )}
-            </main>
 
             {/* Modals */}
             {showCourseModal && (
@@ -2877,6 +3306,39 @@ export default function ClientAdminDashboard() {
                                         className="w-full bg-secondary/50 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
                                 </div>
                             </div>
+                            {/* Certificate Section - Moved Higher & Highlighted */}
+                            <div className={`p-4 rounded-2xl border-2 transition-all duration-300 ${courseForm.certificateEnabled ? 'bg-indigo-500/5 border-indigo-500/20 shadow-lg shadow-indigo-500/5' : 'bg-secondary/20 border-border/50 opacity-80'}`}>
+                                <div className="flex items-center justify-between mb-2">
+                                    <label className="text-xs font-black uppercase tracking-widest text-indigo-500 flex items-center gap-2">
+                                        <Award size={16} /> Certificate of Achievement
+                                    </label>
+                                    <button 
+                                        type="button"
+                                        onClick={() => setCourseForm({ ...courseForm, certificateEnabled: !courseForm.certificateEnabled })}
+                                        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none bg-secondary ${courseForm.certificateEnabled ? 'bg-indigo-600' : ''}`}
+                                    >
+                                        <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${courseForm.certificateEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
+                                    </button>
+                                </div>
+                                <p className="text-[10px] text-muted-foreground mb-3 font-medium">Issue a professional certificate to learners upon course completion.</p>
+                                
+                                {courseForm.certificateEnabled && (
+                                    <div className="space-y-1.5 animate-in slide-in-from-top-2 duration-300 pt-2 border-t border-indigo-500/10">
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-indigo-400/70">Design Template</label>
+                                        <select 
+                                            value={courseForm.certificateTemplateId} 
+                                            onChange={e => setCourseForm({ ...courseForm, certificateTemplateId: e.target.value })}
+                                            className="w-full bg-background border border-indigo-500/20 rounded-xl px-4 py-2.5 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all appearance-none cursor-pointer"
+                                        >
+                                            <option value="">-- Use Default Template --</option>
+                                            {availableTemplates.map((t: any) => (
+                                                <option key={t.id} value={t.id}>{t.name} {t.isGlobal ? '🌍' : '🏠'}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                )}
+                            </div>
+
                             <div className="flex flex-col gap-3 py-2">
                                 <div className="flex items-center gap-2 px-1">
                                     <input type="checkbox" id="course-captions" checked={courseForm.captions} onChange={e => setCourseForm({ ...courseForm, captions: e.target.checked })}
@@ -2888,30 +3350,7 @@ export default function ClientAdminDashboard() {
                                         className="rounded border-border/50 bg-secondary/30 text-amber-500 focus:ring-amber-500/20" />
                                     <label htmlFor="course-marketplace" className="text-xs font-bold uppercase tracking-widest text-amber-600/80 cursor-pointer">Publish to Internal Marketplace</label>
                                 </div>
-                                <div className="flex items-center gap-2 px-1 pt-2 border-t border-border/20 mt-2">
-                                    <input type="checkbox" id="course-certificate" checked={courseForm.certificateEnabled} onChange={e => setCourseForm({ ...courseForm, certificateEnabled: e.target.checked })}
-                                        className="rounded border-border/50 bg-secondary/30 text-indigo-500 focus:ring-indigo-500/20" />
-                                    <label htmlFor="course-certificate" className="text-xs font-bold uppercase tracking-widest text-indigo-400 cursor-pointer flex items-center gap-2">
-                                        <Award size={14} /> Enable Certificate of Achievement
-                                    </label>
-                                </div>
                             </div>
-                            
-                            {courseForm.certificateEnabled && (
-                                <div className="space-y-1.5 animate-in slide-in-from-top-2 duration-300">
-                                    <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Select Certificate Template</label>
-                                    <select 
-                                        value={courseForm.certificateTemplateId} 
-                                        onChange={e => setCourseForm({ ...courseForm, certificateTemplateId: e.target.value })}
-                                        className="w-full bg-secondary/50 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                                    >
-                                        <option value="">-- Choose Template --</option>
-                                        {availableTemplates.map((t: any) => (
-                                            <option key={t.id} value={t.id}>{t.name} {t.isGlobal ? '(Global)' : ''}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                            )}
                             {/* Exclusive Role/Team Gating */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-1.5">
@@ -3422,7 +3861,6 @@ export default function ClientAdminDashboard() {
                                     </a>
                                 </div>
                             )}
-                        </div>
                     </div>
                 </div>
             )}
@@ -3843,6 +4281,125 @@ export default function ClientAdminDashboard() {
                     </div>
                 </div>
             )}
+            {/* ── TRANSLATION MODAL ── */}
+            {showTranslationModal && translatingContent && (
+                <div className="fixed inset-0 z-[400] flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowTranslationModal(false)} />
+                    <div className="relative w-full max-w-4xl glassmorphism rounded-[2.5rem] border border-white/10 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+                        <div className="p-8 border-b border-white/5 flex items-center justify-between bg-gradient-to-r from-indigo-500/10 to-purple-500/10">
+                            <div>
+                                <div className="flex items-center gap-3 mb-1">
+                                    <div className="w-10 h-10 rounded-2xl bg-indigo-500/20 flex items-center justify-center text-indigo-400">
+                                        <Globe size={20} />
+                                    </div>
+                                    <h3 className="text-2xl font-black tracking-tight">Content Translation</h3>
+                                </div>
+                                <p className="text-sm text-muted-foreground font-medium">Managing localization for: <span className="text-foreground font-bold">{translatingContent.title}</span></p>
+                            </div>
+                            <button onClick={() => setShowTranslationModal(false)} className="p-3 rounded-2xl hover:bg-white/5 transition-all text-muted-foreground hover:text-foreground">
+                                <XCircle size={24} />
+                            </button>
+                        </div>
+
+                        <div className="flex-1 overflow-auto p-8 space-y-8 text-foreground">
+                            {/* Translation Request Area */}
+                            <div className="space-y-4">
+                                <h4 className="text-xs font-black uppercase tracking-[0.2em] text-indigo-400">Request New Translation</h4>
+                                <div className="flex flex-wrap gap-3">
+                                    {localesConfig.availableLocales.filter(l => l !== 'en').map(locale => {
+                                        const existing = translations.find(t => t.locale === locale);
+                                        return (
+                                            <button
+                                                key={locale}
+                                                disabled={isTranslating || (existing && existing.status === 'APPROVED')}
+                                                onClick={() => requestTranslation(translatingContent.id, translatingContent.type, locale)}
+                                                className="px-6 py-3 rounded-2xl bg-indigo-600 text-white font-black text-xs flex items-center gap-2 hover:scale-105 active:scale-95 transition-all shadow-lg shadow-indigo-500/20 disabled:opacity-50 disabled:grayscale"
+                                            >
+                                                {isTranslating ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
+                                                Draft AI Translation ({locale.toUpperCase()})
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* Existing Translations List */}
+                            <div className="space-y-6">
+                                <h4 className="text-xs font-black uppercase tracking-[0.2em] text-indigo-400">Verified & Drafted Content</h4>
+                                <div className="space-y-4">
+                                    {translations.length === 0 ? (
+                                        <div className="p-12 rounded-[2rem] border border-dashed border-white/10 text-center flex flex-col items-center gap-4 bg-white/5">
+                                            <Globe className="w-12 h-12 text-muted-foreground opacity-20" />
+                                            <p className="text-muted-foreground italic text-sm">No translations found. Start by drafting one with AI above.</p>
+                                        </div>
+                                    ) : translations.map(t => (
+                                        <div key={t.id} className="p-6 rounded-3xl bg-secondary/20 border border-white/5 space-y-4">
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-3">
+                                                    <span className="text-lg">{t.locale === 'ar' ? '🇸🇦' : '🇺🇸'}</span>
+                                                    <span className="font-bold uppercase tracking-widest text-xs">{t.locale === 'ar' ? 'Arabic' : 'English'}</span>
+                                                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-tighter border ${t.status === 'APPROVED' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-orange-500/10 text-orange-400 border-orange-500/20'}`}>
+                                                        {t.status}
+                                                    </span>
+                                                </div>
+                                                <div className="flex gap-2">
+                                                    {t.status === 'PENDING' && (
+                                                        <button 
+                                                            onClick={() => handleUpdateTranslation(t.id, 'APPROVED')}
+                                                            className="px-4 py-1.5 rounded-xl bg-emerald-500 text-white font-bold text-[10px] hover:scale-105 transition-all shadow-lg shadow-emerald-500/20"
+                                                        >
+                                                            Approve Draft
+                                                        </button>
+                                                    )}
+                                                    {t.status === 'APPROVED' && (
+                                                        <button 
+                                                            onClick={() => handleUpdateTranslation(t.id, 'PENDING')}
+                                                            className="px-4 py-1.5 rounded-xl bg-orange-500/10 text-orange-400 border border-orange-500/20 font-bold text-[10px] hover:bg-orange-500/20 transition-all font-mono"
+                                                        >
+                                                            Revoke Approval
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-2">
+                                                <div className="space-y-1">
+                                                    <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground ml-1">Translated Title</label>
+                                                    <input 
+                                                        type="text" 
+                                                        value={t.title || ''} 
+                                                        dir={t.locale === 'ar' ? 'rtl' : 'ltr'}
+                                                        onChange={(e) => {
+                                                            const newTitle = e.target.value;
+                                                            setTranslations(prev => prev.map(item => item.id === t.id ? { ...item, title: newTitle } : item));
+                                                        }}
+                                                        onBlur={() => handleUpdateTranslation(t.id, t.status, t.title)}
+                                                        className="w-full bg-background border border-border/50 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500/50 outline-none font-bold placeholder:text-muted-foreground/30"
+                                                    />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground ml-1">Translated Description / Metadata</label>
+                                                    <textarea 
+                                                        value={t.description || ''} 
+                                                        dir={t.locale === 'ar' ? 'rtl' : 'ltr'}
+                                                        onChange={(e) => {
+                                                            const newDesc = e.target.value;
+                                                            setTranslations(prev => prev.map(item => item.id === t.id ? { ...item, description: newDesc } : item));
+                                                        }}
+                                                        onBlur={() => handleUpdateTranslation(t.id, t.status, t.title, t.description)}
+                                                        className="w-full bg-background border border-border/50 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500/50 outline-none min-h-[80px]"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+            </main>
         </div>
     );
 }
