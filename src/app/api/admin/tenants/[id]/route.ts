@@ -9,20 +9,22 @@ export async function PUT(
     const { id: tenantId } = await params;
     try {
         const body = await req.json();
-        const { name, subdomain, isActive, adminEmail, newPassword, aiCredits, customRevenue, customRevenueCurrency } = body;
+        const { name, subdomain, isActive, adminEmail, newPassword, aiCredits, customRevenue, customRevenueCurrency, globalMarketplaceEnabled, courseCredits } = body;
 
         // 1. Update Tenant Basic Info
         const updatedTenant = await prisma.tenant.update({
             where: { id: tenantId },
-            data: {
-                name,
-                subdomain,
-                isActive,
-                aiCredits: aiCredits !== undefined ? parseInt(String(aiCredits), 10) : undefined,
-                customRevenue: customRevenue !== undefined ? parseInt(String(customRevenue), 10) : undefined,
-                customRevenueCurrency: customRevenueCurrency || undefined
-            }
-        });
+                data: {
+                    name,
+                    subdomain,
+                    isActive,
+                    aiCredits: aiCredits !== undefined ? parseInt(String(aiCredits), 10) : undefined,
+                    customRevenue: customRevenue !== undefined ? parseInt(String(customRevenue), 10) : undefined,
+                    customRevenueCurrency: customRevenueCurrency || undefined,
+                    globalMarketplaceEnabled: globalMarketplaceEnabled !== undefined ? Boolean(globalMarketplaceEnabled) : undefined,
+                    courseCredits: courseCredits !== undefined ? parseInt(String(courseCredits), 10) : undefined
+                }
+            });
 
         // 2. Handle Admin User Updates (Email/Password)
         if (adminEmail || newPassword) {

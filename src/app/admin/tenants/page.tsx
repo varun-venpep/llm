@@ -18,6 +18,8 @@ interface Tenant {
     aiCredits?: number;
     customRevenue?: number;
     customRevenueCurrency?: string;
+    globalMarketplaceEnabled?: boolean;
+    courseCredits?: number;
 }
 
 const getCurrencySymbol = (currencyCode?: string) => {
@@ -45,7 +47,9 @@ export default function TenantsPage() {
         newPassword: '',
         aiCredits: 0,
         customRevenue: 0,
-        customRevenueCurrency: 'USD'
+        customRevenueCurrency: 'USD',
+        globalMarketplaceEnabled: false,
+        courseCredits: 0
     });
     const [isUpdating, setIsUpdating] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
@@ -87,7 +91,9 @@ export default function TenantsPage() {
             newPassword: '',
             aiCredits: tenant.aiCredits || 0,
             customRevenue: tenant.customRevenue || 0,
-            customRevenueCurrency: tenant.customRevenueCurrency || 'USD'
+            customRevenueCurrency: tenant.customRevenueCurrency || 'USD',
+            globalMarketplaceEnabled: tenant.globalMarketplaceEnabled || false,
+            courseCredits: tenant.courseCredits || 0
         });
         setIsEditModalOpen(true);
         setActiveDropdown(null);
@@ -417,7 +423,39 @@ export default function TenantsPage() {
                             </div>
 
                             <div className="md:col-span-2 space-y-4 pt-2">
-                                <div className="flex items-center gap-3 p-4 bg-secondary/20 rounded-2xl border border-border/50 group cursor-pointer hover:bg-secondary/30 transition-all" onClick={() => editingTenant?.subdomain !== 'admin-system' && setEditForm({...editForm, isActive: !editForm.isActive})}>
+                                {/* Global Marketplace Toggle */}
+                                <div className="md:col-span-2 space-y-3 pt-2 border-t border-border/50">
+                                    <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Global Marketplace</p>
+                                    <div 
+                                        className={`flex items-center justify-between p-4 rounded-2xl border cursor-pointer transition-all ${editForm.globalMarketplaceEnabled ? 'bg-indigo-500/10 border-indigo-500/30' : 'bg-secondary/20 border-border/50'}`}
+                                        onClick={() => editingTenant?.subdomain !== 'admin-system' && setEditForm({...editForm, globalMarketplaceEnabled: !editForm.globalMarketplaceEnabled})}
+                                    >
+                                        <div>
+                                            <p className="text-sm font-bold">Enable Global Course Marketplace</p>
+                                            <p className="text-[10px] text-muted-foreground">Allow this workspace to discover and claim global courses</p>
+                                        </div>
+                                        <div className={`w-10 h-6 rounded-full p-1 flex items-center transition-all ${editForm.globalMarketplaceEnabled ? 'bg-indigo-500' : 'bg-secondary'}`}>
+                                            <div className={`w-4 h-4 rounded-full bg-white shadow transition-all ${editForm.globalMarketplaceEnabled ? 'translate-x-4' : 'translate-x-0'}`} />
+                                        </div>
+                                    </div>
+                                    {editForm.globalMarketplaceEnabled && (
+                                        <div className="space-y-1.5">
+                                            <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Course Credits</label>
+                                            <input 
+                                                type="number" 
+                                                min="0"
+                                                className="w-full bg-secondary/50 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                                                value={editForm.courseCredits || ''}
+                                                onChange={e => setEditForm({...editForm, courseCredits: parseInt(e.target.value) || 0})}
+                                                placeholder="0"
+                                            />
+                                            <p className="text-[9px] text-muted-foreground italic px-1">Each claim costs 1 credit. Set to 0 to restrict access temporarily.</p>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Workspace Status Toggle */}
+                                <div className="flex items-center gap-3 p-4 bg-secondary/20 rounded-2xl border border-border/50 group cursor-pointer hover:bg-secondary/30 transition-all md:col-span-2" onClick={() => editingTenant?.subdomain !== 'admin-system' && setEditForm({...editForm, isActive: !editForm.isActive})}>
                                     <div className={`w-10 h-6 rounded-full p-1 transition-all flex items-center ${editForm.isActive ? 'bg-emerald-500/20 border-emerald-500/40' : 'bg-red-500/20 border-red-500/40'} border`}>
                                         <div className={`w-4 h-4 rounded-full shadow-sm transition-all ${editForm.isActive ? 'bg-emerald-500 translate-x-4' : 'bg-red-500 translate-x-0'}`} />
                                     </div>

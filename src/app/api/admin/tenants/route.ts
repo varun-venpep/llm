@@ -5,7 +5,7 @@ import bcrypt from 'bcryptjs';
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
-        const { name, subdomain, adminEmail, adminPassword } = body;
+        const { name, subdomain, adminEmail, adminPassword, globalMarketplaceEnabled, courseCredits } = body;
 
         // Basic validation
         if (!name || !subdomain || !adminEmail || !adminPassword) {
@@ -27,7 +27,9 @@ export async function POST(req: NextRequest) {
                 data: {
                     name,
                     subdomain,
-                    primaryColor: '#3b82f6', // Default blue
+                    primaryColor: '#3b82f6',
+                    globalMarketplaceEnabled: globalMarketplaceEnabled || false,
+                    courseCredits: courseCredits || 0
                 },
             });
 

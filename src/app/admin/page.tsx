@@ -2,7 +2,7 @@
 
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useState, useEffect } from 'react';
-import { Building2, Users, BookOpen, TrendingUp, ArrowUpRight, Plus, Loader2, Zap } from 'lucide-react';
+import { Building2, Users, BookOpen, TrendingUp, ArrowUpRight, Plus, Loader2, Zap, Globe } from 'lucide-react';
 import Link from 'next/link';
 
 interface Stats {
@@ -23,7 +23,7 @@ export default function SuperAdminDashboard() {
     const [stats, setStats] = useState<Stats | null>(null);
     const [loading, setLoading] = useState(true);
     const [showSpinoff, setShowSpinoff] = useState(false);
-    const [form, setForm] = useState({ name: '', subdomain: '', adminEmail: '', adminPassword: '' });
+    const [form, setForm] = useState({ name: '', subdomain: '', adminEmail: '', adminPassword: '', globalMarketplaceEnabled: false });
     const [formErrors, setFormErrors] = useState<Record<string, string>>({});
     const [spinning, setSpinning] = useState(false);
     const [spinResult, setSpinResult] = useState<any>(null);
@@ -217,6 +217,23 @@ export default function SuperAdminDashboard() {
                                         />
                                     </div>
                                 ))}
+                                {/* Global Marketplace Toggle */}
+                                <div 
+                                    className={`flex items-center justify-between p-4 rounded-2xl border cursor-pointer transition-all ${form.globalMarketplaceEnabled ? 'bg-indigo-500/10 border-indigo-500/30' : 'bg-secondary/30 border-border/50'}`}
+                                    onClick={() => setForm({ ...form, globalMarketplaceEnabled: !form.globalMarketplaceEnabled })}
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <Globe className={`w-4 h-4 ${form.globalMarketplaceEnabled ? 'text-indigo-400' : 'text-muted-foreground'}`} />
+                                        <div>
+                                            <p className="text-sm font-bold">Global Marketplace Access</p>
+                                            <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Let this workspace claim global courses</p>
+                                        </div>
+                                    </div>
+                                    <div className={`w-10 h-6 rounded-full p-1 flex items-center transition-all ${form.globalMarketplaceEnabled ? 'bg-indigo-500' : 'bg-secondary'}`}>
+                                        <div className={`w-4 h-4 rounded-full bg-white shadow transition-all ${form.globalMarketplaceEnabled ? 'translate-x-4' : 'translate-x-0'}`} />
+                                    </div>
+                                </div>
+
                                 <button
                                     type="submit"
                                     disabled={spinning}

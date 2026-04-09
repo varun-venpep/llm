@@ -26,12 +26,15 @@ model Tenant {
   aiCredits             Int                   @default(0)
   customRevenue         Int                   @default(0)
   customRevenueCurrency String                @default("USD")
+  globalMarketplaceEnabled Boolean            @default(false)
+  courseCredits         Int                   @default(0)
   announcements         Announcement[]
   users                 User[]
   certificateTemplates  CertificateTemplate[] @relation("TenantTemplates")
   courses               Course[]
   jobRoles              JobRole[]
   teams                 Team[]
+  marketplaceClaims     MarketplaceClaim[]
 }
 
 model User {
@@ -67,7 +70,7 @@ model Course {
   description           String?
   thumbnail             String?
   isPublished           Boolean                @default(false)
-  tenantId              String
+  tenantId              String?
   createdAt             DateTime               @default(now())
   updatedAt             DateTime               @updatedAt
   captions              Boolean                @default(false)
@@ -78,7 +81,7 @@ model Course {
   exclusiveTeamId       String?
   exclusiveRole         JobRole?               @relation("ExclusiveCourses", fields: [exclusiveRoleId], references: [id])
   exclusiveTeam         Team?                  @relation("ExclusiveTeamCourses", fields: [exclusiveTeamId], references: [id])
-  tenant                Tenant                 @relation(fields: [tenantId], references: [id])
+  tenant                Tenant?                @relation(fields: [tenantId], references: [id])
   enrollments           Enrollment[]
   certificates          IssuedCertificate[]
   modules               Module[]
@@ -89,6 +92,9 @@ model Course {
   certificateEnabled    Boolean                @default(false)
   certificateTemplateId String?
   certificateTemplate   CertificateTemplate?   @relation("CourseTemplate", fields: [certificateTemplateId], references: [id])
+  isGlobal              Boolean                @default(false)
+  clonedFromId          String?
+  marketplaceClaims     MarketplaceClaim[]     @relation("ClaimedCourse")
 }
 
 model Module {
@@ -370,6 +376,18 @@ model TeamCourseAssignment {
   team         Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
 
   @@unique([teamId, courseId])
+}
+
+model MarketplaceClaim {
+  id             String   @id @default(cuid())
+  tenantId       String
+  courseId       String
+  sourceCourseId String
+  claimedAt      DateTime @default(now())
+  tenant         Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  course         Course   @relation("ClaimedCourse", fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, sourceCourseId])
 }
 
 enum Role {

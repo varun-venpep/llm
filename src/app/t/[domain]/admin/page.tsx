@@ -21,8 +21,9 @@ import { TeamsManager } from '@/components/admin/teams/TeamsManager';
 import { LearnersManager } from '@/components/admin/learners/LearnersManager';
 import CertificateManager from '@/components/admin/certificates/CertificateManager';
 import CertificateDesigner from '@/components/admin/certificates/CertificateDesigner';
+import GlobalMarketplaceView from '@/components/admin/GlobalMarketplaceView';
 
-type Tab = 'overview' | 'courses' | 'learners' | 'announcements' | 'branding' | 'domains' | 'settings' | 'certificates' | 'reports' | 'roles' | 'teams' | 'audit';
+type Tab = 'overview' | 'courses' | 'learners' | 'announcements' | 'branding' | 'domains' | 'settings' | 'certificates' | 'reports' | 'roles' | 'teams' | 'audit' | 'global-marketplace';
 
 // Toast Types
 type ToastType = 'success' | 'error' | 'info';
@@ -91,6 +92,7 @@ export default function ClientAdminDashboard() {
         avgProgress: 0,
         avgQuizScore: 0
     });
+    const [globalMarketplaceEnabled, setGlobalMarketplaceEnabled] = useState(false);
     const [courses, setCourses] = useState<any[]>([]);
     const [announcements, setAnnouncements] = useState<any[]>([]);
     const [recentActivity, setRecentActivity] = useState<any[]>([]);
@@ -388,13 +390,14 @@ export default function ClientAdminDashboard() {
             setUserName(user.name || 'Admin');
             setUserEmail(user.email || '');
 
-            const [statsRes, coursesRes, annRes, rolesRes, teamsRes, certsRes] = await Promise.all([
+            const [statsRes, coursesRes, annRes, rolesRes, teamsRes, certsRes, tenantRes] = await Promise.all([
                 fetch(`/api/t/${domain}/admin/stats`),
                 fetch(`/api/t/${domain}/courses`),
                 fetch(`/api/t/${domain}/announcements`),
                 fetch(`/api/t/${domain}/roles`),
                 fetch(`/api/t/${domain}/teams`),
-                fetch(`/api/t/${domain}/certificates`)
+                fetch(`/api/t/${domain}/certificates`),
+                fetch(`/api/t/${domain}/tenant-settings`)
             ]);
 
             if (statsRes.ok) {
@@ -412,6 +415,10 @@ export default function ClientAdminDashboard() {
             if (rolesRes.ok) setAvailableRoles(await rolesRes.json());
             if (teamsRes.ok) setAvailableTeams(await teamsRes.json());
             if (certsRes.ok) setAvailableTemplates(await certsRes.json());
+            if (tenantRes?.ok) {
+                const tenantData = await tenantRes.json();
+                setGlobalMarketplaceEnabled(tenantData.globalMarketplaceEnabled || false);
+            }
 
         } catch (e) {
             console.error(e);
@@ -1333,6 +1340,7 @@ export default function ClientAdminDashboard() {
                         ['certificates', 'Certificates', Award],
                         ['reports', 'Reports', BarChart3],
                         ['audit', 'Audit Monitor', Shield],
+                        ...(globalMarketplaceEnabled ? [['global-marketplace', 'Global Marketplace', Globe]] : []),
                     ] as [Tab, string, any][]).map(([tab, label, Icon]) => (
                         <button key={tab} onClick={() => { setActiveTab(tab); setSelectedCourse(null); }}
                             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === tab ? 'bg-primary/10 text-primary border border-primary/20' : 'text-muted-foreground hover:bg-secondary/50 hover:text-foreground'}`}>
@@ -1352,7 +1360,9 @@ export default function ClientAdminDashboard() {
             <main className="flex-1 p-8 overflow-auto">
                 <header className="flex justify-between items-center mb-8">
                     <h2 className="text-2xl font-black uppercase tracking-tight">
-                        {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
+                        {activeTab === 'global-marketplace' ? 'Global Marketplace' : 
+                         activeTab === 'audit' ? 'Audit Monitor' :
+                         activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
                     </h2>
                     <div className="flex items-center gap-4">
                         {activeTab === 'courses' && !selectedCourse && (
@@ -2800,6 +2810,9 @@ export default function ClientAdminDashboard() {
                         )}
                     </div>
                 )}
+                {activeTab === 'global-marketplace' && globalMarketplaceEnabled && (
+                    <GlobalMarketplaceView domain={domain} />
+                )}
             </main>
 
             {/* Modals */}
@@ -3721,6 +3734,7 @@ export default function ClientAdminDashboard() {
                     </div>
                 </div>
             )}
+
             {showProfileModal && (
                 <div className="fixed inset-0 z-[400] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md animate-in fade-in duration-300">
                     <div className="bg-background border border-border/50 w-full max-w-md rounded-[2rem] p-8 space-y-6 shadow-2xl relative overflow-hidden">

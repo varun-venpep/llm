@@ -14,7 +14,8 @@ import {
     Building2,
     Bell,
     ShieldAlert,
-    Award
+    Award,
+    Globe
 } from 'lucide-react';
 
 export default function AdminLayout({
@@ -34,6 +35,7 @@ export default function AdminLayout({
         { name: 'Dashboard', href: '/admin', icon: BarChart3 },
         { name: 'Reports & Analytics', href: '/admin/reports', icon: BarChart3 },
         { name: 'Tenants', href: '/admin/tenants', icon: Building2 },
+        { name: 'Global Marketplace', href: '/admin/global-marketplace', icon: Globe },
         { name: 'Admin Master', href: '/admin/staff', icon: ShieldAlert },
         { name: 'Global Users', href: '/admin/users', icon: Users },
         { name: 'Certificate Library', href: '/admin/certificates', icon: Award },
