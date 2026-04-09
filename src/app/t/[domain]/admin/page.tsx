@@ -120,7 +120,7 @@ export default function ClientAdminDashboard() {
 
     // Course Builder state
     const [showCourseModal, setShowCourseModal] = useState(false);
-    const [courseFilter, setCourseFilter] = useState<'all' | 'published' | 'draft'>('all');
+    const [courseFilter, setCourseFilter] = useState<'all' | 'published' | 'draft' | 'claimed'>('all');
     const [courseForm, setCourseForm] = useState({ 
         title: '', 
         description: '', 
@@ -2016,6 +2016,7 @@ export default function ClientAdminDashboard() {
                                             { id: 'all', label: 'All Courses', count: courses.length },
                                             { id: 'published', label: 'Published', count: courses.filter(c => c.isPublished).length },
                                             { id: 'draft', label: 'Drafts', count: courses.filter(c => !c.isPublished).length },
+                                            { id: 'claimed', label: 'Claimed', count: courses.filter(c => !!c.clonedFromId).length },
                                         ].map((tab) => (
                                             <button
                                                 key={tab.id}
@@ -2037,6 +2038,7 @@ export default function ClientAdminDashboard() {
                                     ) : courses.filter(c => {
                                         if (courseFilter === 'published') return c.isPublished;
                                         if (courseFilter === 'draft') return !c.isPublished;
+                                        if (courseFilter === 'claimed') return !!c.clonedFromId;
                                         return true;
                                     }).length === 0 ? (
                                         <div className="col-span-3 text-center py-20 border-2 border-dashed border-border/50 rounded-3xl bg-secondary/5">
@@ -2050,6 +2052,7 @@ export default function ClientAdminDashboard() {
                                         courses.filter(c => {
                                             if (courseFilter === 'published') return c.isPublished;
                                             if (courseFilter === 'draft') return !c.isPublished;
+                                            if (courseFilter === 'claimed') return !!c.clonedFromId;
                                             return true;
                                         }).map((course) => (
                                             <div key={course.id} className="group rounded-3xl overflow-hidden border border-border/50 glassmorphism hover:border-primary/30 transition-all">
@@ -2060,6 +2063,11 @@ export default function ClientAdminDashboard() {
                                                         <BookOpen className="w-12 h-12 text-blue-400 opacity-40 group-hover:scale-110 transition-transform duration-500" />
                                                     )}
                                                     <div className="absolute top-3 left-3 flex flex-col gap-1.5 pointer-events-none">
+                                                        {course.clonedFromId && (
+                                                            <span className="px-2 py-1 text-[10px] font-black uppercase rounded-lg bg-amber-500/20 border border-amber-500/30 text-amber-400 backdrop-blur-md flex items-center gap-1 shadow-2xl">
+                                                                <Globe size={10} /> Global Marketplace
+                                                            </span>
+                                                        )}
                                                         {course.exclusiveRole && (
                                                             <span className="px-2 py-1 text-[10px] font-black uppercase rounded-lg bg-indigo-500/20 border border-indigo-500/30 text-indigo-400 backdrop-blur-md flex items-center gap-1 shadow-2xl">
                                                                 <Lock size={10} /> Exclusive: {course.exclusiveRole.name}

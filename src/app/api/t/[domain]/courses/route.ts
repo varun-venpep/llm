@@ -97,6 +97,7 @@ export async function POST(
 ) {
     const { domain } = await params;
     try {
+        const body = await req.json();
         const { 
             title, description, thumbnail, skillLevel, languages, captions, 
             isMarketplace, exclusiveRoleId, exclusiveTeamId,
@@ -152,6 +153,7 @@ export async function PUT(
 ) {
     const { domain } = await params;
     try {
+        const body = await req.json();
         const { 
             id, title, description, thumbnail, skillLevel, languages, captions, 
             isMarketplace, exclusiveRoleId, exclusiveTeamId,
