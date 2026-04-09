@@ -22,7 +22,12 @@ export default async function middleware(req: NextRequest) {
 
     // 2. The root domain is what we want to strip out to find the subdomain
     // E.g. "lvh.me:3000" or "localhost:3000"
-    const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'localhost:3000';
+    let rootDomain = process.env.ROOT_DOMAIN || process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'localhost:3000';
+    if (rawHost === 'dev.lebra.ai' || rawHost.endsWith('.dev.lebra.ai')) {
+        rootDomain = 'dev.lebra.ai';
+    } else if (rawHost === 'lebra.ai' || rawHost.endsWith('.lebra.ai')) {
+        rootDomain = 'lebra.ai';
+    }
 
     // 3. Normalize the hostname (mostly for localhost mapping in simple dev environments)
     let hostname = rawHost;
@@ -100,6 +105,11 @@ export default async function middleware(req: NextRequest) {
             // Fallback to basic dashboard if API check fails
             return NextResponse.next();
         }
+    }
+
+    // 3. Handle 'www' subdomain (Redirect to root domain)
+    if (hostname === `www.${rootDomain}`) {
+        return NextResponse.redirect(new URL(path, `https://${rootDomain}`));
     }
 
     // Super Admin Subdomain (e.g., admin.llm.com)

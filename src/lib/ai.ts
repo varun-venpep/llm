@@ -107,41 +107,24 @@ export async function transcribeMedia(lessonId: string, mediaUrl: string) {
             data: { transcriptStatus: 'PROCESSING' }
         });
 
-        // 3. Trigger ECS Task On-Demand
-        const clusterName = process.env.WHISPER_CLUSTER_NAME;
-        const serviceName = process.env.WHISPER_SERVICE_NAME; // In SST, the service name is often used as the task definition
-
-        if (!clusterName || !serviceName) {
-            throw new Error("Missing WHISPER_CLUSTER_NAME or WHISPER_SERVICE_NAME in environment");
-        }
-
-        const ecs = new ECSClient({ region: "ap-southeast-1" });
-        const command = new RunTaskCommand({
-            cluster: clusterName,
-            taskDefinition: serviceName, // SST maps the service name to the task def
-            launchType: "FARGATE",
-            networkConfiguration: {
-                awsvpcConfiguration: {
-                    subnets: [], // We will leave this empty as SST handles the VPC link typically, or we inject them
-                    assignPublicIp: "ENABLED",
-                }
+        // 3. Trigger Whisper API via HTTP
+        const response = await fetch(`${lambdaUrl}/transcribe`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
             },
-            overrides: {
-                containerOverrides: [
-                    {
-                        name: "WhisperService", // Must match the name in Docker/SST
-                        environment: [
-                            { name: "LESSON_ID", value: lessonId },
-                            { name: "VIDEO_URL", value: mediaUrl },
-                            { name: "CALLBACK_URL", value: callbackUrl },
-                        ]
-                    }
-                ]
-            }
+            body: JSON.stringify({
+                lessonId: lessonId,
+                mediaUrl: mediaUrl,
+                callbackUrl: callbackUrl,
+            })
         });
 
-        await ecs.send(command);
-        console.log(`[AI] Fired ECS on-demand transcription for lesson ${lessonId}.`);
+        if (!response.ok) {
+            throw new Error(`Whisper Service HTTP Error: ${response.status}`);
+        }
+
+        console.log(`[AI] Fired HTTP POST to Whisper AI service for lesson ${lessonId}.`);
 
     } catch (error) {
         console.error(`[AI] Error starting transcription for lesson ${lessonId}:`, error);

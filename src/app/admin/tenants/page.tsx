@@ -304,12 +304,13 @@ export default function TenantsPage() {
                                 {editForm.subdomain && (
                                     <div className="flex items-center justify-between px-1">
                                         <div className="text-[10px] text-blue-400 font-mono flex items-center gap-1.5 overflow-hidden">
-                                            <span className="truncate">http://{editForm.subdomain}.lvh.me:3000/login</span>
+                                            <span className="truncate">{process.env.NEXT_PUBLIC_ROOT_DOMAIN?.includes('localhost') || process.env.NEXT_PUBLIC_ROOT_DOMAIN?.includes('lvh.me') ? 'http' : 'https'}://{editForm.subdomain}.{process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'lvh.me:3000'}/login</span>
                                         </div>
                                         <button 
                                             type="button"
                                             onClick={() => {
-                                                const url = `http://${editForm.subdomain}.lvh.me:3000/login`;
+                                                const isLocal = process.env.NEXT_PUBLIC_ROOT_DOMAIN?.includes('localhost') || process.env.NEXT_PUBLIC_ROOT_DOMAIN?.includes('lvh.me');
+                                                const url = `${isLocal ? 'http' : 'https'}://${editForm.subdomain}.${process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'lvh.me:3000'}/login`;
                                                 if (navigator.clipboard) {
                                                     navigator.clipboard.writeText(url);
                                                 } else {
@@ -407,7 +408,7 @@ export default function TenantsPage() {
 
                             <div className="flex flex-col gap-3 justify-end pb-1.5">
                                 <a 
-                                    href={`http://${editForm.subdomain}.lvh.me:3000/login`}
+                                    href={`${process.env.NEXT_PUBLIC_ROOT_DOMAIN?.includes('localhost') || process.env.NEXT_PUBLIC_ROOT_DOMAIN?.includes('lvh.me') ? 'http' : 'https'}://${editForm.subdomain}.${process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'lvh.me:3000'}/login`}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="flex items-center justify-center gap-2 px-4 py-2.5 text-[11px] font-bold bg-secondary hover:bg-secondary/70 border border-border rounded-xl transition-all uppercase tracking-wider group"

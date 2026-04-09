@@ -2708,7 +2708,7 @@ export default function ClientAdminDashboard() {
                         <div className="glassmorphism p-8 rounded-3xl border border-border/50 space-y-6">
                             <div>
                                 <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">Current Platform Subdomain</p>
-                                <p className="font-mono font-bold text-blue-400">{domain}.lvh.me:3000</p>
+                                <p className="font-mono font-bold text-blue-400">{domain}.{process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'lvh.me:3000'}</p>
                             </div>
                             <div className="space-y-2">
                                 <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Custom Domain</label>

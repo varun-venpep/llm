@@ -9,7 +9,8 @@ export async function POST(
     try {
         const { domain } = await params;
         const body = await req.json();
-        const { email, password, rememberMe } = body;
+        const { password, rememberMe } = body;
+        const email = body.email?.toLowerCase();
 
         // Find user by email and tenant subdomain
         const user = await prisma.user.findFirst({

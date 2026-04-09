@@ -5,14 +5,19 @@ import bcrypt from 'bcryptjs';
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
-        const { name, subdomain, adminEmail, adminPassword } = body;
+        const { name, adminEmail, adminPassword } = body;
 
         // Basic validation
-        if (!name || !subdomain || !adminEmail || !adminPassword) {
+        if (!name || !adminEmail || !adminPassword) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
 
-        // Check if tenant or subdomain exists
+        // Generate dynamic subdomain
+        const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+        const randomString = Math.random().toString(36).substring(2, 8);
+        const subdomain = `${slug}-${randomString}`;
+
+        // Check if tenant or subdomain exists (extremely unlikely due to random char, but kept for safety)
         const existingTenant = await prisma.tenant.findUnique({
             where: { subdomain },
         });
@@ -46,9 +51,13 @@ export async function POST(req: NextRequest) {
             return { tenant, user };
         });
 
+        const rootDomain = process.env.ROOT_DOMAIN || process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'lvh.me:3000';
+        
         return NextResponse.json({
             success: true,
             tenantId: result.tenant.id,
+            subdomain: result.tenant.subdomain,
+            fullDomain: `${result.tenant.subdomain}.${rootDomain}`,
             message: 'Workspace created successfully'
         });
 

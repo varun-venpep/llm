@@ -23,7 +23,7 @@ export default function SuperAdminDashboard() {
     const [stats, setStats] = useState<Stats | null>(null);
     const [loading, setLoading] = useState(true);
     const [showSpinoff, setShowSpinoff] = useState(false);
-    const [form, setForm] = useState({ name: '', subdomain: '', adminEmail: '', adminPassword: '' });
+    const [form, setForm] = useState({ name: '', adminEmail: '', adminPassword: '' });
     const [formErrors, setFormErrors] = useState<Record<string, string>>({});
     const [spinning, setSpinning] = useState(false);
     const [spinResult, setSpinResult] = useState<any>(null);
@@ -45,7 +45,6 @@ export default function SuperAdminDashboard() {
         // Validation
         const errors: Record<string, string> = {};
         if (!form.name.trim()) errors.name = 'Organization name is required';
-        if (!form.subdomain.trim()) errors.subdomain = 'Subdomain is required';
         if (!form.adminEmail.trim()) errors.adminEmail = 'Admin email is required';
         if (!form.adminPassword.trim()) errors.adminPassword = 'Admin password is required';
         
@@ -64,12 +63,17 @@ export default function SuperAdminDashboard() {
                 body: JSON.stringify(form),
             });
             const data = await res.json();
-            setSpinResult(data);
+            
             if (res.ok) {
+                setSpinResult(data);
                 fetchStats();
+            } else {
+                console.error(data.error);
+                setFormErrors({ _form: data.error });
             }
         } catch (e) {
             console.error(e);
+            setFormErrors({ _form: 'Failed to create workspace' });
         } finally {
             setSpinning(false);
         }
@@ -180,19 +184,19 @@ export default function SuperAdminDashboard() {
                             <div className="p-6 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-center space-y-3">
                                 <p className="text-3xl">🚀</p>
                                 <p className="font-black text-emerald-400 text-lg">Workspace Live!</p>
-                                <p className="text-sm text-muted-foreground">Your client can access their portal at:</p>
-                                <a href={`http://${form.subdomain}.${process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'lvh.me:3000'}/login`}
-                                    className="block font-mono text-blue-400 hover:underline text-sm"
-                                    target="_blank">
-                                    http://{form.subdomain}.{process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'lvh.me:3000'}/login
-                                </a>
-                                <button onClick={() => { setShowSpinoff(false); setSpinResult(null); }} className="mt-2 px-4 py-2 bg-emerald-600 text-white font-bold rounded-lg text-sm">Done</button>
+                                <p className="text-sm text-muted-foreground">The system generated this unique domain:</p>
+                                <div className="p-3 bg-secondary/30 rounded-xl border border-border">
+                                    <p className="font-mono text-sm tracking-tight text-blue-400">{spinResult.fullDomain}</p>
+                                </div>
+                                <p className="text-xs text-muted-foreground pt-1">
+                                    Note: This workspace is instantly active via wildcard routing. Custom domain mappings can be managed separately later.
+                                </p>
+                                <button onClick={() => { setShowSpinoff(false); setSpinResult(null); }} className="mt-4 px-6 py-2 bg-emerald-600 hover:bg-emerald-500 transition-colors text-white font-bold rounded-lg text-sm shadow-md shadow-emerald-600/20 w-full">Done</button>
                             </div>
                         ) : (
                             <form onSubmit={handleSpinoff} className="space-y-4">
                                 {[
                                     { key: 'name', label: 'Organization Name', placeholder: 'Acme Academy' },
-                                    { key: 'subdomain', label: 'Subdomain', placeholder: 'acme (→ acme.lms.com)' },
                                     { key: 'adminEmail', label: 'Admin Email', placeholder: 'admin@acme.com', type: 'email' },
                                     { key: 'adminPassword', label: 'Admin Password', placeholder: 'Temporary password', type: 'password' },
                                 ].map(field => (
@@ -217,6 +221,11 @@ export default function SuperAdminDashboard() {
                                         />
                                     </div>
                                 ))}
+                                {formErrors._form && (
+                                    <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-center">
+                                        <p className="text-xs font-bold text-red-500">{formErrors._form}</p>
+                                    </div>
+                                )}
                                 <button
                                     type="submit"
                                     disabled={spinning}

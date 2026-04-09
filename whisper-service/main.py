@@ -11,12 +11,17 @@ import json
 import os
 import tempfile
 import urllib.request
-from fastapi import FastAPI
+from fastapi import FastAPI, BackgroundTasks
 from mangum import Mangum
 from faster_whisper import WhisperModel
 import httpx
 
 app = FastAPI()
+
+@app.get("/")
+def health_check():
+    """Health check for AWS ALB Target Group."""
+    return {"status": "ok"}
 
 # Load model once on cold start.
 # 'base' is fast & fits Lambda memory. Use 'small' for better accuracy.
@@ -45,19 +50,8 @@ def format_timestamp(seconds: float) -> str:
     return f"{hours:02}:{minutes:02}:{secs:02}.{millis:03}"
 
 
-@app.post("/transcribe")
-async def transcribe(payload: dict):
-    """
-    Main transcription endpoint.
-    Expected payload: { lessonId, mediaUrl, callbackUrl }
-    """
-    lesson_id = payload.get("lessonId")
-    media_url = payload.get("mediaUrl")
-    callback_url = payload.get("callbackUrl")
-
-    if not lesson_id or not media_url or not callback_url:
-        return {"error": "Missing required fields: lessonId, mediaUrl, callbackUrl"}
-
+async def run_transcription(lesson_id: str, media_url: str, callback_url: str):
+    """The heavy transcription workload that runs asynchronously in the background."""
     try:
         # 1. Download the media file to a temp location
         suffix = ".mp4" if ".mp4" in media_url.lower() else ".audio"
@@ -86,8 +80,6 @@ async def transcribe(payload: dict):
         # Clean up temp file
         os.unlink(tmp_path)
 
-        return {"status": "READY", "lessonId": lesson_id}
-
     except Exception as e:
         # Notify LMS of failure
         try:
@@ -100,7 +92,25 @@ async def transcribe(payload: dict):
         except Exception:
             pass
 
-        return {"status": "FAILED", "error": str(e)}
+
+@app.post("/transcribe")
+async def transcribe(payload: dict, bg_tasks: BackgroundTasks):
+    """
+    Main transcription endpoint.
+    Expected payload: { lessonId, mediaUrl, callbackUrl }
+    """
+    lesson_id = payload.get("lessonId")
+    media_url = payload.get("mediaUrl")
+    callback_url = payload.get("callbackUrl")
+
+    if not lesson_id or not media_url or not callback_url:
+        return {"error": "Missing required fields: lessonId, mediaUrl, callbackUrl"}
+
+    # Execute the heavy ML processing in the background
+    bg_tasks.add_task(run_transcription, lesson_id, media_url, callback_url)
+
+    # Return immediately to avoid Load Balancer HTTP Idle timeouts
+    return {"status": "PROCESSING", "lessonId": lesson_id}
 
 
 # Entry point for AWS Lambda via Mangum ASGI adapter

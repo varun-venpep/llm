@@ -6,19 +6,28 @@ FROM base AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-# Install dependencies based on the preferred package manager
+# deps stage
 COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* .npmrc* ./
 COPY prisma ./prisma
-RUN npm ci
+RUN npm ci --ignore-scripts
 
-# Rebuild the source code only when needed
+# builder stage
 FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Generate Prisma client
+# Generate Prisma client now that all files are present
 RUN npx prisma generate
+
+# Bake in Next.js public env vars at build time
+ARG NEXT_PUBLIC_ROOT_DOMAIN
+ARG NEXT_PUBLIC_APP_URL
+ARG NEXT_PUBLIC_S3_BUCKET
+
+ENV NEXT_PUBLIC_ROOT_DOMAIN=$NEXT_PUBLIC_ROOT_DOMAIN
+ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
+ENV NEXT_PUBLIC_S3_BUCKET=$NEXT_PUBLIC_S3_BUCKET
 
 # Next.js build
 RUN npm run build
@@ -52,4 +61,8 @@ ENV PORT 3000
 
 # server.js is created by next build from the standalone output
 # https://nextjs.org/docs/pages/api-reference/next-config-js/output
+
+# Add AWS Lambda Adapter
+COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:0.8.4 /lambda-adapter /opt/extensions/lambda-adapter
+
 CMD ["node", "server.js"]
