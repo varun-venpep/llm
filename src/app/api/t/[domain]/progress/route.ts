@@ -112,8 +112,6 @@ export async function POST(
             const course = await prisma.course.findUnique({
                 where: { id: courseId },
                 include: {
-                    certificateEnabled: true,
-                    certificateTemplateId: true,
                     modules: {
                         where: { isActive: true },
                         include: { lessons: { where: { isActive: true } } }

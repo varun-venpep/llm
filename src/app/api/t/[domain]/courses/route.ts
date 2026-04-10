@@ -22,14 +22,14 @@ export async function GET(
             if (session) {
                 const user = await prisma.user.findUnique({
                     where: { id: session.id },
-                    select: { 
-                        jobRoles: { 
+                    select: {
+                        jobRoles: {
                             where: { isActive: true },
-                            select: { id: true } 
+                            select: { id: true }
                         },
-                        teams: { 
+                        teams: {
                             where: { isActive: true },
-                            select: { id: true } 
+                            select: { id: true }
                         },
                         role: true
                     }
@@ -43,7 +43,7 @@ export async function GET(
                     select: { courseId: true }
                 });
                 const assignedMarketplaceIds = assignments.map(a => a.courseId);
-                
+
                 // Visible if (role matches OR role is null) AND (team matches OR team is null)
                 // AND (isMarketplace matches assignment OR isMarketplace is false)
                 visibilityFilter = {
@@ -60,7 +60,7 @@ export async function GET(
                 };
             } else {
                 // If not logged in, only show public courses
-                visibilityFilter = { 
+                visibilityFilter = {
                     exclusiveRoleId: null,
                     exclusiveTeamId: null
                 };
@@ -98,12 +98,12 @@ export async function POST(
     const { domain } = await params;
     try {
         const body = await req.json();
-        const { 
-            title, description, thumbnail, skillLevel, languages, captions, 
+        const {
+            title, description, thumbnail, skillLevel, languages, captions,
             isMarketplace, exclusiveRoleId, exclusiveTeamId,
             certificateEnabled, certificateTemplateId
         } = body;
-        
+
         const tenant = await prisma.tenant.findUnique({ where: { subdomain: domain } });
         if (!tenant) return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
 
@@ -111,19 +111,19 @@ export async function POST(
         const effectiveIsMarketplace = (exclusiveRoleId || exclusiveTeamId) ? false : (isMarketplace || false);
 
         const course = await prisma.course.create({
-            data: { 
-                title, 
-                description, 
-                thumbnail, 
-                skillLevel, 
-                languages, 
-                captions, 
-                isMarketplace: effectiveIsMarketplace, 
+            data: {
+                title,
+                description,
+                thumbnail,
+                skillLevel,
+                languages,
+                captions,
+                isMarketplace: effectiveIsMarketplace,
                 exclusiveRoleId: exclusiveRoleId || null,
                 exclusiveTeamId: exclusiveTeamId || null,
                 certificateEnabled: certificateEnabled || false,
                 certificateTemplateId: certificateTemplateId || null,
-                tenantId: tenant.id 
+                tenantId: tenant.id
             }
         });
 
@@ -154,8 +154,8 @@ export async function PUT(
     const { domain } = await params;
     try {
         const body = await req.json();
-        const { 
-            id, title, description, thumbnail, skillLevel, languages, captions, 
+        const {
+            id, title, description, thumbnail, skillLevel, languages, captions,
             isMarketplace, exclusiveRoleId, exclusiveTeamId,
             certificateEnabled, certificateTemplateId
         } = body;
