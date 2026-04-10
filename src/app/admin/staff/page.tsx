@@ -281,7 +281,7 @@ export default function AdminStaffPage() {
                                 {editingStaff ? 'Refine Admin Access' : 'Onboard Admin Master'}
                             </h2>
                             <p className="text-xs text-muted-foreground mt-1">
-                                {editingStaff ? `Adjust records for ${editingStaff.name}` : 'Grant system-level access to the InfiniteLMS core.'}
+                                {editingStaff ? `Adjust records for ${editingStaff.name}` : 'Grant system-level access to the Lebra.Ai core.'}
                             </p>
                         </div>
                         <form onSubmit={handleAddOrEditStaff} className="p-8 space-y-6">

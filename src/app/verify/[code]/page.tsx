@@ -107,7 +107,7 @@ export default async function VerifyCertificatePage({ params }: { params: Promis
                     <FileBadge2 size={32} className="text-muted-foreground opacity-30" />
                     <div>
                         <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-relaxed">
-                            This document is tamper-proof and mathematically verified by InfiniteLMS Global Database.
+                            This document is tamper-proof and mathematically verified by Lebra.Ai Global Database.
                         </p>
                     </div>
                     <Link href={`http://${certificate.course.tenant?.subdomain}.lvh.me:3000`} className="text-xs font-bold text-primary hover:underline">

@@ -1,15 +1,20 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Settings, Save, UploadCloud, Link as LinkIcon, AlertCircle, Bot } from 'lucide-react';
+import { Settings, Save, UploadCloud, Link as LinkIcon, AlertCircle, Bot, Palette, Globe, Upload, Plus, Trash2, LayoutDashboard } from 'lucide-react';
+import Image from 'next/image';
 
 export default function GlobalSettingsPage() {
     const [settings, setSettings] = useState<Record<string, string>>({
         maxUploadSize: '10',
-        supportEmail: 'support@infinitelms.com'
+        supportEmail: 'support@lebra.ai',
+        PLATFORM_NAME: 'Lebra.Ai',
+        PLATFORM_PRIMARY_COLOR: '#3b82f6'
     });
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState<string | null>(null);
+    const [activeTab, setActiveTab] = useState<'general' | 'branding'>('general');
+    const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({});
 
     useEffect(() => {
         fetch('/api/admin/settings')
@@ -48,6 +53,32 @@ export default function GlobalSettingsPage() {
         setSettings(prev => ({ ...prev, [key]: val }));
     };
 
+    const handleFileUpload = async (file: File, key: string) => {
+        setUploadProgress(prev => ({ ...prev, [key]: 0 }));
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const res = await fetch('/api/upload', {
+                method: 'POST',
+                body: formData
+            });
+            if (res.ok) {
+                const { url } = await res.json();
+                handleSave(key, url);
+                setSettings(prev => ({ ...prev, [key]: url }));
+            }
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setUploadProgress(prev => {
+                const next = { ...prev };
+                delete next[key];
+                return next;
+            });
+        }
+    };
+
     if (isLoading) {
         return (
             <div className="p-8 h-full flex items-center justify-center">
@@ -65,15 +96,30 @@ export default function GlobalSettingsPage() {
                 <div className="flex flex-col gap-2">
                     <h1 className="text-2xl font-black tracking-tight uppercase flex items-center gap-3">
                         <Settings className="w-8 h-8 text-indigo-500" />
-                        Global Platform Settings
+                        Platform Management
                     </h1>
                     <p className="text-muted-foreground text-sm font-medium">
-                        Configure system-wide limits, defaults, and integrations.
+                        Configure global limits, branding, and system-wide integrations.
                     </p>
                 </div>
             </div>
 
-            <div className="space-y-6">
+            {/* Tabs */}
+            <div className="flex gap-2 p-1.5 bg-secondary/30 rounded-2xl w-fit border border-border/50">
+                <button 
+                    onClick={() => setActiveTab('general')}
+                    className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeTab === 'general' ? 'bg-background text-foreground shadow-xl border border-border/50' : 'text-muted-foreground hover:text-foreground'}`}>
+                    <LayoutDashboard size={14} /> General
+                </button>
+                <button 
+                    onClick={() => setActiveTab('branding')}
+                    className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeTab === 'branding' ? 'bg-background text-foreground shadow-xl border border-border/50' : 'text-muted-foreground hover:text-foreground'}`}>
+                    <Palette size={14} /> Branding
+                </button>
+            </div>
+
+            {activeTab === 'general' ? (
+                <div className="space-y-6 animate-in slide-in-from-bottom-2 duration-500">
                 {/* Max Upload Size */}
                 <div className="glassmorphism p-6 rounded-2xl border border-border/50 flex flex-col md:flex-row gap-6 md:items-center justify-between transition-all hover:border-indigo-500/50">
                     <div>
@@ -193,6 +239,123 @@ export default function GlobalSettingsPage() {
                     <p className="text-sm font-medium">Changes made here apply instantly across all tenant workspaces. Make sure not to set limits that break existing workflows.</p>
                 </div>
             </div>
+            ) : (
+                <div className="space-y-8 animate-in slide-in-from-bottom-2 duration-500">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        {/* Identity & Color */}
+                        <div className="glassmorphism p-8 rounded-3xl border border-border/50 space-y-8">
+                            <div className="space-y-4">
+                                <h3 className="text-xs font-black uppercase tracking-[0.2em] text-indigo-500 flex items-center gap-2">
+                                    <Globe size={14} /> Platform Identity
+                                </h3>
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Universal Site Name</label>
+                                    <div className="flex gap-2">
+                                        <input 
+                                            type="text" 
+                                            value={settings.PLATFORM_NAME || ''} 
+                                            onChange={e => handleChange('PLATFORM_NAME', e.target.value)}
+                                            className="flex-1 bg-secondary/50 border border-border/50 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 font-bold" 
+                                            placeholder="e.g. Lebra.Ai" 
+                                        />
+                                        <button 
+                                            onClick={() => handleSave('PLATFORM_NAME', settings.PLATFORM_NAME)}
+                                            disabled={isSaving === 'PLATFORM_NAME'}
+                                            className="px-4 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-500 transition-all shadow-lg shadow-indigo-500/20 disabled:opacity-50"
+                                        >
+                                            <Save size={16} />
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="space-y-4">
+                                <h3 className="text-xs font-black uppercase tracking-[0.2em] text-indigo-500 flex items-center gap-2">
+                                    <Palette size={14} /> Global Theme Color
+                                </h3>
+                                <div className="flex items-center gap-6 p-4 rounded-2xl bg-secondary/20 border border-border/30">
+                                    <div className="relative group">
+                                        <input 
+                                            type="color" 
+                                            value={settings.PLATFORM_PRIMARY_COLOR || '#3b82f6'} 
+                                            onChange={e => {
+                                                handleChange('PLATFORM_PRIMARY_COLOR', e.target.value);
+                                                handleSave('PLATFORM_PRIMARY_COLOR', e.target.value);
+                                            }}
+                                            className="w-16 h-16 rounded-2xl cursor-pointer border-4 border-background bg-transparent shadow-xl transition-transform active:scale-95" 
+                                        />
+                                        <div className="absolute inset-0 rounded-2xl ring-2 ring-indigo-500/20 pointer-events-none" />
+                                    </div>
+                                    <div>
+                                        <p className="text-[9px] text-muted-foreground uppercase tracking-widest font-black mb-1">Brand Token</p>
+                                        <p className="font-mono font-black text-xl text-foreground tracking-tighter">{settings.PLATFORM_PRIMARY_COLOR?.toUpperCase() || '#3B82F6'}</p>
+                                    </div>
+                                </div>
+                                <div className="flex gap-2.5 flex-wrap">
+                                    {['#3b82f6', '#8b5cf6', '#ef4444', '#10b981', '#f59e0b', '#ec4899', '#14b8a6', '#000000'].map(c => (
+                                        <button 
+                                            key={c} 
+                                            className={`w-9 h-9 rounded-xl border-2 transition-all hover:scale-110 shadow-sm ${settings.PLATFORM_PRIMARY_COLOR === c ? 'scale-110 shadow-lg shadow-black/20' : 'opacity-80 hover:opacity-100'}`}
+                                            style={{ backgroundColor: c, borderColor: settings.PLATFORM_PRIMARY_COLOR === c ? 'white' : 'transparent' }}
+                                            onClick={() => {
+                                                handleChange('PLATFORM_PRIMARY_COLOR', c);
+                                                handleSave('PLATFORM_PRIMARY_COLOR', c);
+                                            }} 
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Brand Assets */}
+                        <div className="glassmorphism p-8 rounded-3xl border border-border/50 space-y-6">
+                            <h3 className="text-xs font-black uppercase tracking-[0.2em] text-indigo-500 flex items-center gap-2">
+                                <UploadCloud size={14} /> Master Brand Assets
+                            </h3>
+                            
+                            <div className="grid grid-cols-2 gap-4">
+                                {[
+                                    { id: 'PLATFORM_LOGO_PRIMARY', label: 'Primary Logo', sub: 'Standard Wide' },
+                                    { id: 'PLATFORM_LOGO_LIGHT', label: 'Light Logo', sub: 'For Dark Backgrounds' },
+                                    { id: 'PLATFORM_LOGO_DARK', label: 'Dark Logo', sub: 'For Light Backgrounds' },
+                                    { id: 'PLATFORM_FAVICON', label: 'Platform Favicon', sub: 'Browser Tab Icon' },
+                                ].map((asset) => (
+                                    <div key={asset.id} className="space-y-3 p-4 bg-secondary/20 rounded-2xl border border-border/30 group">
+                                        <div className="px-1">
+                                            <p className="text-[9px] font-black uppercase tracking-widest text-foreground">{asset.label}</p>
+                                            <p className="text-[8px] text-muted-foreground font-medium">{asset.sub}</p>
+                                        </div>
+                                        
+                                        <div className="relative aspect-[3/1] rounded-xl border border-dashed border-border/60 overflow-hidden flex items-center justify-center bg-background/50 group-hover:border-indigo-500/50 transition-colors">
+                                            {settings[asset.id] ? (
+                                                <>
+                                                    <img src={settings[asset.id]} alt={asset.label} className="max-w-[80%] max-h-[80%] object-contain p-2" />
+                                                    <label className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center cursor-pointer transition-opacity">
+                                                        <input type="file" className="hidden" accept="image/*" onChange={(e) => {
+                                                            const file = e.target.files?.[0];
+                                                            if (file) handleFileUpload(file, asset.id);
+                                                        }} />
+                                                        <Upload size={20} className="text-white" />
+                                                    </label>
+                                                </>
+                                            ) : (
+                                                <label className="inset-0 absolute flex flex-col items-center justify-center gap-1 cursor-pointer hover:bg-indigo-500/5 transition-all text-muted-foreground hover:text-indigo-400">
+                                                    <input type="file" className="hidden" accept="image/*" onChange={(e) => {
+                                                        const file = e.target.files?.[0];
+                                                        if (file) handleFileUpload(file, asset.id);
+                                                    }} />
+                                                    <Plus size={16} />
+                                                    <span className="text-[8px] font-black uppercase">Upload</span>
+                                                </label>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

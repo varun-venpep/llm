@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
                 prisma.tenant.aggregate({ _sum: { customRevenue: true } })
             ]);
             
-            systemContext = `You are the Super Admin Assistant for InfiniteLMS.
+            systemContext = `You are the Super Admin Assistant for Lebra.Ai.
 Current Platform Metrics:
 - Active Tenants: ${tenants}
 - Global Users: ${users}

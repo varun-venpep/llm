@@ -1,18 +1,37 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { BookOpen, Users, Globe, ChevronRight, CheckCircle } from 'lucide-react';
 
 export default function LandingPage() {
+  const [branding, setBranding] = useState({
+    name: 'Lebra.Ai',
+    logoPrimary: '/lebra_ai_logo.png',
+    logoLight: '/lebra_ai_logo.png',
+    logoDark: '/lebra_ai_logo.png',
+    favicon: '/favicon.ico',
+    primaryColor: '#3b82f6',
+  });
+
+  useEffect(() => {
+    fetch('/api/branding')
+      .then(res => res.json())
+      .then(data => setBranding(data))
+      .catch(() => {});
+  }, []);
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground selection:bg-purple-500/30">
       {/* Header */}
       <header className="fixed top-0 z-50 w-full glassmorphism px-6 py-4 flex justify-between items-center">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-            <BookOpen className="w-5 h-5 text-white" />
-          </div>
-          <span className="text-xl font-bold tracking-tight uppercase">InfiniteLMS</span>
+          <Image 
+            src={branding.logoPrimary} 
+            alt={`${branding.name} Logo`} 
+            width={120} 
+            height={40} 
+            className="h-8 w-auto object-contain"
+          />
         </div>
         <nav className="hidden md:flex gap-8 text-sm font-medium text-muted-foreground">
           <a href="#features" className="hover:text-primary transition-colors">Features</a>
@@ -68,7 +87,7 @@ export default function LandingPage() {
                 ))}
               </div>
               <p className="text-sm text-muted-foreground">
-                <span className="text-primary font-bold italic">500+</span> teams growing with Infinite
+                <span className="text-primary font-bold italic">500+</span> teams growing with {branding.name.split('.')[0]}
               </p>
             </div>
           </div>
@@ -78,7 +97,7 @@ export default function LandingPage() {
             <div className="relative glassmorphism rounded-2xl overflow-hidden shadow-2xl">
               <Image
                 src="/lms_platform_hero_1773035558238.png"
-                alt="InfiniteLMS Dashboard Preview"
+                alt="Lebra.Ai Dashboard Preview"
                 width={800}
                 height={600}
                 className="w-full h-auto object-cover"
@@ -148,12 +167,15 @@ export default function LandingPage() {
       <footer className="py-12 border-t border-border mt-auto">
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:row-center justify-between gap-8 items-center text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-md bg-muted flex items-center justify-center">
-              <BookOpen className="w-4 h-4" />
-            </div>
-            <span className="font-bold text-foreground">InfiniteLMS</span>
+            <Image 
+              src={branding.logoPrimary} 
+              alt={`${branding.name} Logo`} 
+              width={100} 
+              height={32} 
+              className="h-6 w-auto object-contain brightness-0 invert"
+            />
           </div>
-          <p>© 2026 InfiniteLMS. All rights reserved.</p>
+          <p>© 2026 {branding.name}. All rights reserved.</p>
           <div className="flex gap-8">
             <a href="#" className="hover:text-primary">Twitter</a>
             <a href="#" className="hover:text-primary">GitHub</a>

@@ -2745,7 +2745,7 @@ export default function ClientAdminDashboard() {
                                     </div>
                                     <div className="bg-background/80 p-4 rounded-xl border border-blue-500/20">
                                         <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Target Value</p>
-                                        <p className="font-mono font-bold text-sm text-blue-400">cname.infinitelms.com</p>
+                                        <p className="font-mono font-bold text-sm text-blue-400">cname.lebra.ai</p>
                                     </div>
                                 </div>
                             </div>

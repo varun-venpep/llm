@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import {
     BarChart3,
@@ -25,6 +26,17 @@ export default function AdminLayout({
 }) {
     const pathname = usePathname();
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [branding, setBranding] = useState({
+        name: 'Lebra.Ai',
+        logoPrimary: '/lebra_ai_logo.png'
+    });
+
+    useEffect(() => {
+        fetch('/api/branding')
+            .then(res => res.json())
+            .then(data => setBranding(data))
+            .catch(() => {});
+    }, []);
 
     // If we are on the login page (global or tenant), don't show the dashboard layout
     if (pathname.endsWith('/login')) {
@@ -52,10 +64,13 @@ export default function AdminLayout({
                 <div className="h-full flex flex-col">
                     <div className="p-6 border-b border-white/5 flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center font-black text-white">
-                                I
-                            </div>
-                            <span className="font-black text-lg tracking-tight uppercase">InfiniteLMS</span>
+                            <Image 
+                                src={branding.logoPrimary} 
+                                alt={`${branding.name} Logo`} 
+                                width={120} 
+                                height={40} 
+                                className="h-8 w-auto object-contain"
+                            />
                         </div>
                         <button onClick={() => setSidebarOpen(false)} className="lg:hidden text-muted-foreground hover:text-foreground">
                             <X className="w-5 h-5" />
