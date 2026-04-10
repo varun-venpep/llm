@@ -45,12 +45,12 @@ export default function AdminLayout({
 
     const navigations = [
         { name: 'Dashboard', href: '/admin', icon: BarChart3 },
-        { name: 'Reports & Analytics', href: '/admin/reports', icon: BarChart3 },
         { name: 'Tenants', href: '/admin/tenants', icon: Building2 },
         { name: 'Global Marketplace', href: '/admin/global-marketplace', icon: Globe },
+        { name: 'Certificate Library', href: '/admin/certificates', icon: Award },
         { name: 'Admin Master', href: '/admin/staff', icon: ShieldAlert },
         { name: 'Global Users', href: '/admin/users', icon: Users },
-        { name: 'Certificate Library', href: '/admin/certificates', icon: Award },
+        { name: 'Reports & Analytics', href: '/admin/reports', icon: BarChart3 },
         { name: 'Billing & Plans', href: '/admin/billing', icon: CreditCard },
         { name: 'Platform Settings', href: '/admin/settings', icon: Settings },
     ];

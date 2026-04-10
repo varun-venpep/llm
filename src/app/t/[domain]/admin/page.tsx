@@ -1329,18 +1329,18 @@ export default function ClientAdminDashboard() {
                 <nav className="space-y-1 flex-1">
                     {([
                         ['overview', 'Overview', LayoutDashboard],
-                        ['courses', 'Courses', BookOpen],
                         ['learners', 'Learners', Users],
                         ['roles', 'Job Roles', Shield],
                         ['teams', 'Teams', UsersRound],
+                        ['courses', 'Courses', BookOpen],
+                        ['global-marketplace', 'Global Marketplace', Globe],
+                        ['certificates', 'Certificates', Award],
+                        ['reports', 'Reports', BarChart3],
+                        ['audit', 'Audit Monitor', Shield],
                         ['announcements', 'Announcements', Megaphone],
                         ['branding', 'Branding', Palette],
                         ['domains', 'Domains', Globe],
                         ['settings', 'Settings', Settings],
-                        ['certificates', 'Certificates', Award],
-                        ['reports', 'Reports', BarChart3],
-                        ['audit', 'Audit Monitor', Shield],
-                        ...(globalMarketplaceEnabled ? [['global-marketplace', 'Global Marketplace', Globe]] : []),
                     ] as [Tab, string, any][]).map(([tab, label, Icon]) => (
                         <button key={tab} onClick={() => { setActiveTab(tab); setSelectedCourse(null); }}
                             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === tab ? 'bg-primary/10 text-primary border border-primary/20' : 'text-muted-foreground hover:bg-secondary/50 hover:text-foreground'}`}>
