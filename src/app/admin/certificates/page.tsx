@@ -17,6 +17,7 @@ export default function SuperAdminCertificates() {
     const [uploading, setUploading] = useState(false);
     const [newTemplate, setNewTemplate] = useState({ name: '', image: '' });
     const [search, setSearch] = useState('');
+    const [deletingId, setDeletingId] = useState<string | null>(null);
 
     useEffect(() => {
         fetchTemplates();
@@ -79,7 +80,19 @@ export default function SuperAdminCertificates() {
         }
     };
 
-    const filteredTemplates = templates.filter(t => 
+    const deleteTemplate = async (id: string) => {
+        try {
+            const res = await fetch(`/api/admin/certificates?id=${id}`, { method: 'DELETE' });
+            if (res.ok) {
+                fetchTemplates();
+                setDeletingId(null);
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    };
+
+    const filteredTemplates = templates.filter(t =>
         t.name.toLowerCase().includes(search.toLowerCase())
     );
 
@@ -102,8 +115,8 @@ export default function SuperAdminCertificates() {
 
             <div className="relative max-w-md">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <input 
-                    type="text" 
+                <input
+                    type="text"
                     placeholder="Search templates..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
@@ -139,8 +152,15 @@ export default function SuperAdminCertificates() {
                                     <h3 className="font-bold text-lg tracking-tight uppercase">{template.name}</h3>
                                     <p className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Added on {new Date(template.createdAt).toLocaleDateString()}</p>
                                 </div>
-                                <button className="p-2.5 rounded-xl hover:bg-red-500/10 text-muted-foreground hover:text-red-500 transition-all opacity-0 group-hover:opacity-100">
-                                    <Trash2 className="w-5 h-5" />
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        if (deletingId === template.id) { deleteTemplate(template.id); }
+                                        else { setDeletingId(template.id); setTimeout(() => setDeletingId(null), 3000); }
+                                    }}
+                                    className={`p-2.5 rounded-xl transition-all flex items-center gap-2 ${deletingId === template.id ? 'bg-red-500 text-white px-4 scale-110 shadow-lg' : 'hover:bg-red-500/10 text-muted-foreground hover:text-red-500 opacity-0 group-hover:opacity-100'}`}
+                                >
+                                    {deletingId === template.id ? <span className="text-[10px] font-black uppercase tracking-widest">Confirm?</span> : <Trash2 className="w-5 h-5" />}
                                 </button>
                             </div>
                         </div>
@@ -160,7 +180,7 @@ export default function SuperAdminCertificates() {
                         <div className="space-y-6">
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Template Name</label>
-                                <input 
+                                <input
                                     type="text"
                                     placeholder="e.g. Modern Achievement"
                                     value={newTemplate.name}
@@ -177,7 +197,10 @@ export default function SuperAdminCertificates() {
                                     ) : (
                                         <>
                                             {uploading ? <Loader2 className="w-8 h-8 animate-spin text-indigo-500" /> : <Upload className="w-8 h-8 text-muted-foreground group-hover:text-indigo-400 transition-colors" />}
-                                            <p className="text-xs font-bold text-muted-foreground mt-3 group-hover:text-indigo-300">Click to upload template (A4 Ratio)</p>
+                                            <div className="text-center mt-3 group-hover:text-indigo-300 transition-colors">
+                                                <p className="text-xs font-bold text-muted-foreground">Click to upload template</p>
+                                                <p className="text-[10px] font-black uppercase text-indigo-500/50 mt-1 tracking-tighter">Recommended: 2480 x 3508 px (A4 Landscape)</p>
+                                            </div>
                                             <p className="text-[9px] text-muted-foreground/60 mt-1 uppercase tracking-tighter">JPG, PNG strictly landscape preferred</p>
                                         </>
                                     )}
@@ -187,13 +210,13 @@ export default function SuperAdminCertificates() {
                         </div>
 
                         <div className="flex gap-4">
-                            <button 
+                            <button
                                 onClick={() => setShowUpload(false)}
                                 className="flex-1 py-4 bg-secondary text-muted-foreground font-black uppercase tracking-widest text-xs rounded-2xl hover:bg-secondary/80 transition-all"
                             >
                                 Cancel
                             </button>
-                            <button 
+                            <button
                                 onClick={createTemplate}
                                 disabled={!newTemplate.name || !newTemplate.image || uploading}
                                 className="flex-1 py-4 bg-indigo-600 text-white font-black uppercase tracking-widest text-xs rounded-2xl hover:bg-indigo-500 disabled:opacity-50 transition-all shadow-xl shadow-indigo-500/20"

@@ -18,6 +18,8 @@ interface Tenant {
     aiCredits?: number;
     customRevenue?: number;
     customRevenueCurrency?: string;
+    globalMarketplaceEnabled?: boolean;
+    courseCredits?: number;
 }
 
 const getCurrencySymbol = (currencyCode?: string) => {
@@ -33,19 +35,21 @@ export default function TenantsPage() {
     const [tenants, setTenants] = useState<Tenant[]>([]);
     const [loading, setLoading] = useState(true);
     const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
-    
+
     // Edit Modal State
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editingTenant, setEditingTenant] = useState<Tenant | null>(null);
-    const [editForm, setEditForm] = useState({ 
-        name: '', 
-        subdomain: '', 
+    const [editForm, setEditForm] = useState({
+        name: '',
+        subdomain: '',
         isActive: true,
         adminEmail: '',
         newPassword: '',
         aiCredits: 0,
         customRevenue: 0,
-        customRevenueCurrency: 'USD'
+        customRevenueCurrency: 'USD',
+        globalMarketplaceEnabled: false,
+        courseCredits: 0
     });
     const [isUpdating, setIsUpdating] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
@@ -58,7 +62,7 @@ export default function TenantsPage() {
 
     useEffect(() => {
         fetchTenants();
-        
+
         // Close dropdown when clicking outside
         const handleClickOutside = () => setActiveDropdown(null);
         window.addEventListener('click', handleClickOutside);
@@ -79,15 +83,17 @@ export default function TenantsPage() {
 
     const handleEditClick = (tenant: Tenant) => {
         setEditingTenant(tenant);
-        setEditForm({ 
-            name: tenant.name, 
-            subdomain: tenant.subdomain, 
+        setEditForm({
+            name: tenant.name,
+            subdomain: tenant.subdomain,
             isActive: tenant.isActive,
             adminEmail: tenant.adminEmail || '',
             newPassword: '',
             aiCredits: tenant.aiCredits || 0,
             customRevenue: tenant.customRevenue || 0,
-            customRevenueCurrency: tenant.customRevenueCurrency || 'USD'
+            customRevenueCurrency: tenant.customRevenueCurrency || 'USD',
+            globalMarketplaceEnabled: tenant.globalMarketplaceEnabled || false,
+            courseCredits: tenant.courseCredits || 0
         });
         setIsEditModalOpen(true);
         setActiveDropdown(null);
@@ -233,23 +239,23 @@ export default function TenantsPage() {
                                     </td>
                                     <td className="px-6 py-4 text-sm text-muted-foreground font-mono">{new Date(tenant.createdAt).toLocaleDateString()}</td>
                                     <td className="px-6 py-4 text-right relative px-10">
-                                        <button 
+                                        <button
                                             onClick={(e) => { e.stopPropagation(); setActiveDropdown(activeDropdown === tenant.id ? null : tenant.id); }}
                                             className="p-2 rounded-lg hover:bg-background border border-transparent hover:border-border transition-all text-muted-foreground hover:text-foreground"
                                         >
                                             <MoreVertical className="w-4 h-4" />
                                         </button>
-                                        
+
                                         {activeDropdown === tenant.id && (
                                             <div className="absolute right-12 top-1/2 -translate-y-1/2 z-[100] bg-background border border-border rounded-xl shadow-2xl p-1.5 flex flex-col gap-1 min-w-[120px] animate-in fade-in zoom-in-95 duration-100">
-                                                <button 
+                                                <button
                                                     onClick={() => handleEditClick(tenant)}
                                                     className="flex items-center gap-2 px-3 py-2 text-xs font-bold hover:bg-secondary rounded-lg transition-colors text-blue-400"
                                                 >
                                                     <Edit2 className="w-3.5 h-3.5" /> Edit
                                                 </button>
                                                 {tenant.subdomain !== 'admin-system' && (
-                                                    <button 
+                                                    <button
                                                         onClick={() => handleDeleteClick(tenant)}
                                                         className="flex items-center gap-2 px-3 py-2 text-xs font-bold hover:bg-red-500/10 text-red-400 rounded-lg transition-colors"
                                                     >
@@ -274,16 +280,16 @@ export default function TenantsPage() {
                             <h3 className="text-xl font-black uppercase tracking-tight flex items-center gap-2"><Edit2 className="w-5 h-5 text-blue-400" /> Edit Workspace</h3>
                             <button onClick={() => setIsEditModalOpen(false)} className="text-muted-foreground hover:text-foreground text-2xl">&times;</button>
                         </div>
-                        
+
                         <form onSubmit={handleUpdate} className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-6 md:col-span-2">
                                 <div className="space-y-1.5">
                                     <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Organization Name</label>
-                                    <input 
-                                        type="text" 
+                                    <input
+                                        type="text"
                                         className="w-full bg-secondary/50 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30"
                                         value={editForm.name}
-                                        onChange={e => setEditForm({...editForm, name: e.target.value})}
+                                        onChange={e => setEditForm({ ...editForm, name: e.target.value })}
                                         required
                                     />
                                 </div>
@@ -292,11 +298,11 @@ export default function TenantsPage() {
                             <div className="space-y-1.5">
                                 <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Subdomain</label>
                                 <div className="relative group">
-                                    <input 
-                                        type="text" 
+                                    <input
+                                        type="text"
                                         className="w-full bg-secondary/50 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 font-mono disabled:opacity-50"
                                         value={editForm.subdomain}
-                                        onChange={e => setEditForm({...editForm, subdomain: e.target.value})}
+                                        onChange={e => setEditForm({ ...editForm, subdomain: e.target.value })}
                                         disabled={editingTenant?.subdomain === 'admin-system'}
                                         required
                                     />
@@ -304,13 +310,12 @@ export default function TenantsPage() {
                                 {editForm.subdomain && (
                                     <div className="flex items-center justify-between px-1">
                                         <div className="text-[10px] text-blue-400 font-mono flex items-center gap-1.5 overflow-hidden">
-                                            <span className="truncate">{process.env.NEXT_PUBLIC_ROOT_DOMAIN?.includes('localhost') || process.env.NEXT_PUBLIC_ROOT_DOMAIN?.includes('lvh.me') ? 'http' : 'https'}://{editForm.subdomain}.{process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'lvh.me:3000'}/login</span>
+                                            <span className="truncate">http://{editForm.subdomain}.lvh.me:3000/login</span>
                                         </div>
-                                        <button 
+                                        <button
                                             type="button"
                                             onClick={() => {
-                                                const isLocal = process.env.NEXT_PUBLIC_ROOT_DOMAIN?.includes('localhost') || process.env.NEXT_PUBLIC_ROOT_DOMAIN?.includes('lvh.me');
-                                                const url = `${isLocal ? 'http' : 'https'}://${editForm.subdomain}.${process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'lvh.me:3000'}/login`;
+                                                const url = `http://${editForm.subdomain}.lvh.me:3000/login`;
                                                 if (navigator.clipboard) {
                                                     navigator.clipboard.writeText(url);
                                                 } else {
@@ -339,11 +344,11 @@ export default function TenantsPage() {
 
                             <div className="space-y-1.5">
                                 <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Admin Email Address</label>
-                                <input 
-                                    type="email" 
+                                <input
+                                    type="email"
                                     className="w-full bg-secondary/50 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30"
                                     value={editForm.adminEmail}
-                                    onChange={e => setEditForm({...editForm, adminEmail: e.target.value})}
+                                    onChange={e => setEditForm({ ...editForm, adminEmail: e.target.value })}
                                     required
                                     placeholder="admin@workspace.com"
                                 />
@@ -352,14 +357,14 @@ export default function TenantsPage() {
                             <div className="space-y-1.5 md:col-span-1">
                                 <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Change Admin Password</label>
                                 <div className="relative">
-                                    <input 
-                                        type={showPassword ? "text" : "password"} 
+                                    <input
+                                        type={showPassword ? "text" : "password"}
                                         className="w-full bg-secondary/50 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30"
                                         value={editForm.newPassword}
-                                        onChange={e => setEditForm({...editForm, newPassword: e.target.value})}
+                                        onChange={e => setEditForm({ ...editForm, newPassword: e.target.value })}
                                         placeholder="Enter new password..."
                                     />
-                                    <button 
+                                    <button
                                         type="button"
                                         onClick={() => setShowPassword(!showPassword)}
                                         className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1 transition-colors"
@@ -372,11 +377,11 @@ export default function TenantsPage() {
 
                             <div className="space-y-1.5 md:col-span-1">
                                 <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">AI Transcription Credits</label>
-                                <input 
-                                    type="number" 
+                                <input
+                                    type="number"
                                     className="w-full bg-secondary/50 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30"
                                     value={editForm.aiCredits || ''}
-                                    onChange={e => setEditForm({...editForm, aiCredits: parseInt(e.target.value) || 0})}
+                                    onChange={e => setEditForm({ ...editForm, aiCredits: parseInt(e.target.value) || 0 })}
                                     placeholder="0"
                                 />
                                 <p className="text-[9px] text-muted-foreground italic px-1 pt-1">Total whisper-service credits for this tenant.</p>
@@ -388,18 +393,18 @@ export default function TenantsPage() {
                                     <select
                                         className="bg-transparent pl-4 pr-2 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 rounded-l-xl font-medium border-r border-border"
                                         value={editForm.customRevenueCurrency}
-                                        onChange={e => setEditForm({...editForm, customRevenueCurrency: e.target.value})}
+                                        onChange={e => setEditForm({ ...editForm, customRevenueCurrency: e.target.value })}
                                     >
                                         <option value="USD">USD ($)</option>
                                         <option value="EUR">EUR (€)</option>
                                         <option value="GBP">GBP (£)</option>
                                         <option value="INR">INR (₹)</option>
                                     </select>
-                                    <input 
-                                        type="number" 
+                                    <input
+                                        type="number"
                                         className="w-full bg-transparent px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 rounded-r-xl"
                                         value={editForm.customRevenue || ''}
-                                        onChange={e => setEditForm({...editForm, customRevenue: parseInt(e.target.value) || 0})}
+                                        onChange={e => setEditForm({ ...editForm, customRevenue: parseInt(e.target.value) || 0 })}
                                         placeholder="0"
                                     />
                                 </div>
@@ -407,8 +412,8 @@ export default function TenantsPage() {
                             </div>
 
                             <div className="flex flex-col gap-3 justify-end pb-1.5">
-                                <a 
-                                    href={`${process.env.NEXT_PUBLIC_ROOT_DOMAIN?.includes('localhost') || process.env.NEXT_PUBLIC_ROOT_DOMAIN?.includes('lvh.me') ? 'http' : 'https'}://${editForm.subdomain}.${process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'lvh.me:3000'}/login`}
+                                <a
+                                    href={`http://${editForm.subdomain}.lvh.me:3000/login`}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="flex items-center justify-center gap-2 px-4 py-2.5 text-[11px] font-bold bg-secondary hover:bg-secondary/70 border border-border rounded-xl transition-all uppercase tracking-wider group"
@@ -418,7 +423,39 @@ export default function TenantsPage() {
                             </div>
 
                             <div className="md:col-span-2 space-y-4 pt-2">
-                                <div className="flex items-center gap-3 p-4 bg-secondary/20 rounded-2xl border border-border/50 group cursor-pointer hover:bg-secondary/30 transition-all" onClick={() => editingTenant?.subdomain !== 'admin-system' && setEditForm({...editForm, isActive: !editForm.isActive})}>
+                                {/* Global Marketplace Toggle */}
+                                <div className="md:col-span-2 space-y-3 pt-2 border-t border-border/50">
+                                    <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Global Marketplace</p>
+                                    <div
+                                        className={`flex items-center justify-between p-4 rounded-2xl border cursor-pointer transition-all ${editForm.globalMarketplaceEnabled ? 'bg-indigo-500/10 border-indigo-500/30' : 'bg-secondary/20 border-border/50'}`}
+                                        onClick={() => editingTenant?.subdomain !== 'admin-system' && setEditForm({ ...editForm, globalMarketplaceEnabled: !editForm.globalMarketplaceEnabled })}
+                                    >
+                                        <div>
+                                            <p className="text-sm font-bold">Enable Global Course Marketplace</p>
+                                            <p className="text-[10px] text-muted-foreground">Allow this workspace to discover and claim global courses</p>
+                                        </div>
+                                        <div className={`w-10 h-6 rounded-full p-1 flex items-center transition-all ${editForm.globalMarketplaceEnabled ? 'bg-indigo-500' : 'bg-secondary'}`}>
+                                            <div className={`w-4 h-4 rounded-full bg-white shadow transition-all ${editForm.globalMarketplaceEnabled ? 'translate-x-4' : 'translate-x-0'}`} />
+                                        </div>
+                                    </div>
+                                    {editForm.globalMarketplaceEnabled && (
+                                        <div className="space-y-1.5">
+                                            <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Course Credits</label>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                className="w-full bg-secondary/50 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                                                value={editForm.courseCredits || ''}
+                                                onChange={e => setEditForm({ ...editForm, courseCredits: parseInt(e.target.value) || 0 })}
+                                                placeholder="0"
+                                            />
+                                            <p className="text-[9px] text-muted-foreground italic px-1">Each claim costs 1 credit. Set to 0 to restrict access temporarily.</p>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Workspace Status Toggle */}
+                                <div className="flex items-center gap-3 p-4 bg-secondary/20 rounded-2xl border border-border/50 group cursor-pointer hover:bg-secondary/30 transition-all md:col-span-2" onClick={() => editingTenant?.subdomain !== 'admin-system' && setEditForm({ ...editForm, isActive: !editForm.isActive })}>
                                     <div className={`w-10 h-6 rounded-full p-1 transition-all flex items-center ${editForm.isActive ? 'bg-emerald-500/20 border-emerald-500/40' : 'bg-red-500/20 border-red-500/40'} border`}>
                                         <div className={`w-4 h-4 rounded-full shadow-sm transition-all ${editForm.isActive ? 'bg-emerald-500 translate-x-4' : 'bg-red-500 translate-x-0'}`} />
                                     </div>
@@ -426,17 +463,17 @@ export default function TenantsPage() {
                                         <span className="text-sm font-bold">Workspace Status</span>
                                         <span className="text-[10px] text-muted-foreground uppercase font-black">{editForm.isActive ? 'Active & Online' : 'Inactive & Offline'}</span>
                                     </div>
-                                    <input 
-                                        type="checkbox" 
+                                    <input
+                                        type="checkbox"
                                         className="hidden"
                                         checked={editForm.isActive}
-                                        onChange={e => setEditForm({...editForm, isActive: e.target.checked})}
+                                        onChange={e => setEditForm({ ...editForm, isActive: e.target.checked })}
                                         disabled={editingTenant?.subdomain === 'admin-system'}
                                     />
                                 </div>
-                                
-                                <button 
-                                    type="submit" 
+
+                                <button
+                                    type="submit"
                                     disabled={isUpdating}
                                     className="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white font-black uppercase tracking-widest text-xs rounded-xl transition-all shadow-xl shadow-blue-500/20 disabled:opacity-50 flex items-center justify-center gap-2 group"
                                 >
@@ -458,19 +495,19 @@ export default function TenantsPage() {
                         <div>
                             <h3 className="text-xl font-black uppercase tracking-tight text-red-500">Delete Workspace?</h3>
                             <p className="text-sm text-muted-foreground mt-2">
-                                You are about to permanently delete <span className="font-bold text-foreground font-mono">{deletingTenant?.name}</span>. 
+                                You are about to permanently delete <span className="font-bold text-foreground font-mono">{deletingTenant?.name}</span>.
                                 This action cannot be undone and will erase all data.
                             </p>
                         </div>
                         <div className="flex flex-col gap-2">
-                            <button 
+                            <button
                                 onClick={handleDelete}
                                 disabled={isDeleting}
                                 className="w-full py-3 bg-red-600 hover:bg-red-500 text-white font-black uppercase tracking-widest text-xs rounded-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                             >
                                 {isDeleting ? <><Loader2 className="w-4 h-4 animate-spin" /> Deleting...</> : 'Confirm Deletion'}
                             </button>
-                            <button 
+                            <button
                                 onClick={() => setIsDeleteModalOpen(false)}
                                 className="w-full py-3 bg-secondary text-foreground font-black uppercase tracking-widest text-xs rounded-xl hover:bg-secondary/70 transition-all border border-border"
                             >

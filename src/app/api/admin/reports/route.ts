@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
         // 1. High-Level KPIs
         const totalTenantsFilter = hasDateFilter ? { createdAt: dateFilter, ...tenantFilter } : tenantFilter;
         const totalUsersFilter = hasDateFilter ? { createdAt: dateFilter, ...tenantRelFilter } : tenantRelFilter;
-        
+
         const [totalTenants, activeTenants, totalUsers, totalRevenueAgg, storageAgg, aiCreditsAgg, totalCourses] = await Promise.all([
             prisma.tenant.count({ where: totalTenantsFilter }),
             prisma.tenant.count({ where: { ...totalTenantsFilter, isActive: true } }),
@@ -62,7 +62,7 @@ export async function GET(req: NextRequest) {
             where: totalUsersFilter,
             _count: { id: true }
         });
-        const usersByRole = usersByRoleRaw.map((r: any) => ({
+        const usersByRole = usersByRoleRaw.map(r => ({
             name: r.role,
             value: r._count.id
         }));
@@ -74,13 +74,13 @@ export async function GET(req: NextRequest) {
             select: { createdAt: true },
             orderBy: { createdAt: 'asc' }
         });
-        
+
         const monthlyJoins: Record<string, number> = {};
-        usersForTrend.forEach((u: any) => {
+        usersForTrend.forEach(u => {
             const m = u.createdAt.toLocaleString('default', { month: 'short', year: '2-digit' });
             monthlyJoins[m] = (monthlyJoins[m] || 0) + 1;
         });
-        
+
         const userRegistrationTrend = Object.entries(monthlyJoins).map(([date, count]) => ({
             date,
             users: count
@@ -89,7 +89,7 @@ export async function GET(req: NextRequest) {
         // 5. Tenant Leaderboards (Only run if no specific tenant is selected)
         let topTenantsByRevenue: any[] = [];
         let topTenantsByUsers: any[] = [];
-        
+
         if (!tenantIdParam) {
             const tenantsRaw = await prisma.tenant.findMany({
                 where: totalTenantsFilter,
@@ -103,21 +103,21 @@ export async function GET(req: NextRequest) {
                 orderBy: { customRevenue: 'desc' },
                 take: 5
             });
-            
-            topTenantsByRevenue = tenantsRaw.map((t: any) => ({ 
-                name: t.name, 
+
+            topTenantsByRevenue = tenantsRaw.map(t => ({
+                name: t.name,
                 revenue: t.customRevenue,
                 currency: t.customRevenueCurrency
             }));
-            
+
             const tenantsUsersRaw = await prisma.tenant.findMany({
                 where: totalTenantsFilter,
                 select: { name: true, _count: { select: { users: true } } },
                 orderBy: { users: { _count: 'desc' } },
                 take: 5
             });
-            
-            topTenantsByUsers = tenantsUsersRaw.map((t: any) => ({ name: t.name, users: t._count.users }));
+
+            topTenantsByUsers = tenantsUsersRaw.map(t => ({ name: t.name, users: t._count.users }));
         }
 
         return NextResponse.json({

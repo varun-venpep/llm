@@ -35,13 +35,13 @@ export async function GET(
                 where: { id: teamIdParam },
                 select: { members: { select: { id: true } } }
             });
-            learnerIds = team?.members.map((m: any) => m.id) || [];
+            learnerIds = team?.members.map(m => m.id) || [];
         } else if (roleIdParam) {
             const role = await prisma.jobRole.findUnique({
                 where: { id: roleIdParam },
                 select: { users: { select: { id: true } } }
             });
-            learnerIds = role?.users.map((u: any) => u.id) || [];
+            learnerIds = role?.users.map(u => u.id) || [];
         }
 
         const learnerWhere: any = {
@@ -74,8 +74,8 @@ export async function GET(
         });
 
         const totalEnrollments = enrollments.length;
-        const enrollmentStats = await Promise.all(enrollments.map(async (enrol: any) => {
-            const totalLessons = enrol.course.modules.reduce((sum: number, mod: any) => sum + mod._count.lessons, 0);
+        const enrollmentStats = await Promise.all(enrollments.map(async (enrol) => {
+            const totalLessons = enrol.course.modules.reduce((sum, mod) => sum + mod._count.lessons, 0);
             const completedCount = await prisma.lessonProgress.count({
                 where: { userId: enrol.userId, lesson: { module: { courseId: enrol.courseId } }, completed: true }
             });
@@ -85,9 +85,9 @@ export async function GET(
             };
         }));
 
-        const totalCompletions = enrollmentStats.filter((e: any) => e.isCompleted).length;
+        const totalCompletions = enrollmentStats.filter(e => e.isCompleted).length;
         const avgProgress = enrollmentStats.length > 0
-            ? (enrollmentStats.reduce((sum: number, e: any) => sum + e.progress, 0) / enrollmentStats.length) * 100 : 0;
+            ? (enrollmentStats.reduce((sum, e) => sum + e.progress, 0) / enrollmentStats.length) * 100 : 0;
         const completionRate = totalEnrollments > 0 ? (totalCompletions / totalEnrollments) * 100 : 0;
 
         // 3. Quiz Stats
@@ -98,7 +98,7 @@ export async function GET(
             select: { score: true, passed: true }
         });
         const avgQuizScore = quizAttempts.length > 0
-            ? quizAttempts.reduce((sum: number, a: any) => sum + a.score, 0) / quizAttempts.length : 0;
+            ? quizAttempts.reduce((sum, a) => sum + a.score, 0) / quizAttempts.length : 0;
 
         // 4. Recent Activity
         const recentActivity = await prisma.activityLog.findMany({
@@ -117,8 +117,8 @@ export async function GET(
             }
         });
 
-        const coursePerformance = await Promise.all(courses.map(async (c: any) => {
-            const totalLessons = c.modules.reduce((sum: number, m: any) => sum + m._count.lessons, 0);
+        const coursePerformance = await Promise.all(courses.map(async (c) => {
+            const totalLessons = c.modules.reduce((sum, m) => sum + m._count.lessons, 0);
             const learnerEnrollments = await prisma.enrollment.findMany({
                 where: {
                     courseId: c.id,
@@ -157,10 +157,10 @@ export async function GET(
             }
         });
 
-        const teamPerformance = await Promise.all(teams.map(async (team: any) => {
-            const memberIds = team.members.map((m: any) => m.id);
+        const teamPerformance = await Promise.all(teams.map(async (team) => {
+            const memberIds = team.members.map(m => m.id);
             if (memberIds.length === 0) return { id: team.id, name: team.name, members: 0, avgProgress: 0, completionRate: 0 };
-            
+
             let totalProgress = 0, totalEnroll = 0, totalComplete = 0;
             for (const member of team.members) {
                 for (const enrol of member.enrollments) {
@@ -190,12 +190,12 @@ export async function GET(
             select: { id: true, name: true, email: true, enrollments: { select: { courseId: true } } }
         });
 
-        const topLearners = (await Promise.all(allLearners.map(async (u: any) => {
+        const topLearners = (await Promise.all(allLearners.map(async (u) => {
             if (u.enrollments.length === 0) return { id: u.id, name: u.name || u.email, email: u.email, avgProgress: 0, completedCourses: 0, totalCourses: u.enrollments.length };
             let sumProg = 0, completed = 0;
             for (const enrol of u.enrollments) {
                 const course = await prisma.course.findUnique({ where: { id: enrol.courseId }, include: { modules: { include: { _count: { select: { lessons: true } } } } } });
-                const totalLessons = course?.modules.reduce((s: number, m: any) => s + m._count.lessons, 0) || 0;
+                const totalLessons = course?.modules.reduce((s, m) => s + m._count.lessons, 0) || 0;
                 if (totalLessons === 0) continue;
                 const done = await prisma.lessonProgress.count({ where: { userId: u.id, lesson: { module: { courseId: enrol.courseId } }, completed: true } });
                 const p = done / totalLessons;
@@ -210,7 +210,7 @@ export async function GET(
                 completedCourses: completed,
                 totalCourses: u.enrollments.length
             };
-        }))).sort((a: any, b: any) => b.avgProgress - a.avgProgress).slice(0, 10);
+        }))).sort((a, b) => b.avgProgress - a.avgProgress).slice(0, 10);
 
         // 8. Enrollment Trend (last 6 months, by week/month)
         const sixMonthsAgo = new Date();
@@ -225,7 +225,7 @@ export async function GET(
         });
 
         const trendByMonth: Record<string, number> = {};
-        enrollmentTrend.forEach((e: any) => {
+        enrollmentTrend.forEach(e => {
             const key = e.createdAt.toLocaleString('default', { month: 'short', year: '2-digit' });
             trendByMonth[key] = (trendByMonth[key] || 0) + 1;
         });
@@ -240,7 +240,7 @@ export async function GET(
                 _count: { select: { users: true } }
             }
         });
-        const roleDistribution = roleStats.map((r: any) => ({ name: r.name, value: r._count.users }));
+        const roleDistribution = roleStats.map(r => ({ name: r.name, value: r._count.users }));
 
         return NextResponse.json({
             stats: {

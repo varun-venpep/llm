@@ -1,5 +1,4 @@
 import { prisma } from './prisma';
-import { ECSClient, RunTaskCommand } from "@aws-sdk/client-ecs";
 
 /**
  * Invokes the AWS Lambda Whisper service asynchronously (fire-and-forget).
@@ -90,8 +89,8 @@ export async function transcribeMedia(lessonId: string, mediaUrl: string) {
         return;
     }
 
-    // The callback URL ECS will POST results back to
-    const appUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://lebra.ai';
+    // The callback URL Lambda will POST results back to
+    const appUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
     const callbackUrl = `${appUrl}/api/transcript-callback`;
 
     try {
@@ -107,24 +106,29 @@ export async function transcribeMedia(lessonId: string, mediaUrl: string) {
             data: { transcriptStatus: 'PROCESSING' }
         });
 
-        // 3. Trigger Whisper API via HTTP
-        const response = await fetch(`${lambdaUrl}/transcribe`, {
+        // Fire Lambda asynchronously — do NOT await the transcription result.
+        // Lambda will call our callbackUrl when done.
+        // We use AbortSignal with a 5s timeout just for the HTTP handshake.
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 5000);
+
+        fetch(lambdaUrl, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                lessonId: lessonId,
-                mediaUrl: mediaUrl,
-                callbackUrl: callbackUrl,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ lessonId, mediaUrl, callbackUrl }),
+            signal: controller.signal,
+        })
+            .catch(err => {
+                clearTimeout(timeout);
+                // If Lambda returns 202 (async invocation), the fetch may "fail" due to no body — that's OK.
+                if (!err?.name?.includes('AbortError')) {
+                    console.error(`[AI] Failed to invoke Lambda for lesson ${lessonId}:`, err);
+                    prisma.lesson.update({ where: { id: lessonId }, data: { transcriptStatus: 'FAILED' } }).catch(() => { });
+                }
             })
-        });
+            .finally(() => clearTimeout(timeout));
 
-        if (!response.ok) {
-            throw new Error(`Whisper Service HTTP Error: ${response.status}`);
-        }
-
-        console.log(`[AI] Fired HTTP POST to Whisper AI service for lesson ${lessonId}.`);
+        console.log(`[AI] Fired Lambda transcription job for lesson ${lessonId}. Callback: ${callbackUrl}`);
 
     } catch (error) {
         console.error(`[AI] Error starting transcription for lesson ${lessonId}:`, error);

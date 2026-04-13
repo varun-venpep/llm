@@ -12,12 +12,21 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "InfiniteLMS | Multi-Tenant Learning Platform",
-  description: "The ultimate white-label learning management system for scaling your training business.",
-  keywords: ["LMS", "SaaS", "Multi-tenant", "Education", "Online Courses"],
-  authors: [{ name: "InfiniteLMS Team" }],
-};
+import { getGlobalBranding } from "@/lib/branding";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const branding = await getGlobalBranding();
+
+  return {
+    title: `${branding.name} | Multi-Tenant Learning Platform`,
+    description: `The ultimate white-label learning management system for scaling your training business with ${branding.name}.`,
+    keywords: ["LMS", "SaaS", "Multi-tenant", "Education", "Online Courses"],
+    icons: {
+      icon: branding.favicon,
+    },
+    authors: [{ name: `${branding.name} Team` }],
+  };
+}
 
 import { Providers } from "@/components/Providers";
 import ChatWidget from "@/components/chat/ChatWidget";

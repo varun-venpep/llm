@@ -1,15 +1,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { 
-    Users, 
-    ShieldCheck, 
-    ShieldAlert, 
-    CheckCircle2, 
-    MoreVertical, 
-    UserMinus, 
-    UserCheck, 
-    Mail, 
+import {
+    Users,
+    ShieldCheck,
+    ShieldAlert,
+    CheckCircle2,
+    MoreVertical,
+    UserMinus,
+    UserCheck,
+    Mail,
     Calendar,
     Loader2
 } from 'lucide-react';
@@ -34,7 +34,7 @@ export default function AdminStaffPage() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingStaff, setEditingStaff] = useState<GlobalStaff | null>(null);
     const [openMenuId, setOpenMenuId] = useState<string | null>(null);
-    
+
     // Form state
     const [formData, setFormData] = useState({ email: '', name: '', role: 'PLATFORM_MANAGER', password: '' });
     const [submitting, setSubmitting] = useState(false);
@@ -68,7 +68,7 @@ export default function AdminStaffPage() {
         try {
             const url = editingStaff ? `/api/admin/users/${editingStaff.id}` : '/api/admin/users';
             const method = editingStaff ? 'PATCH' : 'POST';
-            
+
             const payload: any = { ...formData };
             if (editingStaff && !payload.password) delete payload.password; // Don't update password if empty during edit
 
@@ -77,7 +77,7 @@ export default function AdminStaffPage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
-            
+
             const data = await res.json();
             if (res.ok) {
                 alert(editingStaff ? 'Staff updated successfully!' : 'Staff added successfully! Default password is password123');
@@ -112,7 +112,7 @@ export default function AdminStaffPage() {
 
     const handleDelete = async (id: string) => {
         if (!confirm('Are you sure you want to PERMANENTLY delete this staff account? This action cannot be undone.')) return;
-        
+
         try {
             const res = await fetch(`/api/admin/users/${id}`, { method: 'DELETE' });
             if (res.ok) {
@@ -128,9 +128,9 @@ export default function AdminStaffPage() {
 
     const openEditModal = (member: GlobalStaff) => {
         setEditingStaff(member);
-        setFormData({ 
-            email: member.email, 
-            name: member.name || '', 
+        setFormData({
+            email: member.email,
+            name: member.name || '',
             role: member.role,
             password: '' // Don't show password
         });
@@ -149,7 +149,7 @@ export default function AdminStaffPage() {
                     </h1>
                     <p className="text-muted-foreground text-sm font-medium mt-1">Manage the platform owners and administrative operations team.</p>
                 </div>
-                <button 
+                <button
                     onClick={() => {
                         setEditingStaff(null);
                         setFormData({ email: '', name: '', role: 'PLATFORM_MANAGER', password: '' });
@@ -207,10 +207,9 @@ export default function AdminStaffPage() {
                                             </div>
                                         </td>
                                         <td className="px-6 py-5">
-                                            <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase border tracking-widest ${
-                                                member.role === 'SUPER_ADMIN' ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' :
-                                                'bg-amber-500/10 text-amber-400 border-amber-500/20'
-                                            }`}>
+                                            <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase border tracking-widest ${member.role === 'SUPER_ADMIN' ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' :
+                                                    'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                                                }`}>
                                                 {member.role.replace('_', ' ')}
                                             </span>
                                         </td>
@@ -222,7 +221,7 @@ export default function AdminStaffPage() {
                                         </td>
                                         <td className="px-6 py-5">
                                             <div className="flex items-center gap-3">
-                                                <button 
+                                                <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                         handleToggleStatus(member.id, member.isActive !== false);
@@ -237,7 +236,7 @@ export default function AdminStaffPage() {
                                             </div>
                                         </td>
                                         <td className="px-6 py-5 text-right relative overflow-visible">
-                                            <button 
+                                            <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     setOpenMenuId(openMenuId === member.id ? null : member.id);
@@ -246,16 +245,16 @@ export default function AdminStaffPage() {
                                             >
                                                 <MoreVertical className="w-5 h-5" />
                                             </button>
-                                            
+
                                             {openMenuId === member.id && (
                                                 <div className="absolute right-6 top-14 w-48 bg-background border border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-                                                    <button 
+                                                    <button
                                                         onClick={() => openEditModal(member)}
                                                         className="w-full px-4 py-3 flex items-center gap-2 text-xs font-bold hover:bg-white/5 transition-colors text-left"
                                                     >
                                                         <UserCheck className="w-4 h-4 text-blue-400" /> Edit Details
                                                     </button>
-                                                    <button 
+                                                    <button
                                                         onClick={() => handleDelete(member.id)}
                                                         className="w-full px-4 py-3 flex items-center gap-2 text-xs font-bold hover:bg-red-500/10 text-red-400 transition-colors text-left border-t border-white/5"
                                                     >
@@ -281,14 +280,14 @@ export default function AdminStaffPage() {
                                 {editingStaff ? 'Refine Admin Access' : 'Onboard Admin Master'}
                             </h2>
                             <p className="text-xs text-muted-foreground mt-1">
-                                {editingStaff ? `Adjust records for ${editingStaff.name}` : 'Grant system-level access to the InfiniteLMS core.'}
+                                {editingStaff ? `Adjust records for ${editingStaff.name}` : 'Grant system-level access to the Lebra.Ai core.'}
                             </p>
                         </div>
                         <form onSubmit={handleAddOrEditStaff} className="p-8 space-y-6">
                             <div className="space-y-4">
                                 <div className="space-y-1.5">
                                     <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Email Address</label>
-                                    <input 
+                                    <input
                                         type="email"
                                         required
                                         value={formData.email}
@@ -299,7 +298,7 @@ export default function AdminStaffPage() {
                                 </div>
                                 <div className="space-y-1.5">
                                     <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Full Name</label>
-                                    <input 
+                                    <input
                                         type="text"
                                         required
                                         value={formData.name}
@@ -310,7 +309,7 @@ export default function AdminStaffPage() {
                                 </div>
                                 <div className="space-y-1.5">
                                     <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Platform Privilege</label>
-                                    <select 
+                                    <select
                                         value={formData.role}
                                         onChange={e => setFormData({ ...formData, role: e.target.value })}
                                         className="w-full bg-secondary/30 border border-white/5 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-amber-500/50 appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22rgba(255,255,255,0.5)%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:1.2em] bg-[right_1rem_center] bg-no-repeat font-bold"
@@ -323,7 +322,7 @@ export default function AdminStaffPage() {
                                     <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">
                                         {editingStaff ? 'Reset Master Password (Leave blank to keep current)' : 'Master Password'}
                                     </label>
-                                    <input 
+                                    <input
                                         type="password"
                                         required={!editingStaff}
                                         value={formData.password}
@@ -334,7 +333,7 @@ export default function AdminStaffPage() {
                                 </div>
                             </div>
                             <div className="flex gap-3 pt-2">
-                                <button 
+                                <button
                                     type="button"
                                     onClick={() => {
                                         setIsModalOpen(false);
@@ -344,7 +343,7 @@ export default function AdminStaffPage() {
                                 >
                                     Cancel
                                 </button>
-                                <button 
+                                <button
                                     type="submit"
                                     disabled={submitting}
                                     className="flex-1 px-6 py-4 bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-black shadow-lg shadow-amber-500/20 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2"

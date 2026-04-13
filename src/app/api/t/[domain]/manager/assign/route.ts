@@ -30,7 +30,7 @@ export async function POST(
                 },
                 select: { id: true }
             });
-            targetTeamIds = managedTeams.map((t: any) => t.id);
+            targetTeamIds = managedTeams.map(t => t.id);
         } else if (teamId) {
             // Verify single team management
             const isManager = await prisma.team.findFirst({
@@ -64,7 +64,7 @@ export async function POST(
                 where: { id: tid },
                 select: { members: { select: { id: true } } }
             });
-            team?.members.forEach((m: any) => totalLearners.add(m.id));
+            team?.members.forEach(m => totalLearners.add(m.id));
         }
 
         // 3. Process enrollments in bulk
@@ -73,12 +73,12 @@ export async function POST(
             where: { courseId, userId: { in: learnerIds } },
             select: { userId: true }
         });
-        const existingIds = new Set(existingEnrollments.map((e: any) => e.userId));
-        const newIds = learnerIds.filter((id: any) => !existingIds.has(id));
+        const existingIds = new Set(existingEnrollments.map(e => e.userId));
+        const newIds = learnerIds.filter(id => !existingIds.has(id));
 
         if (newIds.length > 0) {
             await prisma.enrollment.createMany({
-                data: newIds.map((uid: any) => ({
+                data: newIds.map(uid => ({
                     userId: uid,
                     courseId,
                     status: 'ACTIVE'

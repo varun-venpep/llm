@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { Lock, Mail, ChevronRight, Loader2, ShieldCheck, Eye, EyeOff } from 'lucide-react';
 
 export default function AdminLogin() {
@@ -12,6 +13,19 @@ export default function AdminLogin() {
     const [showPassword, setShowPassword] = useState(false);
     const [rememberMe, setRememberMe] = useState(false);
     const [isChecking, setIsChecking] = useState(true);
+    const [error, setError] = useState('');
+    const [branding, setBranding] = useState({
+        name: 'Lebra.Ai',
+        logoPrimary: '/lebra_ai_logo.png',
+        logoLight: '/lebra_ai_logo.png'
+    });
+
+    useEffect(() => {
+        fetch('/api/branding')
+            .then(res => res.json())
+            .then(data => setBranding(data))
+            .catch(() => { });
+    }, []);
 
     // Check session but don't auto-redirect (allows switching accounts)
     useEffect(() => {
@@ -34,6 +48,7 @@ export default function AdminLogin() {
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
+        setError('');
 
         try {
             const res = await fetch('/api/admin/login', {
@@ -45,10 +60,12 @@ export default function AdminLogin() {
             if (res.ok) {
                 router.push('/admin');
             } else {
-                // Handle error visually if needed
+                const data = await res.json();
+                setError(data.error || 'Invalid admin credentials');
                 setLoading(false);
             }
         } catch (error) {
+            setError('System error. Please contact platform support.');
             setLoading(false);
         }
     };
@@ -69,10 +86,14 @@ export default function AdminLogin() {
 
             <div className="w-full max-w-md space-y-8 relative z-10">
                 <div className="text-center space-y-3">
-                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center mx-auto shadow-2xl shadow-blue-500/30 border border-white/10">
-                        <ShieldCheck className="w-7 h-7 text-white" />
-                    </div>
-                    <h1 className="text-3xl font-black tracking-tight">InfiniteLMS Platform</h1>
+                    <Image
+                        src={branding.logoLight || branding.logoPrimary}
+                        alt={`${branding.name} Logo`}
+                        width={180}
+                        height={60}
+                        className="h-12 w-auto object-contain mx-auto mb-4"
+                    />
+                    <h1 className="text-3xl font-black tracking-tight">{branding.name} Platform</h1>
                     <p className="text-muted-foreground font-bold uppercase tracking-widest text-[10px]">Super Admin Access Portal</p>
                 </div>
 
@@ -86,7 +107,7 @@ export default function AdminLogin() {
                                     type="email"
                                     required
                                     className="w-full bg-secondary/30 border border-white/10 rounded-xl pl-12 pr-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all focus:bg-secondary/50"
-                                    placeholder="admin@infinitelms.com"
+                                    placeholder="admin@lebra.ai"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                 />
@@ -130,6 +151,12 @@ export default function AdminLogin() {
                             </label>
                             <button type="button" className="text-[10px] font-black text-blue-400 hover:underline uppercase tracking-widest">Recovery Key?</button>
                         </div>
+
+                        {error && (
+                            <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                                <p className="text-red-400 text-[10px] font-black text-center uppercase tracking-widest">{error}</p>
+                            </div>
+                        )}
 
                         <button
                             type="submit"

@@ -1,0 +1,282 @@
+L1 | D: 0 | B: 1 | P: 1 | {activeTab === 'courses' && (
+L2 | D: 1 | B: 1 | P: 1 | <div className="animate-in fade-in durat
+L3 | D: 1 | B: 2 | P: 2 | {selectedCourse ? (
+L5 | D: 2 | B: 2 | P: 2 | <div className="space-y-6">
+L9 | D: 3 | B: 2 | P: 2 | <div className="flex items-center justif
+L10 | D: 4 | B: 2 | P: 2 | <div>
+L13 | D: 3 | B: 2 | P: 2 | </div>
+L14 | D: 4 | B: 2 | P: 2 | <div className="flex flex-wrap gap-2">
+L15 | D: 4 | B: 4 | P: 2 | <button onClick={() => {
+L16 | D: 4 | B: 5 | P: 3 | setCourseForm({
+L28 | D: 4 | B: 4 | P: 2 | });
+L31 | D: 4 | B: 2 | P: 2 | }}
+L35 | D: 4 | B: 4 | P: 2 | <button onClick={() => {
+L39 | D: 4 | B: 2 | P: 2 | }}
+L59 | D: 3 | B: 2 | P: 2 | </div>
+L60 | D: 2 | B: 2 | P: 2 | </div>
+L62 | D: 2 | B: 3 | P: 3 | {courseStats && (
+L63 | D: 3 | B: 3 | P: 3 | <div className="animate-in slide-in-from
+L64 | D: 4 | B: 3 | P: 3 | <div className="grid grid-cols-4 gap-4">
+L65 | D: 4 | B: 4 | P: 3 | {[
+L70 | D: 4 | B: 4 | P: 5 | ].map(stat => (
+L71 | D: 5 | B: 4 | P: 5 | <div key={stat.label} className="p-4 rou
+L72 | D: 6 | B: 4 | P: 5 | <div className="flex items-center gap-2 
+L75 | D: 5 | B: 4 | P: 5 | </div>
+L77 | D: 4 | B: 4 | P: 5 | </div>
+L78 | D: 4 | B: 3 | P: 3 | ))}
+L79 | D: 3 | B: 3 | P: 3 | </div>
+L81 | D: 4 | B: 3 | P: 3 | <div className="glassmorphism rounded-2x
+L82 | D: 5 | B: 3 | P: 3 | <div className="p-4 bg-secondary/20 bord
+L84 | D: 4 | B: 3 | P: 3 | </div>
+L85 | D: 5 | B: 3 | P: 3 | <div className="overflow-x-auto">
+L96 | D: 5 | B: 4 | P: 5 | {courseStats.learnerStats.map((s: any) =
+L103 | D: 6 | B: 4 | P: 5 | <div className="flex items-center gap-2"
+L104 | D: 7 | B: 4 | P: 5 | <div className="flex-1 h-1 bg-secondary 
+L106 | D: 6 | B: 4 | P: 5 | </div>
+L108 | D: 5 | B: 4 | P: 5 | </div>
+L113 | D: 5 | B: 5 | P: 6 | {s.isCompleted ? (
+L117 | D: 5 | B: 4 | P: 5 | )}
+L120 | D: 5 | B: 3 | P: 3 | ))}
+L123 | D: 4 | B: 3 | P: 3 | </div>
+L124 | D: 3 | B: 3 | P: 3 | </div>
+L125 | D: 2 | B: 3 | P: 3 | </div>
+L126 | D: 2 | B: 2 | P: 2 | )}
+L129 | D: 3 | B: 2 | P: 2 | <div className="space-y-4">
+L130 | D: 3 | B: 3 | P: 4 | {selectedCourse.modules?.map((mod: any) 
+L131 | D: 4 | B: 3 | P: 4 | <div key={mod.id} className="glassmorphi
+L132 | D: 5 | B: 3 | P: 4 | <div className="flex items-center gap-3 
+L134 | D: 6 | B: 3 | P: 4 | <div className="flex-1 flex flex-col">
+L135 | D: 6 | B: 4 | P: 5 | {editingModuleId === mod.id ? (
+L136 | D: 7 | B: 4 | P: 5 | <div className="flex flex-col gap-1 flex
+L137 | D: 8 | B: 4 | P: 5 | <div className="flex items-center gap-2"
+L141 | D: 8 | B: 6 | P: 5 | onChange={(e) => {
+L143 | D: 8 | B: 7 | P: 5 | if (validationErrors[`module-${mod.id}`]
+L145 | D: 8 | B: 6 | P: 5 | }
+L146 | D: 8 | B: 4 | P: 5 | }}
+L153 | D: 7 | B: 4 | P: 5 | </div>
+L155 | D: 6 | B: 4 | P: 5 | </div>
+L161 | D: 6 | B: 3 | P: 4 | )}
+L162 | D: 5 | B: 3 | P: 4 | </div>
+L164 | D: 6 | B: 3 | P: 4 | <div className="ml-auto flex items-cente
+L178 | D: 7 | B: 3 | P: 4 | <div
+L182 | D: 8 | B: 3 | P: 4 | <div className={`w-8 h-4 rounded-full p-
+L184 | D: 7 | B: 3 | P: 4 | </div>
+L188 | D: 6 | B: 3 | P: 4 | </div>
+L196 | D: 5 | B: 3 | P: 4 | </div>
+L197 | D: 4 | B: 3 | P: 4 | </div>
+L198 | D: 5 | B: 3 | P: 4 | <div className="p-4 space-y-2">
+L199 | D: 5 | B: 4 | P: 6 | {mod.lessons?.map((lesson: any) => (
+L200 | D: 6 | B: 4 | P: 6 | <div key={lesson.id} className="flex ite
+L208 | D: 6 | B: 5 | P: 7 | {lesson.type === 'VIDEO' && lesson.trans
+L210 | D: 6 | B: 4 | P: 6 | )}
+L211 | D: 6 | B: 5 | P: 7 | {lesson.type === 'VIDEO' && lesson.trans
+L213 | D: 6 | B: 4 | P: 6 | )}
+L214 | D: 6 | B: 5 | P: 7 | {lesson.type === 'VIDEO' && lesson.trans
+L216 | D: 6 | B: 4 | P: 6 | )}
+L217 | D: 7 | B: 4 | P: 6 | <div className="ml-auto flex items-cente
+L218 | D: 7 | B: 5 | P: 7 | {lesson.type === 'VIDEO' && lesson.trans
+L220 | D: 7 | B: 7 | P: 7 | onClick={(e) => {
+L224 | D: 7 | B: 8 | P: 8 | setQuizForm({
+L233 | D: 7 | B: 7 | P: 7 | });
+L234 | D: 7 | B: 5 | P: 7 | }}
+L241 | D: 7 | B: 4 | P: 6 | )}
+L242 | D: 8 | B: 4 | P: 6 | <div
+L246 | D: 9 | B: 4 | P: 6 | <div className={`w-8 h-4 rounded-full p-
+L248 | D: 8 | B: 4 | P: 6 | </div>
+L252 | D: 7 | B: 4 | P: 6 | </div>
+L267 | D: 6 | B: 4 | P: 6 | </div>
+L268 | D: 5 | B: 4 | P: 6 | </div>
+L269 | D: 5 | B: 3 | P: 4 | ))}
+L271 | D: 5 | B: 4 | P: 5 | {activeLessonForms[mod.id] ? (
+L272 | D: 6 | B: 4 | P: 5 | <div className="mt-2 p-4 rounded-xl bg-s
+L273 | D: 7 | B: 4 | P: 5 | <div className="flex justify-between ite
+L276 | D: 6 | B: 4 | P: 5 | </div>
+L279 | D: 7 | B: 4 | P: 5 | <div className="flex gap-2 p-1 bg-second
+L280 | D: 7 | B: 5 | P: 7 | {(['VIDEO', 'PPT', 'QUIZ', 'TEXT'] as co
+L288 | D: 7 | B: 4 | P: 5 | ))}
+L289 | D: 6 | B: 4 | P: 5 | </div>
+L291 | D: 7 | B: 4 | P: 5 | <div className="grid grid-cols-1 md:grid
+L292 | D: 8 | B: 4 | P: 5 | <div className="space-y-1">
+L293 | D: 9 | B: 4 | P: 5 | <div className="flex justify-between ite
+L296 | D: 8 | B: 4 | P: 5 | </div>
+L301 | D: 8 | B: 6 | P: 5 | onChange={e => {
+L303 | D: 8 | B: 7 | P: 5 | if (validationErrors[`lesson-${mod.id}`]
+L305 | D: 8 | B: 6 | P: 5 | }
+L306 | D: 8 | B: 4 | P: 5 | }}
+L308 | D: 7 | B: 4 | P: 5 | </div>
+L309 | D: 8 | B: 4 | P: 5 | <div className="space-y-1">
+L316 | D: 8 | B: 5 | P: 7 | {localesConfig.availableLocales.map(code
+L320 | D: 8 | B: 4 | P: 5 | ))}
+L322 | D: 7 | B: 4 | P: 5 | </div>
+L323 | D: 6 | B: 4 | P: 5 | </div>
+L325 | D: 6 | B: 5 | P: 6 | {newLessonForms[mod.id]?.type === 'VIDEO
+L326 | D: 7 | B: 5 | P: 6 | <div className="space-y-3 animate-in fad
+L327 | D: 8 | B: 5 | P: 6 | <div className="p-4 rounded-xl border bo
+L329 | D: 9 | B: 5 | P: 6 | <div className="text-center">
+L334 | D: 9 | B: 6 | P: 6 | {newLessonForms[mod.id]?.videoUrl
+L336 | D: 9 | B: 5 | P: 6 | : "Only MP4 uploads are supported for pl
+L338 | D: 8 | B: 5 | P: 6 | </div>
+L346 | D: 8 | B: 7 | P: 6 | onChange={(e) => {
+L349 | D: 8 | B: 5 | P: 6 | }}
+L352 | D: 8 | B: 6 | P: 7 | {uploadProgress[mod.id] !== undefined &&
+L353 | D: 9 | B: 6 | P: 7 | <div className="w-full max-w-[200px] h-1
+L354 | D: 10 | B: 6 | P: 7 | <div
+L358 | D: 9 | B: 6 | P: 7 | </div>
+L359 | D: 9 | B: 5 | P: 6 | )}
+L360 | D: 8 | B: 5 | P: 6 | </div>
+L361 | D: 7 | B: 5 | P: 6 | </div>
+L362 | D: 7 | B: 4 | P: 5 | )}
+L364 | D: 7 | B: 5 | P: 6 | {newLessonForms[mod.id]?.type === 'PPT' 
+L365 | D: 8 | B: 5 | P: 6 | <div className="space-y-3 animate-in fad
+L366 | D: 9 | B: 5 | P: 6 | <div className="p-4 rounded-xl border bo
+L368 | D: 10 | B: 5 | P: 6 | <div className="text-center">
+L373 | D: 10 | B: 6 | P: 6 | {newLessonForms[mod.id]?.pdfUrl
+L375 | D: 10 | B: 5 | P: 6 | : "Upload PDF or PPTX for the player."}
+L377 | D: 9 | B: 5 | P: 6 | </div>
+L385 | D: 9 | B: 7 | P: 6 | onChange={(e) => {
+L388 | D: 9 | B: 5 | P: 6 | }}
+L391 | D: 9 | B: 6 | P: 7 | {uploadProgress[mod.id] !== undefined &&
+L392 | D: 10 | B: 6 | P: 7 | <div className="w-full max-w-[200px] h-1
+L393 | D: 11 | B: 6 | P: 7 | <div
+L397 | D: 10 | B: 6 | P: 7 | </div>
+L398 | D: 10 | B: 5 | P: 6 | )}
+L399 | D: 9 | B: 5 | P: 6 | </div>
+L400 | D: 8 | B: 5 | P: 6 | </div>
+L401 | D: 8 | B: 4 | P: 5 | )}
+L403 | D: 8 | B: 5 | P: 6 | {newLessonForms[mod.id]?.type === 'QUIZ'
+L404 | D: 9 | B: 5 | P: 6 | <div className="p-4 rounded-xl border bo
+L405 | D: 10 | B: 5 | P: 6 | <div className="w-10 h-10 rounded-full b
+L407 | D: 9 | B: 5 | P: 6 | </div>
+L408 | D: 10 | B: 5 | P: 6 | <div className="text-center">
+L411 | D: 10 | B: 6 | P: 6 | {mod.lessons?.find((l: any) => l.id === 
+L413 | D: 10 | B: 5 | P: 6 | : 'Use Whisper AI to generate questions 
+L415 | D: 9 | B: 5 | P: 6 | </div>
+L417 | D: 9 | B: 7 | P: 6 | onClick={() => {
+L419 | D: 9 | B: 8 | P: 6 | if (lesson) {
+L422 | D: 9 | B: 9 | P: 7 | setQuizForm({
+L431 | D: 9 | B: 8 | P: 6 | });
+L432 | D: 9 | B: 7 | P: 6 | }
+L433 | D: 9 | B: 5 | P: 6 | }}
+L438 | D: 8 | B: 5 | P: 6 | </div>
+L439 | D: 8 | B: 4 | P: 5 | )}
+L441 | D: 8 | B: 5 | P: 6 | {newLessonForms[mod.id]?.type === 'QUIZ'
+L442 | D: 9 | B: 5 | P: 6 | <div className="p-4 rounded-xl border bo
+L444 | D: 10 | B: 5 | P: 6 | <div className="text-center">
+L447 | D: 9 | B: 5 | P: 6 | </div>
+L450 | D: 9 | B: 7 | P: 6 | onClick={async () => {
+L452 | D: 9 | B: 8 | P: 6 | try {
+L454 | D: 9 | B: 9 | P: 6 | if (saved) {
+L459 | D: 9 | B: 8 | P: 6 | }
+L462 | D: 9 | B: 7 | P: 6 | }
+L463 | D: 9 | B: 5 | P: 6 | }}
+L469 | D: 8 | B: 5 | P: 6 | </div>
+L470 | D: 8 | B: 4 | P: 5 | )}
+L472 | D: 8 | B: 5 | P: 6 | {newLessonForms[mod.id]?.type === 'TEXT'
+L480 | D: 8 | B: 4 | P: 5 | )}
+L482 | D: 9 | B: 4 | P: 5 | <div className="flex items-center gap-2 
+L491 | D: 8 | B: 4 | P: 5 | </div>
+L494 | D: 8 | B: 5 | P: 6 | {newLessonForms[mod.id]?.resources?.leng
+L495 | D: 9 | B: 5 | P: 6 | <div className="flex flex-wrap gap-2 mt-
+L496 | D: 9 | B: 6 | P: 8 | {newLessonForms[mod.id].resources.map((r
+L497 | D: 10 | B: 6 | P: 8 | <div key={idx} className="flex items-cen
+L500 | D: 10 | B: 8 | P: 8 | <button onClick={() => {
+L504 | D: 10 | B: 6 | P: 8 | }} className="text-red-400 hover:text-re
+L505 | D: 9 | B: 6 | P: 8 | </div>
+L506 | D: 9 | B: 5 | P: 6 | ))}
+L507 | D: 8 | B: 5 | P: 6 | </div>
+L508 | D: 8 | B: 4 | P: 5 | )}
+L510 | D: 9 | B: 4 | P: 5 | <div className="flex items-center justif
+L511 | D: 10 | B: 4 | P: 5 | <div className="flex flex-col gap-2 w-fu
+L512 | D: 11 | B: 4 | P: 5 | <div className="flex items-center justif
+L523 | D: 12 | B: 4 | P: 5 | <div className="flex items-center gap-2"
+L524 | D: 12 | B: 5 | P: 6 | {!editingLessonIds[mod.id] && (
+L528 | D: 12 | B: 4 | P: 5 | )}
+L532 | D: 11 | B: 4 | P: 5 | </div>
+L533 | D: 10 | B: 4 | P: 5 | </div>
+L534 | D: 10 | B: 5 | P: 6 | {uploadProgress[`res-${mod.id}`] !== und
+L535 | D: 11 | B: 5 | P: 6 | <div className="w-full h-1 bg-secondary/
+L536 | D: 12 | B: 5 | P: 6 | <div
+L540 | D: 11 | B: 5 | P: 6 | </div>
+L541 | D: 11 | B: 4 | P: 5 | )}
+L542 | D: 10 | B: 4 | P: 5 | </div>
+L543 | D: 9 | B: 4 | P: 5 | </div>
+L544 | D: 8 | B: 4 | P: 5 | </div>
+L549 | D: 8 | B: 3 | P: 4 | )}
+L550 | D: 7 | B: 3 | P: 4 | </div>
+L551 | D: 6 | B: 3 | P: 4 | </div>
+L552 | D: 6 | B: 2 | P: 2 | ))}
+L554 | D: 7 | B: 2 | P: 2 | <div className="space-y-2">
+L555 | D: 8 | B: 2 | P: 2 | <div className="flex gap-3">
+L560 | D: 8 | B: 4 | P: 2 | onChange={e => {
+L563 | D: 8 | B: 2 | P: 2 | }}
+L569 | D: 7 | B: 2 | P: 2 | </div>
+L571 | D: 8 | B: 2 | P: 2 | <div className="glassmorphism p-6 rounde
+L572 | D: 9 | B: 2 | P: 2 | <div className="space-y-4">
+L577 | D: 10 | B: 2 | P: 2 | <div className="flex items-center justif
+L578 | D: 11 | B: 2 | P: 2 | <div className="space-y-0.5">
+L581 | D: 10 | B: 2 | P: 2 | </div>
+L588 | D: 9 | B: 2 | P: 2 | </div>
+L590 | D: 10 | B: 2 | P: 2 | <div className="flex items-center justif
+L591 | D: 11 | B: 2 | P: 2 | <div className="space-y-0.5">
+L594 | D: 10 | B: 2 | P: 2 | </div>
+L601 | D: 9 | B: 2 | P: 2 | </div>
+L602 | D: 8 | B: 2 | P: 2 | </div>
+L604 | D: 9 | B: 2 | P: 2 | <div className="space-y-4 pt-4 border-t 
+L610 | D: 9 | B: 4 | P: 2 | onClick={() => {
+L613 | D: 9 | B: 2 | P: 2 | }}
+L625 | D: 8 | B: 2 | P: 2 | </div>
+L626 | D: 7 | B: 2 | P: 2 | </div>
+L629 | D: 8 | B: 2 | P: 2 | <div className="p-6 rounded-3xl bg-gradi
+L630 | D: 9 | B: 2 | P: 2 | <div className="flex items-center gap-2 
+L633 | D: 8 | B: 2 | P: 2 | </div>
+L637 | D: 9 | B: 2 | P: 2 | <div className="pt-2">
+L638 | D: 10 | B: 2 | P: 2 | <div className="h-1 w-full bg-white/20 r
+L640 | D: 9 | B: 2 | P: 2 | </div>
+L641 | D: 8 | B: 2 | P: 2 | </div>
+L642 | D: 7 | B: 2 | P: 2 | </div>
+L643 | D: 6 | B: 2 | P: 2 | </div>
+L644 | D: 5 | B: 2 | P: 2 | </div> {/* End Flex Row (Div 7) */}
+L647 | D: 6 | B: 2 | P: 2 | <div className="space-y-6">
+L648 | D: 7 | B: 2 | P: 2 | <div className="flex items-center justif
+L649 | D: 8 | B: 2 | P: 2 | <div className="flex p-1 bg-secondary/20
+L650 | D: 8 | B: 3 | P: 2 | {[
+L654 | D: 8 | B: 3 | P: 4 | ].map((tab) => (
+L665 | D: 8 | B: 2 | P: 2 | ))}
+L666 | D: 7 | B: 2 | P: 2 | </div>
+L667 | D: 6 | B: 2 | P: 2 | </div>
+L669 | D: 7 | B: 2 | P: 2 | <div className="grid grid-cols-1 md:grid
+L670 | D: 7 | B: 3 | P: 3 | {loading ? (
+L671 | D: 6 | B: 3 | P: 3 | <div className="col-span-3 flex justify-
+L672 | D: 6 | B: 4 | P: 3 | ) : courses.filter(c => {
+L676 | D: 6 | B: 3 | P: 3 | }).length === 0 ? (
+L677 | D: 7 | B: 3 | P: 3 | <div className="col-span-3 text-center p
+L683 | D: 6 | B: 3 | P: 3 | </div>
+L685 | D: 6 | B: 4 | P: 4 | courses.filter(c => {
+L689 | D: 6 | B: 3 | P: 5 | }).map((course) => (
+L690 | D: 7 | B: 3 | P: 5 | <div key={course.id} className="group ro
+L691 | D: 8 | B: 3 | P: 5 | <div className="aspect-video bg-gradient
+L692 | D: 8 | B: 4 | P: 6 | {course.thumbnail ? (
+L696 | D: 8 | B: 3 | P: 5 | )}
+L697 | D: 9 | B: 3 | P: 5 | <div className="absolute top-3 left-3 fl
+L698 | D: 9 | B: 4 | P: 6 | {course.exclusiveRole && (
+L702 | D: 9 | B: 3 | P: 5 | )}
+L703 | D: 9 | B: 4 | P: 6 | {course.exclusiveTeam && (
+L707 | D: 9 | B: 3 | P: 5 | )}
+L708 | D: 8 | B: 3 | P: 5 | </div>
+L709 | D: 9 | B: 3 | P: 5 | <div className="absolute top-3 right-3">
+L713 | D: 8 | B: 3 | P: 5 | </div>
+L714 | D: 7 | B: 3 | P: 5 | </div>
+L715 | D: 8 | B: 3 | P: 5 | <div className="p-6">
+L718 | D: 9 | B: 3 | P: 5 | <div className="flex justify-between ite
+L721 | D: 8 | B: 3 | P: 5 | </div>
+L722 | D: 9 | B: 3 | P: 5 | <div className="flex gap-2">
+L729 | D: 8 | B: 3 | P: 5 | </div>
+L730 | D: 7 | B: 3 | P: 5 | </div>
+L731 | D: 6 | B: 3 | P: 5 | </div>
+L732 | D: 6 | B: 3 | P: 3 | ))
+L733 | D: 5 | B: 3 | P: 3 | </div>
+L734 | D: 5 | B: 2 | P: 2 | )}
+L735 | D: 4 | B: 2 | P: 2 | </div>
+L736 | D: 3 | B: 2 | P: 2 | </div>
+L737 | D: 3 | B: 1 | P: 1 | )}
+L738 | D: 2 | B: 1 | P: 1 | </div>

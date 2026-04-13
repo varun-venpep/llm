@@ -47,10 +47,10 @@ export async function POST(
                 where: { teamId: { in: teamIds } },
                 select: { courseId: true }
             });
-            const uniqueCourseIds = Array.from(new Set(assignedCourses.map((ac: any) => ac.courseId)));
+            const uniqueCourseIds = Array.from(new Set(assignedCourses.map(ac => ac.courseId)));
             if (uniqueCourseIds.length > 0) {
                 await prisma.enrollment.createMany({
-                    data: uniqueCourseIds.map((cid: any) => ({
+                    data: uniqueCourseIds.map(cid => ({
                         userId: learner.id,
                         courseId: cid,
                         status: 'ACTIVE'
@@ -153,13 +153,13 @@ export async function PUT(
         const { domain } = await params;
         const body = await req.json();
         const { learnerId, newPassword, isActive, name, email, jobRoleIds, teamIds, managedTeamIds } = body;
- 
+
         const tenant = await prisma.tenant.findUnique({
             where: { subdomain: domain }
         });
- 
+
         if (!tenant) return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
- 
+
         await prisma.user.update({
             where: { id: learnerId, tenantId: tenant.id },
             data: {
@@ -167,8 +167,8 @@ export async function PUT(
                 ...(email && { email }),
                 ...(newPassword && { password: await bcrypt.hash(newPassword, 10) }),
                 ...(typeof isActive === 'boolean' && { isActive }),
-                ...(jobRoleIds !== undefined && { 
-                    jobRoles: { set: jobRoleIds.map((id: string) => ({ id })) } 
+                ...(jobRoleIds !== undefined && {
+                    jobRoles: { set: jobRoleIds.map((id: string) => ({ id })) }
                 }),
                 ...(managedTeamIds !== undefined && {
                     managedTeams: { set: managedTeamIds.map((id: string) => ({ id })) }
@@ -216,7 +216,7 @@ export async function PUT(
                 });
             }
         }
- 
+
         return NextResponse.json({ success: true, message: 'Learner updated successfully' });
     } catch (error) {
         return NextResponse.json({ error: 'Failed to update learner' }, { status: 500 });

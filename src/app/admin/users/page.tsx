@@ -112,14 +112,14 @@ export default function UsersPage() {
                         </div>
                         <form onSubmit={handleSearch} className="relative group">
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-purple-400 transition-colors" />
-                            <input 
+                            <input
                                 type="text"
                                 value={query}
                                 onChange={(e) => setQuery(e.target.value)}
                                 placeholder="Search by email, name, or global UID..."
                                 className="w-full bg-background/50 border-2 border-white/5 rounded-2xl pl-12 pr-40 py-4 text-sm font-medium focus:outline-none focus:border-purple-500/50 focus:ring-4 focus:ring-purple-500/10 transition-all backdrop-blur-sm"
                             />
-                            <button 
+                            <button
                                 type="submit"
                                 disabled={isSearching || !query.trim()}
                                 className="absolute right-2 top-1/2 -translate-y-1/2 px-6 py-2.5 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-purple-500/20"
@@ -164,12 +164,11 @@ export default function UsersPage() {
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border ${
-                                                    user.role === 'SUPER_ADMIN' ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' :
-                                                    user.role === 'PLATFORM_MANAGER' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
-                                                    user.role === 'TENANT_ADMIN' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
-                                                    'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                                                }`}>
+                                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border ${user.role === 'SUPER_ADMIN' ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' :
+                                                        user.role === 'PLATFORM_MANAGER' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
+                                                            user.role === 'TENANT_ADMIN' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
+                                                                'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                                                    }`}>
                                                     {user.role.replace('_', ' ')}
                                                 </span>
                                             </td>
@@ -177,7 +176,7 @@ export default function UsersPage() {
                                                 <div className="flex flex-col">
                                                     <span className="text-sm font-bold">{user.tenant.name}</span>
                                                     <span className="text-[10px] text-blue-400 font-mono tracking-tighter">
-                                                        {user.tenant.subdomain}.{process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'lvh.me:3000'}
+                                                        {user.tenant.subdomain}.lvh.me:3000
                                                     </span>
                                                 </div>
                                             </td>
@@ -185,8 +184,8 @@ export default function UsersPage() {
                                                 {new Date(user.createdAt).toLocaleDateString()}
                                             </td>
                                             <td className="px-6 py-4 text-right">
-                                                <a 
-                                                    href={`${process.env.NEXT_PUBLIC_ROOT_DOMAIN?.includes('localhost') || process.env.NEXT_PUBLIC_ROOT_DOMAIN?.includes('lvh.me') ? 'http' : 'https'}://${user.tenant.subdomain}.${process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'lvh.me:3000'}/login`}
+                                                <a
+                                                    href={`http://${user.tenant.subdomain}.lvh.me:3000/login`}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
                                                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-secondary hover:bg-white/10 text-[10px] font-bold uppercase tracking-widest transition-all group-hover:text-blue-400"

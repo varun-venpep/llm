@@ -46,11 +46,19 @@ export async function GET(req: NextRequest) {
             });
 
             const formattedStats = {
+<<<<<<< HEAD
                 SUPER_ADMIN: stats.find((s: any) => s.role === 'SUPER_ADMIN')?._count.id || 0,
                 PLATFORM_MANAGER: stats.find((s: any) => s.role === 'PLATFORM_MANAGER')?._count.id || 0,
                 TENANT_ADMIN: stats.find((s: any) => s.role === 'TENANT_ADMIN')?._count.id || 0,
                 LEARNER: stats.find((s: any) => s.role === 'LEARNER')?._count.id || 0,
                 INSTRUCTOR: stats.find((s: any) => s.role === 'INSTRUCTOR')?._count.id || 0,
+=======
+                SUPER_ADMIN: stats.find(s => s.role === 'SUPER_ADMIN')?._count.id || 0,
+                PLATFORM_MANAGER: stats.find(s => s.role === 'PLATFORM_MANAGER')?._count.id || 0,
+                TENANT_ADMIN: stats.find(s => s.role === 'TENANT_ADMIN')?._count.id || 0,
+                LEARNER: stats.find(s => s.role === 'LEARNER')?._count.id || 0,
+                INSTRUCTOR: stats.find(s => s.role === 'INSTRUCTOR')?._count.id || 0,
+>>>>>>> main
             };
 
             return NextResponse.json(formattedStats);

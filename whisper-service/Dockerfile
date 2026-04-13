@@ -35,5 +35,5 @@ RUN python -c "from faster_whisper import WhisperModel; WhisperModel('${WHISPER_
 # Copy the application code
 COPY main.py .
 
-# Use vanilla python entry point; main.py now handles both uvicorn and job modes
-CMD ["python", "main.py"]
+# Standard uvicorn entry point for Render Web Service
+CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT}"]

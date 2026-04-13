@@ -29,10 +29,10 @@ export async function GET(
 
         if (!course) return NextResponse.json({ error: 'Course not found' }, { status: 404 });
 
-        const allLessonIds = course.modules.flatMap((m: any) => m.lessons.map((l: any) => l.id));
+        const allLessonIds = course.modules.flatMap(m => m.lessons.map(l => l.id));
         const totalLessons = allLessonIds.length;
 
-        const learnerStats = await Promise.all(enrollments.map(async (enrol: any) => {
+        const learnerStats = await Promise.all(enrollments.map(async (enrol) => {
             const progress = await prisma.lessonProgress.findMany({
                 where: { userId: enrol.userId, lessonId: { in: allLessonIds }, completed: true }
             });
@@ -43,8 +43,8 @@ export async function GET(
             // Calculate time taken if completed
             let timeTakenMinutes = 0;
             if (isCompleted && progress.length > 0) {
-                const start = progress.reduce((min: any, p: any) => (p.startedAt < min ? p.startedAt : min), progress[0].startedAt);
-                const end = progress.reduce((max: any, p: any) => (p.completedAt || new Date()) > max ? (p.completedAt || new Date()) : max, progress[0].completedAt || new Date());
+                const start = progress.reduce((min, p) => p.startedAt < min ? p.startedAt : min, progress[0].startedAt);
+                const end = progress.reduce((max, p) => (p.completedAt || new Date()) > max ? (p.completedAt || new Date()) : max, progress[0].completedAt || new Date());
                 timeTakenMinutes = Math.round((end.getTime() - start.getTime()) / (1000 * 60));
             }
 
@@ -61,9 +61,9 @@ export async function GET(
             };
         }));
 
-        const completions = learnerStats.filter((s: any) => s.isCompleted);
+        const completions = learnerStats.filter(s => s.isCompleted);
         const avgTime = completions.length > 0
-            ? Math.round(completions.reduce((acc: number, s: any) => acc + s.timeTakenMinutes, 0) / completions.length)
+            ? Math.round(completions.reduce((acc, s) => acc + s.timeTakenMinutes, 0) / completions.length)
             : 0;
 
         return NextResponse.json({

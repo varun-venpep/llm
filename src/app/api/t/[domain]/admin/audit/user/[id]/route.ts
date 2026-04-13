@@ -57,10 +57,10 @@ export async function GET(
         }
 
         // Calculate progress for each enrollment
-        const detailedEnrollments = user.enrollments.map((en: any) => {
-            const courseLessons = en.course.modules.flatMap((m: any) => m.lessons.map((l: any) => l.id));
+        const detailedEnrollments = user.enrollments.map(en => {
+            const courseLessons = en.course.modules.flatMap(m => m.lessons.map(l => l.id));
             const totalLessons = courseLessons.length;
-            const completedLessons = user.progress.filter((p: any) => courseLessons.includes(p.lessonId)).length;
+            const completedLessons = user.progress.filter(p => courseLessons.includes(p.lessonId)).length;
             const progressPercentage = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
 
             return {

@@ -9,7 +9,7 @@ export async function PUT(
     const { id: tenantId } = await params;
     try {
         const body = await req.json();
-        const { name, subdomain, isActive, adminEmail, newPassword, aiCredits, customRevenue, customRevenueCurrency } = body;
+        const { name, subdomain, isActive, adminEmail, newPassword, aiCredits, customRevenue, customRevenueCurrency, globalMarketplaceEnabled, courseCredits } = body;
 
         // 1. Update Tenant Basic Info
         const updatedTenant = await prisma.tenant.update({
@@ -20,7 +20,9 @@ export async function PUT(
                 isActive,
                 aiCredits: aiCredits !== undefined ? parseInt(String(aiCredits), 10) : undefined,
                 customRevenue: customRevenue !== undefined ? parseInt(String(customRevenue), 10) : undefined,
-                customRevenueCurrency: customRevenueCurrency || undefined
+                customRevenueCurrency: customRevenueCurrency || undefined,
+                globalMarketplaceEnabled: globalMarketplaceEnabled !== undefined ? Boolean(globalMarketplaceEnabled) : undefined,
+                courseCredits: courseCredits !== undefined ? parseInt(String(courseCredits), 10) : undefined
             }
         });
 
@@ -60,7 +62,7 @@ export async function DELETE(
 ) {
     const { id: tenantId } = await params;
     try {
-        const tenant = await prisma.tenant.findUnique({ 
+        const tenant = await prisma.tenant.findUnique({
             where: { id: tenantId },
             include: {
                 users: { select: { id: true } },
@@ -93,10 +95,10 @@ export async function DELETE(
             // 2. Delete tenant-level entities
             await tx.announcement.deleteMany({ where: { tenantId } });
             await tx.certificateTemplate.deleteMany({ where: { tenantId } });
-            
+
             // 3. Delete Courses (Modules/Lessons should cascade if defined in schema, but being safe)
             await tx.course.deleteMany({ where: { tenantId } });
-            
+
             // 4. Delete Users
             await tx.user.deleteMany({ where: { tenantId } });
 

@@ -21,7 +21,7 @@ export async function GET(
             include: {
                 modules: {
                     where: { isActive: true },
-                    include: { 
+                    include: {
                         lessons: {
                             where: { isActive: true }
                         }
@@ -35,7 +35,7 @@ export async function GET(
         const allProgress = await prisma.lessonProgress.findMany({
             where: { userId, lessonId: { in: allLessonIds } }
         });
-        
+
         const completedProgress = allProgress.filter((p: any) => p.completed);
 
         const totalLessons = allLessonIds.length;
@@ -43,7 +43,7 @@ export async function GET(
         const percentage = totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0;
 
         const completedLessonIds = completedProgress.map((p: { lessonId: string }) => p.lessonId);
-        
+
         // Return a map of lessonId -> progress stats
         const progressMap = allProgress.reduce((acc: any, p: any) => {
             acc[p.lessonId] = {
@@ -120,14 +120,14 @@ export async function POST(
             });
 
             if (course && course.certificateEnabled) {
-                const allLessonIds = course.modules.flatMap((m: any) => m.lessons.map((l: any) => l.id));
+                const allLessonIds = course.modules.flatMap(m => m.lessons.map(l => l.id));
                 const totalLessons = allLessonIds.length;
-                
+
                 if (totalLessons > 0) {
                     const completedProgress = await prisma.lessonProgress.count({
                         where: { userId, lessonId: { in: allLessonIds }, completed: true }
                     });
-                    
+
                     // Check for 100% completion
                     if (completedProgress >= totalLessons) {
                         const existingCert = await prisma.issuedCertificate.findFirst({

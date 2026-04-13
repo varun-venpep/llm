@@ -4,18 +4,18 @@ import Link from 'next/link';
 
 export default async function VerifyCertificatePage({ params }: { params: Promise<{ code: string }> }) {
     const resolvedParams = await params;
-    
+
     // Look up the unique cryptographic code in the database
     const certificate = await prisma.issuedCertificate.findUnique({
         where: { uniqueCode: resolvedParams.code },
         include: {
             user: { select: { name: true, email: true } },
-            course: { 
-                select: { 
-                    title: true, 
+            course: {
+                select: {
+                    title: true,
                     description: true,
                     tenant: { select: { name: true, subdomain: true } }
-                } 
+                }
             }
         }
     });
@@ -37,11 +37,11 @@ export default async function VerifyCertificatePage({ params }: { params: Promis
     return (
         <div className="min-h-screen bg-background flex flex-col items-center py-20 px-6 relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-96 bg-gradient-to-b from-blue-500/5 via-purple-500/5 to-transparent -z-10" />
-            
+
             <div className="w-full max-w-3xl glassmorphism rounded-[2rem] border border-border/50 p-10 md:p-16 relative shadow-2xl overflow-hidden mt-10">
                 <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-500 via-purple-500 to-amber-500" />
                 <div className="absolute -top-32 -right-32 w-64 h-64 bg-amber-500/10 blur-[80px] rounded-full" />
-                
+
                 {/* Header Badge */}
                 <div className="flex flex-col md:flex-row items-center justify-between gap-8 border-b border-border/50 pb-10">
                     <div className="flex items-center gap-4 text-emerald-500">
@@ -53,7 +53,7 @@ export default async function VerifyCertificatePage({ params }: { params: Promis
                             <h2 className="text-2xl font-black tracking-tight leading-none mt-1">Status: Verified</h2>
                         </div>
                     </div>
-                    
+
                     <div className="text-center md:text-right">
                         <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Authenticity Code</p>
                         <p className="text-xl font-mono font-bold tracking-widest bg-secondary px-4 py-2 rounded-xl text-primary border border-border/50">
@@ -107,13 +107,10 @@ export default async function VerifyCertificatePage({ params }: { params: Promis
                     <FileBadge2 size={32} className="text-muted-foreground opacity-30" />
                     <div>
                         <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-relaxed">
-                            This document is tamper-proof and mathematically verified by InfiniteLMS Global Database.
+                            This document is tamper-proof and mathematically verified by Lebra.Ai Global Database.
                         </p>
                     </div>
-                    <Link 
-                        href={`${process.env.NEXT_PUBLIC_ROOT_DOMAIN?.includes('localhost') || process.env.NEXT_PUBLIC_ROOT_DOMAIN?.includes('lvh.me') ? 'http' : 'https'}://${certificate.course.tenant?.subdomain}.${process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'lvh.me:3000'}`} 
-                        className="text-xs font-bold text-primary hover:underline"
-                    >
+                    <Link href={`http://${certificate.course.tenant?.subdomain}.lvh.me:3000`} className="text-xs font-bold text-primary hover:underline">
                         Return to {certificate.course.tenant?.name} Learning Portal
                     </Link>
                 </div>

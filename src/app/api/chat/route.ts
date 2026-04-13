@@ -36,8 +36,8 @@ export async function POST(req: NextRequest) {
 
         if (!lambdaUrl) {
             // Provide a friendly fallback if they haven't configured their self-hosted LLM yet
-            return NextResponse.json({ 
-                reply: "Hello! I am ready to be your AI assistant. My cognitive engine is currently offline. Please ask the Super Admin to configure the `CHATBOT_API_URL` in Platform Settings to connect me to our proprietary LLM cluster." 
+            return NextResponse.json({
+                reply: "Hello! I am ready to be your AI assistant. My cognitive engine is currently offline. Please ask the Super Admin to configure the `CHATBOT_API_URL` in Platform Settings to connect me to our proprietary LLM cluster."
             });
         }
 
@@ -50,18 +50,18 @@ export async function POST(req: NextRequest) {
                 prisma.user.count(),
                 prisma.tenant.aggregate({ _sum: { customRevenue: true } })
             ]);
-            
-            systemContext = `You are the Super Admin Assistant for InfiniteLMS.
+
+            systemContext = `You are the Super Admin Assistant for Lebra.Ai.
 Current Platform Metrics:
 - Active Tenants: ${tenants}
 - Global Users: ${users}
 - Offline MRR Value: $${revenueRaw._sum.customRevenue || 0}
 Answer questions concisely to help the Super Admin analyze business outcomes.`;
-        } 
-        
+        }
+
         else if (role === 'TENANT_ADMIN') {
             if (!tenantId) throw new Error("Missing tenant ID");
-            
+
             const [users, courses, enrollments] = await Promise.all([
                 prisma.user.count({ where: { tenantId } }),
                 prisma.course.count({ where: { tenantId } }),
@@ -74,8 +74,8 @@ Your Workspace Metrics:
 - Active Courses: ${courses}
 - Total Enrollments: ${enrollments}
 Help the admin analyze learner progress and course metrics within their isolated workspace.`;
-        } 
-        
+        }
+
         else if (role === 'LEARNER') {
             if (!tenantId) throw new Error("Missing tenant ID");
 
@@ -90,7 +90,7 @@ Help the admin analyze learner progress and course metrics within their isolated
                 if (lesson?.transcript) {
                     systemContext += `\n\nYou are currently helping the learner with the lesson titled "${lesson.title}".\nHere is the exact video transcript:\n"${lesson.transcript}"\n\nOnly answer questions based on this transcript material.`;
                 } else if (lesson?.content) {
-                     systemContext += `\n\nYou are currently helping the learner with the lesson titled "${lesson.title}".\nHere is the lesson text:\n"${lesson.content}"`;
+                    systemContext += `\n\nYou are currently helping the learner with the lesson titled "${lesson.title}".\nHere is the lesson text:\n"${lesson.content}"`;
                 }
             }
         }
@@ -115,14 +115,14 @@ Help the admin analyze learner progress and course metrics within their isolated
             }
 
             const data = await response.json();
-            
+
             // Assume the proprietary endpoint returns `{ "reply": "The response string" }`
             return NextResponse.json({ reply: data.reply || data.response || data.message || "My engine successfully processed your prompt, but returned an empty format." });
 
         } catch (fetchError) {
             console.error("Chatbot Error:", fetchError);
-            return NextResponse.json({ 
-                reply: `Error communicating with the proprietary LLM backend. Ensure ${lambdaUrl} is reachable and returning a JSON payload with a 'reply' property.` 
+            return NextResponse.json({
+                reply: `Error communicating with the proprietary LLM backend. Ensure ${lambdaUrl} is reachable and returning a JSON payload with a 'reply' property.`
             });
         }
 

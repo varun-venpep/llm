@@ -3,12 +3,14 @@
 # dependencies
 /node_modules
 /.pnp
+/public/uploads
 .pnp.*
 .yarn/*
 !.yarn/patches
 !.yarn/plugins
 !.yarn/releases
 !.yarn/versions
+*.pdf
 
 # testing
 /coverage
@@ -31,7 +33,7 @@ yarn-error.log*
 .pnpm-debug.log*
 
 # env files (can opt-in for committing if needed)
-#.env*
+.env*
 
 # vercel
 .vercel
@@ -41,9 +43,3 @@ yarn-error.log*
 next-env.d.ts
 
 /src/generated/prisma
-
-# sst
-.sst
-
-# open-next
-.open-next

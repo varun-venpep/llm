@@ -5,8 +5,12 @@ import bcrypt from 'bcryptjs';
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
+<<<<<<< HEAD
         const { password, rememberMe } = body;
         const email = body.email?.toLowerCase();
+=======
+        const { email, password, rememberMe } = body;
+>>>>>>> main
 
         // Platform staff (SUPER_ADMIN and PLATFORM_MANAGER) are linked to the system-level tenant
         const user = await prisma.user.findFirst({

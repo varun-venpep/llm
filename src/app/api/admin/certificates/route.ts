@@ -35,6 +35,32 @@ export async function POST(req: NextRequest) {
         return NextResponse.json(template);
     } catch (error) {
         console.error("Global certificate creation error:", error);
-        return NextResponse.json({ error: 'Failed to create global template' }, { status: 500 });
+    }
+}
+
+export async function DELETE(req: NextRequest) {
+    try {
+        const { searchParams } = new URL(req.url);
+        const id = searchParams.get('id');
+
+        if (!id) {
+            return NextResponse.json({ error: 'Template ID is required' }, { status: 400 });
+        }
+
+        // Ensure we only delete global templates via this admin endpoint
+        await prisma.certificateTemplate.delete({
+            where: {
+                id,
+                isGlobal: true
+            }
+        });
+
+        return NextResponse.json({ success: true });
+    } catch (error: any) {
+        console.error("Global certificate deletion error:", error);
+        return NextResponse.json({
+            error: 'Failed to delete global template',
+            details: error?.message || String(error)
+        }, { status: 500 });
     }
 }

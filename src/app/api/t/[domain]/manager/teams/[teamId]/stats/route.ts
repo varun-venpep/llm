@@ -51,11 +51,11 @@ export async function GET(
 
         // 2. Process Stats
         const members = team.members;
-        const assignments = team.courseAssignments.map((a: any) => a.course);
+        const assignments = team.courseAssignments.map(a => a.course);
 
         // Fetch all progress for these members and courses in one go (batching optimization)
-        const courseIds = assignments.map((c: any) => c.id);
-        const memberIds = members.map((m: any) => m.id);
+        const courseIds = assignments.map(c => c.id);
+        const memberIds = members.map(m => m.id);
 
         const enrollments = await prisma.enrollment.findMany({
             where: {
@@ -69,10 +69,10 @@ export async function GET(
         });
 
         // Map progress for each enrollment
-        const stats = await Promise.all(assignments.map(async (course: any) => {
-            const totalLessons = course.modules.reduce((sum: number, m: any) => sum + m.lessons.length, 0);
-            
-            const memberStats = await Promise.all(members.map(async (member: any) => {
+        const stats = await Promise.all(assignments.map(async (course) => {
+            const totalLessons = course.modules.reduce((sum, m) => sum + m.lessons.length, 0);
+
+            const memberStats = await Promise.all(members.map(async (member) => {
                 // Find lesson progress for this user in this course
                 const progressCount = await prisma.lessonProgress.count({
                     where: {
@@ -83,7 +83,7 @@ export async function GET(
                 });
 
                 const percentage = totalLessons > 0 ? Math.round((progressCount / totalLessons) * 100) : 0;
-                
+
                 return {
                     userId: member.id,
                     name: member.name,
@@ -93,12 +93,12 @@ export async function GET(
                 };
             }));
 
-            const avgProgress = memberStats.length > 0 
-                ? Math.round(memberStats.reduce((sum: number, m: any) => sum + m.progress, 0) / memberStats.length)
+            const avgProgress = memberStats.length > 0
+                ? Math.round(memberStats.reduce((sum, m) => sum + m.progress, 0) / memberStats.length)
                 : 0;
 
             const completionRate = memberStats.length > 0
-                ? Math.round((memberStats.filter((m: any) => m.isCompleted).length / memberStats.length) * 100)
+                ? Math.round((memberStats.filter(m => m.isCompleted).length / memberStats.length) * 100)
                 : 0;
 
             return {

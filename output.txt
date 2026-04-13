@@ -1,0 +1,91 @@
+2305: depth: 1 | <div className="space-y-6">
+2306: depth: 2 | <div className="flex items-center justif
+2307: depth: 3 | <div className="flex p-1 bg-secondary/20
+2308: depth: 3 | {[
+2309: depth: 3 | { id: 'all', label: 'All Courses', count
+2310: depth: 3 | { id: 'published', label: 'Published', c
+2311: depth: 3 | { id: 'draft', label: 'Drafts', count: c
+2312: depth: 3 | ].map((tab) => (
+2313: depth: 3 | <button
+2314: depth: 3 | key={tab.id}
+2315: depth: 3 | onClick={() => setCourseFilter(tab.id as
+2316: depth: 3 | className={`px-4 py-2 rounded-lg text-xs
+2317: depth: 3 | >
+2318: depth: 3 | {tab.label}
+2319: depth: 3 | <span className={`px-1.5 py-0.5 rounded-
+2320: depth: 3 | {tab.count}
+2321: depth: 3 | </span>
+2322: depth: 3 | </button>
+2323: depth: 3 | ))}
+2324: depth: 2 | </div>
+2325: depth: 1 | </div>
+2326: depth: 1 | 
+2327: depth: 2 | <div className="grid grid-cols-1 md:grid
+2328: depth: 2 | {loading ? (
+2329: depth: 1 | <div className="col-span-3 flex justify-
+2330: depth: 1 | ) : courses.filter(c => {
+2331: depth: 1 | if (courseFilter === 'published') return
+2332: depth: 1 | if (courseFilter === 'draft') return !c.
+2333: depth: 1 | return true;
+2334: depth: 1 | }).length === 0 ? (
+2335: depth: 2 | <div className="col-span-3 text-center p
+2336: depth: 2 | <BookOpen className="w-16 h-16 mx-auto m
+2337: depth: 2 | <p className="font-bold text-lg">No {cou
+2338: depth: 2 | <p className="text-muted-foreground text
+2339: depth: 2 | {courseFilter === 'all' ? 'Create your f
+2340: depth: 2 | </p>
+2341: depth: 1 | </div>
+2342: depth: 1 | ) : (
+2343: depth: 1 | courses.filter(c => {
+2344: depth: 1 | if (courseFilter === 'published') return
+2345: depth: 1 | if (courseFilter === 'draft') return !c.
+2346: depth: 1 | return true;
+2347: depth: 1 | }).map((course) => (
+2348: depth: 2 | <div key={course.id} className="group ro
+2349: depth: 3 | <div className="aspect-video bg-gradient
+2350: depth: 3 | {course.thumbnail ? (
+2351: depth: 3 | <img src={course.thumbnail} alt={course.
+2352: depth: 3 | ) : (
+2353: depth: 3 | <BookOpen className="w-12 h-12 text-blue
+2354: depth: 3 | )}
+2355: depth: 4 | <div className="absolute top-3 left-3 fl
+2356: depth: 4 | {course.exclusiveRole && (
+2357: depth: 4 | <span className="px-2 py-1 text-[10px] f
+2358: depth: 4 | <Lock size={10} /> Exclusive: {course.ex
+2359: depth: 4 | </span>
+2360: depth: 4 | )}
+2361: depth: 4 | {course.exclusiveTeam && (
+2362: depth: 4 | <span className="px-2 py-1 text-[10px] f
+2363: depth: 4 | <UsersRound size={10} /> Team: {course.e
+2364: depth: 4 | </span>
+2365: depth: 4 | )}
+2366: depth: 3 | </div>
+2367: depth: 4 | <div className="absolute top-3 right-3">
+2368: depth: 4 | <span className={`px-2 py-1 text-[10px] 
+2369: depth: 4 | {course.isPublished ? 'Published' : 'Dra
+2370: depth: 4 | </span>
+2371: depth: 3 | </div>
+2372: depth: 2 | </div>
+2373: depth: 3 | <div className="p-6">
+2374: depth: 3 | <h3 className="font-bold text-lg leading
+2375: depth: 3 | <p className="text-sm text-muted-foregro
+2376: depth: 4 | <div className="flex justify-between ite
+2377: depth: 4 | <span>{course.modules?.length || 0} modu
+2378: depth: 4 | <span>{course._count?.enrollments || 0} 
+2379: depth: 3 | </div>
+2380: depth: 4 | <div className="flex gap-2">
+2381: depth: 4 | <button onClick={() => fetchCourseDetail
+2382: depth: 4 | <Edit3 size={14} /> Build Content
+2383: depth: 4 | </button>
+2384: depth: 4 | <button onClick={() => togglePublish(cou
+2385: depth: 4 | {course.isPublished ? <EyeOff size={16} 
+2386: depth: 4 | </button>
+2387: depth: 3 | </div>
+2388: depth: 2 | </div>
+2389: depth: 1 | </div>
+2390: depth: 1 | ))
+2391: depth: 1 | )}
+2392: depth: 0 | </div>
+2393: depth: 0 | )}
+2394: depth: -1 | </div>
+2395: depth: -1 | )}

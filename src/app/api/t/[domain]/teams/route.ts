@@ -43,7 +43,7 @@ export async function POST(
         if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
         const { name, description, managerIds = [], memberIds = [], isActive = true } = await req.json();
-        
+
         if (!name) return NextResponse.json({ error: 'Name is required' }, { status: 400 });
 
         const team = await prisma.team.create({
@@ -109,14 +109,14 @@ export async function PUT(
         if (!currentTeam) return NextResponse.json({ error: 'Team not found' }, { status: 404 });
 
         // Diff members
-        const currentMemberIds = currentTeam.members.map((m: any) => m.id);
+        const currentMemberIds = currentTeam.members.map(m => m.id);
         const toConnectMembers = memberIds.filter((mid: string) => !currentMemberIds.includes(mid));
-        const toDisconnectMembers = currentMemberIds.filter((mid: any) => !memberIds.includes(mid));
+        const toDisconnectMembers = currentMemberIds.filter(mid => !memberIds.includes(mid));
 
         // Diff managers
-        const currentManagerIds = currentTeam.managers.map((m: any) => m.id);
+        const currentManagerIds = currentTeam.managers.map(m => m.id);
         const toConnectManagers = managerIds.filter((mid: string) => !currentManagerIds.includes(mid));
-        const toDisconnectManagers = currentManagerIds.filter((mid: any) => !managerIds.includes(mid));
+        const toDisconnectManagers = currentManagerIds.filter(mid => !managerIds.includes(mid));
 
         const team = await prisma.team.update({
             where: { id, tenantId: tenant.id },

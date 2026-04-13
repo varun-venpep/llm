@@ -31,22 +31,22 @@ export async function POST(
         const body = await req.json();
         const { title, description, passingScore, retakeAllowed, maxAttempts, isRandomized, randomCount, questions } = body;
 
-        const result = await prisma.$transaction(async (tx: any) => {
+        const result = await prisma.$transaction(async (tx) => {
             const quiz = await tx.quiz.upsert({
                 where: { lessonId },
-                update: { 
-                    title, 
-                    description, 
+                update: {
+                    title,
+                    description,
                     passingScore: parseInt(passingScore) || 70,
                     retakeAllowed: !!retakeAllowed,
                     maxAttempts: parseInt(maxAttempts) || 0,
                     isRandomized: !!isRandomized,
                     randomCount: parseInt(randomCount) || 0
                 },
-                create: { 
-                    title, 
-                    description, 
-                    passingScore: parseInt(passingScore) || 70, 
+                create: {
+                    title,
+                    description,
+                    passingScore: parseInt(passingScore) || 70,
                     lessonId,
                     retakeAllowed: !!retakeAllowed,
                     maxAttempts: parseInt(maxAttempts) || 0,
