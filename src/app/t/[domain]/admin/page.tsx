@@ -2659,20 +2659,23 @@ export default function ClientAdminDashboard() {
                                                                 <img src={branding[asset.id as keyof typeof branding]!} alt={asset.label} className="max-w-full max-h-full object-contain" />
                                                                 <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity rounded-[1.25rem]">
                                                                     <Upload size={20} className="text-white" />
-                                                                    <div className="w-full h-full flex flex-col items-center justify-center gap-1 opacity-60">
-                                                                        <span className="text-[9px] font-black uppercase tracking-widest">Select Asset</span>
-                                                                    </div>
-                                                        )}
-                                                                </label>
-                                                                {uploadProgress[asset.id] !== undefined && (
-                                                                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-primary/20 rounded-b-[1.25rem] overflow-hidden">
-                                                                        <div className="h-full bg-primary transition-all duration-300" style={{ width: `${uploadProgress[asset.id]}%` }} />
-                                                                    </div>
-                                                                )}
+                                                                </div>
                                                             </div>
+                                                        ) : (
+                                                            <div className="w-full h-full flex flex-col items-center justify-center gap-1 opacity-60">
+                                                                <span className="text-[9px] font-black uppercase tracking-widest">Select Asset</span>
+                                                            </div>
+                                                        )}
+                                                    </label>
+                                                    {uploadProgress[asset.id] !== undefined && (
+                                                        <div className="absolute bottom-0 left-0 right-0 h-1 bg-primary/20 rounded-b-[1.25rem] overflow-hidden">
+                                                            <div className="h-full bg-primary transition-all duration-300" style={{ width: `${uploadProgress[asset.id]}%` }} />
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
                                         ))}
-                                            </div>
+                                    </div>
                                 </section>
 
                                 {/* Real-time Preview */}
@@ -2781,12 +2784,12 @@ export default function ClientAdminDashboard() {
                             <CertificateDesigner
                                 template={editingTemplate}
                                 onBack={() => { setEditingTemplate(null); fetchAvailableTemplates(); }}
-                                onSave={async (id, designFields, backgroundImage) => {
+                                onSave={async (id, designFields) => {
                                     try {
                                         const res = await fetch(`/api/t/${domain}/certificates/${id}`, {
                                             method: 'PATCH',
                                             headers: { 'Content-Type': 'application/json' },
-                                            body: JSON.stringify({ designFields, backgroundImage })
+                                            body: JSON.stringify({ designFields })
                                         });
                                         if (res.ok) {
                                             addToast('Design saved successfully.', 'success');

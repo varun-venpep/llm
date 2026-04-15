@@ -17,13 +17,4 @@ export default async function TenantPage({ params }: { params: Promise<{ domain:
         const rootDomain = process.env.ROOT_DOMAIN || process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'lebra.ai';
         redirect(`https://${rootDomain}/`);
     }
-
-    export default async function TenantPage({ params }: { params: Promise<{ domain: string }> }) {
-        const resolvedParams = await params;
-        return (
-            <div className="flex min-h-screen flex-col items-center justify-center p-24">
-                <h1 className="text-4xl font-bold">Client Workspace: {resolvedParams.domain}</h1>
-                <p className="mt-4 text-xl">Manage your courses and learners here.</p>
-            </div>
-        );
-    }
+}

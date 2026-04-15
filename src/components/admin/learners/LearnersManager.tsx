@@ -5,18 +5,10 @@ import {
     Users, Plus, Trash2, ShieldCheck, Edit3, BarChart3, 
     X, Check, Copy, RefreshCw, Mail, UserCheck, 
     Shield, Briefcase, UsersRound, Loader2, Info,
-<<<<<<< HEAD
     BookOpen, Clock
 } from 'lucide-react';
 import { SearchableSelect } from '../shared/SearchableSelect';
 import { PeopleMultiSelect } from '../shared/PeopleMultiSelect';
-=======
-    BookOpen, Clock, Upload
-} from 'lucide-react';
-import { SearchableSelect } from '../shared/SearchableSelect';
-import { PeopleMultiSelect } from '../shared/PeopleMultiSelect';
-import { BulkUploadModal } from './BulkUploadModal';
->>>>>>> main
 
 interface Learner {
     id: string;
@@ -453,10 +445,6 @@ export function LearnersManager({ domain, addToast }: { domain: string, addToast
     // Insights Panel
     const [insightsLearner, setInsightsLearner] = useState<Learner | null>(null);
     const [isInsightsOpen, setIsInsightsOpen] = useState(false);
-<<<<<<< HEAD
-=======
-    const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
->>>>>>> main
 
     useEffect(() => {
         fetchData();
@@ -618,29 +606,12 @@ export function LearnersManager({ domain, addToast }: { domain: string, addToast
                             <p className="text-sm text-muted-foreground">Manage organizational structure and student access.</p>
                         </div>
                     </div>
-<<<<<<< HEAD
                     <button 
                         onClick={handleOnboard}
                         className="px-6 py-3 bg-primary text-primary-foreground rounded-2xl font-black text-sm uppercase tracking-widest hover:opacity-90 flex items-center gap-2 shadow-xl shadow-primary/20"
                     >
                         <Plus size={18} /> Onboard talent
                     </button>
-=======
-                    <div className="flex items-center gap-3">
-                        <button 
-                            onClick={() => setIsBulkModalOpen(true)}
-                            className="px-6 py-3 bg-secondary text-foreground rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-secondary/80 flex items-center gap-2 border border-border/50"
-                        >
-                            <Upload size={18} /> Bulk Import
-                        </button>
-                        <button 
-                            onClick={handleOnboard}
-                            className="px-6 py-3 bg-primary text-primary-foreground rounded-2xl font-black text-sm uppercase tracking-widest hover:opacity-90 flex items-center gap-2 shadow-xl shadow-primary/20"
-                        >
-                            <Plus size={18} /> Onboard talent
-                        </button>
-                    </div>
->>>>>>> main
                 </div>
 
                 {/* Search & Filters */}
@@ -781,19 +752,6 @@ export function LearnersManager({ domain, addToast }: { domain: string, addToast
                 onClose={() => setIsInsightsOpen(false)}
                 learner={insightsLearner}
             />
-<<<<<<< HEAD
-=======
-
-            <BulkUploadModal 
-                isOpen={isBulkModalOpen}
-                onClose={() => setIsBulkModalOpen(false)}
-                domain={domain}
-                onSuccess={() => {
-                    addToast('Bulk import completed successfully', 'success');
-                    fetchData();
-                }}
-            />
->>>>>>> main
         </div>
     );
 }

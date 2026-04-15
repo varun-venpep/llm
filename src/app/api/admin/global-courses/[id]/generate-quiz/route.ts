@@ -12,8 +12,8 @@ export async function POST(
 
     try {
         // Find the global course
-        const course = await prisma.globalCourse.findUnique({
-            where: { id: courseId },
+        const course = await prisma.course.findUnique({
+            where: { id: courseId, isGlobal: true },
             include: {
                 modules: {
                     include: {
@@ -26,9 +26,9 @@ export async function POST(
         if (!course) return NextResponse.json({ error: 'Global Course not found' }, { status: 404 });
 
         let fullContext = "";
-        
+
         if (lessonId) {
-            const lesson = await prisma.globalLesson.findUnique({
+            const lesson = await prisma.lesson.findUnique({
                 where: { id: lessonId }
             });
             if (lesson) {

@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
     // Secure the API: Only Super Admins or Platform Managers can access global registry
     const sessionId = req.cookies.get('session-token')?.value;
     if (!sessionId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    
+
     const currentUser = await prisma.user.findUnique({
         where: { id: sessionId },
         select: { role: true }
@@ -46,19 +46,11 @@ export async function GET(req: NextRequest) {
             });
 
             const formattedStats = {
-<<<<<<< HEAD
                 SUPER_ADMIN: stats.find((s: any) => s.role === 'SUPER_ADMIN')?._count.id || 0,
                 PLATFORM_MANAGER: stats.find((s: any) => s.role === 'PLATFORM_MANAGER')?._count.id || 0,
                 TENANT_ADMIN: stats.find((s: any) => s.role === 'TENANT_ADMIN')?._count.id || 0,
                 LEARNER: stats.find((s: any) => s.role === 'LEARNER')?._count.id || 0,
                 INSTRUCTOR: stats.find((s: any) => s.role === 'INSTRUCTOR')?._count.id || 0,
-=======
-                SUPER_ADMIN: stats.find(s => s.role === 'SUPER_ADMIN')?._count.id || 0,
-                PLATFORM_MANAGER: stats.find(s => s.role === 'PLATFORM_MANAGER')?._count.id || 0,
-                TENANT_ADMIN: stats.find(s => s.role === 'TENANT_ADMIN')?._count.id || 0,
-                LEARNER: stats.find(s => s.role === 'LEARNER')?._count.id || 0,
-                INSTRUCTOR: stats.find(s => s.role === 'INSTRUCTOR')?._count.id || 0,
->>>>>>> main
             };
 
             return NextResponse.json(formattedStats);
@@ -162,10 +154,10 @@ export async function POST(req: NextRequest) {
             }
         });
 
-        return NextResponse.json({ 
-            success: true, 
+        return NextResponse.json({
+            success: true,
             message: 'Platform staff created successfully',
-            user: { id: newUser.id, email: newUser.email, role: newUser.role } 
+            user: { id: newUser.id, email: newUser.email, role: newUser.role }
         });
 
     } catch (error) {

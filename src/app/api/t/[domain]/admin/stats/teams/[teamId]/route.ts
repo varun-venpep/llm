@@ -45,11 +45,7 @@ export async function GET(
         }
 
         // 2. Process Stats for each user
-<<<<<<< HEAD
         const memberStats = await Promise.all(team.members.map(async (user: any) => {
-=======
-        const memberStats = await Promise.all(team.members.map(async (user) => {
->>>>>>> main
             const enrollments = user.enrollments;
             if (enrollments.length === 0) {
                 return {
@@ -62,18 +58,13 @@ export async function GET(
                 };
             }
 
-<<<<<<< HEAD
             const courseProgresses = await Promise.all(enrollments.map(async (enrol: any) => {
                 const totalLessons = enrol.course.modules.reduce((sum: number, mod: any) => sum + mod._count.lessons, 0);
-=======
-            const courseProgresses = await Promise.all(enrollments.map(async (enrol) => {
-                const totalLessons = enrol.course.modules.reduce((sum, mod) => sum + mod._count.lessons, 0);
->>>>>>> main
                 const completedCount = await prisma.lessonProgress.count({
-                    where: { 
-                        userId: user.id, 
+                    where: {
+                        userId: user.id,
                         lesson: { module: { courseId: enrol.courseId } },
-                        completed: true 
+                        completed: true
                     }
                 });
 
@@ -84,13 +75,8 @@ export async function GET(
                 };
             }));
 
-<<<<<<< HEAD
             const sumProgress = courseProgresses.reduce((sum: number, cp: any) => sum + cp.progress, 0);
             const completions = courseProgresses.filter((cp: any) => cp.isCompleted).length;
-=======
-            const sumProgress = courseProgresses.reduce((sum, cp) => sum + cp.progress, 0);
-            const completions = courseProgresses.filter(cp => cp.isCompleted).length;
->>>>>>> main
 
             return {
                 userId: user.id,
@@ -104,19 +90,11 @@ export async function GET(
 
         const totalMembers = memberStats.length;
         const aggregateAvgProgress = totalMembers > 0
-<<<<<<< HEAD
             ? Math.round(memberStats.reduce((sum: number, ms: any) => sum + ms.avgProgress, 0) / totalMembers)
             : 0;
-        
+
         const totalCompletions = memberStats.reduce((sum: number, ms: any) => sum + ms.completedCourses, 0);
         const totalEnrollments = memberStats.reduce((sum: number, ms: any) => sum + ms.totalCourses, 0);
-=======
-            ? Math.round(memberStats.reduce((sum, ms) => sum + ms.avgProgress, 0) / totalMembers)
-            : 0;
-        
-        const totalCompletions = memberStats.reduce((sum, ms) => sum + ms.completedCourses, 0);
-        const totalEnrollments = memberStats.reduce((sum, ms) => sum + ms.totalCourses, 0);
->>>>>>> main
         const aggregateCompletionRate = totalEnrollments > 0
             ? Math.round((totalCompletions / totalEnrollments) * 100)
             : 0;
