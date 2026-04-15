@@ -61,10 +61,10 @@ export async function GET(
             const courseProgresses = await Promise.all(enrollments.map(async (enrol) => {
                 const totalLessons = enrol.course.modules.reduce((sum, mod) => sum + mod._count.lessons, 0);
                 const completedCount = await prisma.lessonProgress.count({
-                    where: { 
-                        userId: user.id, 
+                    where: {
+                        userId: user.id,
                         lesson: { module: { courseId: enrol.courseId } },
-                        completed: true 
+                        completed: true
                     }
                 });
 
@@ -92,7 +92,7 @@ export async function GET(
         const aggregateAvgProgress = totalMembers > 0
             ? Math.round(memberStats.reduce((sum, ms) => sum + ms.avgProgress, 0) / totalMembers)
             : 0;
-        
+
         const totalCompletions = memberStats.reduce((sum, ms) => sum + ms.completedCourses, 0);
         const totalEnrollments = memberStats.reduce((sum, ms) => sum + ms.totalCourses, 0);
         const aggregateCompletionRate = totalEnrollments > 0

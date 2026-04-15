@@ -24,7 +24,7 @@ export default function AdminLogin() {
         fetch('/api/branding')
             .then(res => res.json())
             .then(data => setBranding(data))
-            .catch(() => {});
+            .catch(() => { });
     }, []);
 
     // Check session but don't auto-redirect (allows switching accounts)
@@ -86,11 +86,11 @@ export default function AdminLogin() {
 
             <div className="w-full max-w-md space-y-8 relative z-10">
                 <div className="text-center space-y-3">
-                    <Image 
-                        src={branding.logoLight || branding.logoPrimary} 
-                        alt={`${branding.name} Logo`} 
-                        width={180} 
-                        height={60} 
+                    <Image
+                        src={branding.logoLight || branding.logoPrimary}
+                        alt={`${branding.name} Logo`}
+                        width={180}
+                        height={60}
                         className="h-12 w-auto object-contain mx-auto mb-4"
                     />
                     <h1 className="text-3xl font-black tracking-tight">{branding.name} Platform</h1>

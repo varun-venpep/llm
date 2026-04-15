@@ -53,14 +53,14 @@ export async function GET(req: NextRequest, { params }: Params) {
         // 3. Calculate Completions
         // A learner is completed if they have LessonProgress records for all lessons in their course
         // This is a bit expensive, but for a global view it's necessary.
-        
+
         let totalCompletions = 0;
-        const learnerStats = [];
+        const learnerStats: any[] = [];
 
         for (const enrollment of enrollments) {
             const allLessonIds = enrollment.course.modules.flatMap(m => m.lessons.map(l => l.id));
             const totalLessons = allLessonIds.length;
-            
+
             if (totalLessons === 0) continue;
 
             const completedLessonsCount = await prisma.lessonProgress.count({
@@ -94,7 +94,7 @@ export async function GET(req: NextRequest, { params }: Params) {
         const tenantBreakdown = claims.map(c => {
             const tenantEnrollments = enrollments.filter(e => e.course.tenantId === c.tenantId);
             const completions = learnerStats.filter(ls => ls.tenantName === c.tenant.name && ls.isCompleted).length;
-            
+
             return {
                 tenantId: c.tenantId,
                 name: c.tenant.name,
@@ -113,7 +113,7 @@ export async function GET(req: NextRequest, { params }: Params) {
             tenantBreakdown
         });
 
-    } catch (e) {
+    } catch (e: any) {
         console.error('Failed to aggregate global course stats:', e);
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }

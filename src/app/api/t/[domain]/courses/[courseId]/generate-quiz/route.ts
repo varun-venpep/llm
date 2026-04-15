@@ -29,7 +29,7 @@ export async function POST(
         if (!course) return NextResponse.json({ error: 'Course not found' }, { status: 404 });
 
         let fullContext = "";
-        
+
         if (lessonId) {
             const lesson = await prisma.lesson.findUnique({
                 where: { id: lessonId }

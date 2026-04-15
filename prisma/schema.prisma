@@ -28,7 +28,11 @@ model Tenant {
   customRevenueCurrency String                @default("USD")
   globalMarketplaceEnabled Boolean            @default(false)
   courseCredits         Int                   @default(0)
+  openaiKey             String?
+  availableLocales      String[]              @default(["en"])
+  defaultLocale         String                @default("en")
   announcements         Announcement[]
+  translations          Translation[]
   users                 User[]
   certificateTemplates  CertificateTemplate[] @relation("TenantTemplates")
   courses               Course[]
@@ -410,4 +414,21 @@ enum Plan {
   STARTER
   PROFESSIONAL
   ENTERPRISE
+}
+
+model Translation {
+  id         String   @id @default(cuid())
+  entityId   String
+  entityType String
+  field      String
+  locale     String
+  value      String   @db.Text
+  status     String   @default("PENDING")
+  tenantId   String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([entityId, entityType, field, locale, tenantId])
 }

@@ -31,7 +31,7 @@ export async function POST(
 
         for (const userData of users) {
             try {
-                const { name, email, role: rawRole, teams: rawTeams, designation, department } = userData;
+                const { name, email, role: rawRole, teams: rawTeams } = userData;
 
                 if (!email || !name) {
                     results.push({ email: email || 'unknown', status: 'error', error: 'Missing name or email' });
@@ -57,7 +57,7 @@ export async function POST(
                 for (const tName of teamNames) {
                     // Check for existing case-insensitive match
                     let team = existingTeams.find(et => et.name.toLowerCase() === tName.toLowerCase());
-                    
+
                     if (!team) {
                         // Create new team if no resemblance found
                         team = await prisma.team.create({
@@ -69,7 +69,7 @@ export async function POST(
                         // Update local cache
                         existingTeams.push(team);
                     }
-                    
+
                     matchedTeamIds.push(team.id);
                     // If user is a manager, they manage these teams
                     if (role === Role.PLATFORM_MANAGER || normalizedRole.includes('manager')) {
@@ -86,8 +86,6 @@ export async function POST(
                     where: { email_tenantId: { email: email.toLowerCase(), tenantId: tenant.id } },
                     update: {
                         name,
-                        designation,
-                        department,
                         role,
                         teams: {
                             set: matchedTeamIds.map(id => ({ id }))
@@ -102,8 +100,6 @@ export async function POST(
                         password: hashedPassword,
                         role,
                         tenantId: tenant.id,
-                        designation,
-                        department,
                         teams: {
                             connect: matchedTeamIds.map(id => ({ id }))
                         },
@@ -157,9 +153,9 @@ export async function POST(
                 data: {
                     userId: session.id,
                     action: 'BULK_USER_IMPORT',
-                    metadata: { 
+                    metadata: {
                         count: results.filter(r => r.status === 'success').length,
-                        errors: results.filter(r => r.status === 'error').length 
+                        errors: results.filter(r => r.status === 'error').length
                     }
                 }
             });

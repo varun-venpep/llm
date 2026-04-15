@@ -92,7 +92,7 @@ export default function SuperAdminCertificates() {
         }
     };
 
-    const filteredTemplates = templates.filter(t => 
+    const filteredTemplates = templates.filter(t =>
         t.name.toLowerCase().includes(search.toLowerCase())
     );
 
@@ -115,8 +115,8 @@ export default function SuperAdminCertificates() {
 
             <div className="relative max-w-md">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <input 
-                    type="text" 
+                <input
+                    type="text"
                     placeholder="Search templates..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
@@ -152,7 +152,7 @@ export default function SuperAdminCertificates() {
                                     <h3 className="font-bold text-lg tracking-tight uppercase">{template.name}</h3>
                                     <p className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Added on {new Date(template.createdAt).toLocaleDateString()}</p>
                                 </div>
-                                <button 
+                                <button
                                     onClick={(e) => {
                                         e.stopPropagation();
                                         if (deletingId === template.id) { deleteTemplate(template.id); }
@@ -180,7 +180,7 @@ export default function SuperAdminCertificates() {
                         <div className="space-y-6">
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Template Name</label>
-                                <input 
+                                <input
                                     type="text"
                                     placeholder="e.g. Modern Achievement"
                                     value={newTemplate.name}
@@ -210,13 +210,13 @@ export default function SuperAdminCertificates() {
                         </div>
 
                         <div className="flex gap-4">
-                            <button 
+                            <button
                                 onClick={() => setShowUpload(false)}
                                 className="flex-1 py-4 bg-secondary text-muted-foreground font-black uppercase tracking-widest text-xs rounded-2xl hover:bg-secondary/80 transition-all"
                             >
                                 Cancel
                             </button>
-                            <button 
+                            <button
                                 onClick={createTemplate}
                                 disabled={!newTemplate.name || !newTemplate.image || uploading}
                                 className="flex-1 py-4 bg-indigo-600 text-white font-black uppercase tracking-widest text-xs rounded-2xl hover:bg-indigo-500 disabled:opacity-50 transition-all shadow-xl shadow-indigo-500/20"

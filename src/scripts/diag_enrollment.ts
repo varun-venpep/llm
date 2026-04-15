@@ -31,26 +31,26 @@ async function checkData() {
   console.log("\nLearners in venpep:");
   for (const s of learners) {
     const enrollment = await prisma.enrollment.findMany({
-        where: { userId: s.id }
+      where: { userId: s.id }
     });
     console.log(`- ${s.name} (${s.email}): ${enrollment.length} enrollments`);
-    
+
     const progress = await prisma.lessonProgress.findMany({
-        where: { userId: s.id },
-        include: { lesson: { include: { module: true } } }
+      where: { userId: s.id },
+      include: { lesson: { include: { module: true } } }
     });
     console.log(`  Progress records: ${progress.length}`);
-    
+
     const distinctCoursesWithProgress = new Set(progress.map(p => p.lesson.module.courseId));
     console.log(`  Courses with progress: ${distinctCoursesWithProgress.size}`);
-    
+
     for (const cid of distinctCoursesWithProgress) {
-        const e = await prisma.enrollment.findUnique({
-            where: { userId_courseId: { userId: s.id, courseId: cid } }
-        });
-        if (!e) {
-            console.log(`  ! MISSING ENROLLMENT for course ID: ${cid}`);
-        }
+      const e = await prisma.enrollment.findUnique({
+        where: { userId_courseId: { userId: s.id, courseId: cid } }
+      });
+      if (!e) {
+        console.log(`  ! MISSING ENROLLMENT for course ID: ${cid}`);
+      }
     }
   }
 }

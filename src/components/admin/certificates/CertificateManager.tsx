@@ -75,6 +75,7 @@ export default function CertificateManager({ domain, addToast, onEditTemplate }:
     };
 
     const deleteTemplate = async (id: string) => {
+        if (!confirm('Are you sure you want to delete this local template?')) return;
         try {
             const res = await fetch(`/api/t/${domain}/certificates/${id}`, { method: 'DELETE' });
             if (res.ok) {
@@ -185,8 +186,6 @@ function TemplateCard({ template, mode, onDelete, onEdit, onDuplicate }: {
     onEdit?: (t: Template) => void,
     onDuplicate?: (t: Template) => void
 }) {
-    const [isConfirming, setIsConfirming] = useState(false);
-
     if (mode === 'list') {
         return (
             <div className="flex items-center gap-6 p-4 glassmorphism rounded-[1.5rem] border border-border/50 hover:border-primary/30 transition-all group">
@@ -200,28 +199,11 @@ function TemplateCard({ template, mode, onDelete, onEdit, onDuplicate }: {
                 <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                     {!template.isGlobal ? (
                         <>
-                            <button 
-                                onClick={(e) => { e.stopPropagation(); onEdit?.(template); }} 
-                                className="p-2.5 bg-primary/10 text-primary rounded-xl hover:bg-primary hover:text-white transition-all"
-                            >
-                                <Edit3 size={16} />
-                            </button>
-                            <button 
-                                onClick={(e) => { 
-                                    e.stopPropagation();
-                                    if (isConfirming) { onDelete?.(template.id); } 
-                                    else { setIsConfirming(true); setTimeout(() => setIsConfirming(false), 3000); }
-                                }} 
-                                className={`p-2.5 rounded-xl transition-all flex items-center gap-2 ${isConfirming ? 'bg-red-500 text-white px-4' : 'bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white'}`}
-                            >
-                                {isConfirming ? <span className="text-[10px] font-black uppercase tracking-widest">Confirm?</span> : <Trash2 size={16} />}
-                            </button>
+                            <button onClick={() => onEdit?.(template)} className="p-2.5 bg-primary/10 text-primary rounded-xl hover:bg-primary hover:text-white transition-all"><Edit3 size={16} /></button>
+                            <button onClick={() => onDelete?.(template.id)} className="p-2.5 bg-red-500/10 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all"><Trash2 size={16} /></button>
                         </>
                     ) : (
-                        <button 
-                            onClick={(e) => { e.stopPropagation(); onDuplicate?.(template); }} 
-                            className="p-2.5 bg-indigo-500/10 text-indigo-400 rounded-xl hover:bg-indigo-500 hover:text-white transition-all flex items-center gap-2 text-[10px] font-black uppercase tracking-widest"
-                        >
+                        <button onClick={() => onDuplicate?.(template)} className="p-2.5 bg-indigo-500/10 text-indigo-400 rounded-xl hover:bg-indigo-500 hover:text-white transition-all flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
                             <Copy size={16} /> Clone to Local
                         </button>
                     )}
@@ -236,17 +218,11 @@ function TemplateCard({ template, mode, onDelete, onEdit, onDuplicate }: {
                 <img src={template.backgroundImage || 'https://images.unsplash.com/photo-1544391682-17fe04257eb0?w=800&auto=format&fit=crop&q=60'} alt={template.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center gap-3">
                     {!template.isGlobal ? (
-                        <button 
-                            onClick={(e) => { e.stopPropagation(); onEdit?.(template); }} 
-                            className="px-6 py-2.5 bg-primary text-primary-foreground font-black uppercase tracking-widest text-[10px] rounded-2xl hover:scale-110 transition-all shadow-xl shadow-primary/20 flex items-center gap-2"
-                        >
+                        <button onClick={() => onEdit?.(template)} className="px-6 py-2.5 bg-primary text-primary-foreground font-black uppercase tracking-widest text-[10px] rounded-2xl hover:scale-110 transition-all shadow-xl shadow-primary/20 flex items-center gap-2">
                             <Edit3 size={16} /> Modify Design
                         </button>
                     ) : (
-                        <button 
-                            onClick={(e) => { e.stopPropagation(); onDuplicate?.(template); }} 
-                            className="px-6 py-2.5 bg-indigo-600 text-white font-black uppercase tracking-widest text-[10px] rounded-2xl hover:scale-110 transition-all shadow-xl shadow-indigo-500/20 flex items-center gap-2"
-                        >
+                        <button onClick={() => onDuplicate?.(template)} className="px-6 py-2.5 bg-indigo-600 text-white font-black uppercase tracking-widest text-[10px] rounded-2xl hover:scale-110 transition-all shadow-xl shadow-indigo-500/20 flex items-center gap-2">
                             <Copy size={16} /> Use This Template
                         </button>
                     )}
@@ -264,15 +240,8 @@ function TemplateCard({ template, mode, onDelete, onEdit, onDuplicate }: {
                     <p className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">{new Date(template.createdAt).toLocaleDateString()}</p>
                 </div>
                 {!template.isGlobal && (
-                    <button 
-                        onClick={(e) => { 
-                            e.stopPropagation();
-                            if (isConfirming) { onDelete?.(template.id); } 
-                            else { setIsConfirming(true); setTimeout(() => setIsConfirming(false), 3000); }
-                        }} 
-                        className={`p-2.5 rounded-xl transition-all flex items-center gap-2 ${isConfirming ? 'bg-red-500 text-white px-4 scale-110 shadow-lg' : 'hover:bg-red-500/10 text-muted-foreground hover:text-red-500 opacity-0 group-hover:opacity-100'}`}
-                    >
-                        {isConfirming ? <span className="text-[10px] font-black uppercase tracking-widest">Confirm?</span> : <Trash2 size={18} />}
+                    <button onClick={() => onDelete?.(template.id)} className="p-2.5 rounded-xl hover:bg-red-500/10 text-muted-foreground hover:text-red-500 transition-all opacity-0 group-hover:opacity-100">
+                        <Trash2 size={18} />
                     </button>
                 )}
             </div>

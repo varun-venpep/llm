@@ -38,7 +38,7 @@ export default async function middleware(req: NextRequest) {
     // --- AUTHENTICATION CHECKS ---
     const sessionToken = req.cookies.get('session-token')?.value;
     const isSuperAdminHost = hostname === `admin.${rootDomain}`;
-    
+
     // 1. Super Admin Auth Guard
     // Only protect if on the admin subdomain OR on root domain it specifically starts with /admin
     const isSuperAdminPath = url.pathname.startsWith('/admin') && !url.pathname.endsWith('/login');
@@ -50,7 +50,7 @@ export default async function middleware(req: NextRequest) {
 
     // 2. Tenant Auth Guard (Dashboard or Admin)
     const isTenantSubdomain = hostname.endsWith(`.${rootDomain}`) && !isSuperAdminHost;
-    
+
     // Check if the path is explicitly a tenant path (e.g., /t/abc/...)
     const isExplicitTenantPath = url.pathname.startsWith('/t/');
     const pathSubdomain = isExplicitTenantPath ? url.pathname.split('/')[2] : null;
@@ -108,7 +108,7 @@ export default async function middleware(req: NextRequest) {
         if (url.pathname.startsWith('/t/') || url.pathname.startsWith('/api/t/')) {
             return NextResponse.next();
         }
-        
+
         // Avoid double /admin prefix if user already included it in URL
         const targetPath = url.pathname.startsWith('/admin') ? path : `/admin${path}`;
         return NextResponse.rewrite(new URL(targetPath, req.url));
@@ -131,12 +131,12 @@ export default async function middleware(req: NextRequest) {
     // Subdomain check (Tenant Workspaces)
     if (hostname.endsWith(`.${rootDomain}`)) {
         const subdomain = hostname.replace(`.${rootDomain}`, '');
-        
+
         // If the path already starts with /t/[subdomain], don't rewrite it again
         if (url.pathname.startsWith(`/t/${subdomain}`)) {
             return NextResponse.next();
         }
-        
+
         return NextResponse.rewrite(new URL(`/t/${subdomain}${path}`, req.url));
     }
 

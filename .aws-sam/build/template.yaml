@@ -1,0 +1,400 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: LLM Staging/Dev Infrastructure - Next.js (Lambda) & Whisper (ECS)
+Parameters:
+  Stage:
+    Type: String
+    Default: dev
+  DatabaseUrl:
+    Type: String
+    NoEcho: true
+  AppDomain:
+    Type: String
+    Default: lebra.ai
+Resources:
+  LmsVpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      Tags:
+      - Key: Name
+        Value:
+          Fn::Sub: llm-${Stage}-vpc
+  LmsInternetGateway:
+    Type: AWS::EC2::InternetGateway
+  VPCGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId:
+        Ref: LmsVpc
+      InternetGatewayId:
+        Ref: LmsInternetGateway
+  PublicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId:
+        Ref: LmsVpc
+      CidrBlock: 10.0.1.0/24
+      AvailabilityZone:
+        Fn::Select:
+        - 0
+        - Fn::GetAZs: ''
+      MapPublicIpOnLaunch: true
+  PublicSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId:
+        Ref: LmsVpc
+      CidrBlock: 10.0.2.0/24
+      AvailabilityZone:
+        Fn::Select:
+        - 1
+        - Fn::GetAZs: ''
+      MapPublicIpOnLaunch: true
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId:
+        Ref: LmsVpc
+  DefaultPublicRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId:
+        Ref: PublicRouteTable
+      DestinationCidrBlock: '0.0.0.0/0'
+      GatewayId:
+        Ref: LmsInternetGateway
+  PublicSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Ref: PublicSubnet1
+      RouteTableId:
+        Ref: PublicRouteTable
+  PublicSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Ref: PublicSubnet2
+      RouteTableId:
+        Ref: PublicRouteTable
+  LmsSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow HTTP traffic
+      VpcId:
+        Ref: LmsVpc
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 80
+        ToPort: 80
+        CidrIp: '0.0.0.0/0'
+      - IpProtocol: tcp
+        FromPort: 3000
+        ToPort: 3000
+        CidrIp: '0.0.0.0/0'
+      - IpProtocol: tcp
+        FromPort: 10000
+        ToPort: 10000
+        CidrIp: '0.0.0.0/0'
+      - IpProtocol: tcp
+        FromPort: 443
+        ToPort: 443
+        CidrIp: '0.0.0.0/0'
+  LmsStorageBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName:
+        Fn::Sub: llm-${Stage}-storage-bucket-${AWS::AccountId}
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: false
+        BlockPublicPolicy: false
+        IgnorePublicAcls: false
+        RestrictPublicBuckets: false
+  LmsWebFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      DockerContext: /Users/vikramthangaraj/Projects/llm
+      DockerTag: latest
+      Dockerfile: Dockerfile
+      SamResourceId: LmsWebFunction
+    Properties:
+      PackageType: Image
+      Architectures:
+      - arm64
+      MemorySize: 1024
+      Timeout: 30
+      Environment:
+        Variables:
+          DATABASE_URL:
+            Ref: DatabaseUrl
+          NEXT_PUBLIC_S3_BUCKET:
+            Ref: LmsStorageBucket
+          NEXT_PUBLIC_ROOT_DOMAIN:
+            Fn::Sub: ${Stage}.${AppDomain}
+          ROOT_DOMAIN:
+            Fn::Sub: ${Stage}.${AppDomain}
+          NODE_TLS_REJECT_UNAUTHORIZED: '0'
+      Events:
+        ApiEvent:
+          Type: HttpApi
+          Properties:
+            Path: /{proxy+}
+            Method: ANY
+      ImageUri: lmswebfunction:latest
+  WhisperRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName:
+        Fn::Sub: llm-${Stage}-whisper-repo
+  LmsEcsCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName:
+        Fn::Sub: llm-${Stage}-cluster
+  WhisperTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family:
+        Fn::Sub: llm-${Stage}-whisper
+      Cpu: 1024
+      Memory: 4096
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+      - FARGATE
+      RuntimePlatform:
+        CpuArchitecture: ARM64
+        OperatingSystemFamily: LINUX
+      ExecutionRoleArn:
+        Fn::GetAtt:
+        - WhisperExecutionRole
+        - Arn
+      ContainerDefinitions:
+      - Name: whisper
+        Image:
+          Fn::Sub: ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${WhisperRepository}:latest
+        Environment:
+        - Name: DATABASE_URL
+          Value:
+            Ref: DatabaseUrl
+        - Name: WHISPER_MODEL_SIZE
+          Value: base
+        LogConfiguration:
+          LogDriver: awslogs
+          Options:
+            awslogs-group:
+              Ref: WhisperLogGroup
+            awslogs-region:
+              Ref: AWS::Region
+            awslogs-stream-prefix: whisper
+        PortMappings:
+        - ContainerPort: 10000
+  WhisperLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName:
+        Fn::Sub: /ecs/llm-${Stage}-whisper
+      RetentionInDays: 7
+  WhisperExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: ecs-tasks.amazonaws.com
+          Action: sts:AssumeRole
+      ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+  WhisperLoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name:
+        Fn::Sub: llm-${Stage}-whisper-alb
+      Subnets:
+      - Ref: PublicSubnet1
+      - Ref: PublicSubnet2
+      SecurityGroups:
+      - Ref: LmsSecurityGroup
+      Scheme: internet-facing
+      Type: application
+  WhisperTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name:
+        Fn::Sub: llm-${Stage}-whisper-tg
+      VpcId:
+        Ref: LmsVpc
+      Port: 10000
+      Protocol: HTTP
+      TargetType: ip
+      HealthCheckPath: /
+      HealthCheckIntervalSeconds: 30
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 2
+  WhisperListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn:
+        Ref: WhisperLoadBalancer
+      Port: 443
+      Protocol: HTTPS
+      Certificates:
+      - CertificateArn:
+          Ref: LmsWildcardCertificate
+      DefaultActions:
+      - Type: forward
+        TargetGroupArn:
+          Ref: WhisperTargetGroup
+  WhisperService:
+    Type: AWS::ECS::Service
+    DependsOn: WhisperListener
+    Properties:
+      Cluster:
+        Ref: LmsEcsCluster
+      ServiceName:
+        Fn::Sub: llm-${Stage}-whisper-service
+      TaskDefinition:
+        Ref: WhisperTaskDefinition
+      DesiredCount: 1
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets:
+          - Ref: PublicSubnet1
+          - Ref: PublicSubnet2
+          SecurityGroups:
+          - Ref: LmsSecurityGroup
+      LoadBalancers:
+      - ContainerName: whisper
+        ContainerPort: 10000
+        TargetGroupArn:
+          Ref: WhisperTargetGroup
+  LmsHostedZone:
+    Type: AWS::Route53::HostedZone
+    Properties:
+      Name:
+        Ref: AppDomain
+  LmsWildcardCertificate:
+    Type: AWS::CertificateManager::Certificate
+    Properties:
+      DomainName:
+        Fn::Sub: '*.${Stage}.${AppDomain}'
+      SubjectAlternativeNames:
+      - Fn::Sub: ${Stage}.${AppDomain}
+      ValidationMethod: DNS
+      DomainValidationOptions:
+      - DomainName:
+          Fn::Sub: '*.${Stage}.${AppDomain}'
+        HostedZoneId:
+          Ref: LmsHostedZone
+  LmsApiCustomDomain:
+    Type: AWS::ApiGatewayV2::DomainName
+    Properties:
+      DomainName:
+        Fn::Sub: '*.${Stage}.${AppDomain}'
+      DomainNameConfigurations:
+      - CertificateArn:
+          Ref: LmsWildcardCertificate
+        EndpointType: REGIONAL
+  LmsRootApiCustomDomain:
+    Type: AWS::ApiGatewayV2::DomainName
+    Properties:
+      DomainName:
+        Fn::Sub: ${Stage}.${AppDomain}
+      DomainNameConfigurations:
+      - CertificateArn:
+          Ref: LmsWildcardCertificate
+        EndpointType: REGIONAL
+  LmsApiMapping:
+    Type: AWS::ApiGatewayV2::ApiMapping
+    Properties:
+      ApiId:
+        Ref: ServerlessHttpApi
+      DomainName:
+        Ref: LmsApiCustomDomain
+      Stage:
+        Ref: ServerlessHttpApiApiGatewayDefaultStage
+  LmsRootApiMapping:
+    Type: AWS::ApiGatewayV2::ApiMapping
+    Properties:
+      ApiId:
+        Ref: ServerlessHttpApi
+      DomainName:
+        Ref: LmsRootApiCustomDomain
+      Stage:
+        Ref: ServerlessHttpApiApiGatewayDefaultStage
+  LmsWildcardDnsRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId:
+        Ref: LmsHostedZone
+      Name:
+        Fn::Sub: '*.${Stage}.${AppDomain}.'
+      Type: A
+      AliasTarget:
+        DNSName:
+          Fn::GetAtt:
+          - LmsApiCustomDomain
+          - RegionalDomainName
+        HostedZoneId:
+          Fn::GetAtt:
+          - LmsApiCustomDomain
+          - RegionalHostedZoneId
+  LmsRootDnsRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId:
+        Ref: LmsHostedZone
+      Name:
+        Fn::Sub: ${Stage}.${AppDomain}.
+      Type: A
+      AliasTarget:
+        DNSName:
+          Fn::GetAtt:
+          - LmsRootApiCustomDomain
+          - RegionalDomainName
+        HostedZoneId:
+          Fn::GetAtt:
+          - LmsRootApiCustomDomain
+          - RegionalHostedZoneId
+  WhisperDnsRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId:
+        Ref: LmsHostedZone
+      Name:
+        Fn::Sub: whisper.${Stage}.${AppDomain}.
+      Type: A
+      AliasTarget:
+        DNSName:
+          Fn::GetAtt:
+          - WhisperLoadBalancer
+          - DNSName
+        HostedZoneId:
+          Fn::GetAtt:
+          - WhisperLoadBalancer
+          - CanonicalHostedZoneID
+Outputs:
+  WebsiteUrl:
+    Description: URL of the Next.js application
+    Value:
+      Fn::Sub: https://${Stage}.${AppDomain}
+  NameServers:
+    Description: Name Servers for GoDaddy configuration
+    Value:
+      Fn::Join:
+      - ', '
+      - Fn::GetAtt:
+        - LmsHostedZone
+        - NameServers
+  WhisperAlbUrl:
+    Description: The internal Load Balancer URL to configure in the LMS UI for Whisper
+      transcription runs
+    Value:
+      Fn::Sub: https://whisper.${Stage}.${AppDomain}

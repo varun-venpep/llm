@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { 
-    X, Upload, FileText, CheckCircle2, AlertCircle, 
-    Download, Loader2, ChevronRight, Users, Shield, 
+import {
+    X, Upload, FileText, CheckCircle2, AlertCircle,
+    Download, Loader2, ChevronRight, Users, Shield,
     Briefcase, Building2, Check
 } from 'lucide-react';
 import Papa from 'papaparse';
@@ -38,11 +38,11 @@ export function BulkUploadModal({ isOpen, onClose, domain, onSuccess, addToast }
         Papa.parse(file, {
             header: true,
             skipEmptyLines: true,
-            complete: (results) => {
+            complete: (results: any) => {
                 setParsedData(results.data);
                 setStep('preview');
             },
-            error: (err) => {
+            error: (err: any) => {
                 addToast('Failed to parse CSV: ' + err.message, 'error');
             }
         });
@@ -50,10 +50,10 @@ export function BulkUploadModal({ isOpen, onClose, domain, onSuccess, addToast }
 
     const downloadTemplate = () => {
         const headers = ['Name', 'Email', 'Role', 'Teams', 'Designation', 'Department'];
-        const csvContent = "data:text/csv;charset=utf-8," + headers.join(',') + "\n" + 
+        const csvContent = "data:text/csv;charset=utf-8," + headers.join(',') + "\n" +
             "John Doe,john@example.com,Learner,\"Marketing, Sales\",Manager,Growth\n" +
             "Jane Smith,jane@example.com,Manager,\"HR\",Lead,People Operations";
-        
+
         const encodedUri = encodeURI(csvContent);
         const link = document.createElement("a");
         link.setAttribute("href", encodedUri);
@@ -66,7 +66,7 @@ export function BulkUploadModal({ isOpen, onClose, domain, onSuccess, addToast }
     const handleUpload = async () => {
         setIsProcessing(true);
         setStep('processing');
-        
+
         try {
             const response = await fetch(`/api/t/${domain}/users/bulk`, {
                 method: 'POST',
@@ -98,7 +98,7 @@ export function BulkUploadModal({ isOpen, onClose, domain, onSuccess, addToast }
         if (!results) return;
         const headers = ['Name', 'Email', 'Role', 'Temporary Password'];
         const rows = results.success.map(u => [u.name, u.email, u.role, u.password]);
-        
+
         const csvContent = Papa.unparse({ fields: headers, data: rows });
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
@@ -113,9 +113,9 @@ export function BulkUploadModal({ isOpen, onClose, domain, onSuccess, addToast }
     return (
         <div className="fixed inset-0 z-[400] flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/60 backdrop-blur-md animate-in fade-in duration-300" onClick={onClose} />
-            
+
             <div className="relative w-full max-w-4xl bg-background border border-border/60 rounded-3xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden animate-in zoom-in-95 duration-300">
-                
+
                 {/* Header */}
                 <div className="px-8 py-6 border-b border-border/40 flex justify-between items-center bg-gradient-to-r from-primary/5 to-transparent">
                     <div className="flex items-center gap-3">
@@ -135,7 +135,7 @@ export function BulkUploadModal({ isOpen, onClose, domain, onSuccess, addToast }
                 <div className="flex-1 overflow-y-auto p-8">
                     {step === 'upload' && (
                         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
-                            <div 
+                            <div
                                 onClick={() => fileInputRef.current?.click()}
                                 className="border-2 border-dashed border-primary/20 rounded-3xl p-16 flex flex-col items-center text-center gap-4 hover:border-primary/40 hover:bg-primary/5 transition-all cursor-pointer group"
                             >
@@ -146,8 +146,8 @@ export function BulkUploadModal({ isOpen, onClose, domain, onSuccess, addToast }
                                     <p className="text-lg font-bold">Drop your CSV file here</p>
                                     <p className="text-sm text-muted-foreground">or click to browse your workstation</p>
                                 </div>
-                                <input 
-                                    type="file" 
+                                <input
+                                    type="file"
                                     ref={fileInputRef}
                                     onChange={handleFileChange}
                                     accept=".csv"
@@ -172,7 +172,7 @@ export function BulkUploadModal({ isOpen, onClose, domain, onSuccess, addToast }
                                     <p className="text-xs text-muted-foreground font-semibold leading-relaxed">
                                         Use our official template to ensure 100% processing accuracy and automatic team routing.
                                     </p>
-                                    <button 
+                                    <button
                                         onClick={downloadTemplate}
                                         className="w-full py-3 bg-secondary hover:bg-secondary/80 rounded-xl text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2 transition-all"
                                     >
@@ -267,7 +267,7 @@ export function BulkUploadModal({ isOpen, onClose, domain, onSuccess, addToast }
                                         <p className="text-2xl font-black text-emerald-400">{results.success.length}</p>
                                         <p className="text-[10px] font-black uppercase tracking-widest text-emerald-500/70">Successful Enrolments</p>
                                     </div>
-                                    <button 
+                                    <button
                                         onClick={downloadPasswords}
                                         className="w-full py-4 bg-emerald-500 text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-lg shadow-emerald-500/20 hover:scale-[1.02] transition-all flex items-center justify-center gap-2"
                                     >
@@ -301,14 +301,14 @@ export function BulkUploadModal({ isOpen, onClose, domain, onSuccess, addToast }
 
                 {/* Footer Actions */}
                 <div className="px-8 py-5 border-t border-border/40 bg-secondary/10 flex justify-end gap-3">
-                    <button 
+                    <button
                         onClick={onClose}
                         className="px-6 py-3 rounded-xl font-bold text-sm text-muted-foreground hover:text-foreground transition-colors"
                     >
                         {step === 'results' ? 'Close Panel' : 'Cancel'}
                     </button>
                     {step === 'preview' && (
-                        <button 
+                        <button
                             onClick={handleUpload}
                             disabled={isProcessing}
                             className="px-8 py-3 bg-primary text-primary-foreground rounded-xl font-black text-sm uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-2"

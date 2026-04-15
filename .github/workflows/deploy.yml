@@ -1,0 +1,120 @@
+name: Platform Deployment AWS
+
+on:
+  push:
+    branches:
+      - main
+      - development
+  workflow_dispatch:
+
+env:
+  AWS_REGION: ap-southeast-1
+
+jobs:
+  build-and-deploy:
+    name: Build & Deploy to AWS
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # -- 1. Setup Environment Variables based on Branch --
+      - name: Set Environment Context
+        id: env-context
+        run: |
+          if [ "${{ github.ref }}" = "refs/heads/development" ]; then
+            echo "STAGE=dev" >> $GITHUB_ENV
+            echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID_DEV }}" >> $GITHUB_ENV
+            echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY_DEV }}" >> $GITHUB_ENV
+            echo "WHISPER_ECR_REPO=llm-dev-whisper-repo" >> $GITHUB_ENV
+          else
+            echo "STAGE=prod" >> $GITHUB_ENV
+            echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID_PROD }}" >> $GITHUB_ENV
+            echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY_PROD }}" >> $GITHUB_ENV
+            echo "WHISPER_ECR_REPO=llm-prod-whisper-repo" >> $GITHUB_ENV
+          fi
+
+      # Diagnostic: Check if mapped secrets are present
+      - name: Verify Authentication State
+        run: |
+          if [ -z "$AWS_ACCESS_KEY_ID" ]; then 
+            echo "❌ CRITICAL: AWS Credentials for Stage '$STAGE' are missing in Github Secrets."
+            exit 1 
+          else 
+            echo "✅ AWS Credentials for Stage '$STAGE' mapped successfully."
+          fi
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      # -- 2. Codebase Prep --
+      - name: Setup Node.js Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install Monorepo Dependencies
+        run: npm install
+
+      - name: Stage Environment Bindings
+        run: |
+          if [ "$STAGE" == "prod" ]; then
+            cp .env.production .env || echo "WARNING: No .env.production found!"
+          else
+            cp .env.development .env || echo "WARNING: No .env.development found!"
+          fi
+
+      - name: Setup Prisma Database Client
+        run: |
+          if [ -f .env ]; then
+            export $(grep -v '^#' .env | xargs)
+          fi
+          npx prisma generate
+
+      # -- 3. Build & push ML Services --
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+        with:
+          mask-password: true
+
+      - name: Build and Push Whisper Service Docker Image (x86_64)
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        run: |
+          echo "Verifying ECR Repository [$WHISPER_ECR_REPO] exists..."
+          aws ecr describe-repositories --repository-names $WHISPER_ECR_REPO || aws ecr create-repository --repository-name $WHISPER_ECR_REPO
+
+          echo "Building Whisper Docker Image natively on Github Runners..."
+          cd whisper-service
+          docker build -t $ECR_REGISTRY/$WHISPER_ECR_REPO:latest .
+          
+          echo "Pushing AI Service securely to Amazon Elastic Container Registry..."
+          docker push $ECR_REGISTRY/$WHISPER_ECR_REPO:latest
+
+      # -- 4. Deploy Core Serverless Framework --
+      - name: Setup AWS Serverless Application Model (SAM CLI)
+        uses: aws-actions/setup-sam@v2
+        with:
+          use-installer: true
+
+      - name: Compile Cloudformation Template (Next.js & API)
+        run: sam build
+
+      - name: Execute Serverless Deployment
+        run: |
+          echo "Deploying AWS Microservices securely to Stage: $STAGE ..."
+          
+          # Inheriting DatabaseURL dynamically from local .env file
+          if [ -f .env ]; then
+            export $(grep -v '^#' .env | xargs)
+            sam deploy --no-confirm-changeset --no-fail-on-empty-changeset --parameter-overrides "Stage=$STAGE DatabaseUrl=\"$DATABASE_URL\""
+          else
+            sam deploy --no-confirm-changeset --no-fail-on-empty-changeset --parameter-overrides "Stage=$STAGE"
+          fi

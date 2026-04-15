@@ -160,7 +160,7 @@ export async function GET(
         const teamPerformance = await Promise.all(teams.map(async (team) => {
             const memberIds = team.members.map(m => m.id);
             if (memberIds.length === 0) return { id: team.id, name: team.name, members: 0, avgProgress: 0, completionRate: 0 };
-            
+
             let totalProgress = 0, totalEnroll = 0, totalComplete = 0;
             for (const member of team.members) {
                 for (const enrol of member.enrollments) {

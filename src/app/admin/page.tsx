@@ -41,14 +41,14 @@ export default function SuperAdminDashboard() {
 
     const handleSpinoff = async (e: React.FormEvent) => {
         e.preventDefault();
-        
+
         // Validation
         const errors: Record<string, string> = {};
         if (!form.name.trim()) errors.name = 'Organization name is required';
         if (!form.subdomain.trim()) errors.subdomain = 'Subdomain is required';
         if (!form.adminEmail.trim()) errors.adminEmail = 'Admin email is required';
         if (!form.adminPassword.trim()) errors.adminPassword = 'Admin password is required';
-        
+
         if (Object.keys(errors).length > 0) {
             setFormErrors(errors);
             return;
@@ -218,7 +218,7 @@ export default function SuperAdminDashboard() {
                                     </div>
                                 ))}
                                 {/* Global Marketplace Toggle */}
-                                <div 
+                                <div
                                     className={`flex items-center justify-between p-4 rounded-2xl border cursor-pointer transition-all ${form.globalMarketplaceEnabled ? 'bg-indigo-500/10 border-indigo-500/30' : 'bg-secondary/30 border-border/50'}`}
                                     onClick={() => setForm({ ...form, globalMarketplaceEnabled: !form.globalMarketplaceEnabled })}
                                 >

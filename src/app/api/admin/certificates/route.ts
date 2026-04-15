@@ -49,16 +49,16 @@ export async function DELETE(req: NextRequest) {
 
         // Ensure we only delete global templates via this admin endpoint
         await prisma.certificateTemplate.delete({
-            where: { 
+            where: {
                 id,
-                isGlobal: true 
+                isGlobal: true
             }
         });
 
         return NextResponse.json({ success: true });
     } catch (error: any) {
         console.error("Global certificate deletion error:", error);
-        return NextResponse.json({ 
+        return NextResponse.json({
             error: 'Failed to delete global template',
             details: error?.message || String(error)
         }, { status: 500 });

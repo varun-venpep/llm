@@ -43,7 +43,7 @@ export async function POST(
         if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
         const { name, description, managerIds = [], memberIds = [], isActive = true } = await req.json();
-        
+
         if (!name) return NextResponse.json({ error: 'Name is required' }, { status: 400 });
 
         const team = await prisma.team.create({

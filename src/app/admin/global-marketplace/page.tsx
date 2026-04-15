@@ -1,11 +1,11 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { 
-    Globe, Plus, Loader2, BookOpen, Users, ChevronRight, 
-    ChevronDown, Trash2, Edit3, CheckCircle2, XCircle, 
-    Eye, EyeOff, Layers, Video, FileText, HelpCircle, 
-    Archive, Mic, ShoppingCart, Sparkles, Settings, BarChart3, 
+import {
+    Globe, Plus, Loader2, BookOpen, Users, ChevronRight,
+    ChevronDown, Trash2, Edit3, CheckCircle2, XCircle,
+    Eye, EyeOff, Layers, Video, FileText, HelpCircle,
+    Archive, Mic, ShoppingCart, Sparkles, Settings, BarChart3,
     Clock, UserCheck, CheckCircle, Info, Activity,
     Calendar, Filter, TrendingUp, Target, Users2,
     Lock, UsersRound, Megaphone, ChevronLeft,
@@ -79,7 +79,7 @@ export default function GlobalMarketplacePage() {
     const [isUploadingThumbnail, setIsUploadingThumbnail] = useState(false);
     const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
     const [validationErrors, setValidationErrors] = useState<any>({});
-    
+
     // Course Form
     const [courseForm, setCourseForm] = useState({
         title: '',
@@ -345,7 +345,7 @@ export default function GlobalMarketplacePage() {
         if (!selectedCourse) return;
         const form = newLessonForms[moduleId];
         if (!form?.title?.trim()) {
-            setValidationErrors(prev => ({ ...prev, [`lesson-${moduleId}`]: { title: 'Title is required' } }));
+            setValidationErrors((prev: any) => ({ ...prev, [`lesson-${moduleId}`]: { title: 'Title is required' } }));
             return;
         }
 
@@ -551,7 +551,7 @@ export default function GlobalMarketplacePage() {
                         <div className="h-6 w-px bg-white/[0.08]" />
                         <nav className="flex gap-6">
                             {(['courses', 'stats', 'claims'] as const).map(tab => (
-                                <button 
+                                <button
                                     key={tab}
                                     onClick={() => {
                                         setActiveTab(tab);
@@ -573,7 +573,7 @@ export default function GlobalMarketplacePage() {
                     /* ── Builder View (100% Stylistic Clone) ── */
                     <div className="space-y-10 animate-in fade-in duration-500">
                         <div>
-                            <button 
+                            <button
                                 onClick={() => setSelectedCourse(null)}
                                 className="flex items-center gap-2.5 text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground hover:text-primary transition-all group mb-6"
                             >
@@ -591,15 +591,15 @@ export default function GlobalMarketplacePage() {
                                     <p className="text-muted-foreground max-w-2xl text-sm leading-relaxed">{selectedCourse.description || "Experimental global curriculum awaiting final structural optimization."}</p>
                                 </div>
                                 <div className="flex flex-wrap gap-2">
-                                    <button onClick={() => { setCourseForm({ ...selectedCourse, description: selectedCourse.description || '' }); setThumbnailPreview(selectedCourse.thumbnail); setShowCourseModal(true); }}
+                                    <button onClick={() => { setCourseForm({ ...selectedCourse, description: selectedCourse.description || '', thumbnail: selectedCourse.thumbnail || '' }); setThumbnailPreview(selectedCourse.thumbnail); setShowCourseModal(true); }}
                                         className="px-4 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest bg-white/[0.03] border border-white/[0.08] text-muted-foreground hover:text-white hover:bg-white/[0.06] transition-all flex items-center gap-2">
                                         <Settings size={14} className="text-indigo-400" /> Course Settings
                                     </button>
-                                    <button 
+                                    <button
                                         onClick={() => fetchCourseStats(selectedCourse.id)}
                                         disabled={loadingStats}
                                         className="px-4 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest bg-white/[0.03] border border-white/[0.08] text-muted-foreground hover:text-white hover:bg-white/[0.06] transition-all flex items-center gap-2 disabled:opacity-50">
-                                        {loadingStats ? <Loader2 size={14} className="animate-spin" /> : <BarChart3 size={14} className="text-purple-400" />} 
+                                        {loadingStats ? <Loader2 size={14} className="animate-spin" /> : <BarChart3 size={14} className="text-purple-400" />}
                                         {loadingStats ? 'Loading...' : 'Statistics'}
                                     </button>
                                     <button onClick={() => togglePublish(selectedCourse)}
@@ -646,7 +646,7 @@ export default function GlobalMarketplacePage() {
                                         <div className="flex-1 flex flex-col">
                                             {editingModuleId === mod.id ? (
                                                 <div className="flex items-center gap-2">
-                                                    <input 
+                                                    <input
                                                         autoFocus
                                                         value={moduleEditTitle}
                                                         onChange={e => setModuleEditTitle(e.target.value)}
@@ -665,19 +665,19 @@ export default function GlobalMarketplacePage() {
                                         </div>
                                         <div className="ml-auto flex items-center gap-2">
                                             <span className="text-xs text-muted-foreground mr-2 font-mono">{mod.lessons?.length || 0} Lessons</span>
-                                            <button 
+                                            <button
                                                 onClick={() => setManagingResources({ id: mod.id, type: 'MODULE', name: mod.title, resources: mod.resources || [] })}
                                                 className="px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all bg-black border border-white/10 text-muted-foreground hover:text-blue-400 hover:border-blue-400/30 flex items-center gap-1.5"
                                             >
                                                 <Archive size={12} /> Resources
                                             </button>
-                                            <button 
+                                            <button
                                                 onClick={() => { setEditingModuleId(mod.id); setModuleEditTitle(mod.title); }}
                                                 className="px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all bg-black border border-white/10 text-muted-foreground hover:text-primary hover:border-primary/30 flex items-center gap-1.5"
                                             >
                                                 <Edit3 size={12} /> Edit
                                             </button>
-                                            <div 
+                                            <div
                                                 onClick={(e) => { e.stopPropagation(); toggleModuleStatus(mod); }}
                                                 className="px-3 py-1.5 rounded-lg bg-black border border-white/10 flex items-center gap-2 cursor-pointer hover:bg-white/5 transition-all select-none"
                                             >
@@ -688,7 +688,7 @@ export default function GlobalMarketplacePage() {
                                                     {mod.isActive ? 'Module Active' : 'Deactivated'}
                                                 </span>
                                             </div>
-                                            <button 
+                                            <button
                                                 onClick={(e) => deleteModule(e, mod.id)}
                                                 className="p-1.5 rounded-lg transition-all bg-black border border-white/10 text-red-500/70 hover:text-red-400 hover:bg-red-500/10"
                                             >
@@ -696,7 +696,7 @@ export default function GlobalMarketplacePage() {
                                             </button>
                                         </div>
                                     </div>
-                                    
+
                                     <div className="p-4 space-y-2">
                                         {mod.lessons?.map((lesson) => (
                                             <div key={lesson.id} className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.02] border border-white/[0.05] group">
@@ -705,7 +705,7 @@ export default function GlobalMarketplacePage() {
                                                 {!lesson.isActive && <span className="text-[10px] bg-red-500/10 text-red-400 border border-red-500/20 rounded-full px-2 py-0.5 font-bold uppercase">Hidden</span>}
                                                 {lesson.videoUrl && <span className="text-[9px] bg-sky-500/10 text-sky-400 border border-sky-500/20 rounded-lg px-2 py-0.5 font-black uppercase tracking-widest">Video Content</span>}
                                                 {lesson.resources?.length > 0 && <span className="text-[9px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-lg px-2 py-0.5 font-black uppercase tracking-widest">{lesson.resources.length} Downloadables</span>}
-                                                
+
                                                 {lesson.type === 'VIDEO' && lesson.transcriptStatus === 'PROCESSING' && (
                                                     <span className="text-[9px] bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-lg px-2 py-0.5 font-black uppercase tracking-widest animate-pulse flex items-center gap-1.5">
                                                         <Clock size={10} /> Transcription Processing
@@ -724,7 +724,7 @@ export default function GlobalMarketplacePage() {
 
                                                 <div className="ml-auto flex items-center gap-2">
                                                     {lesson.type === 'VIDEO' && lesson.transcriptStatus === 'READY' && (
-                                                        <button 
+                                                        <button
                                                             onClick={() => {
                                                                 setActiveQuizLesson({ moduleId: mod.id, lessonId: lesson.id });
                                                                 setQuizForm(lesson.quiz || { title: lesson.title, description: '', passingScore: 70, questions: [], isRandomized: false, randomCount: 0 });
@@ -735,7 +735,7 @@ export default function GlobalMarketplacePage() {
                                                             <span className="text-[9px] font-black uppercase tracking-widest">AI Quiz</span>
                                                         </button>
                                                     )}
-                                                    <div 
+                                                    <div
                                                         onClick={() => toggleLessonStatus(mod.id, lesson)}
                                                         className="px-3 py-1.5 rounded-lg bg-black border border-white/10 flex items-center gap-2 cursor-pointer hover:bg-white/5 transition-all select-none"
                                                     >
@@ -746,7 +746,7 @@ export default function GlobalMarketplacePage() {
                                                             {lesson.isActive ? 'Active' : 'Hidden'}
                                                         </span>
                                                     </div>
-                                                    <button 
+                                                    <button
                                                         onClick={() => {
                                                             setEditingLessonIds(prev => ({ ...prev, [mod.id]: lesson.id }));
                                                             setNewLessonForms(prev => ({ ...prev, [mod.id]: { ...lesson } }));
@@ -756,7 +756,7 @@ export default function GlobalMarketplacePage() {
                                                     >
                                                         <Edit3 size={14} />
                                                     </button>
-                                                    <button 
+                                                    <button
                                                         onClick={(e) => deleteLesson(e, mod.id, lesson.id)}
                                                         className="p-1.5 text-red-500/70 hover:text-red-400 hover:bg-red-500/10 rounded-lg bg-black border border-white/10 transition-all"
                                                     >
@@ -788,7 +788,7 @@ export default function GlobalMarketplacePage() {
 
                                                 <div className="space-y-1">
                                                     <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Lesson Title</label>
-                                                    <input 
+                                                    <input
                                                         className="w-full bg-black border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all font-bold"
                                                         placeholder="e.g. Introduction to React..."
                                                         value={newLessonForms[mod.id]?.title || ''}
@@ -797,7 +797,7 @@ export default function GlobalMarketplacePage() {
                                                 </div>
 
                                                 {newLessonForms[mod.id]?.type === 'TEXT' && (
-                                                    <textarea 
+                                                    <textarea
                                                         placeholder="Lesson text content / instructions..."
                                                         rows={4}
                                                         className="w-full bg-black border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50 resize-none animate-in fade-in duration-300"
@@ -819,10 +819,10 @@ export default function GlobalMarketplacePage() {
                                                                 <p className="text-[9px] text-muted-foreground/50 mt-1">Maximum file size 2GB (Regional replication enabled)</p>
                                                             )}
                                                         </div>
-                                                        <input 
-                                                            type="file" 
-                                                            className="hidden" 
-                                                            id={`main-file-${mod.id}`} 
+                                                        <input
+                                                            type="file"
+                                                            className="hidden"
+                                                            id={`main-file-${mod.id}`}
                                                             onChange={async e => {
                                                                 const file = e.target.files?.[0];
                                                                 if (!file) return;
@@ -851,7 +851,7 @@ export default function GlobalMarketplacePage() {
                                                                     setUploadProgress(prev => ({ ...prev, [mod.id]: undefined as any }));
                                                                 };
                                                                 xhr.send(formData);
-                                                            }} 
+                                                            }}
                                                         />
                                                         <label htmlFor={`main-file-${mod.id}`} className="px-8 py-3 bg-white/[0.05] border border-white/[0.1] rounded-xl text-[10px] font-black uppercase tracking-widest cursor-pointer hover:bg-white/[0.1] transition-all">
                                                             {uploadProgress[mod.id] !== undefined ? `Uploading ${uploadProgress[mod.id]}%` : 'Select File'}
@@ -868,7 +868,7 @@ export default function GlobalMarketplacePage() {
                                                             <p className="text-[10px] font-black uppercase tracking-widest text-white">AI Quiz Whisperer</p>
                                                             <p className="text-[9px] text-muted-foreground/50 max-w-[200px] mx-auto">Generate a master quiz archive using deep learning from global pool.</p>
                                                         </div>
-                                                        <button 
+                                                        <button
                                                             onClick={() => {
                                                                 setActiveQuizLesson({ moduleId: mod.id, lessonId: editingLessonIds[mod.id] || 'new' });
                                                                 setQuizForm({ title: newLessonForms[mod.id].title || 'Untitled Quiz', description: '', passingScore: 70, questions: [], isRandomized: false, randomCount: 0 });
@@ -881,9 +881,9 @@ export default function GlobalMarketplacePage() {
                                                 )}
 
                                                 <div className="flex items-center gap-2 px-1 py-1">
-                                                    <input 
-                                                        type="checkbox" 
-                                                        id={`lesson-active-${mod.id}`} 
+                                                    <input
+                                                        type="checkbox"
+                                                        id={`lesson-active-${mod.id}`}
                                                         checked={newLessonForms[mod.id]?.isActive !== false}
                                                         onChange={e => setNewLessonForms(prev => ({ ...prev, [mod.id]: { ...prev[mod.id], isActive: e.target.checked } }))}
                                                         className="rounded border-white/10 bg-black text-primary"
@@ -911,14 +911,14 @@ export default function GlobalMarketplacePage() {
                                                 <div className="flex items-center justify-between pt-2 border-t border-white/5 mt-2">
                                                     <label className={`flex items-center gap-2 px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg cursor-pointer transition-colors text-xs font-bold text-muted-foreground ${uploadProgress[`res-${mod.id}`] !== undefined ? 'opacity-50 cursor-not-allowed' : ''}`}>
                                                         <Upload size={14} /> Add Downloadable Resource
-                                                        <input 
-                                                            type="file" 
-                                                            className="hidden" 
+                                                        <input
+                                                            type="file"
+                                                            className="hidden"
                                                             disabled={uploadProgress[`res-${mod.id}`] !== undefined}
-                                                            onChange={e => handleResourceUpload(mod.id, e)} 
+                                                            onChange={e => handleResourceUpload(mod.id, e)}
                                                         />
                                                     </label>
-                                                    
+
                                                     <div className="flex items-center gap-2">
                                                         {!editingLessonIds[mod.id] && (
                                                             <button onClick={() => addOrUpdateLesson(mod.id, false)} className="px-3 py-1.5 font-bold rounded-lg text-xs bg-white/5 hover:bg-white/10 transition-colors">
@@ -930,7 +930,7 @@ export default function GlobalMarketplacePage() {
                                                         </button>
                                                     </div>
                                                 </div>
-                                                
+
                                                 {uploadProgress[`res-${mod.id}`] !== undefined && (
                                                     <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden mt-1">
                                                         <div className="h-full bg-primary transition-all duration-300" style={{ width: `${uploadProgress[`res-${mod.id}`]}%` }} />
@@ -938,7 +938,7 @@ export default function GlobalMarketplacePage() {
                                                 )}
                                             </div>
                                         ) : (
-                                            <button 
+                                            <button
                                                 onClick={() => { setActiveLessonForms(prev => ({ ...prev, [mod.id]: true })); setNewLessonForms(prev => ({ ...prev, [mod.id]: { title: '', type: 'TEXT', isActive: true, resources: [] } })); setEditingLessonIds(prev => ({ ...prev, [mod.id]: null })); }}
                                                 className="w-full mt-2 px-4 py-3 border border-dashed border-white/10 hover:border-primary/50 hover:bg-primary/5 text-muted-foreground hover:text-primary font-bold rounded-xl text-sm transition-all flex items-center justify-center gap-2"
                                             >
@@ -950,14 +950,14 @@ export default function GlobalMarketplacePage() {
                             ))}
 
                             <div className="flex gap-3">
-                                <input 
+                                <input
                                     className="flex-1 bg-white/[0.03] border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all font-bold"
                                     placeholder="New module title..."
                                     value={newModuleTitle}
                                     onChange={e => setNewModuleTitle(e.target.value)}
                                     onKeyDown={e => e.key === 'Enter' && addModule(selectedCourse.id)}
                                 />
-                                <button 
+                                <button
                                     onClick={() => addModule(selectedCourse.id)}
                                     className="px-6 py-3 bg-white text-black rounded-xl font-bold text-sm hover:opacity-90 flex items-center gap-2"
                                 >
@@ -1042,40 +1042,40 @@ export default function GlobalMarketplacePage() {
                                                 </div>
                                             </div>
                                         </div>
-                                        
+
                                         <div className="h-72 w-full">
                                             <ResponsiveContainer width="100%" height="100%">
                                                 <AreaChart data={globalStatsOverview.claimGrowth || []} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                                                     <defs>
                                                         <linearGradient id="colorClaims" x1="0" y1="0" x2="0" y2="1">
-                                                            <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
-                                                            <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                                                            <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3} />
+                                                            <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
                                                         </linearGradient>
                                                     </defs>
                                                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.03)" />
-                                                    <XAxis 
-                                                        dataKey="name" 
-                                                        axisLine={false} 
-                                                        tickLine={false} 
-                                                        tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 10, fontWeight: 900 }} 
+                                                    <XAxis
+                                                        dataKey="name"
+                                                        axisLine={false}
+                                                        tickLine={false}
+                                                        tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 10, fontWeight: 900 }}
                                                         dy={10}
                                                     />
-                                                    <YAxis 
-                                                        axisLine={false} 
-                                                        tickLine={false} 
-                                                        tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 10, fontWeight: 900 }} 
+                                                    <YAxis
+                                                        axisLine={false}
+                                                        tickLine={false}
+                                                        tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 10, fontWeight: 900 }}
                                                     />
-                                                    <Tooltip 
+                                                    <Tooltip
                                                         contentStyle={{ backgroundColor: '#0A0A0A', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.1)', fontSize: '12px' }}
                                                         itemStyle={{ fontWeight: 900, textTransform: 'uppercase' }}
                                                     />
-                                                    <Area 
-                                                        type="monotone" 
-                                                        dataKey="claims" 
-                                                        stroke="#6366f1" 
-                                                        strokeWidth={4} 
-                                                        fillOpacity={1} 
-                                                        fill="url(#colorClaims)" 
+                                                    <Area
+                                                        type="monotone"
+                                                        dataKey="claims"
+                                                        stroke="#6366f1"
+                                                        strokeWidth={4}
+                                                        fillOpacity={1}
+                                                        fill="url(#colorClaims)"
                                                     />
                                                 </AreaChart>
                                             </ResponsiveContainer>
@@ -1085,7 +1085,7 @@ export default function GlobalMarketplacePage() {
                                     {/* Distribution View */}
                                     <div className="p-8 rounded-[3rem] border border-white/[0.08] glassmorphism space-y-8">
                                         <h3 className="text-sm font-black uppercase tracking-widest text-white flex items-center gap-3">
-                                            <PieChart className="text-sky-400" size={18} /> Ecosystem Pulse
+                                            <PieChart className="text-sky-400" style={{ width: 18, height: 18 }} /> Ecosystem Pulse
                                         </h3>
                                         <div className="h-64 flex flex-col justify-between items-center relative">
                                             {/* Minimal Pie Logic or Visualization Card */}
@@ -1242,8 +1242,8 @@ export default function GlobalMarketplacePage() {
                         <div className="flex items-center justify-between">
                             <div className="flex gap-2 p-1 bg-white/[0.03] border border-white/[0.08] rounded-xl">
                                 {(['all', 'published', 'draft'] as const).map(f => (
-                                    <button 
-                                        key={f} 
+                                    <button
+                                        key={f}
                                         onClick={() => setCourseFilter(f)}
                                         className={`px-6 py-2 rounded-lg text-xs font-bold transition-all ${courseFilter === f ? 'bg-primary text-black shadow-lg shadow-primary/20' : 'text-muted-foreground hover:text-white'}`}
                                     >
@@ -1251,7 +1251,7 @@ export default function GlobalMarketplacePage() {
                                     </button>
                                 ))}
                             </div>
-                            <button 
+                            <button
                                 onClick={() => {
                                     setCourseForm({ title: '', description: '', thumbnail: '', skillLevel: 'All Levels', isPublished: false });
                                     setThumbnailPreview(null);
@@ -1269,7 +1269,7 @@ export default function GlobalMarketplacePage() {
                                 if (courseFilter === 'draft') return !c.isPublished;
                                 return true;
                             }).map(course => (
-                                <div 
+                                <div
                                     key={course.id}
                                     className="group rounded-3xl overflow-hidden border border-white/[0.08] glassmorphism hover:border-primary/30 transition-all shadow-2xl shadow-black/40"
                                 >
@@ -1290,7 +1290,7 @@ export default function GlobalMarketplacePage() {
                                     <div className="p-6">
                                         <h3 className="font-bold text-lg leading-tight mb-2 truncate">{course.title}</h3>
                                         <p className="text-sm text-muted-foreground mb-6 line-clamp-2 h-10">{course.description || 'Global master curriculum blueprint.'}</p>
-                                        
+
                                         <div className="flex justify-between items-center text-xs text-muted-foreground mb-6">
                                             <span className="flex items-center gap-1.5"><Layers size={12} className="text-primary/40" /> {course.modules?.length || 0} Modules</span>
                                             <span className="flex items-center gap-1.5"><Users size={12} className="text-primary/40" /> {course._count?.marketplaceClaims || 0} Claims</span>
@@ -1323,7 +1323,7 @@ export default function GlobalMarketplacePage() {
                         <form onSubmit={selectedCourse ? updateCourse : createCourse} className="space-y-8">
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-3">Blueprint Title</label>
-                                <input 
+                                <input
                                     className="w-full bg-black border border-white/[0.08] rounded-2xl px-6 py-4 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-primary/10 transition-all"
                                     placeholder="e.g. Advanced System Architecture"
                                     value={courseForm.title}
@@ -1332,7 +1332,7 @@ export default function GlobalMarketplacePage() {
                             </div>
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-3">Mission Abstract</label>
-                                <textarea 
+                                <textarea
                                     rows={3}
                                     className="w-full bg-black border border-white/[0.08] rounded-2xl px-6 py-4 text-sm font-medium focus:outline-none focus:ring-4 focus:ring-primary/10 transition-all resize-none"
                                     placeholder="Define the scope of this global curriculum..."
@@ -1356,7 +1356,7 @@ export default function GlobalMarketplacePage() {
                             </div>
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-3">Difficulty Vector</label>
-                                <select 
+                                <select
                                     className="w-full bg-black border border-white/[0.08] rounded-2xl px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] focus:outline-none appearance-none cursor-pointer"
                                     value={courseForm.skillLevel}
                                     onChange={e => setCourseForm({ ...courseForm, skillLevel: e.target.value })}
@@ -1391,19 +1391,19 @@ export default function GlobalMarketplacePage() {
                             <div className="grid grid-cols-2 gap-8">
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-3">Exam Vector Title</label>
-                                    <input 
+                                    <input
                                         className="w-full bg-black border border-white/[0.08] rounded-2xl px-6 py-5 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-primary/10 transition-all"
                                         value={quizForm.title}
-                                        onChange={e => setQuizForm({...quizForm, title: e.target.value})}
+                                        onChange={e => setQuizForm({ ...quizForm, title: e.target.value })}
                                     />
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-3">Passing Integrity Threshold (%)</label>
-                                    <input 
+                                    <input
                                         type="number"
                                         className="w-full bg-black border border-white/[0.08] rounded-2xl px-6 py-5 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-primary/10 transition-all font-mono"
                                         value={quizForm.passingScore}
-                                        onChange={e => setQuizForm({...quizForm, passingScore: parseInt(e.target.value)})}
+                                        onChange={e => setQuizForm({ ...quizForm, passingScore: parseInt(e.target.value) })}
                                     />
                                 </div>
                             </div>
@@ -1414,7 +1414,7 @@ export default function GlobalMarketplacePage() {
                                         <Layers size={18} className="text-primary" /> Logic Candidates ({quizForm.questions.length})
                                     </h4>
                                     <div className="flex gap-3">
-                                        <button 
+                                        <button
                                             disabled={isGeneratingQuiz}
                                             onClick={generateAIQuiz}
                                             className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition-all flex items-center gap-2 shadow-lg shadow-indigo-500/20 disabled:opacity-30"
@@ -1422,8 +1422,8 @@ export default function GlobalMarketplacePage() {
                                             {isGeneratingQuiz ? <Loader2 size={14} className="animate-spin" /> : <Mic size={14} />}
                                             {isGeneratingQuiz ? 'Neural Mapping...' : 'Whisper AI Generation'}
                                         </button>
-                                        <button 
-                                            onClick={() => setQuizForm({...quizForm, questions: [...quizForm.questions, { text: '', type: 'MULTIPLE_CHOICE', options: [{ text: '', isCorrect: true }, { text: '', isCorrect: false }] }]})}
+                                        <button
+                                            onClick={() => setQuizForm({ ...quizForm, questions: [...quizForm.questions, { text: '', type: 'MULTIPLE_CHOICE', options: [{ text: '', isCorrect: true }, { text: '', isCorrect: false }] }] })}
                                             className="px-6 py-3 bg-white/[0.03] border border-white/[0.08] text-white font-black text-[10px] uppercase tracking-widest rounded-xl hover:bg-white/[0.08] transition-all"
                                         >
                                             Manual Insertion
@@ -1436,45 +1436,45 @@ export default function GlobalMarketplacePage() {
                                         <div key={qIdx} className="p-8 rounded-[2rem] bg-white/[0.01] border border-white/[0.08] space-y-6 group">
                                             <div className="flex justify-between items-start">
                                                 <span className="w-10 h-10 rounded-xl bg-primary/20 text-primary flex items-center justify-center font-black text-xs">V{qIdx + 1}</span>
-                                                <button 
+                                                <button
                                                     onClick={() => {
                                                         const qs = [...quizForm.questions];
                                                         qs.splice(qIdx, 1);
-                                                        setQuizForm({...quizForm, questions: qs});
+                                                        setQuizForm({ ...quizForm, questions: qs });
                                                     }}
                                                     className="p-2 text-muted-foreground hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
                                                 >
                                                     <Trash2 size={18} />
                                                 </button>
                                             </div>
-                                            <input 
+                                            <input
                                                 className="w-full bg-transparent border-b border-white/[0.1] px-0 py-4 text-xl font-black focus:outline-none focus:border-primary transition-all placeholder:text-muted-foreground/10"
                                                 placeholder="State the core inquiry..."
                                                 value={q.text}
                                                 onChange={e => {
                                                     const qs = [...quizForm.questions];
                                                     qs[qIdx].text = e.target.value;
-                                                    setQuizForm({...quizForm, questions: qs});
+                                                    setQuizForm({ ...quizForm, questions: qs });
                                                 }}
                                             />
                                             <div className="grid grid-cols-2 gap-4">
                                                 {q.options.map((opt: any, oIdx: number) => (
                                                     <div key={oIdx} className="flex items-center gap-3 bg-black border border-white/[0.05] p-4 rounded-xl">
-                                                        <div 
+                                                        <div
                                                             onClick={() => {
                                                                 const qs = [...quizForm.questions];
                                                                 qs[qIdx].options = qs[qIdx].options.map((o: any, idx: number) => ({ ...o, isCorrect: idx === oIdx }));
-                                                                setQuizForm({...quizForm, questions: qs});
+                                                                setQuizForm({ ...quizForm, questions: qs });
                                                             }}
                                                             className={`w-5 h-5 rounded-full border-2 transition-all cursor-pointer ${opt.isCorrect ? 'border-emerald-500 bg-emerald-500/20' : 'border-white/10'}`}
                                                         />
-                                                        <input 
+                                                        <input
                                                             className="flex-1 bg-transparent text-sm font-bold focus:outline-none"
                                                             value={opt.text}
                                                             onChange={e => {
                                                                 const qs = [...quizForm.questions];
                                                                 qs[qIdx].options[oIdx].text = e.target.value;
-                                                                setQuizForm({...quizForm, questions: qs});
+                                                                setQuizForm({ ...quizForm, questions: qs });
                                                             }}
                                                         />
                                                     </div>
@@ -1519,7 +1519,7 @@ export default function GlobalMarketplacePage() {
                                             {res.size && <span>• {(res.size / (1024 * 1024)).toFixed(2)} MB</span>}
                                         </div>
                                     </div>
-                                    <button 
+                                    <button
                                         onClick={() => deleteTargetResource(res.id)}
                                         disabled={isDeletingResource === res.id}
                                         className="p-2 text-muted-foreground hover:text-red-400 transition-colors disabled:opacity-30"
@@ -1541,20 +1541,20 @@ export default function GlobalMarketplacePage() {
                                 <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
                                     {uploadProgress[`res-${managingResources.id}`] !== undefined ? `Compiling Asset ${uploadProgress[`res-${managingResources.id}`]}%` : 'Inject New Global Resource'}
                                 </span>
-                                <input 
-                                    type="file" 
-                                    className="hidden" 
+                                <input
+                                    type="file"
+                                    className="hidden"
                                     onChange={async (e) => {
                                         const file = e.target.files?.[0];
                                         if (!file) return;
-                                        
+
                                         const formData = new FormData();
                                         formData.append('file', file);
                                         formData.append('parentId', managingResources.id);
                                         formData.append('parentType', managingResources.type);
 
                                         setUploadProgress(prev => ({ ...prev, [`res-${managingResources.id}`]: 0 }));
-                                        
+
                                         try {
                                             const res = await fetch(`/api/admin/global-courses/${selectedCourse?.id}/resources`, {
                                                 method: 'POST',
@@ -1571,7 +1571,7 @@ export default function GlobalMarketplacePage() {
                                         } finally {
                                             setUploadProgress(prev => ({ ...prev, [`res-${managingResources.id}`]: undefined as any }));
                                         }
-                                    }} 
+                                    }}
                                 />
                             </label>
                         </div>

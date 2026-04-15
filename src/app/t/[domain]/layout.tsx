@@ -25,22 +25,21 @@ export async function generateMetadata({ params }: { params: Promise<{ domain: s
 
 export default async function TenantLayout({ children, params }: LayoutProps) {
     const { domain } = await params;
-    
+
     // We can also fetch branding colors here and inject them as CSS variables if needed
     const tenant = await prisma.tenant.findUnique({
         where: { subdomain: domain }
     });
 
-    const branding = tenant?.branding as any || {};
-    const primaryColor = branding.primaryColor || '#3b82f6';
-    const secondaryColor = branding.secondaryColor || '#1f2937';
+    const primaryColor = (tenant as any)?.primaryColor || '#3b82f6';
+    const secondaryColor = '#1f2937'; // Consistent dark theme secondary
 
     return (
-        <div 
+        <div
             className="min-h-screen bg-background"
-            style={{ 
+            style={{
                 '--primary-brand': primaryColor,
-                '--secondary-brand': secondaryColor 
+                '--secondary-brand': secondaryColor
             } as any}
         >
             {children}

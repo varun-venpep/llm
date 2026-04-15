@@ -16,7 +16,7 @@ import { getGlobalBranding } from "@/lib/branding";
 
 export async function generateMetadata(): Promise<Metadata> {
   const branding = await getGlobalBranding();
-  
+
   return {
     title: `${branding.name} | Multi-Tenant Learning Platform`,
     description: `The ultimate white-label learning management system for scaling your training business with ${branding.name}.`,

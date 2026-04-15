@@ -18,18 +18,18 @@ export default function LandingPage() {
     fetch('/api/branding')
       .then(res => res.json())
       .then(data => setBranding(data))
-      .catch(() => {});
+      .catch(() => { });
   }, []);
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground selection:bg-purple-500/30">
       {/* Header */}
       <header className="fixed top-0 z-50 w-full glassmorphism px-6 py-4 flex justify-between items-center">
         <div className="flex items-center gap-2">
-          <Image 
-            src={branding.logoPrimary} 
-            alt={`${branding.name} Logo`} 
-            width={120} 
-            height={40} 
+          <Image
+            src={branding.logoPrimary}
+            alt={`${branding.name} Logo`}
+            width={120}
+            height={40}
             className="h-8 w-auto object-contain"
           />
         </div>
@@ -167,11 +167,11 @@ export default function LandingPage() {
       <footer className="py-12 border-t border-border mt-auto">
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:row-center justify-between gap-8 items-center text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
-            <Image 
-              src={branding.logoPrimary} 
-              alt={`${branding.name} Logo`} 
-              width={100} 
-              height={32} 
+            <Image
+              src={branding.logoPrimary}
+              alt={`${branding.name} Logo`}
+              width={100}
+              height={32}
               className="h-6 w-auto object-contain brightness-0 invert"
             />
           </div>

@@ -14,17 +14,17 @@ export async function PUT(
         // 1. Update Tenant Basic Info
         const updatedTenant = await prisma.tenant.update({
             where: { id: tenantId },
-                data: {
-                    name,
-                    subdomain,
-                    isActive,
-                    aiCredits: aiCredits !== undefined ? parseInt(String(aiCredits), 10) : undefined,
-                    customRevenue: customRevenue !== undefined ? parseInt(String(customRevenue), 10) : undefined,
-                    customRevenueCurrency: customRevenueCurrency || undefined,
-                    globalMarketplaceEnabled: globalMarketplaceEnabled !== undefined ? Boolean(globalMarketplaceEnabled) : undefined,
-                    courseCredits: courseCredits !== undefined ? parseInt(String(courseCredits), 10) : undefined
-                }
-            });
+            data: {
+                name,
+                subdomain,
+                isActive,
+                aiCredits: aiCredits !== undefined ? parseInt(String(aiCredits), 10) : undefined,
+                customRevenue: customRevenue !== undefined ? parseInt(String(customRevenue), 10) : undefined,
+                customRevenueCurrency: customRevenueCurrency || undefined,
+                globalMarketplaceEnabled: globalMarketplaceEnabled !== undefined ? Boolean(globalMarketplaceEnabled) : undefined,
+                courseCredits: courseCredits !== undefined ? parseInt(String(courseCredits), 10) : undefined
+            }
+        });
 
         // 2. Handle Admin User Updates (Email/Password)
         if (adminEmail || newPassword) {
@@ -62,7 +62,7 @@ export async function DELETE(
 ) {
     const { id: tenantId } = await params;
     try {
-        const tenant = await prisma.tenant.findUnique({ 
+        const tenant = await prisma.tenant.findUnique({
             where: { id: tenantId },
             include: {
                 users: { select: { id: true } },
@@ -95,10 +95,10 @@ export async function DELETE(
             // 2. Delete tenant-level entities
             await tx.announcement.deleteMany({ where: { tenantId } });
             await tx.certificateTemplate.deleteMany({ where: { tenantId } });
-            
+
             // 3. Delete Courses (Modules/Lessons should cascade if defined in schema, but being safe)
             await tx.course.deleteMany({ where: { tenantId } });
-            
+
             // 4. Delete Users
             await tx.user.deleteMany({ where: { tenantId } });
 

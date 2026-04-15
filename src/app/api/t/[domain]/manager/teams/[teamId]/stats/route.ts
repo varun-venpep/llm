@@ -71,7 +71,7 @@ export async function GET(
         // Map progress for each enrollment
         const stats = await Promise.all(assignments.map(async (course) => {
             const totalLessons = course.modules.reduce((sum, m) => sum + m.lessons.length, 0);
-            
+
             const memberStats = await Promise.all(members.map(async (member) => {
                 // Find lesson progress for this user in this course
                 const progressCount = await prisma.lessonProgress.count({
@@ -83,7 +83,7 @@ export async function GET(
                 });
 
                 const percentage = totalLessons > 0 ? Math.round((progressCount / totalLessons) * 100) : 0;
-                
+
                 return {
                     userId: member.id,
                     name: member.name,
@@ -93,7 +93,7 @@ export async function GET(
                 };
             }));
 
-            const avgProgress = memberStats.length > 0 
+            const avgProgress = memberStats.length > 0
                 ? Math.round(memberStats.reduce((sum, m) => sum + m.progress, 0) / memberStats.length)
                 : 0;
 

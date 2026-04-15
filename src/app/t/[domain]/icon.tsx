@@ -1,18 +1,19 @@
 import { ImageResponse } from 'next/og';
 import { prisma } from '@/lib/prisma';
 
-export const runtime = 'edge';
+// Switching to nodejs runtime to support Prisma/Crypto modules
+export const runtime = 'nodejs';
 export const contentType = 'image/png';
 export const size = { width: 32, height: 32 };
 
 export default async function Icon({ params }: { params: Promise<{ domain: string }> }) {
     const { domain } = await params;
-    
+
     const tenant = await prisma.tenant.findUnique({
         where: { subdomain: domain }
     });
 
-    if (!tenant?.branding?.favicon) {
+    if (!tenant?.favicon) {
         // Return a default icon if none set (e.g., a colored circle with first letter)
         return new ImageResponse(
             (
@@ -41,10 +42,10 @@ export default async function Icon({ params }: { params: Promise<{ domain: strin
     // for security and performance.
     return new ImageResponse(
         (
-            <img 
-                src={tenant.branding.favicon} 
-                width="32" 
-                height="32" 
+            <img
+                src={tenant.favicon}
+                width="32"
+                height="32"
                 style={{ borderRadius: '20%' }}
             />
         ),

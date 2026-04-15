@@ -35,7 +35,7 @@ export default function AdminLayout({
         fetch('/api/branding')
             .then(res => res.json())
             .then(data => setBranding(data))
-            .catch(() => {});
+            .catch(() => { });
     }, []);
 
     // If we are on the login page (global or tenant), don't show the dashboard layout
@@ -64,11 +64,11 @@ export default function AdminLayout({
                 <div className="h-full flex flex-col">
                     <div className="p-6 border-b border-white/5 flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                            <Image 
-                                src={branding.logoPrimary} 
-                                alt={`${branding.name} Logo`} 
-                                width={120} 
-                                height={40} 
+                            <Image
+                                src={branding.logoPrimary}
+                                alt={`${branding.name} Logo`}
+                                width={120}
+                                height={40}
                                 className="h-8 w-auto object-contain"
                             />
                         </div>
