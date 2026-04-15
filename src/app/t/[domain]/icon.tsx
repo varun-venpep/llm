@@ -1,7 +1,8 @@
 import { ImageResponse } from 'next/og';
 import { prisma } from '@/lib/prisma';
 
-export const runtime = 'edge';
+// Switching to nodejs runtime to support Prisma/Crypto modules
+export const runtime = 'nodejs';
 export const contentType = 'image/png';
 export const size = { width: 32, height: 32 };
 

@@ -21,9 +21,8 @@ import { TeamsManager } from '@/components/admin/teams/TeamsManager';
 import { LearnersManager } from '@/components/admin/learners/LearnersManager';
 import CertificateManager from '@/components/admin/certificates/CertificateManager';
 import CertificateDesigner from '@/components/admin/certificates/CertificateDesigner';
-import GlobalMarketplaceView from '@/components/admin/GlobalMarketplaceView';
 
-type Tab = 'overview' | 'courses' | 'learners' | 'announcements' | 'branding' | 'domains' | 'settings' | 'certificates' | 'reports' | 'roles' | 'teams' | 'audit' | 'global-marketplace';
+type Tab = 'overview' | 'courses' | 'learners' | 'announcements' | 'branding' | 'domains' | 'settings' | 'certificates' | 'reports' | 'roles' | 'teams' | 'audit';
 
 // Toast Types
 type ToastType = 'success' | 'error' | 'info';
@@ -92,7 +91,6 @@ export default function ClientAdminDashboard() {
         avgProgress: 0,
         avgQuizScore: 0
     });
-    const [globalMarketplaceEnabled, setGlobalMarketplaceEnabled] = useState(false);
     const [courses, setCourses] = useState<any[]>([]);
     const [announcements, setAnnouncements] = useState<any[]>([]);
     const [recentActivity, setRecentActivity] = useState<any[]>([]);
@@ -110,8 +108,8 @@ export default function ClientAdminDashboard() {
     const [availableRoles, setAvailableRoles] = useState<any[]>([]);
     const [availableTeams, setAvailableTeams] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
-    const [branding, setBranding] = useState({
-        name: domain.charAt(0).toUpperCase() + domain.slice(1),
+    const [branding, setBranding] = useState({ 
+        name: domain.charAt(0).toUpperCase() + domain.slice(1), 
         primaryColor: '#3b82f6',
         logoLight: null as string | null,
         logoDark: null as string | null,
@@ -120,16 +118,16 @@ export default function ClientAdminDashboard() {
 
     // Course Builder state
     const [showCourseModal, setShowCourseModal] = useState(false);
-    const [courseFilter, setCourseFilter] = useState<'all' | 'published' | 'draft' | 'claimed'>('all');
-    const [courseForm, setCourseForm] = useState({
-        title: '',
-        description: '',
-        thumbnail: '',
-        skillLevel: 'All Levels',
-        languages: 'English',
-        captions: false,
-        isMarketplace: false,
-        exclusiveRoleId: '',
+    const [courseFilter, setCourseFilter] = useState<'all' | 'published' | 'draft'>('all');
+    const [courseForm, setCourseForm] = useState({ 
+        title: '', 
+        description: '', 
+        thumbnail: '', 
+        skillLevel: 'All Levels', 
+        languages: 'English', 
+        captions: false, 
+        isMarketplace: false, 
+        exclusiveRoleId: '', 
         exclusiveTeamId: '',
         certificateEnabled: false,
         certificateTemplateId: ''
@@ -191,11 +189,13 @@ export default function ClientAdminDashboard() {
     const [selectedAnnouncement, setSelectedAnnouncement] = useState<any | null>(null);
     const [announcementPage, setAnnouncementPage] = useState(1);
     const ANNOUNCEMENTS_PER_PAGE = 5;
+    
     // Audit state
     const [auditLogs, setAuditLogs] = useState<any[]>([]);
     const [auditPagination, setAuditPagination] = useState({ total: 0, pages: 1, currentPage: 1, limit: 20 });
     const [auditLoading, setAuditLoading] = useState(false);
     const [auditSearch, setAuditSearch] = useState('');
+    
     // Audit Details State
     const [selectedLogMetadata, setSelectedLogMetadata] = useState<any | null>(null);
     const [insightsUserId, setInsightsUserId] = useState<string | null>(null);
@@ -245,9 +245,9 @@ export default function ClientAdminDashboard() {
     const handleLogoUpload = async (file: File, type: 'logoLight' | 'logoDark' | 'favicon') => {
         const formData = new FormData();
         formData.append('file', file);
-
+        
         setUploadProgress(prev => ({ ...prev, [type]: 0 }));
-
+        
         try {
             // Simulate progress for smoother UI since fetch doesn't support ProgressEvent easily without XHR
             const progressInterval = setInterval(() => {
@@ -265,9 +265,9 @@ export default function ClientAdminDashboard() {
                 method: 'POST',
                 body: formData
             });
-
+            
             clearInterval(progressInterval);
-
+            
             if (res.ok) {
                 const data = await res.json();
                 setBranding(prev => ({ ...prev, [type]: data.url }));
@@ -293,6 +293,7 @@ export default function ClientAdminDashboard() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(branding)
             });
+            
             if (res.ok) {
                 addToast('Branding settings saved', 'success');
             } else {
@@ -376,6 +377,7 @@ export default function ClientAdminDashboard() {
                 return;
             }
             const { user } = await sessionRes.json();
+            
             // Double check role
             if (user.role === 'LEARNER') {
                 router.push(`/t/${domain}/dashboard`);
@@ -386,14 +388,13 @@ export default function ClientAdminDashboard() {
             setUserName(user.name || 'Admin');
             setUserEmail(user.email || '');
 
-            const [statsRes, coursesRes, annRes, rolesRes, teamsRes, certsRes, tenantRes] = await Promise.all([
+            const [statsRes, coursesRes, annRes, rolesRes, teamsRes, certsRes] = await Promise.all([
                 fetch(`/api/t/${domain}/admin/stats`),
                 fetch(`/api/t/${domain}/courses`),
                 fetch(`/api/t/${domain}/announcements`),
                 fetch(`/api/t/${domain}/roles`),
                 fetch(`/api/t/${domain}/teams`),
-                fetch(`/api/t/${domain}/certificates`),
-                fetch(`/api/t/${domain}/tenant-settings`)
+                fetch(`/api/t/${domain}/certificates`)
             ]);
 
             if (statsRes.ok) {
@@ -411,10 +412,6 @@ export default function ClientAdminDashboard() {
             if (rolesRes.ok) setAvailableRoles(await rolesRes.json());
             if (teamsRes.ok) setAvailableTeams(await teamsRes.json());
             if (certsRes.ok) setAvailableTemplates(await certsRes.json());
-            if (tenantRes?.ok) {
-                const tenantData = await tenantRes.json();
-                setGlobalMarketplaceEnabled(tenantData.globalMarketplaceEnabled || false);
-            }
 
         } catch (e) {
             console.error(e);
@@ -565,15 +562,15 @@ export default function ClientAdminDashboard() {
             });
             if (res.ok) {
                 setShowCourseModal(false);
-                setCourseForm({
-                    title: '',
-                    description: '',
-                    thumbnail: '',
-                    skillLevel: 'All Levels',
-                    languages: 'English',
-                    captions: false,
-                    isMarketplace: false,
-                    exclusiveRoleId: '',
+                setCourseForm({ 
+                    title: '', 
+                    description: '', 
+                    thumbnail: '', 
+                    skillLevel: 'All Levels', 
+                    languages: 'English', 
+                    captions: false, 
+                    isMarketplace: false, 
+                    exclusiveRoleId: '', 
                     exclusiveTeamId: '',
                     certificateEnabled: false,
                     certificateTemplateId: ''
@@ -1305,9 +1302,9 @@ export default function ClientAdminDashboard() {
                 <div className="flex items-center gap-3 px-2">
                     {(branding.logoDark || branding.logoLight) ? (
                         <div className="h-14 w-auto min-w-[3rem] flex items-center justify-center bg-transparent">
-                            <img
-                                src={mounted ? (resolvedTheme === 'dark' ? (branding.logoDark || branding.logoLight!) : (branding.logoLight || branding.logoDark!)) : (branding.logoDark || branding.logoLight!)}
-                                alt={branding.name}
+                            <img 
+                                src={mounted ? (resolvedTheme === 'dark' ? (branding.logoDark || branding.logoLight!) : (branding.logoLight || branding.logoDark!)) : (branding.logoDark || branding.logoLight!)} 
+                                alt={branding.name} 
                                 className="h-full w-auto object-contain"
                             />
                         </div>
@@ -1325,18 +1322,17 @@ export default function ClientAdminDashboard() {
                 <nav className="space-y-1 flex-1">
                     {([
                         ['overview', 'Overview', LayoutDashboard],
+                        ['courses', 'Courses', BookOpen],
                         ['learners', 'Learners', Users],
                         ['roles', 'Job Roles', Shield],
                         ['teams', 'Teams', UsersRound],
-                        ['courses', 'Courses', BookOpen],
-                        ['global-marketplace', 'Global Marketplace', Globe],
-                        ['certificates', 'Certificates', Award],
-                        ['reports', 'Reports', BarChart3],
-                        ['audit', 'Audit Monitor', Shield],
                         ['announcements', 'Announcements', Megaphone],
                         ['branding', 'Branding', Palette],
                         ['domains', 'Domains', Globe],
                         ['settings', 'Settings', Settings],
+                        ['certificates', 'Certificates', Award],
+                        ['reports', 'Reports', BarChart3],
+                        ['audit', 'Audit Monitor', Shield],
                     ] as [Tab, string, any][]).map(([tab, label, Icon]) => (
                         <button key={tab} onClick={() => { setActiveTab(tab); setSelectedCourse(null); }}
                             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === tab ? 'bg-primary/10 text-primary border border-primary/20' : 'text-muted-foreground hover:bg-secondary/50 hover:text-foreground'}`}>
@@ -1356,9 +1352,7 @@ export default function ClientAdminDashboard() {
             <main className="flex-1 p-8 overflow-auto">
                 <header className="flex justify-between items-center mb-8">
                     <h2 className="text-2xl font-black uppercase tracking-tight">
-                        {activeTab === 'global-marketplace' ? 'Global Marketplace' :
-                            activeTab === 'audit' ? 'Audit Monitor' :
-                                activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
+                        {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
                     </h2>
                     <div className="flex items-center gap-4">
                         {activeTab === 'courses' && !selectedCourse && (
@@ -1385,7 +1379,7 @@ export default function ClientAdminDashboard() {
                             </button>
                             <button
                                 onClick={async () => {
-                                    await fetch(`/api/logout`, { method: 'POST' }).catch(() => { });
+                                    await fetch(`/api/logout`, { method: 'POST' }).catch(() => {});
                                     localStorage.removeItem(`${domain}_userId`);
                                     router.push(`/t/${domain}/login`);
                                 }}
@@ -2012,7 +2006,6 @@ export default function ClientAdminDashboard() {
                                             { id: 'all', label: 'All Courses', count: courses.length },
                                             { id: 'published', label: 'Published', count: courses.filter(c => c.isPublished).length },
                                             { id: 'draft', label: 'Drafts', count: courses.filter(c => !c.isPublished).length },
-                                            { id: 'claimed', label: 'Claimed', count: courses.filter(c => !!c.clonedFromId).length },
                                         ].map((tab) => (
                                             <button
                                                 key={tab.id}
@@ -2034,7 +2027,6 @@ export default function ClientAdminDashboard() {
                                     ) : courses.filter(c => {
                                         if (courseFilter === 'published') return c.isPublished;
                                         if (courseFilter === 'draft') return !c.isPublished;
-                                        if (courseFilter === 'claimed') return !!c.clonedFromId;
                                         return true;
                                     }).length === 0 ? (
                                         <div className="col-span-3 text-center py-20 border-2 border-dashed border-border/50 rounded-3xl bg-secondary/5">
@@ -2048,7 +2040,6 @@ export default function ClientAdminDashboard() {
                                         courses.filter(c => {
                                             if (courseFilter === 'published') return c.isPublished;
                                             if (courseFilter === 'draft') return !c.isPublished;
-                                            if (courseFilter === 'claimed') return !!c.clonedFromId;
                                             return true;
                                         }).map((course) => (
                                             <div key={course.id} className="group rounded-3xl overflow-hidden border border-border/50 glassmorphism hover:border-primary/30 transition-all">
@@ -2059,11 +2050,6 @@ export default function ClientAdminDashboard() {
                                                         <BookOpen className="w-12 h-12 text-blue-400 opacity-40 group-hover:scale-110 transition-transform duration-500" />
                                                     )}
                                                     <div className="absolute top-3 left-3 flex flex-col gap-1.5 pointer-events-none">
-                                                        {course.clonedFromId && (
-                                                            <span className="px-2 py-1 text-[10px] font-black uppercase rounded-lg bg-amber-500/20 border border-amber-500/30 text-amber-400 backdrop-blur-md flex items-center gap-1 shadow-2xl">
-                                                                <Globe size={10} /> Global Marketplace
-                                                            </span>
-                                                        )}
                                                         {course.exclusiveRole && (
                                                             <span className="px-2 py-1 text-[10px] font-black uppercase rounded-lg bg-indigo-500/20 border border-indigo-500/30 text-indigo-400 backdrop-blur-md flex items-center gap-1 shadow-2xl">
                                                                 <Lock size={10} /> Exclusive: {course.exclusiveRole.name}
@@ -2188,251 +2174,251 @@ export default function ClientAdminDashboard() {
                 {activeTab === 'reports' && (() => {
                     const CHART_COLORS = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#ec4899'];
                     return (
-                        <div className="space-y-6 animate-in fade-in duration-500 pb-10">
+                    <div className="space-y-6 animate-in fade-in duration-500 pb-10">
 
-                            {/* ── Filter Bar ── */}
-                            <div className="glassmorphism rounded-2xl border border-border/50 p-4 flex flex-col lg:flex-row items-start lg:items-center gap-4 flex-wrap">
-                                <div className="flex items-center gap-2 text-muted-foreground font-bold text-sm shrink-0">
-                                    <Filter size={16} /> Filters
+                        {/* ── Filter Bar ── */}
+                        <div className="glassmorphism rounded-2xl border border-border/50 p-4 flex flex-col lg:flex-row items-start lg:items-center gap-4 flex-wrap">
+                            <div className="flex items-center gap-2 text-muted-foreground font-bold text-sm shrink-0">
+                                <Filter size={16} /> Filters
+                            </div>
+                            <div className="flex items-center gap-2 flex-wrap flex-1">
+                                <div className="flex items-center gap-2 bg-secondary/40 border border-border/50 rounded-xl px-3 py-2">
+                                    <Calendar size={14} className="text-muted-foreground" />
+                                    <input type="date" value={reportStartDate} onChange={e => setReportStartDate(e.target.value)}
+                                        className="bg-transparent text-sm focus:outline-none w-32" />
+                                    <span className="text-muted-foreground text-xs">to</span>
+                                    <input type="date" value={reportEndDate} onChange={e => setReportEndDate(e.target.value)}
+                                        className="bg-transparent text-sm focus:outline-none w-32" />
                                 </div>
-                                <div className="flex items-center gap-2 flex-wrap flex-1">
-                                    <div className="flex items-center gap-2 bg-secondary/40 border border-border/50 rounded-xl px-3 py-2">
-                                        <Calendar size={14} className="text-muted-foreground" />
-                                        <input type="date" value={reportStartDate} onChange={e => setReportStartDate(e.target.value)}
-                                            className="bg-transparent text-sm focus:outline-none w-32" />
-                                        <span className="text-muted-foreground text-xs">to</span>
-                                        <input type="date" value={reportEndDate} onChange={e => setReportEndDate(e.target.value)}
-                                            className="bg-transparent text-sm focus:outline-none w-32" />
-                                    </div>
-                                    <select value={reportTeamId} onChange={e => { setReportTeamId(e.target.value); setReportRoleId(''); }}
-                                        className="bg-secondary/40 border border-border/50 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50">
-                                        <option value="">All Teams</option>
-                                        {availableTeams.map((t: any) => <option key={t.id} value={t.id}>{t.name}</option>)}
-                                    </select>
-                                    <select value={reportRoleId} onChange={e => { setReportRoleId(e.target.value); setReportTeamId(''); }}
-                                        className="bg-secondary/40 border border-border/50 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50">
-                                        <option value="">All Roles</option>
-                                        {availableRoles.map((r: any) => <option key={r.id} value={r.id}>{r.name}</option>)}
-                                    </select>
-                                    <button onClick={() => fetchReportStats(reportStartDate, reportEndDate, reportTeamId, reportRoleId)}
-                                        className="px-4 py-2 bg-primary text-primary-foreground font-bold rounded-xl text-sm hover:opacity-90 transition-all flex items-center gap-2">
-                                        {reportLoading ? <Loader2 size={14} className="animate-spin" /> : <Activity size={14} />}
-                                        Apply
+                                <select value={reportTeamId} onChange={e => { setReportTeamId(e.target.value); setReportRoleId(''); }}
+                                    className="bg-secondary/40 border border-border/50 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50">
+                                    <option value="">All Teams</option>
+                                    {availableTeams.map((t: any) => <option key={t.id} value={t.id}>{t.name}</option>)}
+                                </select>
+                                <select value={reportRoleId} onChange={e => { setReportRoleId(e.target.value); setReportTeamId(''); }}
+                                    className="bg-secondary/40 border border-border/50 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50">
+                                    <option value="">All Roles</option>
+                                    {availableRoles.map((r: any) => <option key={r.id} value={r.id}>{r.name}</option>)}
+                                </select>
+                                <button onClick={() => fetchReportStats(reportStartDate, reportEndDate, reportTeamId, reportRoleId)}
+                                    className="px-4 py-2 bg-primary text-primary-foreground font-bold rounded-xl text-sm hover:opacity-90 transition-all flex items-center gap-2">
+                                    {reportLoading ? <Loader2 size={14} className="animate-spin" /> : <Activity size={14} />}
+                                    Apply
+                                </button>
+                                {(reportStartDate || reportEndDate || reportTeamId || reportRoleId) && (
+                                    <button onClick={() => { setReportStartDate(''); setReportEndDate(''); setReportTeamId(''); setReportRoleId(''); fetchReportStats('', '', '', ''); }}
+                                        className="text-xs font-bold text-red-400 hover:text-red-300 px-2">
+                                        Clear
                                     </button>
-                                    {(reportStartDate || reportEndDate || reportTeamId || reportRoleId) && (
-                                        <button onClick={() => { setReportStartDate(''); setReportEndDate(''); setReportTeamId(''); setReportRoleId(''); fetchReportStats('', '', '', ''); }}
-                                            className="text-xs font-bold text-red-400 hover:text-red-300 px-2">
-                                            Clear
-                                        </button>
-                                    )}
-                                </div>
-                                {reportLoading && <span className="text-xs text-muted-foreground animate-pulse">Updating…</span>}
+                                )}
                             </div>
-
-                            {/* ── KPI Cards ── */}
-                            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
-                                {[
-                                    { label: 'Learners', value: stats.learners, icon: Users2, color: 'blue' },
-                                    { label: 'Courses', value: stats.courses, icon: BookOpen, color: 'purple' },
-                                    { label: 'Enrollments', value: stats.enrollments, icon: Target, color: 'cyan' },
-                                    { label: 'Completions', value: stats.completions ?? 0, icon: CheckCircle, color: 'emerald' },
-                                    { label: 'Completion Rate', value: `${stats.completionRate}%`, icon: TrendingUp, color: 'green' },
-                                    { label: 'Avg Progress', value: `${stats.avgProgress}%`, icon: BarChart3, color: 'orange' },
-                                ].map(({ label, value, icon: Icon, color }) => (
-                                    <div key={label} className={`glassmorphism p-4 rounded-2xl border border-${color}-500/20 hover:border-${color}-500/40 transition-colors`}>
-                                        <div className={`w-8 h-8 rounded-xl bg-${color}-500/10 text-${color}-400 flex items-center justify-center mb-3`}>
-                                            <Icon size={16} />
-                                        </div>
-                                        <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{label}</p>
-                                        <p className="text-2xl font-black mt-0.5">{value}</p>
-                                    </div>
-                                ))}
-                            </div>
-
-                            {/* ── Charts Row ── */}
-                            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-                                {/* Enrollment Trend */}
-                                <div className="xl:col-span-2 glassmorphism rounded-2xl border border-border/50 p-6">
-                                    <div className="flex items-center justify-between mb-4">
-                                        <h3 className="font-bold flex items-center gap-2 text-sm uppercase tracking-widest text-muted-foreground">
-                                            <TrendingUp size={14} className="text-blue-400" /> Enrollment Trend (6 months)
-                                        </h3>
-                                    </div>
-                                    {enrollmentTrendData.length > 0 ? (
-                                        <ResponsiveContainer width="100%" height={200}>
-                                            <AreaChart data={enrollmentTrendData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
-                                                <defs>
-                                                    <linearGradient id="enrollGrad" x1="0" y1="0" x2="0" y2="1">
-                                                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                                                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                                                    </linearGradient>
-                                                </defs>
-                                                <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" />
-                                                <XAxis dataKey="date" stroke="#ffffff40" fontSize={11} tickLine={false} axisLine={false} />
-                                                <YAxis stroke="#ffffff40" fontSize={11} tickLine={false} axisLine={false} />
-                                                <Tooltip contentStyle={{ backgroundColor: '#09090b', borderRadius: '12px', borderColor: '#ffffff15', fontSize: 12 }} cursor={{ fill: '#ffffff05' }} />
-                                                <Area type="monotone" dataKey="enrollments" name="New Enrollments" stroke="#3b82f6" fill="url(#enrollGrad)" strokeWidth={2} dot={false} />
-                                            </AreaChart>
-                                        </ResponsiveContainer>
-                                    ) : (
-                                        <div className="h-48 flex items-center justify-center text-muted-foreground text-sm italic">No enrollment data in the last 6 months</div>
-                                    )}
-                                </div>
-
-                                {/* Role Distribution */}
-                                <div className="glassmorphism rounded-2xl border border-border/50 p-6">
-                                    <h3 className="font-bold flex items-center gap-2 text-sm uppercase tracking-widest text-muted-foreground mb-4">
-                                        <Users2 size={14} className="text-purple-400" /> Role Distribution
-                                    </h3>
-                                    {roleDistribution.filter(r => r.value > 0).length > 0 ? (
-                                        <>
-                                            <ResponsiveContainer width="100%" height={140}>
-                                                <PieChart>
-                                                    <Pie data={roleDistribution.filter(r => r.value > 0)} cx="50%" cy="50%" innerRadius={40} outerRadius={65} dataKey="value" paddingAngle={4}>
-                                                        {roleDistribution.filter(r => r.value > 0).map((_: any, i: number) => (
-                                                            <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
-                                                        ))}
-                                                    </Pie>
-                                                    <Tooltip contentStyle={{ backgroundColor: '#09090b', borderRadius: '12px', borderColor: '#ffffff15', fontSize: 11 }} />
-                                                </PieChart>
-                                            </ResponsiveContainer>
-                                            <div className="mt-2 space-y-1.5">
-                                                {roleDistribution.filter(r => r.value > 0).map((r: any, i: number) => (
-                                                    <div key={r.name} className="flex items-center justify-between text-xs">
-                                                        <div className="flex items-center gap-2">
-                                                            <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }} />
-                                                            <span className="text-muted-foreground font-medium truncate max-w-[100px]">{r.name}</span>
-                                                        </div>
-                                                        <span className="font-bold">{r.value}</span>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </>
-                                    ) : (
-                                        <div className="h-48 flex items-center justify-center text-muted-foreground text-sm italic">No roles assigned</div>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* ── Course Performance ── */}
-                            <div className="glassmorphism rounded-2xl border border-border/50 overflow-hidden">
-                                <div className="p-5 border-b border-border/50 flex justify-between items-center bg-secondary/10">
-                                    <h3 className="font-bold flex items-center gap-2 text-sm uppercase tracking-widest text-muted-foreground">
-                                        <BarChart3 size={14} className="text-primary" /> Course Performance
-                                    </h3>
-                                    <button className="px-3 py-1.5 bg-secondary/60 hover:bg-secondary border border-border/50 rounded-xl text-[10px] font-bold flex items-center gap-1.5 transition-all text-muted-foreground">
-                                        <Download size={11} /> Export CSV
-                                    </button>
-                                </div>
-                                <div className="overflow-x-auto">
-                                    <table className="w-full text-left">
-                                        <thead>
-                                            <tr className="bg-secondary/10 border-b border-border/50">
-                                                {['Course', 'Enrollments', 'Completions', 'Completion Rate', 'Avg Progress'].map(h => (
-                                                    <th key={h} className="px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-muted-foreground whitespace-nowrap">{h}</th>
-                                                ))}
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-border/30">
-                                            {coursePerformance.length === 0 ? (
-                                                <tr><td colSpan={5} className="py-16 text-center text-muted-foreground italic text-sm">No course data yet</td></tr>
-                                            ) : coursePerformance.map((c: any) => {
-                                                const rate = c.enrollments > 0 ? Math.round((c.completions / c.enrollments) * 100) : 0;
-                                                return (
-                                                    <tr key={c.id} className="hover:bg-secondary/10 transition-colors">
-                                                        <td className="px-5 py-3.5 font-bold text-sm">{c.title}</td>
-                                                        <td className="px-5 py-3.5 text-center font-mono text-sm text-muted-foreground">{c.enrollments}</td>
-                                                        <td className="px-5 py-3.5 text-center font-mono text-sm text-emerald-400">{c.completions}</td>
-                                                        <td className="px-5 py-3.5">
-                                                            <div className="flex items-center gap-2">
-                                                                <div className="flex-1 h-1.5 bg-secondary/50 rounded-full overflow-hidden min-w-[60px]">
-                                                                    <div className="h-full bg-emerald-500 transition-all" style={{ width: `${rate}%` }} />
-                                                                </div>
-                                                                <span className="text-[11px] font-bold text-emerald-400 w-8">{rate}%</span>
-                                                            </div>
-                                                        </td>
-                                                        <td className="px-5 py-3.5">
-                                                            <div className="flex items-center gap-2">
-                                                                <div className="flex-1 h-1.5 bg-secondary/50 rounded-full overflow-hidden min-w-[60px]">
-                                                                    <div className="h-full bg-primary transition-all" style={{ width: `${c.avgProgress}%` }} />
-                                                                </div>
-                                                                <span className="text-[11px] font-bold text-primary w-8">{c.avgProgress}%</span>
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                );
-                                            })}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-
-                            {/* ── Team Performance + Top Learners ── */}
-                            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                                {/* Team Performance */}
-                                <div className="glassmorphism rounded-2xl border border-border/50 overflow-hidden">
-                                    <div className="p-5 border-b border-border/50 bg-secondary/10">
-                                        <h3 className="font-bold flex items-center gap-2 text-sm uppercase tracking-widest text-muted-foreground">
-                                            <UsersRound size={14} className="text-cyan-400" /> Team Performance
-                                        </h3>
-                                    </div>
-                                    <div className="divide-y divide-border/30">
-                                        {teamPerformance.length === 0 ? (
-                                            <div className="py-12 text-center text-muted-foreground italic text-sm">No teams configured</div>
-                                        ) : teamPerformance.map((t: any, idx: number) => (
-                                            <div key={t.id} className="flex items-center gap-4 px-5 py-3.5 hover:bg-secondary/10 transition-colors">
-                                                <span className="text-xs font-black text-muted-foreground w-5">#{idx + 1}</span>
-                                                <div className="flex-1 min-w-0">
-                                                    <p className="font-bold text-sm truncate">{t.name}</p>
-                                                    <p className="text-[10px] text-muted-foreground">{t.members} member{t.members !== 1 ? 's' : ''}</p>
-                                                </div>
-                                                <div className="text-right space-y-1 min-w-[120px]">
-                                                    <div className="flex items-center gap-2 justify-end">
-                                                        <div className="w-20 h-1 bg-secondary/50 rounded-full overflow-hidden">
-                                                            <div className="h-full bg-cyan-500 transition-all" style={{ width: `${t.avgProgress}%` }} />
-                                                        </div>
-                                                        <span className="text-[11px] font-bold text-cyan-400 w-7">{t.avgProgress}%</span>
-                                                    </div>
-                                                    <p className="text-[10px] text-muted-foreground text-right">{t.completionRate}% complete</p>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                {/* Top Learners */}
-                                <div className="glassmorphism rounded-2xl border border-border/50 overflow-hidden">
-                                    <div className="p-5 border-b border-border/50 bg-secondary/10">
-                                        <h3 className="font-bold flex items-center gap-2 text-sm uppercase tracking-widest text-muted-foreground">
-                                            <Medal size={14} className="text-amber-400" /> Top Learners
-                                        </h3>
-                                    </div>
-                                    <div className="divide-y divide-border/30">
-                                        {topLearners.length === 0 ? (
-                                            <div className="py-12 text-center text-muted-foreground italic text-sm">No learner data yet</div>
-                                        ) : topLearners.slice(0, 8).map((l: any, idx: number) => (
-                                            <div key={l.id} className="flex items-center gap-3 px-5 py-3 hover:bg-secondary/10 transition-colors">
-                                                <span className={`text-xs font-black w-5 ${idx === 0 ? 'text-amber-400' : idx === 1 ? 'text-slate-300' : idx === 2 ? 'text-amber-700' : 'text-muted-foreground'}`}>#{idx + 1}</span>
-                                                <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-black text-primary shrink-0">
-                                                    {(l.name || l.email)[0].toUpperCase()}
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <p className="font-bold text-xs truncate">{l.name}</p>
-                                                    <p className="text-[10px] text-muted-foreground">{l.completedCourses}/{l.totalCourses} courses</p>
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                    <div className="w-16 h-1 bg-secondary/50 rounded-full overflow-hidden">
-                                                        <div className="h-full bg-amber-400 transition-all" style={{ width: `${l.avgProgress}%` }} />
-                                                    </div>
-                                                    <span className="text-[11px] font-bold text-amber-400 w-7">{l.avgProgress}%</span>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-
+                            {reportLoading && <span className="text-xs text-muted-foreground animate-pulse">Updating…</span>}
                         </div>
+
+                        {/* ── KPI Cards ── */}
+                        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
+                            {[
+                                { label: 'Learners', value: stats.learners, icon: Users2, color: 'blue' },
+                                { label: 'Courses', value: stats.courses, icon: BookOpen, color: 'purple' },
+                                { label: 'Enrollments', value: stats.enrollments, icon: Target, color: 'cyan' },
+                                { label: 'Completions', value: stats.completions ?? 0, icon: CheckCircle, color: 'emerald' },
+                                { label: 'Completion Rate', value: `${stats.completionRate}%`, icon: TrendingUp, color: 'green' },
+                                { label: 'Avg Progress', value: `${stats.avgProgress}%`, icon: BarChart3, color: 'orange' },
+                            ].map(({ label, value, icon: Icon, color }) => (
+                                <div key={label} className={`glassmorphism p-4 rounded-2xl border border-${color}-500/20 hover:border-${color}-500/40 transition-colors`}>
+                                    <div className={`w-8 h-8 rounded-xl bg-${color}-500/10 text-${color}-400 flex items-center justify-center mb-3`}>
+                                        <Icon size={16} />
+                                    </div>
+                                    <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{label}</p>
+                                    <p className="text-2xl font-black mt-0.5">{value}</p>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* ── Charts Row ── */}
+                        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                            {/* Enrollment Trend */}
+                            <div className="xl:col-span-2 glassmorphism rounded-2xl border border-border/50 p-6">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="font-bold flex items-center gap-2 text-sm uppercase tracking-widest text-muted-foreground">
+                                        <TrendingUp size={14} className="text-blue-400" /> Enrollment Trend (6 months)
+                                    </h3>
+                                </div>
+                                {enrollmentTrendData.length > 0 ? (
+                                    <ResponsiveContainer width="100%" height={200}>
+                                        <AreaChart data={enrollmentTrendData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+                                            <defs>
+                                                <linearGradient id="enrollGrad" x1="0" y1="0" x2="0" y2="1">
+                                                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
+                                                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                                                </linearGradient>
+                                            </defs>
+                                            <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" />
+                                            <XAxis dataKey="date" stroke="#ffffff40" fontSize={11} tickLine={false} axisLine={false} />
+                                            <YAxis stroke="#ffffff40" fontSize={11} tickLine={false} axisLine={false} />
+                                            <Tooltip contentStyle={{ backgroundColor: '#09090b', borderRadius: '12px', borderColor: '#ffffff15', fontSize: 12 }} cursor={{ fill: '#ffffff05' }} />
+                                            <Area type="monotone" dataKey="enrollments" name="New Enrollments" stroke="#3b82f6" fill="url(#enrollGrad)" strokeWidth={2} dot={false} />
+                                        </AreaChart>
+                                    </ResponsiveContainer>
+                                ) : (
+                                    <div className="h-48 flex items-center justify-center text-muted-foreground text-sm italic">No enrollment data in the last 6 months</div>
+                                )}
+                            </div>
+
+                            {/* Role Distribution */}
+                            <div className="glassmorphism rounded-2xl border border-border/50 p-6">
+                                <h3 className="font-bold flex items-center gap-2 text-sm uppercase tracking-widest text-muted-foreground mb-4">
+                                    <Users2 size={14} className="text-purple-400" /> Role Distribution
+                                </h3>
+                                {roleDistribution.filter(r => r.value > 0).length > 0 ? (
+                                    <>
+                                        <ResponsiveContainer width="100%" height={140}>
+                                            <PieChart>
+                                                <Pie data={roleDistribution.filter(r => r.value > 0)} cx="50%" cy="50%" innerRadius={40} outerRadius={65} dataKey="value" paddingAngle={4}>
+                                                    {roleDistribution.filter(r => r.value > 0).map((_: any, i: number) => (
+                                                        <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
+                                                    ))}
+                                                </Pie>
+                                                <Tooltip contentStyle={{ backgroundColor: '#09090b', borderRadius: '12px', borderColor: '#ffffff15', fontSize: 11 }} />
+                                            </PieChart>
+                                        </ResponsiveContainer>
+                                        <div className="mt-2 space-y-1.5">
+                                            {roleDistribution.filter(r => r.value > 0).map((r: any, i: number) => (
+                                                <div key={r.name} className="flex items-center justify-between text-xs">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }} />
+                                                        <span className="text-muted-foreground font-medium truncate max-w-[100px]">{r.name}</span>
+                                                    </div>
+                                                    <span className="font-bold">{r.value}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div className="h-48 flex items-center justify-center text-muted-foreground text-sm italic">No roles assigned</div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* ── Course Performance ── */}
+                        <div className="glassmorphism rounded-2xl border border-border/50 overflow-hidden">
+                            <div className="p-5 border-b border-border/50 flex justify-between items-center bg-secondary/10">
+                                <h3 className="font-bold flex items-center gap-2 text-sm uppercase tracking-widest text-muted-foreground">
+                                    <BarChart3 size={14} className="text-primary" /> Course Performance
+                                </h3>
+                                <button className="px-3 py-1.5 bg-secondary/60 hover:bg-secondary border border-border/50 rounded-xl text-[10px] font-bold flex items-center gap-1.5 transition-all text-muted-foreground">
+                                    <Download size={11} /> Export CSV
+                                </button>
+                            </div>
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left">
+                                    <thead>
+                                        <tr className="bg-secondary/10 border-b border-border/50">
+                                            {['Course', 'Enrollments', 'Completions', 'Completion Rate', 'Avg Progress'].map(h => (
+                                                <th key={h} className="px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-muted-foreground whitespace-nowrap">{h}</th>
+                                            ))}
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-border/30">
+                                        {coursePerformance.length === 0 ? (
+                                            <tr><td colSpan={5} className="py-16 text-center text-muted-foreground italic text-sm">No course data yet</td></tr>
+                                        ) : coursePerformance.map((c: any) => {
+                                            const rate = c.enrollments > 0 ? Math.round((c.completions / c.enrollments) * 100) : 0;
+                                            return (
+                                                <tr key={c.id} className="hover:bg-secondary/10 transition-colors">
+                                                    <td className="px-5 py-3.5 font-bold text-sm">{c.title}</td>
+                                                    <td className="px-5 py-3.5 text-center font-mono text-sm text-muted-foreground">{c.enrollments}</td>
+                                                    <td className="px-5 py-3.5 text-center font-mono text-sm text-emerald-400">{c.completions}</td>
+                                                    <td className="px-5 py-3.5">
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="flex-1 h-1.5 bg-secondary/50 rounded-full overflow-hidden min-w-[60px]">
+                                                                <div className="h-full bg-emerald-500 transition-all" style={{ width: `${rate}%` }} />
+                                                            </div>
+                                                            <span className="text-[11px] font-bold text-emerald-400 w-8">{rate}%</span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-5 py-3.5">
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="flex-1 h-1.5 bg-secondary/50 rounded-full overflow-hidden min-w-[60px]">
+                                                                <div className="h-full bg-primary transition-all" style={{ width: `${c.avgProgress}%` }} />
+                                                            </div>
+                                                            <span className="text-[11px] font-bold text-primary w-8">{c.avgProgress}%</span>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        {/* ── Team Performance + Top Learners ── */}
+                        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                            {/* Team Performance */}
+                            <div className="glassmorphism rounded-2xl border border-border/50 overflow-hidden">
+                                <div className="p-5 border-b border-border/50 bg-secondary/10">
+                                    <h3 className="font-bold flex items-center gap-2 text-sm uppercase tracking-widest text-muted-foreground">
+                                        <UsersRound size={14} className="text-cyan-400" /> Team Performance
+                                    </h3>
+                                </div>
+                                <div className="divide-y divide-border/30">
+                                    {teamPerformance.length === 0 ? (
+                                        <div className="py-12 text-center text-muted-foreground italic text-sm">No teams configured</div>
+                                    ) : teamPerformance.map((t: any, idx: number) => (
+                                        <div key={t.id} className="flex items-center gap-4 px-5 py-3.5 hover:bg-secondary/10 transition-colors">
+                                            <span className="text-xs font-black text-muted-foreground w-5">#{idx + 1}</span>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="font-bold text-sm truncate">{t.name}</p>
+                                                <p className="text-[10px] text-muted-foreground">{t.members} member{t.members !== 1 ? 's' : ''}</p>
+                                            </div>
+                                            <div className="text-right space-y-1 min-w-[120px]">
+                                                <div className="flex items-center gap-2 justify-end">
+                                                    <div className="w-20 h-1 bg-secondary/50 rounded-full overflow-hidden">
+                                                        <div className="h-full bg-cyan-500 transition-all" style={{ width: `${t.avgProgress}%` }} />
+                                                    </div>
+                                                    <span className="text-[11px] font-bold text-cyan-400 w-7">{t.avgProgress}%</span>
+                                                </div>
+                                                <p className="text-[10px] text-muted-foreground text-right">{t.completionRate}% complete</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Top Learners */}
+                            <div className="glassmorphism rounded-2xl border border-border/50 overflow-hidden">
+                                <div className="p-5 border-b border-border/50 bg-secondary/10">
+                                    <h3 className="font-bold flex items-center gap-2 text-sm uppercase tracking-widest text-muted-foreground">
+                                        <Medal size={14} className="text-amber-400" /> Top Learners
+                                    </h3>
+                                </div>
+                                <div className="divide-y divide-border/30">
+                                    {topLearners.length === 0 ? (
+                                        <div className="py-12 text-center text-muted-foreground italic text-sm">No learner data yet</div>
+                                    ) : topLearners.slice(0, 8).map((l: any, idx: number) => (
+                                        <div key={l.id} className="flex items-center gap-3 px-5 py-3 hover:bg-secondary/10 transition-colors">
+                                            <span className={`text-xs font-black w-5 ${idx === 0 ? 'text-amber-400' : idx === 1 ? 'text-slate-300' : idx === 2 ? 'text-amber-700' : 'text-muted-foreground'}`}>#{idx + 1}</span>
+                                            <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-black text-primary shrink-0">
+                                                {(l.name || l.email)[0].toUpperCase()}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="font-bold text-xs truncate">{l.name}</p>
+                                                <p className="text-[10px] text-muted-foreground">{l.completedCourses}/{l.totalCourses} courses</p>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-16 h-1 bg-secondary/50 rounded-full overflow-hidden">
+                                                    <div className="h-full bg-amber-400 transition-all" style={{ width: `${l.avgProgress}%` }} />
+                                                </div>
+                                                <span className="text-[11px] font-bold text-amber-400 w-7">{l.avgProgress}%</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
                     );
                 })()}
 
@@ -2450,7 +2436,7 @@ export default function ClientAdminDashboard() {
                             </div>
                             <div className="relative w-full md:w-96">
                                 <Filter className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                                <input
+                                <input 
                                     type="text"
                                     placeholder="Search by action, name or email..."
                                     value={auditSearch}
@@ -2489,7 +2475,7 @@ export default function ClientAdminDashboard() {
                                             </tr>
                                         ) : (
                                             auditLogs.map((log) => (
-                                                <tr key={log.id}
+                                                <tr key={log.id} 
                                                     onClick={() => fetchUserDetail(log.user.id)}
                                                     className="hover:bg-primary/5 cursor-pointer transition-colors group">
                                                     <td className="px-6 py-4">
@@ -2513,16 +2499,17 @@ export default function ClientAdminDashboard() {
                                                         </div>
                                                     </td>
                                                     <td className="px-6 py-4">
-                                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black tracking-tight ${log.action.includes('CREATED') ? 'bg-emerald-500/10 text-emerald-500' :
+                                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black tracking-tight ${
+                                                            log.action.includes('CREATED') ? 'bg-emerald-500/10 text-emerald-500' :
                                                             log.action.includes('DELETED') ? 'bg-red-500/10 text-red-500' :
-                                                                log.action.includes('UPDATED') ? 'bg-blue-500/10 text-blue-500' :
-                                                                    'bg-secondary text-muted-foreground'
-                                                            }`}>
+                                                            log.action.includes('UPDATED') ? 'bg-blue-500/10 text-blue-500' :
+                                                            'bg-secondary text-muted-foreground'
+                                                        }`}>
                                                             {log.action}
                                                         </span>
                                                     </td>
                                                     <td className="px-6 py-4 text-right">
-                                                        <button
+                                                        <button 
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
                                                                 setSelectedLogMetadata(log);
@@ -2547,7 +2534,7 @@ export default function ClientAdminDashboard() {
                                         Showing {(auditPagination.currentPage - 1) * auditPagination.limit + 1} - {Math.min(auditPagination.currentPage * auditPagination.limit, auditPagination.total)} of {auditPagination.total} logs
                                     </p>
                                     <div className="flex items-center gap-2">
-                                        <button
+                                        <button 
                                             disabled={auditPagination.currentPage === 1 || auditLoading}
                                             onClick={() => fetchAuditLogs(auditPagination.currentPage - 1, auditSearch)}
                                             className="p-2 rounded-xl bg-background border border-border/50 hover:bg-secondary disabled:opacity-50 transition-all"
@@ -2557,7 +2544,7 @@ export default function ClientAdminDashboard() {
                                         <span className="text-sm font-black px-4">
                                             {auditPagination.currentPage} / {auditPagination.pages}
                                         </span>
-                                        <button
+                                        <button 
                                             disabled={auditPagination.currentPage === auditPagination.pages || auditLoading}
                                             onClick={() => fetchAuditLogs(auditPagination.currentPage + 1, auditSearch)}
                                             className="p-2 rounded-xl bg-background border border-border/50 hover:bg-secondary disabled:opacity-50 transition-all"
@@ -2585,7 +2572,7 @@ export default function ClientAdminDashboard() {
                                     <div className="space-y-1">
                                         <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Platform Display Name</label>
                                         <input type="text" value={branding.name} onChange={e => setBranding({ ...branding, name: e.target.value })}
-                                            className="w-full bg-secondary/50 border border-border/50 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 font-bold"
+                                            className="w-full bg-secondary/50 border border-border/50 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 font-bold" 
                                             placeholder="e.g. Acme Academy" />
                                     </div>
                                 </div>
@@ -2607,7 +2594,7 @@ export default function ClientAdminDashboard() {
                                     </div>
                                     <div className="flex gap-2.5 flex-wrap">
                                         {['#3b82f6', '#8b5cf6', '#ef4444', '#10b981', '#f59e0b', '#ec4899', '#14b8a6', '#000000'].map(c => (
-                                            <button key={c}
+                                            <button key={c} 
                                                 className={`w-9 h-9 rounded-xl border-2 transition-all hover:scale-110 shadow-sm ${branding.primaryColor === c ? 'scale-110 shadow-lg shadow-black/20' : 'opacity-80 hover:opacity-100'}`}
                                                 style={{ backgroundColor: c, borderColor: branding.primaryColor === c ? 'white' : 'transparent' }}
                                                 onClick={() => setBranding({ ...branding, primaryColor: c })} />
@@ -2616,7 +2603,7 @@ export default function ClientAdminDashboard() {
                                 </div>
 
                                 <div className="pt-4 flex gap-4">
-                                    <button
+                                    <button 
                                         onClick={handleSaveBranding}
                                         className="flex-1 flex items-center justify-center gap-3 px-6 py-4 bg-primary text-primary-foreground rounded-[1.25rem] font-black uppercase tracking-widest text-xs hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-primary/20">
                                         <Save size={16} /> Save Platform Changes
@@ -2629,13 +2616,13 @@ export default function ClientAdminDashboard() {
                                     <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2">
                                         <Upload size={14} /> Brand Assets
                                     </h3>
-
+                                    
                                     {/* Asset Grid */}
                                     <div className="space-y-6">
                                         {[
-                                            { id: 'logoLight', label: 'Primary Logo (Light Theme)', sub: 'Wide suggested (Min 400x100px)', icon: Globe },
-                                            { id: 'logoDark', label: 'Secondary Logo (Dark Theme)', sub: 'Wide suggested (Min 400x100px)', icon: Globe },
-                                            { id: 'favicon', label: 'Site Favicon', sub: 'Square icon (512x512px preferred)', icon: Globe },
+                                            { id: 'logoLight', label: 'Primary Logo (Light Theme)', sub: 'Transparent PNG/SVG suggested', icon: Globe },
+                                            { id: 'logoDark', label: 'Secondary Logo (Dark Theme)', sub: 'Logo for dark navigation bars', icon: Globe },
+                                            { id: 'favicon', label: 'Site Favicon', sub: 'Square icon (32x32px suggested)', icon: Globe },
                                         ].map((asset) => (
                                             <div key={asset.id} className="space-y-3">
                                                 <div className="flex justify-between items-end px-1">
@@ -2644,16 +2631,18 @@ export default function ClientAdminDashboard() {
                                                         <p className="text-[9px] text-muted-foreground font-medium">{asset.sub}</p>
                                                     </div>
                                                 </div>
-
+                                                
                                                 <div className="relative group">
-                                                    <label className={`block w-full cursor-pointer rounded-[1.25rem] border-2 border-dashed transition-all overflow-hidden ${branding[asset.id as keyof typeof branding]
-                                                        ? 'border-primary/20 bg-primary/5 h-24'
-                                                        : 'border-border/60 hover:border-primary/40 bg-secondary/10 hover:bg-secondary/20 h-20'
-                                                        }`}>
+                                                    <label className={`block w-full cursor-pointer rounded-[1.25rem] border-2 border-dashed transition-all overflow-hidden ${
+                                                        branding[asset.id as keyof typeof branding] 
+                                                            ? 'border-primary/20 bg-primary/5 h-24' 
+                                                            : 'border-border/60 hover:border-primary/40 bg-secondary/10 hover:bg-secondary/20 h-20'
+                                                    }`}>
                                                         <input type="file" className="hidden" accept="image/*" onChange={(e) => {
                                                             const file = e.target.files?.[0];
                                                             if (file) handleLogoUpload(file, asset.id as any);
                                                         }} />
+                                                        
                                                         {branding[asset.id as keyof typeof branding] ? (
                                                             <div className="w-full h-full flex items-center justify-center p-4">
                                                                 <img src={branding[asset.id as keyof typeof branding]!} alt={asset.label} className="max-w-full max-h-full object-contain" />
@@ -2663,6 +2652,7 @@ export default function ClientAdminDashboard() {
                                                             </div>
                                                         ) : (
                                                             <div className="w-full h-full flex flex-col items-center justify-center gap-1 opacity-60">
+                                                                <Plus size={16} />
                                                                 <span className="text-[9px] font-black uppercase tracking-widest">Select Asset</span>
                                                             </div>
                                                         )}
@@ -2679,10 +2669,10 @@ export default function ClientAdminDashboard() {
                                 </section>
 
                                 {/* Real-time Preview */}
-                                <div className="p-8 rounded-[2rem] border-2 border-dashed bg-secondary/5 relative overflow-hidden"
+                                <div className="p-8 rounded-[2rem] border-2 border-dashed bg-secondary/5 relative overflow-hidden" 
                                     style={{ borderColor: branding.primaryColor + '30' }}>
                                     <div className="absolute -top-12 -right-12 w-32 h-32 rounded-full blur-3xl opacity-20" style={{ backgroundColor: branding.primaryColor }} />
-
+                                    
                                     <div className="flex items-center gap-3 mb-6">
                                         <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-lg" style={{ backgroundColor: branding.primaryColor }}>
                                             <Globe size={14} className="text-white" />
@@ -2701,7 +2691,7 @@ export default function ClientAdminDashboard() {
                                         </div>
                                         <div className="h-2 w-3/4 bg-secondary/50 rounded-full" />
                                         <div className="h-2 w-1/2 bg-secondary/30 rounded-full" />
-                                        <button className="w-full py-2.5 rounded-xl text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-black/5"
+                                        <button className="w-full py-2.5 rounded-xl text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-black/5" 
                                             style={{ backgroundColor: branding.primaryColor }}>
                                             Join Learning Path
                                         </button>
@@ -2737,7 +2727,7 @@ export default function ClientAdminDashboard() {
                                     </div>
                                     <div className="bg-background/80 p-4 rounded-xl border border-blue-500/20">
                                         <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Target Value</p>
-                                        <p className="font-mono font-bold text-sm text-blue-400">cname.lebra.ai</p>
+                                        <p className="font-mono font-bold text-sm text-blue-400">cname.infinitelms.com</p>
                                     </div>
                                 </div>
                             </div>
@@ -2781,8 +2771,8 @@ export default function ClientAdminDashboard() {
                 {activeTab === 'certificates' && (
                     <div className="space-y-6 animate-in fade-in duration-500 pb-20">
                         {editingTemplate ? (
-                            <CertificateDesigner
-                                template={editingTemplate}
+                            <CertificateDesigner 
+                                template={editingTemplate} 
                                 onBack={() => { setEditingTemplate(null); fetchAvailableTemplates(); }}
                                 onSave={async (id, designFields) => {
                                     try {
@@ -2800,16 +2790,13 @@ export default function ClientAdminDashboard() {
                                 }}
                             />
                         ) : (
-                            <CertificateManager
-                                domain={domain as string}
-                                addToast={addToast}
+                            <CertificateManager 
+                                domain={domain as string} 
+                                addToast={addToast} 
                                 onEditTemplate={(t) => setEditingTemplate(t)}
                             />
                         )}
                     </div>
-                )}
-                {activeTab === 'global-marketplace' && globalMarketplaceEnabled && (
-                    <GlobalMarketplaceView domain={domain} />
                 )}
             </main>
 
@@ -2907,12 +2894,12 @@ export default function ClientAdminDashboard() {
                                     </label>
                                 </div>
                             </div>
-
+                            
                             {courseForm.certificateEnabled && (
                                 <div className="space-y-1.5 animate-in slide-in-from-top-2 duration-300">
                                     <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Select Certificate Template</label>
-                                    <select
-                                        value={courseForm.certificateTemplateId}
+                                    <select 
+                                        value={courseForm.certificateTemplateId} 
                                         onChange={e => setCourseForm({ ...courseForm, certificateTemplateId: e.target.value })}
                                         className="w-full bg-secondary/50 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                                     >
@@ -3158,8 +3145,8 @@ export default function ClientAdminDashboard() {
                                                             setQuizForm({ ...quizForm, questions: newQs });
                                                         }}
                                                         className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${(q.type || 'MULTIPLE_CHOICE') === t.value
-                                                            ? 'bg-primary/20 border-primary/40 text-primary'
-                                                            : 'border-border/50 text-muted-foreground hover:border-primary/30'
+                                                                ? 'bg-primary/20 border-primary/40 text-primary'
+                                                                : 'border-border/50 text-muted-foreground hover:border-primary/30'
                                                             }`}
                                                     >
                                                         {t.label}
@@ -3548,52 +3535,52 @@ export default function ClientAdminDashboard() {
                             </button>
                         </div>
                         <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
-                            <div className="space-y-8">
-                                {/* Human Narrative */}
-                                <div className="p-6 rounded-3xl bg-primary/5 border border-primary/10 relative overflow-hidden group">
-                                    <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
-                                        <Activity size={48} />
-                                    </div>
-                                    <h4 className="text-[10px] font-black uppercase tracking-widest text-primary mb-2">Narrative Context</h4>
-                                    <p className="text-sm font-bold leading-relaxed">
-                                        User <span className="text-primary">{selectedLogMetadata.user.name}</span> performed a <span className="text-primary">{selectedLogMetadata.action.replace(/_/g, ' ')}</span> operation on the workspace entity.
-                                    </p>
-                                </div>
+                           <div className="space-y-8">
+                               {/* Human Narrative */}
+                               <div className="p-6 rounded-3xl bg-primary/5 border border-primary/10 relative overflow-hidden group">
+                                   <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
+                                       <Activity size={48} />
+                                   </div>
+                                   <h4 className="text-[10px] font-black uppercase tracking-widest text-primary mb-2">Narrative Context</h4>
+                                   <p className="text-sm font-bold leading-relaxed">
+                                       User <span className="text-primary">{selectedLogMetadata.user.name}</span> performed a <span className="text-primary">{selectedLogMetadata.action.replace(/_/g, ' ')}</span> operation on the workspace entity.
+                                   </p>
+                               </div>
 
-                                <div className="space-y-4">
-                                    <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                                        <Shield size={12} className="text-primary" /> Authority Context
-                                    </h4>
-                                    <div className="p-5 rounded-2xl bg-secondary/20 border border-border/50 divide-y divide-border/30">
-                                        <div className="flex justify-between items-center py-3">
-                                            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Action Type</span>
-                                            <span className="text-xs font-black text-primary">{selectedLogMetadata.action}</span>
-                                        </div>
-                                        <div className="flex justify-between items-center py-3">
-                                            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Timestamp</span>
-                                            <span className="text-[11px] font-bold">{new Date(selectedLogMetadata.createdAt).toLocaleString()}</span>
-                                        </div>
-                                    </div>
-                                </div>
+                               <div className="space-y-4">
+                                   <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                                       <Shield size={12} className="text-primary" /> Authority Context
+                                   </h4>
+                                   <div className="p-5 rounded-2xl bg-secondary/20 border border-border/50 divide-y divide-border/30">
+                                       <div className="flex justify-between items-center py-3">
+                                           <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Action Type</span>
+                                           <span className="text-xs font-black text-primary">{selectedLogMetadata.action}</span>
+                                       </div>
+                                       <div className="flex justify-between items-center py-3">
+                                           <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Timestamp</span>
+                                           <span className="text-[11px] font-bold">{new Date(selectedLogMetadata.createdAt).toLocaleString()}</span>
+                                       </div>
+                                   </div>
+                               </div>
 
-                                <div className="space-y-4">
-                                    <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                                        <LayoutList size={12} className="text-primary" /> Resource Properties
-                                    </h4>
-                                    <div className="grid grid-cols-1 gap-3">
-                                        {Object.entries(selectedLogMetadata.metadata || {}).map(([key, value]) => (
-                                            <div key={key} className="p-4 rounded-2xl bg-secondary/10 border border-border/40 hover:border-primary/20 transition-all">
-                                                <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 mb-1">{getMetadataLabel(key)}</p>
-                                                <p className="text-xs font-bold break-all">{typeof value === 'object' ? JSON.stringify(value) : String(value)}</p>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
+                               <div className="space-y-4">
+                                   <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                                       <LayoutList size={12} className="text-primary" /> Resource Properties
+                                   </h4>
+                                   <div className="grid grid-cols-1 gap-3">
+                                       {Object.entries(selectedLogMetadata.metadata || {}).map(([key, value]) => (
+                                           <div key={key} className="p-4 rounded-2xl bg-secondary/10 border border-border/40 hover:border-primary/20 transition-all">
+                                               <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 mb-1">{getMetadataLabel(key)}</p>
+                                               <p className="text-xs font-bold break-all">{typeof value === 'object' ? JSON.stringify(value) : String(value)}</p>
+                                           </div>
+                                       ))}
+                                   </div>
+                               </div>
+                           </div>
                         </div>
 
                         <div className="p-8 border-t border-border/50">
-                            <button
+                            <button 
                                 onClick={() => exportAuditLog(selectedLogMetadata)}
                                 className="w-full py-4 bg-primary text-primary-foreground rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] transition-all shadow-lg hover:shadow-primary/20 active:scale-[0.98] flex items-center justify-center gap-2"
                             >
@@ -3608,6 +3595,7 @@ export default function ClientAdminDashboard() {
             {insightsUserId && (
                 <div className="fixed inset-0 z-[500] flex justify-end bg-black/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => { setInsightsUserId(null); setInsightsUser(null); }}>
                     <div className="w-full max-w-xl bg-background border-l border-border/50 h-full flex flex-col shadow-2xl animate-in slide-in-from-right duration-300" onClick={e => e.stopPropagation()}>
+                        
                         {/* Header */}
                         <div className="flex items-start justify-between px-8 py-6 border-b border-border/50 bg-gradient-to-r from-primary/5 to-transparent">
                             <div className="flex items-center gap-4">
@@ -3623,6 +3611,7 @@ export default function ClientAdminDashboard() {
                                 <XCircle size={20} />
                             </button>
                         </div>
+                        
                         <div className="flex-1 overflow-y-auto custom-scrollbar">
                             {!isFetchingUserDetail && insightsUser ? (
                                 <div className="p-8 space-y-10">
@@ -3672,9 +3661,9 @@ export default function ClientAdminDashboard() {
                                                                     <span className="text-[10px] font-black text-primary">{en.progressPercentage}%</span>
                                                                 </div>
                                                                 <div className="h-1.5 w-full bg-secondary rounded-full overflow-hidden">
-                                                                    <div
-                                                                        className="h-full bg-primary transition-all duration-1000"
-                                                                        style={{ width: `${en.progressPercentage}%` }}
+                                                                    <div 
+                                                                        className="h-full bg-primary transition-all duration-1000" 
+                                                                        style={{ width: `${en.progressPercentage}%` }} 
                                                                     />
                                                                 </div>
                                                             </div>
@@ -3720,7 +3709,7 @@ export default function ClientAdminDashboard() {
 
                         {/* Footer */}
                         <div className="p-6 border-t border-border/50 bg-background/80 backdrop-blur-sm mt-auto">
-                            <button
+                            <button 
                                 onClick={() => { setInsightsUserId(null); setInsightsUser(null); }}
                                 className="w-full py-4 bg-secondary text-foreground rounded-2xl font-black uppercase tracking-widest text-sm hover:bg-secondary/80 transition-all shadow-lg active:scale-[0.98]"
                             >
