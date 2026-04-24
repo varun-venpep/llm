@@ -1725,7 +1725,7 @@ export default function ClientAdminDashboard() {
                                                                     onClick={() => setNewLessonForms(prev => ({ ...prev, [mod.id]: { ...prev[mod.id], type: t } }))}
                                                                     className={`flex-1 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${newLessonForms[mod.id]?.type === t || (!newLessonForms[mod.id]?.type && t === 'TEXT') ? 'bg-background shadow-sm text-primary' : 'text-muted-foreground hover:text-foreground'}`}
                                                                 >
-                                                                    {t}
+                                                                    {t === 'PPT' ? 'PDF' : t}
                                                                 </button>
                                                             ))}
                                                         </div>

@@ -1,6 +1,10 @@
 import { PrismaClient } from '@prisma/client'
 import { Pool } from 'pg'
 import { PrismaPg } from '@prisma/adapter-pg'
+ 
+ if (process.env.NODE_ENV !== 'production') {
+     process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+ }
 
 const globalForPrisma = global as unknown as { prisma: PrismaClient }
 

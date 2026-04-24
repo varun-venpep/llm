@@ -121,7 +121,8 @@ export default async function middleware(req: NextRequest) {
             url.pathname.startsWith('/admin') ||
             url.pathname.startsWith('/api') ||
             url.pathname.startsWith('/t/') ||
-            url.pathname.startsWith('/login')
+            url.pathname.startsWith('/login') ||
+            url.pathname.startsWith('/auth')
         ) {
             return NextResponse.next();
         }

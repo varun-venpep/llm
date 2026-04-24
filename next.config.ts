@@ -10,6 +10,7 @@ const nextConfig: NextConfig = {
     ],
   },
   output: 'standalone',
+  serverExternalPackages: ['nodemailer', 'bcryptjs', '@prisma/client'],
 };
 
 export default nextConfig;
