@@ -16,6 +16,7 @@ import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
     AreaChart, Area, PieChart, Pie, Cell, Legend
 } from 'recharts';
+import { uploadFile } from '@/lib/upload';
 import { RolesManager } from '@/components/admin/roles/RolesManager';
 import { TeamsManager } from '@/components/admin/teams/TeamsManager';
 import { LearnersManager } from '@/components/admin/learners/LearnersManager';
@@ -245,6 +246,8 @@ export default function ClientAdminDashboard() {
     const handleLogoUpload = async (file: File, type: 'logoLight' | 'logoDark' | 'favicon') => {
         const formData = new FormData();
         formData.append('file', file);
+        formData.append('tenantId', domain);
+        formData.append('courseId', 'branding');
         
         setUploadProgress(prev => ({ ...prev, [type]: 0 }));
         
@@ -645,6 +648,8 @@ export default function ClientAdminDashboard() {
         setIsUploadingThumbnail(true);
         const formData = new FormData();
         formData.append('file', file);
+        formData.append('tenantId', domain);
+        formData.append('courseId', selectedCourse?.id || 'misc');
 
         try {
             const res = await fetch('/api/upload', {
@@ -741,69 +746,43 @@ export default function ClientAdminDashboard() {
             return;
         }
 
-        const formData = new FormData();
-        formData.append('file', file);
+        try {
+            const data = await uploadFile(file, 
+                { tenantId: domain, courseId: selectedCourse?.id || 'misc' },
+                (percent) => setUploadProgress(prev => ({ ...prev, [`res-${moduleId}`]: percent }))
+            );
 
-        return new Promise<void>((resolve, reject) => {
-            const xhr = new XMLHttpRequest();
-            xhr.open('POST', '/api/upload', true);
-
-            xhr.upload.onprogress = (e) => {
-                if (e.lengthComputable) {
-                    const percentComplete = Math.round((e.loaded / e.total) * 100);
-                    setUploadProgress(prev => ({ ...prev, [`res-${moduleId}`]: percentComplete }));
-                }
-            };
-
-            xhr.onload = () => {
-                if (xhr.status >= 200 && xhr.status < 300) {
-                    const data = JSON.parse(xhr.responseText);
-                    setNewLessonForms(prev => {
-                        const currentForm = prev[moduleId] || { title: '', content: '', videoUrl: '', pdfUrl: '', type: 'TEXT', resources: [] };
-                        return {
-                            ...prev,
-                            [moduleId]: {
-                                ...currentForm,
-                                resources: [...(currentForm.resources || []), {
-                                    id: Math.random().toString(36).substring(2, 9),
-                                    name: data.name,
-                                    url: data.url,
-                                    type: isVideo ? 'VIDEO' : 'DOCUMENT',
-                                    size: data.size
-                                }]
-                            }
-                        };
-                    });
-                    setUploadProgress(prev => {
-                        const next = { ...prev };
-                        delete next[`res-${moduleId}`];
-                        return next;
-                    });
-                    resolve();
-                } else {
-                    const error = JSON.parse(xhr.responseText);
-                    addToast(error.error || 'Upload failed', 'error');
-                    setUploadProgress(prev => {
-                        const next = { ...prev };
-                        delete next[`res-${moduleId}`];
-                        return next;
-                    });
-                    reject();
-                }
-            };
-
-            xhr.onerror = () => {
-                addToast('Upload error. Check connection.', 'error');
-                setUploadProgress(prev => {
-                    const next = { ...prev };
-                    delete next[`res-${moduleId}`];
-                    return next;
-                });
-                reject();
-            };
-
-            xhr.send(formData);
-        });
+            setNewLessonForms(prev => {
+                const currentForm = prev[moduleId] || { title: '', content: '', videoUrl: '', pdfUrl: '', type: 'TEXT', resources: [] };
+                return {
+                    ...prev,
+                    [moduleId]: {
+                        ...currentForm,
+                        resources: [...(currentForm.resources || []), {
+                            id: Math.random().toString(36).substring(2, 9),
+                            name: data.name,
+                            url: data.url,
+                            type: isVideo ? 'VIDEO' : 'DOCUMENT',
+                            size: data.size
+                        }]
+                    }
+                };
+            });
+            setUploadProgress(prev => {
+                const next = { ...prev };
+                delete next[`res-${moduleId}`];
+                return next;
+            });
+            addToast('Resource uploaded successfully');
+        } catch (err: any) {
+            console.error('Upload error:', err);
+            addToast(err.message || 'Upload failed', 'error');
+            setUploadProgress(prev => {
+                const next = { ...prev };
+                delete next[`res-${moduleId}`];
+                return next;
+            });
+        }
     };
 
     const handleMainContentUpload = async (moduleId: string, file: File, type: 'VIDEO' | 'PPT') => {
@@ -814,73 +793,45 @@ export default function ClientAdminDashboard() {
             return;
         }
 
-        const formData = new FormData();
-        formData.append('file', file);
+        try {
+            const data = await uploadFile(file, 
+                { tenantId: domain, courseId: selectedCourse?.id || 'misc' },
+                (percent) => setUploadProgress(prev => ({ ...prev, [moduleId]: percent }))
+            );
 
-        return new Promise<void>((resolve, reject) => {
-            const xhr = new XMLHttpRequest();
-            xhr.open('POST', '/api/upload', true);
-
-            xhr.upload.onprogress = (e) => {
-                if (e.lengthComputable) {
-                    const percentComplete = Math.round((e.loaded / e.total) * 100);
-                    setUploadProgress(prev => ({ ...prev, [moduleId]: percentComplete }));
+            setNewLessonForms(prev => ({
+                ...prev,
+                [moduleId]: {
+                    ...prev[moduleId],
+                    [type === 'VIDEO' ? 'videoUrl' : 'pdfUrl']: data.url
                 }
-            };
-
-            xhr.onload = () => {
-                if (xhr.status >= 200 && xhr.status < 300) {
-                    const data = JSON.parse(xhr.responseText);
-                    setNewLessonForms(prev => ({
-                        ...prev,
-                        [moduleId]: {
-                            ...prev[moduleId],
-                            [type === 'VIDEO' ? 'videoUrl' : 'pdfUrl']: data.url
-                        }
-                    }));
-                    addToast(`${type === 'VIDEO' ? 'Video' : 'File'} uploaded successfully`);
-                    setUploadProgress(prev => {
-                        const next = { ...prev };
-                        delete next[moduleId];
-                        return next;
-                    });
-                    resolve();
-                } else {
-                    const error = JSON.parse(xhr.responseText);
-                    addToast(error.error || 'Upload failed', 'error');
-                    setUploadProgress(prev => {
-                        const next = { ...prev };
-                        delete next[moduleId];
-                        return next;
-                    });
-                    reject();
-                }
-            };
-
-            xhr.onerror = () => {
-                addToast('Upload error. Check connection.', 'error');
-                setUploadProgress(prev => {
-                    const next = { ...prev };
-                    delete next[moduleId];
-                    return next;
-                });
-                reject();
-            };
-
-            xhr.send(formData);
-        });
+            }));
+            addToast(`${type === 'VIDEO' ? 'Video' : 'File'} uploaded successfully`);
+            setUploadProgress(prev => {
+                const next = { ...prev };
+                delete next[moduleId];
+                return next;
+            });
+        } catch (err: any) {
+            console.error('Upload Error:', err);
+            addToast(err.message || 'Upload failed', 'error');
+            setUploadProgress(prev => {
+                const next = { ...prev };
+                delete next[moduleId];
+                return next;
+            });
+        }
     };
 
     const uploadTargetResource = async (file: File) => {
         if (!file || !managingResources) return;
         setIsUploadingTargetResource(true);
 
-        const formData = new FormData();
-        formData.append('file', file);
-
         try {
-            const uploadRes = await fetch('/api/upload', { method: 'POST', body: formData });
-            const uploadData = await uploadRes.json();
+            const uploadData = await uploadFile(file, { 
+                tenantId: domain, 
+                courseId: managingResources?.id || 'misc' 
+            });
 
             const res = await fetch(`/api/t/${domain}/resources`, {
                 method: 'POST',
@@ -2708,7 +2659,7 @@ export default function ClientAdminDashboard() {
                         <div className="glassmorphism p-8 rounded-3xl border border-border/50 space-y-6">
                             <div>
                                 <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">Current Platform Subdomain</p>
-                                <p className="font-mono font-bold text-blue-400">{domain}.lvh.me:3000</p>
+                                <p className="font-mono font-bold text-blue-400">{domain}.{process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'lvh.me:3000'}</p>
                             </div>
                             <div className="space-y-2">
                                 <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Custom Domain</label>
@@ -3331,6 +3282,8 @@ export default function ClientAdminDashboard() {
                                             if (!file) return;
                                             const formData = new FormData();
                                             formData.append('file', file);
+                                            formData.append('tenantId', domain);
+                                            formData.append('courseId', 'announcements');
                                             setUploadProgress(prev => ({ ...prev, 'announcement-img': 10 }));
                                             try {
                                                 const res = await fetch('/api/upload', { method: 'POST', body: formData });
@@ -3353,6 +3306,8 @@ export default function ClientAdminDashboard() {
                                             if (!file) return;
                                             const formData = new FormData();
                                             formData.append('file', file);
+                                            formData.append('tenantId', domain);
+                                            formData.append('courseId', 'announcements');
                                             setUploadProgress(prev => ({ ...prev, 'announcement-doc': 10 }));
                                             try {
                                                 const res = await fetch('/api/upload', { method: 'POST', body: formData });

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { uploadToS3 } from '@/lib/s3';
+import crypto from 'crypto';
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -21,7 +23,40 @@ export async function GET(req: NextRequest, { params }: Params) {
 export async function POST(req: NextRequest, { params }: Params) {
     const { id } = await params;
     try {
-        const { name, url, type, size } = await req.json();
+        const contentType = req.headers.get('content-type') || '';
+        let name, url, type, size;
+
+        if (contentType.includes('multipart/form-data')) {
+            const formData = await req.formData();
+            const file = formData.get('file') as File;
+            if (!file) return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
+
+            const bytes = await file.arrayBuffer();
+            const buffer = Buffer.from(bytes);
+
+            const uniqueSuffix = crypto.randomBytes(8).toString('hex');
+            const originalNameParts = file.name.split('.');
+            const extension = originalNameParts.length > 1 ? originalNameParts.pop() : '';
+            const baseName = originalNameParts.join('.').replace(/[^a-zA-Z0-9_-]/g, '_');
+            const newFilename = extension ? `${baseName}_${uniqueSuffix}.${extension}` : `${baseName}_${uniqueSuffix}`;
+
+            // Upload to S3 (categorized under system/courseId)
+            url = await uploadToS3({
+                file: buffer,
+                tenantId: 'system',
+                courseId: id,
+                fileName: newFilename
+            });
+            name = file.name;
+            size = file.size;
+            type = file.type.startsWith('image/') ? 'IMAGE' : file.type.startsWith('video/') ? 'VIDEO' : 'DOCUMENT';
+        } else {
+            const body = await req.json();
+            name = body.name;
+            url = body.url;
+            type = body.type;
+            size = body.size;
+        }
         
         if (!name || !url || !type) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -37,10 +72,10 @@ export async function POST(req: NextRequest, { params }: Params) {
             }
         });
 
-        // Optional: Trigger a notification or audit log
         return NextResponse.json(resource, { status: 201 });
-    } catch (e) {
-        return NextResponse.json({ error: 'Failed to add resource' }, { status: 500 });
+    } catch (e: any) {
+        console.error('Global resource create error:', e);
+        return NextResponse.json({ error: 'Failed to add resource: ' + e.message }, { status: 500 });
     }
 }
 

@@ -108,6 +108,24 @@ Resources:
         BlockPublicPolicy: false
         IgnorePublicAcls: false
         RestrictPublicBuckets: false
+      CorsConfiguration:
+        CorsRules:
+          - AllowedHeaders: ["*"]
+            AllowedMethods: ["GET", "HEAD", "PUT"]
+            AllowedOrigins: ["*"]
+            MaxAge: 3600
+
+  LmsStorageBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref LmsStorageBucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: "*"
+            Action: s3:GetObject
+            Resource: !Sub "arn:aws:s3:::${LmsStorageBucket}/*"
 
   # 4. Compute - Next.js App (Lambda)
   LmsWebFunction:
@@ -116,12 +134,19 @@ Resources:
       Dockerfile: Dockerfile
       DockerContext: .
       DockerTag: latest
+      BuildArgs:
+        NEXT_PUBLIC_ROOT_DOMAIN: !Sub ${Stage}.${AppDomain}
+        NEXT_PUBLIC_APP_URL: !Sub https://${Stage}.${AppDomain}
     Properties:
       PackageType: Image
       Architectures:
         - x86_64
       MemorySize: 1024
       Timeout: 30
+      Policies:
+        # Give the function permissions to the S3 bucket
+        - S3CrudPolicy:
+            BucketName: !Sub llm-${Stage}-storage-bucket-${AWS::AccountId}
       Environment:
         Variables:
           DATABASE_URL: !Ref DatabaseUrl

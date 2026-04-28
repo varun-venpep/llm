@@ -17,17 +17,14 @@ export const config = {
 export default async function middleware(req: NextRequest) {
     const url = req.nextUrl;
 
-    // 1. Get raw host header (prefer x-forwarded-host for deployments like Vercel/AWS)
-    const rawHost = req.headers.get('x-forwarded-host') || req.headers.get('host') || req.nextUrl.host;
+    // 1. Get raw host header (e.g. admin.lvh.me:3000, venpep.lvh.me:3000)
+    const hostHeader = req.headers.get('host');
+    const forwardedHost = req.headers.get('x-forwarded-host');
+    const rawHost = (forwardedHost || hostHeader || '').split(':')[0]; // Strip port
 
     // 2. The root domain is what we want to strip out to find the subdomain
     // E.g. "lvh.me:3000" or "localhost:3000" or "dev.lebra.ai"
     let rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'dev.lebra.ai';
-
-    // Allow Vercel staging domains to act as root
-    if (rawHost.endsWith('.vercel.app') || rawHost.endsWith('.amplifyapp.com')) {
-        rootDomain = rawHost;
-    }
 
     // 3. Normalize the hostname
     let hostname = rawHost.split(',')[0].trim();
@@ -35,7 +32,7 @@ export default async function middleware(req: NextRequest) {
     if (hostname.includes(':') && !hostname.includes('localhost')) {
         hostname = hostname.split(':')[0];
     }
-    
+
     if (hostname.includes('.localhost:3000')) {
         hostname = hostname.replace('.localhost:3000', `.${rootDomain}`);
     }
@@ -150,6 +147,11 @@ export default async function middleware(req: NextRequest) {
         }
 
         return NextResponse.rewrite(new URL(`/t/${subdomain}${path}`, req.url));
+    }
+
+    // Final fallback rewrite
+    if (url.pathname.startsWith(`/t/${hostname}`)) {
+        return NextResponse.next();
     }
 
     return NextResponse.rewrite(new URL(`/t/${hostname}${path}`, req.url));

@@ -22,6 +22,11 @@ app = FastAPI()
 # 'base' is fast & fits Lambda memory. Use 'small' for better accuracy.
 MODEL_SIZE = os.environ.get("WHISPER_MODEL_SIZE", "base")
 model = WhisperModel(MODEL_SIZE, device="cpu", compute_type="int8")
+ 
+ 
+@app.get("/")
+async def health():
+    return {"status": "ok"}
 
 
 def segments_to_vtt(segments) -> str:
