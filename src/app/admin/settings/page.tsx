@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Settings, Save, UploadCloud, Link as LinkIcon, AlertCircle, Bot, Palette, Globe, Upload, Plus, Trash2, LayoutDashboard } from 'lucide-react';
 import Image from 'next/image';
+import { uploadFile } from '@/lib/upload';
 
 export default function GlobalSettingsPage() {
     const [settings, setSettings] = useState<Record<string, string>>({
@@ -55,19 +56,12 @@ export default function GlobalSettingsPage() {
 
     const handleFileUpload = async (file: File, key: string) => {
         setUploadProgress(prev => ({ ...prev, [key]: 0 }));
-        const formData = new FormData();
-        formData.append('file', file);
-
         try {
-            const res = await fetch('/api/upload', {
-                method: 'POST',
-                body: formData
+            const data = await uploadFile(file, { tenantId: 'system', courseId: 'branding' }, (p) => {
+                setUploadProgress(prev => ({ ...prev, [key]: p }));
             });
-            if (res.ok) {
-                const { url } = await res.json();
-                handleSave(key, url);
-                setSettings(prev => ({ ...prev, [key]: url }));
-            }
+            handleSave(key, data.url);
+            setSettings(prev => ({ ...prev, [key]: data.url }));
         } catch (error) {
             console.error(error);
         } finally {

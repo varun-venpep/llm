@@ -12,6 +12,7 @@ import {
     AlertCircle, Award, Cpu, ShieldCheck, Share2, Save, Upload, ArrowLeft, RefreshCw
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell, PieChart, Pie } from 'recharts';
+import { uploadFile } from '@/lib/upload';
 
 interface GlobalCourse {
     id: string;
@@ -269,16 +270,10 @@ export default function GlobalMarketplacePage() {
         if (!file) return;
 
         setIsUploadingThumbnail(true);
-        const formData = new FormData();
-        formData.append('file', file);
-
         try {
-            const res = await fetch('/api/upload', { method: 'POST', body: formData });
-            const data = await res.json();
-            if (res.ok) {
-                setCourseForm(prev => ({ ...prev, thumbnail: data.url }));
-                setThumbnailPreview(data.url);
-            }
+            const data = await uploadFile(file, { tenantId: 'system', courseId: selectedCourse?.id || 'global' });
+            setCourseForm(prev => ({ ...prev, thumbnail: data.url }));
+            setThumbnailPreview(data.url);
         } catch (e) {
             console.error(e);
         } finally {
@@ -405,6 +400,8 @@ export default function GlobalMarketplacePage() {
 
         const formData = new FormData();
         formData.append('file', file);
+        formData.append('tenantId', 'system');
+        formData.append('courseId', selectedCourse?.id || 'global');
 
         return new Promise<void>((resolve, reject) => {
             const xhr = new XMLHttpRequest();
@@ -826,31 +823,24 @@ export default function GlobalMarketplacePage() {
                                                             onChange={async e => {
                                                                 const file = e.target.files?.[0];
                                                                 if (!file) return;
-                                                                const formData = new FormData();
-                                                                formData.append('file', file);
                                                                 setUploadProgress(prev => ({ ...prev, [mod.id]: 0 }));
-                                                                const xhr = new XMLHttpRequest();
-                                                                xhr.open('POST', '/api/upload', true);
-                                                                xhr.upload.onprogress = (evt) => {
-                                                                    if (evt.lengthComputable) {
-                                                                        const percentComplete = Math.round((evt.loaded / evt.total) * 100);
-                                                                        setUploadProgress(prev => ({ ...prev, [mod.id]: percentComplete }));
-                                                                    }
-                                                                };
-                                                                xhr.onload = () => {
-                                                                    if (xhr.status >= 200 && xhr.status < 300) {
-                                                                        const data = JSON.parse(xhr.responseText);
-                                                                        setNewLessonForms(prev => ({
-                                                                            ...prev,
-                                                                            [mod.id]: {
-                                                                                ...prev[mod.id],
-                                                                                [newLessonForms[mod.id].type === 'VIDEO' ? 'videoUrl' : 'pdfUrl']: data.url
-                                                                            }
-                                                                        }));
-                                                                    }
+                                                                try {
+                                                                    const data = await uploadFile(file, 
+                                                                        { tenantId: 'system', courseId: selectedCourse?.id || 'global' },
+                                                                        (percent) => setUploadProgress(prev => ({ ...prev, [mod.id]: percent }))
+                                                                    );
+                                                                    setNewLessonForms(prev => ({
+                                                                        ...prev,
+                                                                        [mod.id]: {
+                                                                            ...prev[mod.id],
+                                                                            [newLessonForms[mod.id].type === 'VIDEO' ? 'videoUrl' : 'pdfUrl']: data.url
+                                                                        }
+                                                                    }));
+                                                                } catch (err) {
+                                                                    console.error(err);
+                                                                } finally {
                                                                     setUploadProgress(prev => ({ ...prev, [mod.id]: undefined as any }));
-                                                                };
-                                                                xhr.send(formData);
+                                                                }
                                                             }}
                                                         />
                                                         <label htmlFor={`main-file-${mod.id}`} className="px-8 py-3 bg-white/[0.05] border border-white/[0.1] rounded-xl text-[10px] font-black uppercase tracking-widest cursor-pointer hover:bg-white/[0.1] transition-all">
@@ -1201,7 +1191,7 @@ export default function GlobalMarketplacePage() {
                                                 <td className="px-8 py-6">
                                                     <div className="flex flex-col">
                                                         <span className="text-sm font-black text-white group-hover:text-primary transition-colors">{claim.tenant?.name || 'Unknown'}</span>
-                                                        <span className="text-[10px] text-muted-foreground lowercase opacity-50 font-mono italic">{claim.tenant?.subdomain}.lvh.me</span>
+                                                        <span className="text-[10px] text-muted-foreground lowercase opacity-50 font-mono italic">{claim.tenant?.subdomain}.{process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'lvh.me:3000'}</span>
                                                     </div>
                                                 </td>
                                                 <td className="px-8 py-6">
@@ -1548,17 +1538,23 @@ export default function GlobalMarketplacePage() {
                                         const file = e.target.files?.[0];
                                         if (!file) return;
 
-                                        const formData = new FormData();
-                                        formData.append('file', file);
-                                        formData.append('parentId', managingResources.id);
-                                        formData.append('parentType', managingResources.type);
-
                                         setUploadProgress(prev => ({ ...prev, [`res-${managingResources.id}`]: 0 }));
 
                                         try {
+                                            const data = await uploadFile(file, 
+                                                { tenantId: 'system', courseId: selectedCourse?.id || 'global' },
+                                                (percent) => setUploadProgress(prev => ({ ...prev, [`res-${managingResources.id}`]: percent }))
+                                            );
+
                                             const res = await fetch(`/api/admin/global-courses/${selectedCourse?.id}/resources`, {
                                                 method: 'POST',
-                                                body: formData
+                                                headers: { 'Content-Type': 'application/json' },
+                                                body: JSON.stringify({
+                                                    name: data.name,
+                                                    url: data.url,
+                                                    type: file.type.startsWith('video/') ? 'VIDEO' : file.type.startsWith('image/') ? 'IMAGE' : 'DOCUMENT',
+                                                    size: data.size
+                                                })
                                             });
                                             if (res.ok) {
                                                 const newRes = await res.json();

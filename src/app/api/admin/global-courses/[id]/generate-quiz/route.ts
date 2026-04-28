@@ -12,7 +12,7 @@ export async function POST(
 
     try {
         // Find the global course
-        const course = await prisma.course.findUnique({
+        const course = await prisma.course.findFirst({
             where: { id: courseId, isGlobal: true },
             include: {
                 modules: {

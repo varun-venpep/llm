@@ -181,10 +181,10 @@ export default function SuperAdminDashboard() {
                                 <p className="text-3xl">🚀</p>
                                 <p className="font-black text-emerald-400 text-lg">Workspace Live!</p>
                                 <p className="text-sm text-muted-foreground">Your client can access their portal at:</p>
-                                <a href={`http://${form.subdomain}.${process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'lvh.me:3000'}/login`}
+                                <a href={`http://${form.subdomain}.${process.env.NEXT_PUBLIC_ROOT_DOMAIN}/login`}
                                     className="block font-mono text-blue-400 hover:underline text-sm"
                                     target="_blank">
-                                    http://{form.subdomain}.{process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'lvh.me:3000'}/login
+                                    http://{form.subdomain}.{process.env.NEXT_PUBLIC_ROOT_DOMAIN}/login
                                 </a>
                                 <button onClick={() => { setShowSpinoff(false); setSpinResult(null); }} className="mt-2 px-4 py-2 bg-emerald-600 text-white font-bold rounded-lg text-sm">Done</button>
                             </div>

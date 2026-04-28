@@ -9,7 +9,7 @@ WORKDIR /app
 # deps stage
 COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* .npmrc* ./
 COPY prisma ./prisma
-RUN npm ci --ignore-scripts
+RUN npm install --ignore-scripts
 
 # builder stage
 FROM base AS builder
@@ -21,13 +21,13 @@ COPY . .
 RUN npx prisma generate
 
 # Bake in Next.js public env vars at build time
-ARG NEXT_PUBLIC_ROOT_DOMAIN
-ARG NEXT_PUBLIC_APP_URL
-ARG NEXT_PUBLIC_S3_BUCKET
+# ARG NEXT_PUBLIC_ROOT_DOMAIN
+# ARG NEXT_PUBLIC_APP_URL
+# ARG NEXT_PUBLIC_S3_BUCKET
 
-ENV NEXT_PUBLIC_ROOT_DOMAIN=$NEXT_PUBLIC_ROOT_DOMAIN
-ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
-ENV NEXT_PUBLIC_S3_BUCKET=$NEXT_PUBLIC_S3_BUCKET
+# ENV NEXT_PUBLIC_ROOT_DOMAIN=$NEXT_PUBLIC_ROOT_DOMAIN
+# ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
+# ENV NEXT_PUBLIC_S3_BUCKET=$NEXT_PUBLIC_S3_BUCKET
 
 # Next.js build
 RUN npm run build

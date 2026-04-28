@@ -110,7 +110,7 @@ export default async function VerifyCertificatePage({ params }: { params: Promis
                             This document is tamper-proof and mathematically verified by Lebra.Ai Global Database.
                         </p>
                     </div>
-                    <Link href={`http://${certificate.course.tenant?.subdomain}.lvh.me:3000`} className="text-xs font-bold text-primary hover:underline">
+                    <Link href={`http://${certificate.course.tenant?.subdomain}.${process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'lvh.me:3000'}`} className="text-xs font-bold text-primary hover:underline">
                         Return to {certificate.course.tenant?.name} Learning Portal
                     </Link>
                 </div>

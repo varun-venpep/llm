@@ -176,7 +176,7 @@ export default function UsersPage() {
                                                 <div className="flex flex-col">
                                                     <span className="text-sm font-bold">{user.tenant.name}</span>
                                                     <span className="text-[10px] text-blue-400 font-mono tracking-tighter">
-                                                        {user.tenant.subdomain}.lvh.me:3000
+                                                        {user.tenant.subdomain}.{process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'lvh.me:3000'}
                                                     </span>
                                                 </div>
                                             </td>
@@ -185,7 +185,7 @@ export default function UsersPage() {
                                             </td>
                                             <td className="px-6 py-4 text-right">
                                                 <a
-                                                    href={`http://${user.tenant.subdomain}.lvh.me:3000/login`}
+                                                    href={`http://${user.tenant.subdomain}.${process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'lvh.me:3000'}/login`}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
                                                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-secondary hover:bg-white/10 text-[10px] font-bold uppercase tracking-widest transition-all group-hover:text-blue-400"

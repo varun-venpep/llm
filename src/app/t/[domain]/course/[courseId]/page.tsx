@@ -467,7 +467,7 @@ export default function CoursePlayer({ params: paramsPromise }: { params: Promis
                                         {activeLesson.type === 'VIDEO' && (
                                             <div className="w-full aspect-video max-h-[70vh] flex justify-center bg-black">
                                                 {activeLesson.videoUrl ? (
-                                                    activeLesson.videoUrl.startsWith('/') ? (
+                                                    (activeLesson.videoUrl.startsWith('/') || activeLesson.videoUrl.includes('s3.')) ? (
                                                         <div className="w-full h-full relative">
                                                             <video
                                                                 key={activeLesson.id}
@@ -541,7 +541,7 @@ export default function CoursePlayer({ params: paramsPromise }: { params: Promis
                                         {activeLesson.type === 'PPT' && (
                                             <div className="w-full aspect-video max-h-[75vh] flex justify-center bg-black">
                                                 {activeLesson.pdfUrl ? (
-                                                    activeLesson.pdfUrl.startsWith('/') ? (
+                                                    (activeLesson.pdfUrl.startsWith('/') || activeLesson.pdfUrl.includes('s3.')) ? (
                                                         activeLesson.pdfUrl.toLowerCase().endsWith('.pdf') ? (
                                                             <ScormDocumentPlayer 
                                                                 url={activeLesson.pdfUrl}

@@ -113,9 +113,36 @@ Resources:
         BlockPublicPolicy: false
         IgnorePublicAcls: false
         RestrictPublicBuckets: false
+      CorsConfiguration:
+        CorsRules:
+        - AllowedHeaders:
+          - '*'
+          AllowedMethods:
+          - GET
+          - HEAD
+          - PUT
+          AllowedOrigins:
+          - '*'
+          MaxAge: 3600
+  LmsStorageBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket:
+        Ref: LmsStorageBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal: '*'
+          Action: s3:GetObject
+          Resource:
+            Fn::Sub: arn:aws:s3:::${LmsStorageBucket}/*
   LmsWebFunction:
     Type: AWS::Serverless::Function
     Metadata:
+      BuildArgs:
+        NEXT_PUBLIC_APP_URL: https://dev.lebra.ai
+        NEXT_PUBLIC_ROOT_DOMAIN: dev.lebra.ai
       DockerContext: /Users/vikramthangaraj/Projects/llm
       DockerTag: latest
       Dockerfile: Dockerfile
@@ -123,9 +150,13 @@ Resources:
     Properties:
       PackageType: Image
       Architectures:
-      - arm64
+      - x86_64
       MemorySize: 1024
       Timeout: 30
+      Policies:
+      - S3CrudPolicy:
+          BucketName:
+            Fn::Sub: llm-${Stage}-storage-bucket-${AWS::AccountId}
       Environment:
         Variables:
           DATABASE_URL:
@@ -165,7 +196,7 @@ Resources:
       RequiresCompatibilities:
       - FARGATE
       RuntimePlatform:
-        CpuArchitecture: ARM64
+        CpuArchitecture: X86_64
         OperatingSystemFamily: LINUX
       ExecutionRoleArn:
         Fn::GetAtt:

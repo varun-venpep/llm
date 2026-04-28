@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Award, Plus, Upload, Trash2, Loader2, Image as ImageIcon, Search } from 'lucide-react';
+import { uploadFile } from '@/lib/upload';
 
 interface Template {
     id: string;
@@ -37,18 +38,9 @@ export default function SuperAdminCertificates() {
         if (!file) return;
 
         setUploading(true);
-        const formData = new FormData();
-        formData.append('file', file);
-
         try {
-            const res = await fetch('/api/upload', {
-                method: 'POST',
-                body: formData
-            });
-            const data = await res.json();
-            if (data.success) {
-                setNewTemplate(prev => ({ ...prev, image: data.url }));
-            }
+            const data = await uploadFile(file, { tenantId: 'system', courseId: 'certificates' });
+            setNewTemplate(prev => ({ ...prev, image: data.url }));
         } catch (e) {
             console.error(e);
         } finally {
