@@ -10,6 +10,7 @@ function ResetPasswordForm() {
     const searchParams = useSearchParams();
     const token = searchParams.get('token');
     const email = searchParams.get('email');
+    const returnTo = searchParams.get('returnTo') || '/admin/login';
 
     const [loading, setLoading] = useState(false);
     const [newPassword, setNewPassword] = useState('');
@@ -64,7 +65,7 @@ function ResetPasswordForm() {
                     <p className="text-muted-foreground text-sm">Your security credentials have been updated.</p>
                 </div>
                 <button 
-                    onClick={() => router.push('/admin/login')}
+                    onClick={() => router.push(returnTo)}
                     className="w-full py-4 rounded-xl bg-primary text-primary-foreground font-bold hover:scale-[1.02] transition-all"
                 >
                     Return to Login
@@ -77,7 +78,7 @@ function ResetPasswordForm() {
         return (
             <div className="text-center space-y-4">
                 <p className="text-red-400 font-bold">Invalid or expired reset link.</p>
-                <button onClick={() => router.push('/admin/login')} className="text-sm text-blue-400 hover:underline">Back to login</button>
+                <button onClick={() => router.push(returnTo)} className="text-sm text-blue-400 hover:underline">Back to login</button>
             </div>
         );
     }

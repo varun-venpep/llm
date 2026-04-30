@@ -18,9 +18,24 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ authenticated: false }, { status: 401 });
         }
 
+        let permissionRows: { tenantAdminPermissions: string[] | null }[] = [];
+        try {
+            permissionRows = await prisma.$queryRaw<{ tenantAdminPermissions: string[] | null }[]>`
+                SELECT "tenantAdminPermissions"
+                FROM "User"
+                WHERE "id" = ${user.id}
+                LIMIT 1
+            `;
+        } catch (error: any) {
+            if (error?.code !== 'P2010') throw error;
+        }
+
         return NextResponse.json({
             authenticated: true,
-            user
+            user: {
+                ...user,
+                tenantAdminPermissions: permissionRows[0]?.tenantAdminPermissions || []
+            }
         });
 
     } catch (error) {

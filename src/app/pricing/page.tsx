@@ -35,7 +35,7 @@ export default function PricingPage() {
             <Eyebrow tone="green">Included Value</Eyebrow>
             <h2 className="mt-5 text-4xl font-bold tracking-tight text-slate-950">Pricing that considers the complete learning operation.</h2>
             <p className="mt-5 text-base leading-8 text-slate-600">
-              Your LMS cost should reflect more than hosting. Libra.AI supports the practical work of running a branded academy: setup, user structure, learning paths, completion proof, and reporting clarity.
+              Your LMS cost should reflect more than hosting. Lebra.Ai supports the practical work of running a branded academy: setup, user structure, learning paths, completion proof, and reporting clarity.
             </p>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">

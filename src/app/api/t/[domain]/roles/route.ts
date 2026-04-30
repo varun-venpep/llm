@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { checkSession } from '@/lib/auth';
+import { checkSession, requireTenantPermission } from '@/lib/auth';
 
 export async function GET(
     req: NextRequest,
@@ -12,7 +12,7 @@ export async function GET(
         if (!tenant) return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
 
         const session = await checkSession(req, domain, 'TENANT_ADMIN');
-        if (!session) {
+        if (!requireTenantPermission(session, 'people.manage')) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
@@ -42,7 +42,7 @@ export async function POST(
         if (!tenant) return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
 
         const session = await checkSession(req, domain, 'TENANT_ADMIN');
-        if (!session) {
+        if (!requireTenantPermission(session, 'people.manage')) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
@@ -86,7 +86,7 @@ export async function PUT(
         if (!tenant) return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
 
         const session = await checkSession(req, domain, 'TENANT_ADMIN');
-        if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        if (!requireTenantPermission(session, 'people.manage')) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
         const { id, name, description, isActive, userIds } = await req.json();
         if (!id) return NextResponse.json({ error: 'Role ID is required' }, { status: 400 });
@@ -141,7 +141,7 @@ export async function DELETE(
         if (!tenant) return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
 
         const session = await checkSession(req, domain, 'TENANT_ADMIN');
-        if (!session) {
+        if (!requireTenantPermission(session, 'people.manage')) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 

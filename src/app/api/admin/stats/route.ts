@@ -1,7 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
-export async function GET(req: NextRequest) {
+export const dynamic = 'force-dynamic';
+
+export async function GET() {
     try {
         const [tenantCount, userCount, courseCount, enrollmentCount] = await Promise.all([
             prisma.tenant.count({ where: { isActive: true, subdomain: { not: 'admin-system' } } }),
@@ -24,7 +26,8 @@ export async function GET(req: NextRequest) {
             enrollmentCount,
             recentTenants
         });
-    } catch (e) {
+    } catch (error) {
+        console.error('Admin stats error:', error);
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
 }

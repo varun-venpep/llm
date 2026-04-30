@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
+import { normalizeTenantAdminPermissions } from '@/lib/permissions';
 
 export async function PUT(
     req: NextRequest,
@@ -10,6 +11,7 @@ export async function PUT(
     try {
         const body = await req.json();
         const { name, subdomain, isActive, adminEmail, newPassword, aiCredits, customRevenue, customRevenueCurrency, globalMarketplaceEnabled, courseCredits } = body;
+        const tenantAdminPermissions = normalizeTenantAdminPermissions(body.tenantAdminPermissions);
 
         // 1. Update Tenant Basic Info
         const updatedTenant = await prisma.tenant.update({
@@ -27,7 +29,7 @@ export async function PUT(
         });
 
         // 2. Handle Admin User Updates (Email/Password)
-        if (adminEmail || newPassword) {
+        if (adminEmail || newPassword || body.tenantAdminPermissions !== undefined) {
             const adminUser = await prisma.user.findFirst({
                 where: {
                     tenantId: tenantId,
@@ -41,11 +43,24 @@ export async function PUT(
                 if (newPassword) {
                     updateData.password = await bcrypt.hash(newPassword, 10);
                 }
+                if (body.tenantAdminPermissions !== undefined) {
+                    try {
+                        await prisma.$executeRaw`
+                            UPDATE "User"
+                            SET "tenantAdminPermissions" = ${tenantAdminPermissions}::text[]
+                            WHERE "id" = ${adminUser.id}
+                        `;
+                    } catch (error: any) {
+                        if (error?.code !== 'P2010') throw error;
+                    }
+                }
 
-                await prisma.user.update({
-                    where: { id: adminUser.id },
-                    data: updateData
-                });
+                if (Object.keys(updateData).length > 0) {
+                    await prisma.user.update({
+                        where: { id: adminUser.id },
+                        data: updateData
+                    });
+                }
             }
         }
 

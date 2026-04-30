@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
+import { useTheme } from 'next-themes';
 import {
     BarChart3,
     Users,
@@ -25,10 +26,13 @@ export default function AdminLayout({
     children: React.ReactNode;
 }) {
     const pathname = usePathname();
+    const { resolvedTheme } = useTheme();
+    const [mounted, setMounted] = useState(false);
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [branding, setBranding] = useState({
-        name: 'Libra.AI',
-        logoPrimary: '/libra_ai_logo_exact.png'
+        name: 'Lebra.Ai',
+        logoPrimary: '/lebra_ai_logo_transparent.png',
+        logoLight: '/lebra_ai_logo_footer.png'
     });
 
     useEffect(() => {
@@ -36,6 +40,10 @@ export default function AdminLayout({
             .then(res => res.json())
             .then(data => setBranding(data))
             .catch(() => { });
+    }, []);
+
+    useEffect(() => {
+        setMounted(true);
     }, []);
 
     // If we are on the login page (global or tenant), don't show the dashboard layout
@@ -55,6 +63,21 @@ export default function AdminLayout({
         { name: 'Platform Settings', href: '/admin/settings', icon: Settings },
     ];
 
+    const isWhiteLogo = (logo?: string) => logo === '/lebra_ai_logo_footer.png';
+    const isColorLogo = (logo?: string) =>
+        logo === '/lebra_ai_logo_transparent.png' ||
+        logo === '/libra_ai_logo_exact.png' ||
+        logo === '/lebra_ai_logo.png';
+
+    const colorLogo = branding.logoPrimary && !isWhiteLogo(branding.logoPrimary)
+        ? branding.logoPrimary
+        : '/lebra_ai_logo_transparent.png';
+    const whiteLogo =
+        branding.logoLight && !isColorLogo(branding.logoLight)
+            ? branding.logoLight
+            : '/lebra_ai_logo_footer.png';
+    const themeLogo = mounted && resolvedTheme === 'dark' ? whiteLogo : colorLogo;
+
     return (
         <div className="min-h-screen bg-background flex overflow-hidden">
             {/* Sidebar */}
@@ -65,11 +88,11 @@ export default function AdminLayout({
                     <div className="p-6 border-b border-white/5 flex items-center justify-between">
                         <div className="flex items-center gap-2">
                             <Image
-                                src={branding.logoPrimary}
+                                src={themeLogo}
                                 alt={`${branding.name} Logo`}
-                                width={120}
-                                height={40}
-                                className="h-8 w-auto object-contain"
+                                width={1340}
+                                height={382}
+                                className="h-8 w-[116px] object-contain"
                             />
                         </div>
                         <button onClick={() => setSidebarOpen(false)} className="lg:hidden text-muted-foreground hover:text-foreground">

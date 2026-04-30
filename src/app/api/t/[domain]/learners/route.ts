@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
-import { checkSession } from '@/lib/auth';
+import { checkSession, requireTenantPermission } from '@/lib/auth';
 
 export async function POST(
     req: NextRequest,
@@ -18,6 +18,11 @@ export async function POST(
 
         if (!tenant) {
             return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
+        }
+
+        const session = await checkSession(req, domain, ['TENANT_ADMIN', 'SUPER_ADMIN']);
+        if (!requireTenantPermission(session, 'learners.manage')) {
+            return NextResponse.json({ error: 'You do not have permission to create learners' }, { status: 403 });
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -61,7 +66,6 @@ export async function POST(
         }
 
         // Audit Log: Learner Creation
-        const session = await checkSession(req, domain);
         if (session) {
             await prisma.activityLog.create({
                 data: {
@@ -92,6 +96,11 @@ export async function GET(
 ) {
     try {
         const { domain } = await params;
+        const session = await checkSession(req, domain, ['TENANT_ADMIN', 'SUPER_ADMIN']);
+        if (!requireTenantPermission(session, 'learners.manage')) {
+            return NextResponse.json({ error: 'You do not have permission to view learners' }, { status: 403 });
+        }
+
         const learners = await prisma.user.findMany({
             where: {
                 tenant: { subdomain: domain },
@@ -160,6 +169,11 @@ export async function PUT(
 
         if (!tenant) return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
 
+        const session = await checkSession(req, domain, ['TENANT_ADMIN', 'SUPER_ADMIN']);
+        if (!requireTenantPermission(session, 'learners.manage')) {
+            return NextResponse.json({ error: 'You do not have permission to update learners' }, { status: 403 });
+        }
+
         await prisma.user.update({
             where: { id: learnerId, tenantId: tenant.id },
             data: {
@@ -180,7 +194,6 @@ export async function PUT(
         });
 
         // Audit Log: Learner Update
-        const session = await checkSession(req, domain);
         if (session) {
             await prisma.activityLog.create({
                 data: {
@@ -242,13 +255,17 @@ export async function DELETE(
 
         if (!tenant) return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
 
+        const session = await checkSession(req, domain, ['TENANT_ADMIN', 'SUPER_ADMIN']);
+        if (!requireTenantPermission(session, 'learners.manage')) {
+            return NextResponse.json({ error: 'You do not have permission to delete learners' }, { status: 403 });
+        }
+
         // Delete user (Prisma should handle cascade if configured, but we check here)
         await prisma.user.delete({
             where: { id: learnerId, tenantId: tenant.id }
         });
 
         // Audit Log: Learner Deletion
-        const session = await checkSession(req, domain);
         if (session) {
             await prisma.activityLog.create({
                 data: {

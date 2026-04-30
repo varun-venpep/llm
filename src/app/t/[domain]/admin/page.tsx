@@ -22,6 +22,7 @@ import { TeamsManager } from '@/components/admin/teams/TeamsManager';
 import { LearnersManager } from '@/components/admin/learners/LearnersManager';
 import CertificateManager from '@/components/admin/certificates/CertificateManager';
 import CertificateDesigner from '@/components/admin/certificates/CertificateDesigner';
+import { ALL_TENANT_ADMIN_PERMISSIONS } from '@/lib/permissions';
 
 type Tab = 'overview' | 'courses' | 'learners' | 'announcements' | 'branding' | 'domains' | 'settings' | 'certificates' | 'reports' | 'roles' | 'teams' | 'audit';
 
@@ -77,6 +78,7 @@ export default function ClientAdminDashboard() {
     const [userName, setUserName] = useState('Admin');
     const [userEmail, setUserEmail] = useState('');
     const [userId, setUserId] = useState<string | null>(null);
+    const [adminPermissions, setAdminPermissions] = useState<string[]>(ALL_TENANT_ADMIN_PERMISSIONS);
     const [profileForm, setProfileForm] = useState({
         currentPassword: '',
         newPassword: '',
@@ -183,6 +185,37 @@ export default function ClientAdminDashboard() {
             setToasts(prev => prev.filter(t => t.id !== id));
         }, 3000);
     };
+
+    const can = useCallback((permission: string) => adminPermissions.length === 0 || adminPermissions.includes(permission), [adminPermissions]);
+
+    const tabPermissions: Partial<Record<Tab, string>> = {
+        courses: 'courses.manage',
+        learners: 'learners.manage',
+        roles: 'people.manage',
+        teams: 'people.manage',
+        announcements: 'announcements.manage',
+        branding: 'branding.manage',
+        domains: 'branding.manage',
+        settings: 'branding.manage',
+        certificates: 'certificates.manage',
+        reports: 'reports.view',
+        audit: 'reports.view',
+    };
+
+    const visibleTabs = ([
+        ['overview', 'Overview', LayoutDashboard],
+        ['courses', 'Courses', BookOpen],
+        ['learners', 'Learners', Users],
+        ['roles', 'Job Roles', Shield],
+        ['teams', 'Teams', UsersRound],
+        ['announcements', 'Announcements', Megaphone],
+        ['branding', 'Branding', Palette],
+        ['domains', 'Domains', Globe],
+        ['settings', 'Settings', Settings],
+        ['certificates', 'Certificates', Award],
+        ['reports', 'Reports', BarChart3],
+        ['audit', 'Audit Monitor', Shield],
+    ] as [Tab, string, any][]).filter(([tab]) => !tabPermissions[tab] || can(tabPermissions[tab]!));
 
     // Announcement state
     const [showAnnouncementModal, setShowAnnouncementModal] = useState(false);
@@ -390,14 +423,21 @@ export default function ClientAdminDashboard() {
             setUserId(user.id);
             setUserName(user.name || 'Admin');
             setUserEmail(user.email || '');
+            const permissions = Array.isArray(user.tenantAdminPermissions) && user.tenantAdminPermissions.length > 0
+                ? user.tenantAdminPermissions
+                : ALL_TENANT_ADMIN_PERMISSIONS;
+            setAdminPermissions(permissions);
+            if (tabPermissions[activeTab] && !permissions.includes(tabPermissions[activeTab]!)) {
+                setActiveTab('overview');
+            }
 
             const [statsRes, coursesRes, annRes, rolesRes, teamsRes, certsRes] = await Promise.all([
                 fetch(`/api/t/${domain}/admin/stats`),
-                fetch(`/api/t/${domain}/courses`),
-                fetch(`/api/t/${domain}/announcements`),
-                fetch(`/api/t/${domain}/roles`),
-                fetch(`/api/t/${domain}/teams`),
-                fetch(`/api/t/${domain}/certificates`)
+                permissions.includes('courses.manage') ? fetch(`/api/t/${domain}/courses`) : Promise.resolve(null),
+                permissions.includes('announcements.manage') ? fetch(`/api/t/${domain}/announcements`) : Promise.resolve(null),
+                permissions.includes('people.manage') ? fetch(`/api/t/${domain}/roles`) : Promise.resolve(null),
+                permissions.includes('people.manage') ? fetch(`/api/t/${domain}/teams`) : Promise.resolve(null),
+                permissions.includes('certificates.manage') ? fetch(`/api/t/${domain}/certificates`) : Promise.resolve(null)
             ]);
 
             if (statsRes.ok) {
@@ -410,11 +450,11 @@ export default function ClientAdminDashboard() {
                 setEnrollmentTrendData(data.enrollmentTrendData || []);
                 setRoleDistribution(data.roleDistribution || []);
             }
-            if (coursesRes.ok) setCourses(await coursesRes.json());
-            if (annRes.ok) setAnnouncements(await annRes.json());
-            if (rolesRes.ok) setAvailableRoles(await rolesRes.json());
-            if (teamsRes.ok) setAvailableTeams(await teamsRes.json());
-            if (certsRes.ok) setAvailableTemplates(await certsRes.json());
+            if (coursesRes?.ok) setCourses(await coursesRes.json());
+            if (annRes?.ok) setAnnouncements(await annRes.json());
+            if (rolesRes?.ok) setAvailableRoles(await rolesRes.json());
+            if (teamsRes?.ok) setAvailableTeams(await teamsRes.json());
+            if (certsRes?.ok) setAvailableTemplates(await certsRes.json());
 
         } catch (e) {
             console.error(e);
@@ -1271,20 +1311,7 @@ export default function ClientAdminDashboard() {
                 </div>
 
                 <nav className="space-y-1 flex-1">
-                    {([
-                        ['overview', 'Overview', LayoutDashboard],
-                        ['courses', 'Courses', BookOpen],
-                        ['learners', 'Learners', Users],
-                        ['roles', 'Job Roles', Shield],
-                        ['teams', 'Teams', UsersRound],
-                        ['announcements', 'Announcements', Megaphone],
-                        ['branding', 'Branding', Palette],
-                        ['domains', 'Domains', Globe],
-                        ['settings', 'Settings', Settings],
-                        ['certificates', 'Certificates', Award],
-                        ['reports', 'Reports', BarChart3],
-                        ['audit', 'Audit Monitor', Shield],
-                    ] as [Tab, string, any][]).map(([tab, label, Icon]) => (
+                    {visibleTabs.map(([tab, label, Icon]) => (
                         <button key={tab} onClick={() => { setActiveTab(tab); setSelectedCourse(null); }}
                             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === tab ? 'bg-primary/10 text-primary border border-primary/20' : 'text-muted-foreground hover:bg-secondary/50 hover:text-foreground'}`}>
                             <Icon size={18} />
@@ -2723,14 +2750,15 @@ export default function ClientAdminDashboard() {
                     <div className="space-y-6 animate-in fade-in duration-500 pb-20">
                         {editingTemplate ? (
                             <CertificateDesigner 
+                                key={editingTemplate.id}
                                 template={editingTemplate} 
                                 onBack={() => { setEditingTemplate(null); fetchAvailableTemplates(); }}
-                                onSave={async (id, designFields) => {
+                                onSave={async (id, designFields, backgroundImage) => {
                                     try {
                                         const res = await fetch(`/api/t/${domain}/certificates/${id}`, {
                                             method: 'PATCH',
                                             headers: { 'Content-Type': 'application/json' },
-                                            body: JSON.stringify({ designFields })
+                                            body: JSON.stringify({ designFields, backgroundImage })
                                         });
                                         if (res.ok) {
                                             addToast('Design saved successfully.', 'success');

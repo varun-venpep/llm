@@ -40,6 +40,8 @@ export default async function middleware(req: NextRequest) {
 
     const searchParams = req.nextUrl.searchParams.toString();
     const path = `${url.pathname}${searchParams.length > 0 ? `?${searchParams}` : ''}`;
+    const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
+    const isRootHost = hostname === rootDomain || isLocalhost;
 
     console.log(`[Middleware] Raw Host: ${rawHost} | Root Domain: ${rootDomain} | Hostname: ${hostname}`);
 
@@ -50,7 +52,7 @@ export default async function middleware(req: NextRequest) {
     // 1. Super Admin Auth Guard
     // Only protect if on the admin subdomain OR on root domain it specifically starts with /admin
     const isSuperAdminPath = url.pathname.startsWith('/admin') && !url.pathname.endsWith('/login');
-    if (isSuperAdminPath && (isSuperAdminHost || hostname === rootDomain)) {
+    if (isSuperAdminPath && (isSuperAdminHost || isRootHost)) {
         if (!sessionToken) {
             return NextResponse.redirect(new URL('/admin/login', req.url));
         }
@@ -84,7 +86,7 @@ export default async function middleware(req: NextRequest) {
 
     // 3. Login-to-Dashboard Auto-Jump (Redirect AWAY from login if already authenticated)
     if (url.pathname.endsWith('/login') && sessionToken) {
-        if (url.pathname.startsWith('/admin') && (isSuperAdminHost || hostname === rootDomain)) {
+        if (url.pathname.startsWith('/admin') && (isSuperAdminHost || isRootHost)) {
             return NextResponse.redirect(new URL('/admin', req.url));
         }
 
@@ -123,7 +125,7 @@ export default async function middleware(req: NextRequest) {
     }
 
     // Root domain check (Platform Landing Page)
-    if (hostname === rootDomain) {
+    if (isRootHost) {
         // Do NOT rewrite if the path starts with /admin, /api, /t/, or /login
         if (
             url.pathname.startsWith('/admin') ||

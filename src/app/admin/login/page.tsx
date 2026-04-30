@@ -3,10 +3,12 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { Lock, Mail, ChevronRight, Loader2, ShieldCheck, Eye, EyeOff, CheckCircle2, ArrowLeft } from 'lucide-react';
+import { useTheme } from 'next-themes';
+import { Lock, Mail, ChevronRight, Loader2, Eye, EyeOff } from 'lucide-react';
 
 export default function AdminLogin() {
     const router = useRouter();
+    const { resolvedTheme } = useTheme();
     const [loading, setLoading] = useState(false);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -14,17 +16,27 @@ export default function AdminLogin() {
     const [rememberMe, setRememberMe] = useState(false);
     const [isChecking, setIsChecking] = useState(true);
     const [error, setError] = useState('');
-    const [success, setSuccess] = useState('');
-    
-    // Forgot Password Flow State
-    const [isResetting, setIsResetting] = useState(false);
-    const [isLinkSent, setIsLinkSent] = useState(false);
 
     const [branding, setBranding] = useState({
-        name: 'Libra.AI',
-        logoPrimary: '/libra_ai_logo_exact.png',
-        logoLight: '/libra_ai_logo_exact.png'
+        name: 'Lebra.Ai',
+        logoPrimary: '/lebra_ai_logo_transparent.png',
+        logoLight: '/lebra_ai_logo_footer.png'
     });
+
+    const isWhiteLogo = (logo?: string) => logo === '/lebra_ai_logo_footer.png';
+    const isColorLogo = (logo?: string) =>
+        logo === '/lebra_ai_logo_transparent.png' ||
+        logo === '/libra_ai_logo_exact.png' ||
+        logo === '/lebra_ai_logo.png';
+
+    const colorLogo = branding.logoPrimary && !isWhiteLogo(branding.logoPrimary)
+        ? branding.logoPrimary
+        : '/lebra_ai_logo_transparent.png';
+    const whiteLogo =
+        branding.logoLight && !isColorLogo(branding.logoLight)
+            ? branding.logoLight
+            : '/lebra_ai_logo_footer.png';
+    const themeLogo = resolvedTheme === 'dark' ? whiteLogo : colorLogo;
 
     useEffect(() => {
         fetch('/api/branding')
@@ -39,7 +51,7 @@ export default function AdminLogin() {
             try {
                 await fetch('/api/auth/session');
                 setIsChecking(false);
-            } catch (e) {
+            } catch {
                 setIsChecking(false);
             } finally {
                 clearTimeout(timeoutId);
@@ -67,33 +79,8 @@ export default function AdminLogin() {
                 setError(data.error || 'Invalid admin credentials');
                 setLoading(false);
             }
-        } catch (error) {
+        } catch {
             setError('System error. Please contact platform support.');
-            setLoading(false);
-        }
-    };
-
-    const handleRequestLink = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setLoading(true);
-        setError('');
-
-        try {
-            const res = await fetch('/api/auth/reset', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'request', email }),
-            });
-
-            if (res.ok) {
-                setIsLinkSent(true);
-            } else {
-                const data = await res.json();
-                setError(data.error || 'Failed to send link');
-            }
-        } catch (err) {
-            setError('Connection error');
-        } finally {
             setLoading(false);
         }
     };
@@ -114,21 +101,20 @@ export default function AdminLogin() {
             <div className="w-full max-w-md space-y-8 relative z-10">
                 <div className="text-center space-y-3">
                     <Image
-                        src={branding.logoLight || branding.logoPrimary}
+                        src={themeLogo}
                         alt={`${branding.name} Logo`}
-                        width={180}
-                        height={60}
-                        className="h-12 w-auto object-contain mx-auto mb-4"
+                        width={1340}
+                        height={382}
+                        className="h-16 w-[230px] object-contain mx-auto mb-4"
                     />
                     <h1 className="text-3xl font-black tracking-tight">{branding.name} Platform</h1>
                     <p className="text-muted-foreground font-bold uppercase tracking-widest text-[10px]">
-                        {isResetting ? 'Forgot Password' : 'Super Admin Access Portal'}
+                        Super Admin Access Portal
                     </p>
                 </div>
 
                 <div className="glassmorphism p-8 rounded-3xl border border-white/10 shadow-2xl bg-background/50 backdrop-blur-xl">
-                    {!isResetting ? (
-                        <form onSubmit={handleLogin} className="space-y-6">
+                    <form onSubmit={handleLogin} className="space-y-6">
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Admin Email</label>
                                 <div className="relative group">
@@ -174,7 +160,6 @@ export default function AdminLogin() {
                                     </div>
                                     Stay logged in
                                 </label>
-                                <button type="button" onClick={() => setIsResetting(true)} className="text-[10px] font-black text-blue-400 hover:underline uppercase tracking-widest">Forgot Password?</button>
                             </div>
 
                             {error && <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3 text-red-400 text-[10px] font-black text-center uppercase tracking-widest">{error}</div>}
@@ -182,47 +167,7 @@ export default function AdminLogin() {
                             <button type="submit" disabled={loading} className="w-full py-4 rounded-xl bg-primary text-primary-foreground font-bold hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2 shadow-xl shadow-primary/20 disabled:opacity-50">
                                 {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Authenticate via SSO <ChevronRight className="w-5 h-5" /></>}
                             </button>
-                        </form>
-                    ) : (
-                        <div className="space-y-6">
-                            {!isLinkSent ? (
-                                <form onSubmit={handleRequestLink} className="space-y-6">
-                                    <p className="text-[11px] text-muted-foreground leading-relaxed text-center font-medium">Enter your email address and we'll send you a secure link to reset your password.</p>
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Admin Email</label>
-                                        <div className="relative group">
-                                            <Mail className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-blue-400 transition-colors" />
-                                            <input
-                                                type="email"
-                                                required
-                                                className="w-full bg-secondary/30 border border-white/10 rounded-xl pl-12 pr-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
-                                                placeholder="admin@lebra.ai"
-                                                value={email}
-                                                onChange={(e) => setEmail(e.target.value)}
-                                            />
-                                        </div>
-                                    </div>
-                                    {error && <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3 text-red-400 text-[10px] font-black text-center uppercase tracking-widest">{error}</div>}
-                                    <button type="submit" disabled={loading} className="w-full py-4 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-500 transition-all flex items-center justify-center gap-2 shadow-xl shadow-blue-500/20 disabled:opacity-50">
-                                        {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Send Reset Link <ChevronRight className="w-5 h-5" /></>}
-                                    </button>
-                                </form>
-                            ) : (
-                                <div className="text-center space-y-6 py-4 animate-in fade-in zoom-in duration-500">
-                                    <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto">
-                                        <CheckCircle2 className="w-8 h-8 text-green-500" />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <h3 className="font-black text-lg">Check your email</h3>
-                                        <p className="text-[11px] text-muted-foreground leading-relaxed">We've sent a secure reset link to <strong>{email}</strong>. Please check your inbox and spam folder.</p>
-                                    </div>
-                                </div>
-                            )}
-                            <button type="button" onClick={() => { setIsResetting(false); setIsLinkSent(false); }} className="w-full py-2 text-[10px] font-black text-muted-foreground hover:text-foreground uppercase tracking-widest flex items-center justify-center gap-2">
-                                <ArrowLeft className="w-3 h-3" /> Back to Login
-                            </button>
-                        </div>
-                    )}
+                    </form>
                 </div>
             </div>
         </div>

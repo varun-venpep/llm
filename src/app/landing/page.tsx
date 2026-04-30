@@ -4,7 +4,6 @@ import {
   BadgeCheck,
   BookOpenCheck,
   Building2,
-  CheckCircle2,
   ChevronRight,
   FileText,
   GraduationCap,
@@ -36,10 +35,10 @@ export default function LandingPage() {
               MPA Home
             </div>
             <h1 className="mt-6 max-w-4xl text-4xl font-bold leading-[1.03] tracking-tight text-white sm:text-5xl lg:text-[64px]">
-              Your own learning portal, branded for every academy.
+              AI-powered learning, built for every academy.
             </h1>
             <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-300 sm:text-xl">
-              Launch a polished learning experience for teams, customers, and learners with a premium public presence, tenant-aware workspaces, certifications, analytics, and fast admin operations.
+              Deliver smarter education with an AI chat tutor, automated question generation, and intelligent learning workflows.
             </p>
             <div className="mt-8 flex flex-col gap-4 sm:flex-row">
               <Link href="/contact" className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-blue-500 to-violet-600 px-7 py-4 text-sm font-semibold text-white shadow-2xl shadow-blue-500/20 transition duration-200 hover:-translate-y-0.5">
@@ -48,14 +47,6 @@ export default function LandingPage() {
               <Link href="/features" className="inline-flex items-center justify-center gap-2 rounded-full border border-white/20 bg-white/10 px-7 py-4 text-sm font-semibold text-white transition-colors hover:bg-white/15">
                 Explore Features <ArrowRight className="h-5 w-5" />
               </Link>
-            </div>
-            <div className="mt-10 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-              {['Home', 'Features', 'Pricing', 'Contact'].map((item) => (
-                <div key={item} className="flex items-center gap-2 rounded-3xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-slate-200 shadow-sm shadow-slate-950/10">
-                  <CheckCircle2 className="h-5 w-5 text-emerald-300" />
-                  {item}
-                </div>
-              ))}
             </div>
             <div className="mt-8 grid gap-3 rounded-[32px] border border-white/10 bg-white/5 p-4 shadow-lg shadow-slate-950/10 sm:grid-cols-3">
               {[
@@ -113,7 +104,7 @@ export default function LandingPage() {
             <Eyebrow tone="amber">Built For MPA Teams</Eyebrow>
             <h2 className="mt-5 text-4xl font-bold tracking-tight text-slate-950">One system for platform owners, admins, managers, and learners.</h2>
             <p className="mt-5 text-base leading-8 text-slate-600">
-              Whether you are training employees, customers, partners, franchise teams, or student cohorts, Libra.AI gives every audience a clean experience while keeping operations centralized.
+              Whether you are training employees, customers, partners, franchise teams, or student cohorts, Lebra.Ai gives every audience a clean experience while keeping operations centralized.
             </p>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
