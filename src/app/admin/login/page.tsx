@@ -21,9 +21,9 @@ export default function AdminLogin() {
     const [isLinkSent, setIsLinkSent] = useState(false);
 
     const [branding, setBranding] = useState({
-        name: 'Lebra.Ai',
-        logoPrimary: '/lebra_ai_logo.png',
-        logoLight: '/lebra_ai_logo.png'
+        name: 'Libra.AI',
+        logoPrimary: '/libra_ai_logo_exact.png',
+        logoLight: '/libra_ai_logo_exact.png'
     });
 
     useEffect(() => {

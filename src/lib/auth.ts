@@ -8,7 +8,19 @@ export async function checkSession(req: NextRequest, domain: string, requiredRol
 
     const user = await prisma.user.findUnique({
         where: { id: sessionId },
-        include: { tenant: true }
+        select: {
+            id: true,
+            email: true,
+            name: true,
+            role: true,
+            tenantId: true,
+            tenant: {
+                select: {
+                    id: true,
+                    subdomain: true
+                }
+            }
+        }
     });
 
     if (!user || user.tenant.subdomain !== domain) return null;
