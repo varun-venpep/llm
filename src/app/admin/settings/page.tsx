@@ -9,7 +9,7 @@ export default function GlobalSettingsPage() {
     const [settings, setSettings] = useState<Record<string, string>>({
         maxUploadSize: '10',
         supportEmail: 'support@lebra.ai',
-        PLATFORM_NAME: 'Lebra.Ai',
+        PLATFORM_NAME: 'Libra.AI',
         PLATFORM_PRIMARY_COLOR: '#3b82f6'
     });
     const [isLoading, setIsLoading] = useState(true);
@@ -250,7 +250,7 @@ export default function GlobalSettingsPage() {
                                             value={settings.PLATFORM_NAME || ''}
                                             onChange={e => handleChange('PLATFORM_NAME', e.target.value)}
                                             className="flex-1 bg-secondary/50 border border-border/50 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 font-bold"
-                                            placeholder="e.g. Lebra.Ai"
+                                            placeholder="e.g. Libra.AI"
                                         />
                                         <button
                                             onClick={() => handleSave('PLATFORM_NAME', settings.PLATFORM_NAME)}

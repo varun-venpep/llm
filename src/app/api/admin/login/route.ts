@@ -13,6 +13,13 @@ export async function POST(req: NextRequest) {
             where: {
                 email,
                 role: { in: ['SUPER_ADMIN', 'PLATFORM_MANAGER'] }
+            },
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                role: true,
+                password: true
             }
         });
 

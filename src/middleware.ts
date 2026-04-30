@@ -24,7 +24,8 @@ export default async function middleware(req: NextRequest) {
 
     // 2. The root domain is what we want to strip out to find the subdomain
     // E.g. "lvh.me:3000" or "localhost:3000" or "dev.lebra.ai"
-    let rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'dev.lebra.ai';
+    const configuredRootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'dev.lebra.ai';
+    const rootDomain = configuredRootDomain.split(':')[0];
 
     // 3. Normalize the hostname
     let hostname = rawHost.split(',')[0].trim();
@@ -33,8 +34,8 @@ export default async function middleware(req: NextRequest) {
         hostname = hostname.split(':')[0];
     }
 
-    if (hostname.includes('.localhost:3000')) {
-        hostname = hostname.replace('.localhost:3000', `.${rootDomain}`);
+    if (hostname.includes(`.${configuredRootDomain}`)) {
+        hostname = hostname.replace(`.${configuredRootDomain}`, `.${rootDomain}`);
     }
 
     const searchParams = req.nextUrl.searchParams.toString();
@@ -130,7 +131,10 @@ export default async function middleware(req: NextRequest) {
             url.pathname.startsWith('/t/') ||
             url.pathname.startsWith('/login') ||
             url.pathname.startsWith('/auth') ||
-            url.pathname.startsWith('/landing')
+            url.pathname.startsWith('/landing') ||
+            url.pathname.startsWith('/features') ||
+            url.pathname.startsWith('/pricing') ||
+            url.pathname.startsWith('/contact')
         ) {
             return NextResponse.next();
         }

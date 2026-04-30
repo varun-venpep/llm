@@ -1,188 +1,172 @@
-'use client';
-
-import { useState, useEffect } from 'react';
-import Image from 'next/image';
-import { BookOpen, Users, Globe, ChevronRight, CheckCircle } from 'lucide-react';
+import Link from 'next/link';
+import {
+  ArrowRight,
+  BadgeCheck,
+  BookOpenCheck,
+  Building2,
+  CheckCircle2,
+  ChevronRight,
+  FileText,
+  GraduationCap,
+  Sparkles,
+  UsersRound,
+} from 'lucide-react';
+import {
+  DashboardMockup,
+  Eyebrow,
+  FeatureCard,
+  MarketingPage,
+  MetricStrip,
+  ProcessBand,
+  TrustBand,
+} from '@/components/marketing/MarketingLayout';
+import { homeHighlights } from '@/components/marketing/marketingData';
 
 export default function LandingPage() {
-  const [branding, setBranding] = useState({
-    name: 'Lebra.Ai',
-    logoPrimary: '/lebra_ai_logo.png',
-    logoLight: '/lebra_ai_logo.png',
-    logoDark: '/lebra_ai_logo.png',
-    favicon: '/favicon.ico',
-    primaryColor: '#3b82f6',
-  });
-
-  useEffect(() => {
-    fetch('/api/branding')
-      .then(res => res.json())
-      .then(data => setBranding(data))
-      .catch(() => { });
-  }, []);
   return (
-    <div className="flex min-h-screen flex-col bg-background text-foreground selection:bg-purple-500/30">
-      {/* Header */}
-      <header className="fixed top-0 z-50 w-full glassmorphism px-6 py-4 flex justify-between items-center">
-        <div className="flex items-center gap-2">
-          <Image
-            src={branding.logoPrimary}
-            alt={`${branding.name} Logo`}
-            width={120}
-            height={40}
-            className="h-8 w-auto object-contain"
-          />
-        </div>
-        <nav className="hidden md:flex gap-8 text-sm font-medium text-muted-foreground">
-          <a href="#features" className="hover:text-primary transition-colors">Features</a>
-          <a href="#solutions" className="hover:text-primary transition-colors">Solutions</a>
-          <a href="#pricing" className="hover:text-primary transition-colors">Pricing</a>
-        </nav>
-        <div className="flex gap-4 items-center">
-          <button
-            onClick={() => window.location.href = '/login'}
-            className="text-sm font-medium hover:text-primary transition-colors"
-          >
-            Sign In
-          </button>
-          <button className="px-4 py-2 rounded-full bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity">
-            Start Free
-          </button>
-        </div>
-      </header>
-
-      {/* Hero Section */}
-      <section className="pt-32 pb-20 px-6 overflow-hidden relative">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-purple-600/10 blur-[120px] rounded-full pointer-events-none -z-10" />
-
-        <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
-          <div className="space-y-8">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold uppercase tracking-wider">
-              <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
-              The Future of Learning
+    <MarketingPage>
+      <section className="relative overflow-hidden bg-slate-950 px-5 text-white sm:px-6 lg:px-8">
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-[360px] bg-[radial-gradient(circle_at_top_left,_rgba(59,130,246,0.18),_transparent_25%),radial-gradient(circle_at_top_right,_rgba(168,85,247,0.22),_transparent_30%)]" />
+        <div className="pointer-events-none absolute -bottom-16 right-6 h-56 w-56 rounded-full bg-blue-500/10 blur-3xl sm:right-16" />
+        <div className="pointer-events-none absolute -bottom-14 left-6 h-56 w-56 rounded-full bg-violet-500/10 blur-3xl sm:left-10" />
+        <div className="mx-auto grid w-full max-w-7xl gap-10 py-10 sm:py-14 lg:grid-cols-[0.84fr_1.16fr] lg:items-center lg:py-8">
+          <div>
+            <div className="inline-flex items-center gap-3 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-blue-100 shadow-sm shadow-slate-950/20">
+              <span className="h-2 w-2 rounded-full bg-emerald-300" />
+              MPA Home
             </div>
-            <h1 className="text-5xl md:text-7xl font-extrabold leading-[1.1] tracking-tight">
-              Launch Your Own <br />
-              <span className="gradient-text">Whitelabel LMS</span> <br />
-              in Minutes.
+            <h1 className="mt-6 max-w-4xl text-4xl font-bold leading-[1.03] tracking-tight text-white sm:text-5xl lg:text-[64px]">
+              Your own learning portal, branded for every academy.
             </h1>
-            <p className="text-lg md:text-xl text-muted-foreground max-w-lg leading-relaxed">
-              Empower your staff, engage your learners, and scale your brand with the world's most powerful managed learning ecosystem.
+            <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-300 sm:text-xl">
+              Launch a polished learning experience for teams, customers, and learners with a premium public presence, tenant-aware workspaces, certifications, analytics, and fast admin operations.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 pt-4">
-              <button className="px-8 py-4 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold text-lg hover:scale-105 transition-transform flex items-center justify-center gap-2 shadow-lg shadow-purple-500/20">
-                Setup Your Workspace <ChevronRight className="w-5 h-5" />
-              </button>
-              <button className="px-8 py-4 rounded-full bg-secondary text-foreground font-bold text-lg hover:bg-secondary/80 transition-colors border border-border">
-                Watch Demo
-              </button>
+            <div className="mt-8 flex flex-col gap-4 sm:flex-row">
+              <Link href="/contact" className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-blue-500 to-violet-600 px-7 py-4 text-sm font-semibold text-white shadow-2xl shadow-blue-500/20 transition duration-200 hover:-translate-y-0.5">
+                Setup Your Workspace <ChevronRight className="h-5 w-5" />
+              </Link>
+              <Link href="/features" className="inline-flex items-center justify-center gap-2 rounded-full border border-white/20 bg-white/10 px-7 py-4 text-sm font-semibold text-white transition-colors hover:bg-white/15">
+                Explore Features <ArrowRight className="h-5 w-5" />
+              </Link>
             </div>
+            <div className="mt-10 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              {['Home', 'Features', 'Pricing', 'Contact'].map((item) => (
+                <div key={item} className="flex items-center gap-2 rounded-3xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-slate-200 shadow-sm shadow-slate-950/10">
+                  <CheckCircle2 className="h-5 w-5 text-emerald-300" />
+                  {item}
+                </div>
+              ))}
+            </div>
+            <div className="mt-8 grid gap-3 rounded-[32px] border border-white/10 bg-white/5 p-4 shadow-lg shadow-slate-950/10 sm:grid-cols-3">
+              {[
+                ['10 min', 'workspace kickoff'],
+                ['4 roles', 'owner to learner'],
+                ['100%', 'brand controlled'],
+              ].map(([value, label]) => (
+                <div key={label} className="rounded-3xl bg-slate-900/60 p-6 text-white shadow-sm shadow-slate-950/10">
+                  <div className="text-xl font-bold">{value}</div>
+                  <div className="mt-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">{label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="relative">
+            <div className="mb-4 grid gap-3 sm:grid-cols-3">
+              {[
+                ['Brand', 'Logo, color, domain'],
+                ['Learn', 'Courses and quizzes'],
+                ['Measure', 'Reports and certificates'],
+              ].map(([title, text]) => (
+                <div key={title} className="rounded-3xl border border-white/10 bg-white/10 p-5 shadow-lg shadow-slate-950/10">
+                  <div className="text-sm font-semibold text-white">{title}</div>
+                  <div className="mt-1 text-xs text-slate-300">{text}</div>
+                </div>
+              ))}
+            </div>
+            <DashboardMockup />
+          </div>
+        </div>
+      </section>
 
-            <div className="flex items-center gap-6 pt-8 border-t border-border/50">
-              <div className="flex -space-x-3">
-                {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="w-10 h-10 rounded-full border-2 border-background bg-secondary flex items-center justify-center overflow-hidden">
-                    <img src={`https://i.pravatar.cc/100?img=${i + 10}`} alt="user" />
-                  </div>
-                ))}
+      <MetricStrip />
+
+      <section className="px-5 py-20 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl">
+          <div className="max-w-3xl">
+            <Eyebrow tone="green">What You Get</Eyebrow>
+            <h2 className="mt-5 text-4xl font-bold tracking-tight text-slate-950 sm:text-5xl">A complete front office for modern learning operations.</h2>
+            <p className="mt-5 text-lg leading-8 text-slate-600">
+              The platform is built for teams that need more than a course library. It supports the operational details behind real training delivery: branding, enrollment, content, reporting, certificates, and learner support.
+            </p>
+          </div>
+          <div className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            {homeHighlights.map((item) => (
+              <FeatureCard key={item.title} {...item} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-slate-50 px-5 py-20 sm:px-6 lg:px-8">
+        <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[0.85fr_1.15fr] lg:items-center">
+          <div>
+            <Eyebrow tone="amber">Built For MPA Teams</Eyebrow>
+            <h2 className="mt-5 text-4xl font-bold tracking-tight text-slate-950">One system for platform owners, admins, managers, and learners.</h2>
+            <p className="mt-5 text-base leading-8 text-slate-600">
+              Whether you are training employees, customers, partners, franchise teams, or student cohorts, Libra.AI gives every audience a clean experience while keeping operations centralized.
+            </p>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {[
+              [Building2, 'Platform Owners', 'Control tenants, marketplace content, global settings, staff access, and growth reporting.'],
+              [UsersRound, 'Tenant Admins', 'Manage learners, teams, roles, courses, certificates, announcements, and workspace branding.'],
+              [GraduationCap, 'Learners', 'View courses, continue lessons, complete quizzes, track progress, and download certificates.'],
+              [BookOpenCheck, 'Managers', 'Monitor assigned teams, review progress, and keep learning aligned with team goals.'],
+            ].map(([Icon, title, text]) => (
+              <div key={title as string} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                <Icon className="h-7 w-7 text-blue-700" />
+                <h3 className="mt-5 font-bold text-slate-950">{title as string}</h3>
+                <p className="mt-3 text-sm leading-6 text-slate-600">{text as string}</p>
               </div>
-              <p className="text-sm text-muted-foreground">
-                <span className="text-primary font-bold italic">500+</span> teams growing with {branding.name.split('.')[0]}
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <ProcessBand />
+
+      <section className="px-5 py-20 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl rounded-[32px] border border-slate-200 bg-white p-8 shadow-xl shadow-slate-200/70 sm:p-10 lg:p-12">
+          <div className="grid gap-10 lg:grid-cols-[1fr_0.8fr] lg:items-center">
+            <div>
+              <Eyebrow tone="rose">Ready To Launch</Eyebrow>
+              <h2 className="mt-5 text-4xl font-bold tracking-tight text-slate-950">Create a learning portal that looks owned, managed, and trustworthy from day one.</h2>
+              <p className="mt-5 text-base leading-8 text-slate-600">
+                Get the structure of an enterprise LMS with the flexibility of a modern SaaS platform. We can help you shape the first workspace, content model, user roles, and reporting rhythm.
               </p>
+              <Link href="/contact" className="mt-8 inline-flex items-center gap-2 rounded-full bg-blue-600 px-7 py-4 text-sm font-bold text-white shadow-lg shadow-blue-200 transition-transform hover:scale-[1.02]">
+                Plan My Launch <ArrowRight className="h-5 w-5" />
+              </Link>
             </div>
-          </div>
-
-          <div className="relative group">
-            <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-1000 group-hover:duration-200" />
-            <div className="relative glassmorphism rounded-2xl overflow-hidden shadow-2xl">
-              <Image
-                src="/lms_platform_hero_1773035558238.png"
-                alt="Lebra.Ai Dashboard Preview"
-                width={800}
-                height={600}
-                className="w-full h-auto object-cover"
-              />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Stats Section */}
-      <section className="py-20 border-y border-border/30 bg-secondary/20">
-        <div className="max-w-7xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-12 text-center">
-          <div className="space-y-2">
-            <h3 className="text-4xl font-black gradient-text">99.9%</h3>
-            <p className="text-sm text-muted-foreground uppercase font-bold tracking-widest">Uptime</p>
-          </div>
-          <div className="space-y-2">
-            <h3 className="text-4xl font-black gradient-text">24/7</h3>
-            <p className="text-sm text-muted-foreground uppercase font-bold tracking-widest">Support</p>
-          </div>
-          <div className="space-y-2">
-            <h3 className="text-4xl font-black gradient-text">100+</h3>
-            <p className="text-sm text-muted-foreground uppercase font-bold tracking-widest">Integrations</p>
-          </div>
-          <div className="space-y-2">
-            <h3 className="text-4xl font-black gradient-text">0%</h3>
-            <p className="text-sm text-muted-foreground uppercase font-bold tracking-widest">Down Time</p>
-          </div>
-        </div>
-      </section>
-
-      {/* Features Grid */}
-      <section id="features" className="py-32 px-6">
-        <div className="max-w-7xl mx-auto space-y-20">
-          <div className="text-center space-y-4 max-w-2xl mx-auto">
-            <h2 className="text-4xl md:text-5xl font-black">Everything you need to <span className="gradient-text">scale learning</span>.</h2>
-            <p className="text-muted-foreground text-lg">Powerful features built for managed service providers and internal training teams.</p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="p-8 rounded-2xl bg-secondary/30 border border-border hover:border-blue-500/50 transition-colors group">
-              <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                <Globe className="w-6 h-6 text-blue-400" />
-              </div>
-              <h4 className="text-xl font-bold mb-4">Custom Domains</h4>
-              <p className="text-muted-foreground leading-relaxed">Map your client's own domain or subdomain for a fully branded experience that feels internal.</p>
-            </div>
-            <div className="p-8 rounded-2xl bg-secondary/30 border border-border hover:border-purple-500/50 transition-colors group">
-              <div className="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                <Users className="w-6 h-6 text-purple-400" />
-              </div>
-              <h4 className="text-xl font-bold mb-4">Managed Onboarding</h4>
-              <p className="text-muted-foreground leading-relaxed">Bulk enroll learners and generate secure credentials instantly. Zero friction for your learners.</p>
-            </div>
-            <div className="p-8 rounded-2xl bg-secondary/30 border border-border hover:border-emerald-500/50 transition-colors group">
-              <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                <CheckCircle className="w-6 h-6 text-emerald-400" />
-              </div>
-              <h4 className="text-xl font-bold mb-4">Offline Payments</h4>
-              <p className="text-muted-foreground leading-relaxed">Focus on content delivery. Collect fees through your own channels without complex platform cuts.</p>
+            <div className="grid gap-4">
+              {[
+                [Sparkles, 'Branded academy experience'],
+                [FileText, 'Course and certificate workflows'],
+                [BadgeCheck, 'Admin-ready reporting'],
+              ].map(([Icon, label]) => (
+                <div key={label as string} className="flex items-center gap-4 rounded-2xl bg-slate-50 p-5">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-slate-950 shadow-sm">
+                    <Icon className="h-6 w-6" />
+                  </div>
+                  <span className="font-bold text-slate-950">{label as string}</span>
+                </div>
+              ))}
             </div>
           </div>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="py-12 border-t border-border mt-auto">
-        <div className="max-w-7xl mx-auto px-6 flex flex-col md:row-center justify-between gap-8 items-center text-sm text-muted-foreground">
-          <div className="flex items-center gap-2">
-            <Image
-              src={branding.logoPrimary}
-              alt={`${branding.name} Logo`}
-              width={100}
-              height={32}
-              className="h-6 w-auto object-contain brightness-0 invert"
-            />
-          </div>
-          <p>© 2026 {branding.name}. All rights reserved.</p>
-          <div className="flex gap-8">
-            <a href="#" className="hover:text-primary">Twitter</a>
-            <a href="#" className="hover:text-primary">GitHub</a>
-            <a href="#" className="hover:text-primary">LinkedIn</a>
-          </div>
-        </div>
-      </footer>
-    </div>
+      <TrustBand />
+    </MarketingPage>
   );
 }

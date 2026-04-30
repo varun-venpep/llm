@@ -81,13 +81,11 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
 
-    } catch (error: any) {
+    } catch (error) {
         console.error('--- [RESET API ERROR] ---');
-        console.error('Error Name:', error.name);
-        console.error('Error Message:', error.message);
-        if (error.code) console.error('Error Code:', error.code);
+        console.error('Error:', error);
         console.error('Full Error:', error);
         console.error('--------------------------');
-        return NextResponse.json({ error: 'Internal server error: ' + (error.message || 'Unknown') }, { status: 500 });
+        return NextResponse.json({ error: 'Unable to process password reset right now. Please contact platform support.' }, { status: 500 });
     }
 }

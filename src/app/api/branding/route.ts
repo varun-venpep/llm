@@ -19,10 +19,10 @@ export async function GET() {
         });
 
         const branding = {
-            name: settings.find(s => s.key === 'PLATFORM_NAME')?.value || 'Lebra.Ai',
-            logoPrimary: settings.find(s => s.key === 'PLATFORM_LOGO_PRIMARY')?.value || '/lebra_ai_logo.png',
-            logoLight: settings.find(s => s.key === 'PLATFORM_LOGO_LIGHT')?.value || '/lebra_ai_logo.png',
-            logoDark: settings.find(s => s.key === 'PLATFORM_LOGO_DARK')?.value || '/lebra_ai_logo.png',
+            name: settings.find(s => s.key === 'PLATFORM_NAME')?.value || 'Libra.AI',
+            logoPrimary: settings.find(s => s.key === 'PLATFORM_LOGO_PRIMARY')?.value || '/libra_ai_logo_exact.png',
+            logoLight: settings.find(s => s.key === 'PLATFORM_LOGO_LIGHT')?.value || '/libra_ai_logo_exact.png',
+            logoDark: settings.find(s => s.key === 'PLATFORM_LOGO_DARK')?.value || '/libra_ai_logo_exact.png',
             favicon: settings.find(s => s.key === 'PLATFORM_FAVICON')?.value || '/favicon.ico',
             primaryColor: settings.find(s => s.key === 'PLATFORM_PRIMARY_COLOR')?.value || '#3b82f6', // Default blue-500
         };

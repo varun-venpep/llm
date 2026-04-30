@@ -27,8 +27,8 @@ export default function AdminLayout({
     const pathname = usePathname();
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [branding, setBranding] = useState({
-        name: 'Lebra.Ai',
-        logoPrimary: '/lebra_ai_logo.png'
+        name: 'Libra.AI',
+        logoPrimary: '/libra_ai_logo_exact.png'
     });
 
     useEffect(() => {
