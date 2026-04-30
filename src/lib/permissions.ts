@@ -10,11 +10,17 @@ export const TENANT_ADMIN_PERMISSIONS = [
 
 export type TenantAdminPermission = typeof TENANT_ADMIN_PERMISSIONS[number]['key'];
 
-export const ALL_TENANT_ADMIN_PERMISSIONS = TENANT_ADMIN_PERMISSIONS.map(permission => permission.key);
+export const ALL_TENANT_ADMIN_PERMISSIONS: TenantAdminPermission[] = TENANT_ADMIN_PERMISSIONS.map(permission => permission.key);
 
-export function normalizeTenantAdminPermissions(value: unknown): string[] {
+const TENANT_ADMIN_PERMISSION_KEYS = new Set<string>(ALL_TENANT_ADMIN_PERMISSIONS);
+
+export function isTenantAdminPermission(value: unknown): value is TenantAdminPermission {
+  return typeof value === 'string' && TENANT_ADMIN_PERMISSION_KEYS.has(value);
+}
+
+export function normalizeTenantAdminPermissions(value: unknown): TenantAdminPermission[] {
   if (!Array.isArray(value)) return [];
-  return value.filter((permission): permission is string => typeof permission === 'string');
+  return value.filter(isTenantAdminPermission);
 }
 
 export function hasTenantPermission(user: { role?: string; tenantAdminPermissions?: string[] | null }, permission: string) {
@@ -24,5 +30,5 @@ export function hasTenantPermission(user: { role?: string; tenantAdminPermission
   const permissions = normalizeTenantAdminPermissions(user.tenantAdminPermissions);
   if (permissions.length === 0) return true;
 
-  return permissions.includes(permission);
+  return isTenantAdminPermission(permission) && permissions.includes(permission);
 }
