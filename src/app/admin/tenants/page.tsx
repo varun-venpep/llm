@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Search, MoreVertical, Building2, CheckCircle2, ShieldCheck, Edit2, Trash2, AlertTriangle, Loader2, ExternalLink, Copy, Check, Eye, EyeOff } from 'lucide-react';
-import { ALL_TENANT_ADMIN_PERMISSIONS, TENANT_ADMIN_PERMISSIONS } from '@/lib/permissions';
+import { ALL_TENANT_ADMIN_PERMISSIONS, normalizeTenantAdminPermissions, TENANT_ADMIN_PERMISSIONS, type TenantAdminPermission } from '@/lib/permissions';
 
 interface Tenant {
     id: string;
@@ -33,10 +33,23 @@ const getCurrencySymbol = (currencyCode?: string) => {
     }
 };
 
+type EditForm = {
+    name: string;
+    subdomain: string;
+    isActive: boolean;
+    adminEmail: string;
+    newPassword: string;
+    aiCredits: number;
+    customRevenue: number;
+    customRevenueCurrency: string;
+    globalMarketplaceEnabled: boolean;
+    courseCredits: number;
+    tenantAdminPermissions: TenantAdminPermission[];
+};
+
 const getTenantAdminAccess = (permissions?: string[]) => {
-    const knownPermissions = new Set(TENANT_ADMIN_PERMISSIONS.map(permission => permission.key));
     const enabledPermissions = permissions?.length
-        ? permissions.filter(permission => knownPermissions.has(permission))
+        ? normalizeTenantAdminPermissions(permissions)
         : ALL_TENANT_ADMIN_PERMISSIONS;
     const enabledLabels = TENANT_ADMIN_PERMISSIONS
         .filter(permission => enabledPermissions.includes(permission.key))
@@ -57,7 +70,7 @@ export default function TenantsPage() {
     // Edit Modal State
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editingTenant, setEditingTenant] = useState<Tenant | null>(null);
-    const [editForm, setEditForm] = useState({
+    const [editForm, setEditForm] = useState<EditForm>({
         name: '',
         subdomain: '',
         isActive: true,
@@ -113,13 +126,13 @@ export default function TenantsPage() {
             customRevenueCurrency: tenant.customRevenueCurrency || 'USD',
             globalMarketplaceEnabled: tenant.globalMarketplaceEnabled || false,
             courseCredits: tenant.courseCredits || 0,
-            tenantAdminPermissions: tenant.tenantAdminPermissions?.length ? tenant.tenantAdminPermissions : ALL_TENANT_ADMIN_PERMISSIONS
+            tenantAdminPermissions: tenant.tenantAdminPermissions?.length ? normalizeTenantAdminPermissions(tenant.tenantAdminPermissions) : ALL_TENANT_ADMIN_PERMISSIONS
         });
         setIsEditModalOpen(true);
         setActiveDropdown(null);
     };
 
-    const toggleTenantAdminPermission = (permission: string) => {
+    const toggleTenantAdminPermission = (permission: TenantAdminPermission) => {
         setEditForm(prev => ({
             ...prev,
             tenantAdminPermissions: prev.tenantAdminPermissions.includes(permission)
