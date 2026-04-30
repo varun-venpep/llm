@@ -28,7 +28,7 @@ export async function PATCH(
             where: { id },
             data: {
                 ...(name && { name }),
-                ...(backgroundImage && { backgroundImage }),
+                ...(backgroundImage !== undefined && { backgroundImage }),
                 ...(designFields && { designFields }),
                 ...(isActive !== undefined && { isActive })
             }

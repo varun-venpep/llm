@@ -1,11 +1,38 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
+type CertificateDesignField = {
+    text: string;
+    x: number;
+    y: number;
+    fontSize: number;
+    color: string;
+    fontWeight: string;
+    alignment: 'left' | 'center' | 'right';
+};
+
+function resolveCertificateImageUrl(url: string | null) {
+    if (!url || url.startsWith('/')) return url;
+
+    try {
+        const parsed = new URL(url);
+        if (parsed.hostname.includes('.s3.') || parsed.hostname.includes('.s3-') || parsed.hostname.includes('s3.amazonaws.com')) {
+            const bucket = parsed.hostname.split('.')[0];
+            const key = parsed.pathname.replace(/^\/+/, '').split('/').map(decodeURIComponent).map(encodeURIComponent).join('/');
+            return `/api/files/${key}?bucket=${encodeURIComponent(bucket)}`;
+        }
+    } catch {
+        return url;
+    }
+
+    return url;
+}
+
 export async function GET(
     req: NextRequest,
     { params }: { params: Promise<{ domain: string }> }
 ) {
-    const { domain } = await params;
+    await params;
     const { searchParams } = new URL(req.url);
     const userId = searchParams.get('userId');
     const courseId = searchParams.get('courseId');
@@ -32,7 +59,7 @@ export async function GET(
         }
 
         const template = cert.course.certificateTemplate;
-        const design = template.designFields as any;
+        const design = template.designFields as { fields?: CertificateDesignField[] } | null;
         const fields = design?.fields || [];
 
         // Substitutions
@@ -44,7 +71,7 @@ export async function GET(
             '{{Certificate ID}}': cert.uniqueCode
         };
 
-        const renderFields = fields.map((f: any) => {
+        const renderFields = fields.map((f) => {
             let text = f.text;
             Object.entries(substitutions).forEach(([key, val]) => {
                 text = text.replace(key, val);
@@ -58,7 +85,7 @@ export async function GET(
                     transform: translate(${f.alignment === 'center' ? '-50%' : f.alignment === 'right' ? '-100%' : '0'}, -50%);
                     font-size: ${f.fontSize}px;
                     color: ${f.color};
-                    font-weight: ${f.fontWeight === 'bold' ? '900' : '400'};
+                    font-weight: ${f.fontWeight === 'bold' ? '900' : f.fontWeight === 'semibold' ? '700' : '400'};
                     text-align: ${f.alignment};
                     white-space: nowrap;
                     font-family: 'Inter', sans-serif;
@@ -79,7 +106,7 @@ export async function GET(
                         position: relative;
                         width: 100%;
                         aspect-ratio: 1.414 / 1;
-                        background-image: url('${template.backgroundImage}');
+                        background-image: url('${resolveCertificateImageUrl(template.backgroundImage)}');
                         background-size: cover;
                         background-position: center;
                     }

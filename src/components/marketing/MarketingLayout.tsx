@@ -1,9 +1,7 @@
-import type { ReactNode } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Plus_Jakarta_Sans } from 'next/font/google';
 import {
-  ArrowRight,
   BarChart3,
   BookOpenCheck,
   Building2,
@@ -36,8 +34,9 @@ const marketingFont = Plus_Jakarta_Sans({
 });
 
 const brand = {
-  name: 'Libra.AI',
-  logo: '/libra_ai_logo_exact.png',
+  name: 'Lebra.Ai',
+  logo: '/lebra_ai_logo_transparent.png',
+  footerLogo: '/lebra_ai_logo_footer.png',
 };
 
 export function MarketingFooter() {
@@ -47,11 +46,11 @@ export function MarketingFooter() {
         <div className="space-y-5">
           <Link href="/landing" className="inline-flex items-center">
             <Image
-              src={brand.logo}
+              src={brand.footerLogo}
               alt={`${brand.name} logo`}
-              width={285}
-              height={100}
-              className="h-14 w-[160px] object-contain filter brightness-0 invert"
+              width={1340}
+              height={382}
+              className="h-14 w-[250px] object-contain"
             />
           </Link>
           <p className="max-w-sm text-sm leading-6 text-slate-300">
@@ -340,7 +339,7 @@ export function ProcessBand() {
             <Eyebrow tone="green">Workflow</Eyebrow>
             <h2 className="mt-5 text-3xl font-bold tracking-tight sm:text-4xl">From empty portal to operating academy.</h2>
             <p className="mt-5 text-sm leading-7 text-slate-300">
-              Libra.AI is designed for the practical work behind learning operations: setup, content, enrollment, governance, measurement, and ongoing support.
+              Lebra.Ai is designed for the practical work behind learning operations: setup, content, enrollment, governance, measurement, and ongoing support.
             </p>
           </div>
           <div className="grid gap-4">

@@ -26,7 +26,35 @@ export async function uploadFile(
     throw new Error(err.error || 'Failed to get presigned URL');
   }
 
-  const { uploadUrl, publicUrl, key } = await presignRes.json();
+  const presignData = await presignRes.json();
+  const { uploadUrl, publicUrl, key, localFallback } = presignData;
+
+  if (localFallback) {
+    const fallbackData = new FormData();
+    fallbackData.append('file', file);
+    if (metadata.tenantId) fallbackData.append('tenantId', metadata.tenantId);
+    if (metadata.courseId) fallbackData.append('courseId', metadata.courseId);
+
+    const uploadRes = await fetch('/api/upload', {
+      method: 'POST',
+      body: fallbackData,
+    });
+
+    if (!uploadRes.ok) {
+      const err = await uploadRes.json();
+      throw new Error(err.error || 'Local upload failed');
+    }
+
+    const data = await uploadRes.json();
+    onProgress?.(100);
+
+    return {
+      url: data.url,
+      name: data.name || file.name,
+      size: data.size || file.size,
+      key: data.key || data.url,
+    };
+  }
 
   // 2. Upload to S3 directly
   return new Promise((resolve, reject) => {

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { checkSession } from '@/lib/auth';
+import { checkSession, requireTenantPermission } from '@/lib/auth';
 
 export async function GET(
     req: NextRequest,
@@ -12,7 +12,7 @@ export async function GET(
         if (!tenant) return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
 
         const session = await checkSession(req, domain, 'TENANT_ADMIN');
-        if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        if (!requireTenantPermission(session, 'people.manage')) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
         const teams = await prisma.team.findMany({
             where: { tenantId: tenant.id },
@@ -40,7 +40,7 @@ export async function POST(
         if (!tenant) return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
 
         const session = await checkSession(req, domain, 'TENANT_ADMIN');
-        if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        if (!requireTenantPermission(session, 'people.manage')) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
         const { name, description, managerIds = [], memberIds = [], isActive = true } = await req.json();
 
@@ -93,7 +93,7 @@ export async function PUT(
         if (!tenant) return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
 
         const session = await checkSession(req, domain, 'TENANT_ADMIN');
-        if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        if (!requireTenantPermission(session, 'people.manage')) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
         const { id, name, description, isActive, managerIds = [], memberIds = [] } = await req.json();
         if (!id) return NextResponse.json({ error: 'ID is required' }, { status: 400 });
@@ -167,7 +167,7 @@ export async function DELETE(
         if (!tenant) return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
 
         const session = await checkSession(req, domain, 'TENANT_ADMIN');
-        if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        if (!requireTenantPermission(session, 'people.manage')) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
         const id = req.nextUrl.searchParams.get('id');
         if (!id) return NextResponse.json({ error: 'ID is required' }, { status: 400 });

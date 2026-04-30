@@ -53,6 +53,7 @@ model User {
   isActive          Boolean                @default(true)
   resetCode         String?
   resetExpires      DateTime?
+  tenantAdminPermissions String[]          @default([])
   activityLogs      ActivityLog[]
   enrollments       Enrollment[]
   certificates      IssuedCertificate[]

@@ -3,11 +3,11 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowRight, Menu, X } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 
 const brand = {
-  name: 'Libra.AI',
-  logo: '/libra_ai_logo_exact.png',
+  name: 'Lebra.Ai',
+  logo: '/lebra_ai_logo_transparent.png',
 };
 
 const navItems = [
@@ -24,7 +24,7 @@ export function MarketingHeader() {
     <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur-xl">
       <div className="mx-auto flex h-[72px] max-w-7xl items-center justify-between px-5 sm:px-6 lg:px-8">
         <Link href="/landing" className="flex items-center" aria-label={`${brand.name} home`}>
-          <Image src={brand.logo} alt={`${brand.name} logo`} width={285} height={100} className="h-12 w-[138px] object-contain" priority />
+          <Image src={brand.logo} alt={`${brand.name} logo`} width={1340} height={382} className="h-14 w-[250px] object-contain" priority />
         </Link>
         <nav className="hidden items-center gap-8 text-sm font-semibold text-slate-600 md:flex">
           {navItems.map((item) => (
@@ -36,9 +36,6 @@ export function MarketingHeader() {
         <div className="hidden items-center gap-3 sm:flex">
           <Link href="/login" className="px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:text-slate-950">
             Sign In
-          </Link>
-          <Link href="/contact" className="inline-flex items-center gap-2 rounded-full bg-slate-950 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition-transform hover:scale-[1.02]">
-            Start Free <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
         <button
@@ -73,13 +70,6 @@ export function MarketingHeader() {
               onClick={() => setMobileOpen(false)}
             >
               Sign In
-            </Link>
-            <Link
-              href="/contact"
-              className="inline-flex items-center justify-center rounded-2xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
-              onClick={() => setMobileOpen(false)}
-            >
-              Start Free
             </Link>
           </div>
         </div>

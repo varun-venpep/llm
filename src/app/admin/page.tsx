@@ -2,8 +2,9 @@
 
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useState, useEffect } from 'react';
-import { Building2, Users, BookOpen, TrendingUp, ArrowUpRight, Plus, Loader2, Zap, Globe } from 'lucide-react';
+import { Building2, Users, BookOpen, TrendingUp, ArrowUpRight, Loader2, Zap, Globe } from 'lucide-react';
 import Link from 'next/link';
+import { ALL_TENANT_ADMIN_PERMISSIONS, TENANT_ADMIN_PERMISSIONS } from '@/lib/permissions';
 
 interface Stats {
     tenantCount: number;
@@ -19,25 +20,76 @@ interface Stats {
     }>;
 }
 
+type RecentTenant = Stats['recentTenants'][number];
+
+interface SpinResult {
+    success: boolean;
+    tenantId: string;
+    message: string;
+    tenant?: RecentTenant;
+}
+
+type SpinoffFormKey = 'name' | 'subdomain' | 'adminEmail' | 'adminPassword';
+
+interface SpinoffForm {
+    name: string;
+    subdomain: string;
+    adminEmail: string;
+    adminPassword: string;
+    globalMarketplaceEnabled: boolean;
+    tenantAdminPermissions: string[];
+}
+
 export default function SuperAdminDashboard() {
     const [stats, setStats] = useState<Stats | null>(null);
     const [loading, setLoading] = useState(true);
     const [showSpinoff, setShowSpinoff] = useState(false);
-    const [form, setForm] = useState({ name: '', subdomain: '', adminEmail: '', adminPassword: '', globalMarketplaceEnabled: false });
+    const [form, setForm] = useState<SpinoffForm>({
+        name: '',
+        subdomain: '',
+        adminEmail: '',
+        adminPassword: '',
+        globalMarketplaceEnabled: false,
+        tenantAdminPermissions: ALL_TENANT_ADMIN_PERMISSIONS
+    });
     const [formErrors, setFormErrors] = useState<Record<string, string>>({});
     const [spinning, setSpinning] = useState(false);
-    const [spinResult, setSpinResult] = useState<any>(null);
-
-    useEffect(() => { fetchStats(); }, []);
+    const [spinResult, setSpinResult] = useState<SpinResult | null>(null);
+    const [spinError, setSpinError] = useState('');
 
     const fetchStats = async () => {
         try {
-            const res = await fetch('/api/admin/stats');
+            const res = await fetch(`/api/admin/stats?ts=${Date.now()}`, { cache: 'no-store' });
             const data = await res.json();
             setStats(data);
         } catch (e) { console.error(e); }
         finally { setLoading(false); }
     };
+
+    const addRecentTenant = (tenant?: RecentTenant) => {
+        if (!tenant) return;
+        setStats(prev => {
+            if (!prev) return prev;
+            return {
+                ...prev,
+                tenantCount: tenant.isActive ? prev.tenantCount + 1 : prev.tenantCount,
+                userCount: prev.userCount + 1,
+                recentTenants: [
+                    tenant,
+                    ...prev.recentTenants.filter(item => item.id !== tenant.id)
+                ].slice(0, 5)
+            };
+        });
+    };
+
+    const verifyTenantCreated = async (tenantId: string) => {
+        const res = await fetch(`/api/admin/tenants?ts=${Date.now()}`, { cache: 'no-store' });
+        if (!res.ok) return false;
+        const tenants = await res.json() as Array<{ id: string }>;
+        return tenants.some(tenant => tenant.id === tenantId);
+    };
+
+    useEffect(() => { void Promise.resolve().then(fetchStats); }, []);
 
     const handleSpinoff = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -55,6 +107,7 @@ export default function SuperAdminDashboard() {
         }
 
         setFormErrors({});
+        setSpinError('');
         setSpinning(true);
         setSpinResult(null);
         try {
@@ -64,12 +117,22 @@ export default function SuperAdminDashboard() {
                 body: JSON.stringify(form),
             });
             const data = await res.json();
-            setSpinResult(data);
             if (res.ok) {
-                fetchStats();
+                const createdTenantId = typeof data.tenantId === 'string' ? data.tenantId : '';
+                const isVisible = createdTenantId ? await verifyTenantCreated(createdTenantId) : false;
+                if (!isVisible) {
+                    setSpinError('Workspace creation did not appear in deployments. Please retry after restarting the dev server.');
+                    return;
+                }
+                setSpinResult(data);
+                addRecentTenant(data.tenant);
+                void fetchStats();
+            } else {
+                setSpinError(data.error || 'Failed to create workspace');
             }
         } catch (e) {
             console.error(e);
+            setSpinError('Failed to create workspace');
         } finally {
             setSpinning(false);
         }
@@ -87,6 +150,15 @@ export default function SuperAdminDashboard() {
         purple: 'from-purple-500/20 to-purple-600/5 border-purple-500/20 text-purple-400',
         emerald: 'from-emerald-500/20 to-emerald-600/5 border-emerald-500/20 text-emerald-400',
         orange: 'from-orange-500/20 to-orange-600/5 border-orange-500/20 text-orange-400',
+    };
+
+    const togglePermission = (permission: string) => {
+        setForm(prev => ({
+            ...prev,
+            tenantAdminPermissions: prev.tenantAdminPermissions.includes(permission)
+                ? prev.tenantAdminPermissions.filter(item => item !== permission)
+                : [...prev.tenantAdminPermissions, permission]
+        }));
     };
 
     return (
@@ -166,14 +238,14 @@ export default function SuperAdminDashboard() {
 
             {/* Quick Spin-off Modal */}
             {showSpinoff && (
-                <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="bg-background border border-border w-full max-w-lg rounded-3xl shadow-2xl p-8 space-y-6">
+                <div className="fixed inset-0 z-[200] flex items-center justify-center overflow-y-auto p-4 sm:p-6 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-background border border-border w-full max-w-lg max-h-[calc(100vh-2rem)] sm:max-h-[calc(100vh-3rem)] rounded-3xl shadow-2xl p-6 sm:p-8 space-y-6 overflow-y-auto">
                         <div className="flex justify-between items-center">
                             <div>
                                 <h3 className="text-xl font-black uppercase tracking-tight flex items-center gap-2"><Zap className="w-5 h-5 text-blue-400" /> Deploy New Workspace</h3>
                                 <p className="text-sm text-muted-foreground mt-1">Spin up a new client LMS in seconds.</p>
                             </div>
-                            <button onClick={() => { setShowSpinoff(false); setSpinResult(null); }} className="text-muted-foreground hover:text-foreground text-2xl leading-none">&times;</button>
+                            <button onClick={() => { setShowSpinoff(false); setSpinResult(null); setSpinError(''); }} className="text-muted-foreground hover:text-foreground text-2xl leading-none">&times;</button>
                         </div>
 
                         {spinResult ? (
@@ -186,16 +258,16 @@ export default function SuperAdminDashboard() {
                                     target="_blank">
                                     http://{form.subdomain}.{process.env.NEXT_PUBLIC_ROOT_DOMAIN}/login
                                 </a>
-                                <button onClick={() => { setShowSpinoff(false); setSpinResult(null); }} className="mt-2 px-4 py-2 bg-emerald-600 text-white font-bold rounded-lg text-sm">Done</button>
+                                <button onClick={() => { setShowSpinoff(false); setSpinResult(null); setSpinError(''); }} className="mt-2 px-4 py-2 bg-emerald-600 text-white font-bold rounded-lg text-sm">Done</button>
                             </div>
                         ) : (
                             <form onSubmit={handleSpinoff} className="space-y-4">
                                 {[
-                                    { key: 'name', label: 'Organization Name', placeholder: 'Acme Academy' },
-                                    { key: 'subdomain', label: 'Subdomain', placeholder: 'acme (→ acme.lms.com)' },
-                                    { key: 'adminEmail', label: 'Admin Email', placeholder: 'admin@acme.com', type: 'email' },
-                                    { key: 'adminPassword', label: 'Admin Password', placeholder: 'Temporary password', type: 'password' },
-                                ].map(field => (
+                                    { key: 'name' as const, label: 'Organization Name', placeholder: 'Acme Academy' },
+                                    { key: 'subdomain' as const, label: 'Subdomain', placeholder: 'acme (→ acme.lms.com)' },
+                                    { key: 'adminEmail' as const, label: 'Admin Email', placeholder: 'admin@acme.com', type: 'email' },
+                                    { key: 'adminPassword' as const, label: 'Admin Password', placeholder: 'Temporary password', type: 'password' },
+                                ].map((field: { key: SpinoffFormKey; label: string; placeholder: string; type?: string }) => (
                                     <div key={field.key} className="space-y-1.5">
                                         <div className="flex justify-between items-center">
                                             <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{field.label}</label>
@@ -205,9 +277,12 @@ export default function SuperAdminDashboard() {
                                             type={field.type || 'text'}
                                             placeholder={field.placeholder}
                                             className={`w-full bg-secondary/50 border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 transition-all ${formErrors[field.key] ? 'border-red-500/50 focus:ring-red-500/50' : 'border-border focus:ring-blue-500/50'}`}
-                                            value={(form as any)[field.key]}
+                                            value={form[field.key]}
                                             onChange={e => {
-                                                setForm({ ...form, [field.key]: e.target.value });
+                                                const value = field.key === 'subdomain'
+                                                    ? e.target.value.trim().toLowerCase()
+                                                    : e.target.value;
+                                                setForm({ ...form, [field.key]: value });
                                                 if (formErrors[field.key]) {
                                                     const newErrors = { ...formErrors };
                                                     delete newErrors[field.key];
@@ -234,6 +309,46 @@ export default function SuperAdminDashboard() {
                                     </div>
                                 </div>
 
+                                <div className="space-y-3 rounded-2xl border border-border/50 bg-secondary/20 p-4">
+                                    <div className="flex items-center justify-between gap-3">
+                                        <div>
+                                            <p className="text-sm font-bold">Tenant Admin Permissions</p>
+                                            <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Choose what this admin can access</p>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => setForm(prev => ({ ...prev, tenantAdminPermissions: ALL_TENANT_ADMIN_PERMISSIONS }))}
+                                            className="text-[10px] font-black uppercase tracking-widest text-blue-400 hover:underline"
+                                        >
+                                            Select All
+                                        </button>
+                                    </div>
+                                    <div className="grid gap-2">
+                                        {TENANT_ADMIN_PERMISSIONS.map(permission => {
+                                            const isEnabled = form.tenantAdminPermissions.includes(permission.key);
+
+                                            return (
+                                                <button
+                                                    key={permission.key}
+                                                    type="button"
+                                                    role="switch"
+                                                    aria-checked={isEnabled}
+                                                    onClick={() => togglePermission(permission.key)}
+                                                    className="flex w-full cursor-pointer items-center justify-between gap-3 rounded-xl border border-border/40 bg-background/40 p-3 text-left transition-colors hover:bg-background/70"
+                                                >
+                                                    <span className="min-w-0">
+                                                        <span className="block text-xs font-bold">{permission.label}</span>
+                                                        <span className="block text-[10px] text-muted-foreground">{permission.description}</span>
+                                                    </span>
+                                                    <span className={`flex h-5 w-9 shrink-0 items-center rounded-full p-0.5 transition-all ${isEnabled ? 'bg-blue-500' : 'bg-secondary'}`}>
+                                                        <span className={`h-4 w-4 rounded-full bg-white shadow transition-all ${isEnabled ? 'translate-x-4' : 'translate-x-0'}`} />
+                                                    </span>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+
                                 <button
                                     type="submit"
                                     disabled={spinning}
@@ -241,6 +356,11 @@ export default function SuperAdminDashboard() {
                                 >
                                     {spinning ? <><Loader2 className="w-5 h-5 animate-spin" /> Deploying...</> : <><Zap className="w-5 h-5" /> Launch Workspace</>}
                                 </button>
+                                {spinError && (
+                                    <p className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm font-bold text-red-500">
+                                        {spinError}
+                                    </p>
+                                )}
                             </form>
                         )}
                     </div>

@@ -19,6 +19,7 @@ export default function SuperAdminCertificates() {
     const [newTemplate, setNewTemplate] = useState({ name: '', image: '' });
     const [search, setSearch] = useState('');
     const [deletingId, setDeletingId] = useState<string | null>(null);
+    const [uploadError, setUploadError] = useState('');
 
     useEffect(() => {
         fetchTemplates();
@@ -38,11 +39,13 @@ export default function SuperAdminCertificates() {
         if (!file) return;
 
         setUploading(true);
+        setUploadError('');
         try {
             const data = await uploadFile(file, { tenantId: 'system', courseId: 'certificates' });
             setNewTemplate(prev => ({ ...prev, image: data.url }));
         } catch (e) {
             console.error(e);
+            setUploadError(e instanceof Error ? e.message : 'Upload failed');
         } finally {
             setUploading(false);
         }
@@ -64,6 +67,7 @@ export default function SuperAdminCertificates() {
                 fetchTemplates();
                 setShowUpload(false);
                 setNewTemplate({ name: '', image: '' });
+                setUploadError('');
             }
         } catch (e) {
             console.error(e);
@@ -98,7 +102,10 @@ export default function SuperAdminCertificates() {
                     <p className="text-muted-foreground text-sm mt-1">Manage standard certificate backgrounds available for all platform tenants.</p>
                 </div>
                 <button
-                    onClick={() => setShowUpload(true)}
+                    onClick={() => {
+                        setUploadError('');
+                        setShowUpload(true);
+                    }}
                     className="flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-sm transition-all hover:scale-105 shadow-xl shadow-indigo-500/20"
                 >
                     <Plus className="w-5 h-5" /> Add Global Template
@@ -198,6 +205,9 @@ export default function SuperAdminCertificates() {
                                     )}
                                     <input type="file" className="hidden" accept="image/*" onChange={handleUpload} disabled={uploading} />
                                 </label>
+                                {uploadError ? (
+                                    <p className="text-xs font-bold text-red-400">{uploadError}</p>
+                                ) : null}
                             </div>
                         </div>
 

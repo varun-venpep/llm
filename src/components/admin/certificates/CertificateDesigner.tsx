@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { Save, ChevronLeft, Type, Move, Palette, Maximize, AlertCircle, Loader2, RefreshCw } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { Save, ChevronLeft, Type, Move, Palette, Maximize, AlertCircle, Loader2, RefreshCw, Plus, Trash2, Image as ImageIcon } from 'lucide-react';
 
 interface DesignField {
     id: string;
@@ -18,13 +18,13 @@ interface Template {
     id: string;
     name: string;
     backgroundImage: string;
-    designFields?: any;
+    designFields?: { fields?: DesignField[] } | null;
 }
 
 interface CertificateDesignerProps {
     template: Template;
     onBack: () => void;
-    onSave: (id: string, designFields: any) => void;
+    onSave: (id: string, designFields: { fields: DesignField[] }, backgroundImage: string) => void | Promise<void>;
 }
 
 const DEFAULT_FIELDS: DesignField[] = [
@@ -34,26 +34,115 @@ const DEFAULT_FIELDS: DesignField[] = [
     { id: 'serial', text: 'ID: {{Certificate ID}}', x: 50, y: 82, fontSize: 10, color: '#9CA3AF', fontWeight: 'normal', alignment: 'center' },
 ];
 
+const FALLBACK_BACKGROUND = 'https://images.unsplash.com/photo-1544391682-17fe04257eb0?w=1200&auto=format&fit=crop&q=80';
+
+const PLACEHOLDER_FIELDS = [
+    { label: 'Learner Name', text: '{{Learner Name}}' },
+    { label: 'Course Title', text: '{{Course Title}}' },
+    { label: 'Completion Date', text: '{{Completion Date}}' },
+    { label: 'Certificate ID', text: 'ID: {{Certificate ID}}' },
+];
+
+function resolveImageUrl(url: string) {
+    if (!url) return FALLBACK_BACKGROUND;
+    if (url.startsWith('/')) return url;
+
+    try {
+        const parsed = new URL(url);
+        if (parsed.hostname.includes('.s3.') || parsed.hostname.includes('.s3-') || parsed.hostname.includes('s3.amazonaws.com')) {
+            const bucket = parsed.hostname.split('.')[0];
+            const key = parsed.pathname.replace(/^\/+/, '').split('/').map(decodeURIComponent).map(encodeURIComponent).join('/');
+            return `/api/files/${key}?bucket=${encodeURIComponent(bucket)}`;
+        }
+    } catch {
+        return url;
+    }
+
+    return url;
+}
+
+function normalizeFields(rawFields?: DesignField[]) {
+    const source = rawFields?.length ? rawFields : DEFAULT_FIELDS;
+    const seenIds = new Set<string>();
+    const seenSystemTexts = new Set<string>();
+
+    return source.reduce<DesignField[]>((result, field, index) => {
+        const isSystemPlaceholder = PLACEHOLDER_FIELDS.some(item => item.text === field.text);
+        if (isSystemPlaceholder && seenSystemTexts.has(field.text)) return result;
+        if (isSystemPlaceholder) seenSystemTexts.add(field.text);
+
+        const baseId = field.id || `field-${index + 1}`;
+        const id = seenIds.has(baseId) ? `${baseId}-${index + 1}` : baseId;
+        seenIds.add(id);
+
+        result.push({
+            ...field,
+            id,
+            x: Math.min(Math.max(field.x, 0), 100),
+            y: Math.min(Math.max(field.y, 0), 100),
+        });
+        return result;
+    }, []);
+}
+
 export default function CertificateDesigner({ template, onBack, onSave }: CertificateDesignerProps) {
-    const [fields, setFields] = useState<DesignField[]>(template.designFields?.fields || DEFAULT_FIELDS);
+    const [fields, setFields] = useState<DesignField[]>(() => normalizeFields(template.designFields?.fields));
     const [selectedFieldId, setSelectedFieldId] = useState<string | null>(null);
+    const [backgroundImage, setBackgroundImage] = useState(() => resolveImageUrl(template.backgroundImage));
+    const [backgroundError, setBackgroundError] = useState(false);
+    const [backgroundErrorDetail, setBackgroundErrorDetail] = useState('');
     const [saving, setSaving] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
+    const nextFieldIdRef = useRef(0);
 
     const selectedField = fields.find(f => f.id === selectedFieldId);
+    const existingSystemTexts = new Set(fields.map(field => field.text));
 
     const updateField = (id: string, updates: Partial<DesignField>) => {
         setFields(prev => prev.map(f => f.id === id ? { ...f, ...updates } : f));
+    };
+
+    const createFieldId = () => {
+        nextFieldIdRef.current += 1;
+        let id = `custom-${nextFieldIdRef.current}`;
+        while (fields.some(field => field.id === id)) {
+            nextFieldIdRef.current += 1;
+            id = `custom-${nextFieldIdRef.current}`;
+        }
+        return id;
+    };
+
+    const addField = (text = 'Custom Text') => {
+        const customCount = fields.filter(field => !PLACEHOLDER_FIELDS.some(item => item.text === field.text)).length;
+        const nextY = Math.min(88, 40 + customCount * 8);
+        const newField: DesignField = {
+            id: createFieldId(),
+            text,
+            x: 50,
+            y: text.includes('{{') ? 50 : nextY,
+            fontSize: text.includes('{{') ? 24 : 18,
+            color: '#111827',
+            fontWeight: text.includes('{{') ? 'semibold' : 'normal',
+            alignment: 'center'
+        };
+        setFields(prev => [...prev, newField]);
+        setSelectedFieldId(newField.id);
+    };
+
+    const deleteField = (id: string) => {
+        setFields(prev => prev.filter(f => f.id !== id));
+        setSelectedFieldId(null);
     };
 
     const handleDrag = (e: React.MouseEvent | React.TouchEvent, id: string) => {
         const container = containerRef.current;
         if (!container) return;
 
-        const move = (moveEvent: any) => {
+        const move = (moveEvent: MouseEvent | TouchEvent) => {
             const rect = container.getBoundingClientRect();
-            const clientX = moveEvent.type === 'touchmove' ? moveEvent.touches[0].clientX : moveEvent.clientX;
-            const clientY = moveEvent.type === 'touchmove' ? moveEvent.touches[0].clientY : moveEvent.clientY;
+            const isTouch = moveEvent instanceof TouchEvent;
+            const clientX = isTouch ? moveEvent.touches[0].clientX : moveEvent.clientX;
+            const clientY = isTouch ? moveEvent.touches[0].clientY : moveEvent.clientY;
             
             const x = Math.min(Math.max(((clientX - rect.left) / rect.width) * 100, 0), 100);
             const y = Math.min(Math.max(((clientY - rect.top) / rect.height) * 100, 0), 100);
@@ -76,8 +165,28 @@ export default function CertificateDesigner({ template, onBack, onSave }: Certif
 
     const handleSave = async () => {
         setSaving(true);
-        await onSave(template.id, { fields });
+        await onSave(template.id, { fields: normalizeFields(fields) }, backgroundImage);
         setSaving(false);
+    };
+
+    const checkBackground = async (url: string) => {
+        const resolvedUrl = resolveImageUrl(url);
+        setBackgroundError(false);
+        setBackgroundErrorDetail('');
+
+        if (resolvedUrl.startsWith('/api/files/')) {
+            try {
+                const res = await fetch(resolvedUrl, { method: 'HEAD' });
+                if (!res.ok) {
+                    const detail = await fetch(resolvedUrl).then(response => response.text()).catch(() => '');
+                    setBackgroundError(true);
+                    setBackgroundErrorDetail(detail || `Request failed with ${res.status}`);
+                }
+            } catch {
+                setBackgroundError(true);
+                setBackgroundErrorDetail('Unable to reach the file proxy route.');
+            }
+        }
     };
 
     return (
@@ -109,15 +218,28 @@ export default function CertificateDesigner({ template, onBack, onSave }: Certif
                 >
                     <div className="relative aspect-[1.414/1] w-full max-w-4xl shadow-2xl rounded-sm group-hover:scale-[1.01] transition-transform duration-500">
                         {/* Background */}
-                        <img 
-                            src={template.backgroundImage || 'https://images.unsplash.com/photo-1544391682-17fe04257eb0?w=1200&auto=format&fit=crop&q=80'} 
-                            alt="Certificate Background"
-                            crossOrigin="anonymous"
-                            className="w-full h-full object-cover select-none pointer-events-none"
-                        />
+                        {backgroundError ? (
+                            <div className="w-full h-full bg-secondary/20 border border-dashed border-border flex flex-col items-center justify-center gap-3 text-center px-8">
+                                <ImageIcon className="w-8 h-8 text-muted-foreground" />
+                                <div>
+                                    <p className="text-sm font-black uppercase tracking-widest">Background not loading</p>
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                        {backgroundErrorDetail || 'Update the background image URL in the inspector.'}
+                                    </p>
+                                </div>
+                            </div>
+                        ) : (
+                            <img
+                            src={resolveImageUrl(backgroundImage)}
+                                alt="Certificate Background"
+                                crossOrigin="anonymous"
+                                onError={() => setBackgroundError(true)}
+                                className="w-full h-full object-cover select-none pointer-events-none"
+                            />
+                        )}
 
                         {/* Overlay Fields */}
-                        {fields.map((field) => (
+                        {!backgroundError && fields.map((field) => (
                             <div 
                                 key={field.id}
                                 onMouseDown={(e) => { setSelectedFieldId(field.id); handleDrag(e, field.id); }}
@@ -165,6 +287,67 @@ export default function CertificateDesigner({ template, onBack, onSave }: Certif
                     <p className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Adjust typography & placement</p>
                 </div>
 
+                <div className="space-y-3">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                        <ImageIcon size={10} /> Background Image URL
+                    </label>
+                    <input
+                        type="url"
+                        value={backgroundImage}
+                        onChange={(e) => {
+                            setBackgroundImage(e.target.value);
+                            setBackgroundError(false);
+                            setBackgroundErrorDetail('');
+                        }}
+                        placeholder="https://..."
+                        className="w-full bg-secondary/30 border border-border/50 rounded-xl px-3 py-2.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    />
+                    <button
+                        onClick={() => checkBackground(backgroundImage)}
+                        className="w-full px-3 py-2 rounded-xl bg-secondary/30 border border-border/50 text-[10px] font-black uppercase tracking-widest hover:bg-secondary transition-all"
+                    >
+                        Check Background
+                    </button>
+                </div>
+
+                <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                            <Plus size={10} /> Add Field
+                        </label>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                        {PLACEHOLDER_FIELDS.map(field => {
+                            const isExisting = existingSystemTexts.has(field.text);
+                            return (
+                            <button
+                                key={field.text}
+                                disabled={isExisting}
+                                onClick={() => addField(field.text)}
+                                className={`px-3 py-2 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all ${isExisting ? 'bg-secondary/10 border-border/30 text-muted-foreground/40 cursor-not-allowed' : 'bg-secondary/30 border-border/50 hover:bg-secondary'}`}
+                            >
+                                {field.label}
+                            </button>
+                            );
+                        })}
+                        <button
+                            onClick={() => addField()}
+                            className="col-span-2 px-3 py-2 rounded-xl bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-widest hover:scale-[1.02] transition-all"
+                        >
+                            Custom Text
+                        </button>
+                        <button
+                            onClick={() => {
+                                setFields(DEFAULT_FIELDS);
+                                setSelectedFieldId(null);
+                            }}
+                            className="col-span-2 px-3 py-2 rounded-xl bg-secondary/30 border border-border/50 text-[10px] font-black uppercase tracking-widest hover:bg-secondary transition-all"
+                        >
+                            Reset Default Fields
+                        </button>
+                    </div>
+                </div>
+
                 {!selectedField ? (
                     <div className="p-8 border-2 border-dashed border-border/50 rounded-3xl flex flex-col items-center justify-center text-center space-y-3 bg-secondary/5">
                         <div className="w-12 h-12 rounded-full bg-secondary/30 flex items-center justify-center text-muted-foreground">
@@ -177,6 +360,28 @@ export default function CertificateDesigner({ template, onBack, onSave }: Certif
                         <div className="p-4 bg-primary/5 border border-primary/20 rounded-2xl">
                             <p className="text-[10px] font-black uppercase tracking-widest text-primary mb-1">Target Field</p>
                             <p className="font-bold text-sm tracking-tight">{selectedField.text}</p>
+                        </div>
+
+                        {/* Text Content */}
+                        <div className="space-y-3">
+                            <div className="flex justify-between items-center">
+                                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2"><Type size={10} /> Text</label>
+                                <button
+                                    onClick={() => deleteField(selectedField.id)}
+                                    className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-red-500 hover:text-red-400"
+                                >
+                                    <Trash2 size={11} /> Delete
+                                </button>
+                            </div>
+                            <textarea
+                                value={selectedField.text}
+                                onChange={(e) => updateField(selectedField.id, { text: e.target.value })}
+                                rows={3}
+                                className="w-full bg-secondary/30 border border-border/50 rounded-xl px-3 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none"
+                            />
+                            <p className="text-[10px] text-muted-foreground font-bold leading-relaxed">
+                                Dynamic values use placeholders like {'{{Learner Name}}'} and {'{{Course Title}}'}.
+                            </p>
                         </div>
 
                         {/* Font Size */}

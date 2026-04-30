@@ -5,14 +5,20 @@ import { useTheme } from 'next-themes';
 import { BookOpen, Lock, Mail, ChevronRight, Loader2, Eye, EyeOff, CheckCircle2, ArrowLeft } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 
+type TenantBranding = {
+    name?: string;
+    logoLight?: string;
+    logoDark?: string;
+    primaryColor?: string;
+};
+
 export default function TenantLoginPage() {
     const params = useParams();
     const router = useRouter();
     const domain = params.domain as string;
     const { resolvedTheme } = useTheme();
-    const [mounted, setMounted] = useState(false);
 
-    const [tenant, setTenant] = useState<any>(null);
+    const [tenant, setTenant] = useState<TenantBranding | null>(null);
     const [loading, setLoading] = useState(true);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -23,10 +29,8 @@ export default function TenantLoginPage() {
     // Forgot Password Flow State
     const [isResetting, setIsResetting] = useState(false);
     const [isLinkSent, setIsLinkSent] = useState(false);
-
-    useEffect(() => {
-        setMounted(true);
-    }, []);
+    const [devResetLink, setDevResetLink] = useState('');
+    const [learnerRequest, setLearnerRequest] = useState(false);
 
     useEffect(() => {
         const fetchBranding = async () => {
@@ -39,7 +43,7 @@ export default function TenantLoginPage() {
                 } else {
                     setTenant({ name: domain.charAt(0).toUpperCase() + domain.slice(1) });
                 }
-            } catch (e) {
+            } catch {
                 setTenant({ name: domain.charAt(0).toUpperCase() + domain.slice(1) });
             } finally {
                 setLoading(false);
@@ -71,7 +75,7 @@ export default function TenantLoginPage() {
             } else {
                 setError(data.error || 'Login failed');
             }
-        } catch (err) {
+        } catch {
             setError('Network error');
         } finally {
             setLoading(false);
@@ -82,21 +86,26 @@ export default function TenantLoginPage() {
         e.preventDefault();
         setLoading(true);
         setError('');
+        setDevResetLink('');
+        setLearnerRequest(false);
 
         try {
             const res = await fetch('/api/auth/reset', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'request', email, tenantId: tenant?.id }),
+                body: JSON.stringify({ action: 'request', email, domain }),
             });
 
             if (res.ok) {
+                const data = await res.json();
+                setLearnerRequest(Boolean(data.learnerRequest));
+                setDevResetLink(data.devResetLink || '');
                 setIsLinkSent(true);
             } else {
                 const data = await res.json();
                 setError(data.error || 'Failed to send link');
             }
-        } catch (err) {
+        } catch {
             setError('Connection error');
         } finally {
             setLoading(false);
@@ -118,8 +127,8 @@ export default function TenantLoginPage() {
                     {tenant?.logoLight || tenant?.logoDark ? (
                         <div className="w-auto h-32 flex items-center justify-center mb-6">
                             <img 
-                                src={mounted ? (resolvedTheme === 'dark' ? (tenant.logoDark || tenant.logoLight) : (tenant.logoLight || tenant.logoDark)) : (tenant.logoLight || tenant.logoDark)} 
-                                alt={tenant.name} 
+                                src={resolvedTheme === 'dark' ? (tenant.logoDark || tenant.logoLight) : (tenant.logoLight || tenant.logoDark)}
+                                alt={tenant.name || domain}
                                 className="max-w-[360px] max-h-full object-contain drop-shadow-2xl"
                             />
                         </div>
@@ -132,7 +141,7 @@ export default function TenantLoginPage() {
                         {tenant?.name}
                     </h1>
                     <p className="text-muted-foreground font-bold uppercase tracking-[0.25em] text-[10px] opacity-70">
-                        {isResetting ? 'Forgot Password' : 'Workspace Authentication'}
+                        {isResetting ? 'Password Help' : 'Workspace Authentication'}
                     </p>
                 </div>
 
@@ -184,7 +193,7 @@ export default function TenantLoginPage() {
                                     </div>
                                     Stay logged in
                                 </label>
-                                <button type="button" onClick={() => setIsResetting(true)} className="text-[10px] font-black text-primary hover:text-primary/70 uppercase tracking-widest transition-colors">Forgot Password?</button>
+                                <button type="button" onClick={() => setIsResetting(true)} className="text-[10px] font-black text-primary hover:text-primary/70 uppercase tracking-widest transition-colors">Need Password Help?</button>
                             </div>
 
                             {error && <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3 text-red-400 text-[10px] font-black text-center uppercase tracking-widest">{error}</div>}
@@ -197,7 +206,7 @@ export default function TenantLoginPage() {
                         <div className="space-y-7">
                             {!isLinkSent ? (
                                 <form onSubmit={handleRequestLink} className="space-y-7">
-                                    <p className="text-[11px] text-muted-foreground leading-relaxed text-center font-medium">Please enter your email to receive a secure recovery link.</p>
+                                    <p className="text-[11px] text-muted-foreground leading-relaxed text-center font-medium">Tenant admins receive a secure reset link. Learners can request help from their workspace admin.</p>
                                     <div className="space-y-2">
                                         <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Email Address</label>
                                         <div className="relative group">
@@ -214,7 +223,7 @@ export default function TenantLoginPage() {
                                     </div>
                                     {error && <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3 text-red-400 text-[10px] font-black text-center uppercase tracking-widest">{error}</div>}
                                     <button type="submit" disabled={loading} className="w-full py-4 rounded-2xl bg-primary text-primary-foreground font-black text-sm uppercase tracking-widest hover:scale-[1.02] transition-all shadow-xl shadow-primary/20 disabled:opacity-50" style={{ backgroundColor: tenant?.primaryColor }}>
-                                        {loading ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : <>Send Reset Link <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" /></>}
+                                        {loading ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : 'Continue'}
                                     </button>
                                 </form>
                             ) : (
@@ -223,12 +232,27 @@ export default function TenantLoginPage() {
                                         <CheckCircle2 className="w-8 h-8 text-green-500" />
                                     </div>
                                     <div className="space-y-2">
-                                        <h3 className="font-black text-lg">Check your inbox</h3>
-                                        <p className="text-[11px] text-muted-foreground leading-relaxed">A recovery link has been sent to <strong>{email}</strong>. Please click the link in that email to reset your password.</p>
+                                        <h3 className="font-black text-lg">{learnerRequest ? 'Request sent' : devResetLink ? 'Reset link ready' : 'Check your inbox'}</h3>
+                                        <p className="text-[11px] text-muted-foreground leading-relaxed">
+                                            {learnerRequest
+                                                ? 'Your request has been sent to your workspace admin. They will assist you with password reset.'
+                                                : devResetLink
+                                                ? 'SMTP is not configured for this local environment. Use the reset link below.'
+                                                : <>A recovery link has been sent to <strong>{email}</strong>. Please click the link in that email to reset your password.</>}
+                                        </p>
+                                        {devResetLink && !learnerRequest ? (
+                                            <a
+                                                href={devResetLink}
+                                                className="mt-3 inline-flex w-full items-center justify-center rounded-xl bg-primary px-4 py-3 text-xs font-black uppercase tracking-widest text-primary-foreground"
+                                                style={{ backgroundColor: tenant?.primaryColor }}
+                                            >
+                                                Open Reset Link
+                                            </a>
+                                        ) : null}
                                     </div>
                                 </div>
                             )}
-                            <button type="button" onClick={() => { setIsResetting(false); setIsLinkSent(false); }} className="w-full py-2 text-[10px] font-black text-muted-foreground hover:text-foreground uppercase tracking-widest flex items-center justify-center gap-2">
+                            <button type="button" onClick={() => { setIsResetting(false); setIsLinkSent(false); setDevResetLink(''); setLearnerRequest(false); }} className="w-full py-2 text-[10px] font-black text-muted-foreground hover:text-foreground uppercase tracking-widest flex items-center justify-center gap-2">
                                 <ArrowLeft className="w-3 h-3" /> Return to Login
                             </button>
                         </div>

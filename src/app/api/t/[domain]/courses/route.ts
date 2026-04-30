@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { checkSession } from '@/lib/auth';
+import { checkSession, requireTenantPermission } from '@/lib/auth';
 
 // GET all courses for a tenant
 export async function GET(
@@ -14,6 +14,13 @@ export async function GET(
 
         const { searchParams } = new URL(req.url);
         const view = searchParams.get('view');
+
+        if (view !== 'learner') {
+            const session = await checkSession(req, domain, ['TENANT_ADMIN', 'SUPER_ADMIN']);
+            if (!requireTenantPermission(session, 'courses.manage')) {
+                return NextResponse.json({ error: 'You do not have permission to view courses' }, { status: 403 });
+            }
+        }
 
         // For learner view, filter role and team exclusive courses
         let visibilityFilter = {};
@@ -107,6 +114,11 @@ export async function POST(
         const tenant = await prisma.tenant.findUnique({ where: { subdomain: domain } });
         if (!tenant) return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
 
+        const session = await checkSession(req, domain, ['TENANT_ADMIN', 'SUPER_ADMIN']);
+        if (!requireTenantPermission(session, 'courses.manage')) {
+            return NextResponse.json({ error: 'You do not have permission to create courses' }, { status: 403 });
+        }
+
         // Rule: exclusive courses cannot appear in the marketplace
         const effectiveIsMarketplace = (exclusiveRoleId || exclusiveTeamId) ? false : (isMarketplace || false);
 
@@ -127,8 +139,6 @@ export async function POST(
             }
         });
 
-        // Audit Log: Course Creation
-        const session = await checkSession(req, domain);
         if (session) {
             await prisma.activityLog.create({
                 data: {
@@ -165,6 +175,11 @@ export async function PUT(
         const tenant = await prisma.tenant.findUnique({ where: { subdomain: domain } });
         if (!tenant) return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
 
+        const session = await checkSession(req, domain, ['TENANT_ADMIN', 'SUPER_ADMIN']);
+        if (!requireTenantPermission(session, 'courses.manage')) {
+            return NextResponse.json({ error: 'You do not have permission to update courses' }, { status: 403 });
+        }
+
         // Rule: exclusive courses cannot appear in the marketplace
         const effectiveIsMarketplace = (exclusiveRoleId || exclusiveTeamId) ? false : (isMarketplace || false);
 
@@ -186,7 +201,6 @@ export async function PUT(
         });
 
         // Audit Log: Course Update
-        const session = await checkSession(req, domain);
         if (session) {
             await prisma.activityLog.create({
                 data: {
