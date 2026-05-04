@@ -2,24 +2,33 @@
 
 :root {
   --background: hsl(0 0% 100%);
-  --foreground: hsl(240 10% 3.9%);
+  --foreground: hsl(222 47% 11%);
   --card: hsl(0 0% 100%);
-  --card-foreground: hsl(240 10% 3.9%);
+  --card-foreground: hsl(222 47% 11%);
   --popover: hsl(0 0% 100%);
-  --popover-foreground: hsl(240 10% 3.9%);
-  --primary: hsl(240 5.9% 10%);
+  --popover-foreground: hsl(222 47% 11%);
+  --primary: hsl(235 85% 60%);
   --primary-foreground: hsl(0 0% 98%);
-  --secondary: hsl(240 4.8% 95.9%);
-  --secondary-foreground: hsl(240 5.9% 10%);
-  --muted: hsl(240 4.8% 95.9%);
-  --muted-foreground: hsl(240 3.8% 46.1%);
-  --accent: hsl(240 4.8% 95.9%);
-  --accent-foreground: hsl(240 5.9% 10%);
+  --primary-glow: hsl(265 85% 65%);
+  --secondary: hsl(220 20% 96%);
+  --secondary-foreground: hsl(222 47% 11%);
+  --muted: hsl(220 20% 96%);
+  --muted-foreground: hsl(220 10% 46%);
+  --accent: hsl(158 64% 45%);
+  --accent-foreground: hsl(222 47% 11%);
+  --accent-soft: hsl(152 68% 92%);
   --destructive: hsl(0 84.2% 60.2%);
   --destructive-foreground: hsl(0 0% 98%);
-  --border: hsl(240 5.9% 90%);
-  --input: hsl(240 5.9% 90%);
-  --ring: hsl(240 5.9% 10%);
+  --border: hsl(220 15% 91%);
+  --input: hsl(220 15% 91%);
+  --ring: hsl(235 85% 60%);
+  --surface-dark: hsl(224 47% 8%);
+  --surface-dark-foreground: hsl(0 0% 100%);
+  --surface-dark-card: hsl(224 40% 12%);
+  --surface-dark-border: hsl(224 30% 20%);
+  --gradient-primary: linear-gradient(135deg, hsl(235 85% 60%) 0%, hsl(265 85% 65%) 100%);
+  --gradient-hero-dark: linear-gradient(180deg, hsl(224 47% 8%) 0%, hsl(230 50% 12%) 100%);
+  --transition-smooth: cubic-bezier(0.22, 1, 0.36, 1);
   --glass-background: rgba(255, 255, 255, 0.4);
   --glass-border: rgba(0, 0, 0, 0.05);
 }
@@ -57,23 +66,40 @@
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-primary-glow: var(--primary-glow);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
+  --color-accent-soft: var(--accent-soft);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-surface-dark: var(--surface-dark);
+  --color-surface-dark-foreground: var(--surface-dark-foreground);
+  --color-surface-dark-card: var(--surface-dark-card);
+  --color-surface-dark-border: var(--surface-dark-border);
 }
 
 @layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    letter-spacing: 0;
   }
 }
 
@@ -85,4 +111,64 @@
 
 .gradient-text {
   @apply bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-600;
+}
+
+.text-gradient-primary {
+  background: var(--gradient-primary);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.pill-badge,
+.pill-badge-dark {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  padding: 0.375rem 1rem;
+  font-size: 0.75rem;
+  font-weight: 800;
+  line-height: 1rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.pill-badge {
+  border: 1px solid hsl(158 50% 80%);
+  background: var(--accent-soft);
+  color: hsl(158 70% 25%);
+}
+
+.pill-badge-dark {
+  border: 1px solid hsl(158 64% 45% / 0.3);
+  background: hsl(158 64% 45% / 0.15);
+  color: hsl(158 70% 65%);
+}
+
+.surface-dark {
+  background: var(--gradient-hero-dark);
+  color: var(--surface-dark-foreground);
+}
+
+.glow-orb {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(80px);
+  pointer-events: none;
+}
+
+.animate-fade-up {
+  animation: fadeUp 0.8s var(--transition-smooth) both;
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

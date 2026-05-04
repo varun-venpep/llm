@@ -1,0 +1,71 @@
+▲ Next.js 16.1.6 (Turbopack)
+- Local:         http://localhost:3001
+- Network:       http://169.254.84.102:3001
+- Environments: .env.development, .env
+
+✓ Starting...
+Creating turbopack project { dir: 'C:\\Users\\venpep\\Desktop\\llmm\\llm', testMode: true }
+○ Compiling middleware ...
+✓ Ready in 26.4s
+[Middleware] Raw Host: localhost | Root Domain: lvh.me | Hostname: localhost
+[Middleware] Raw Host: localhost | Root Domain: lvh.me | Hostname: localhost
+○ Compiling /landing ...
+[Middleware] Raw Host: localhost | Root Domain: lvh.me | Hostname: localhost
+[Middleware] Raw Host: localhost | Root Domain: lvh.me | Hostname: localhost
+prisma:query SELECT "public"."PlatformSetting"."id", "public"."PlatformSetting"."key", "public"."PlatformSetting"."value", "public"."PlatformSetting"."createdAt", "public"."PlatformSetting"."updatedAt" FROM "public"."PlatformSetting" WHERE "public"."PlatformSetting"."key" IN ($1,$2,$3,$4,$5,$6) OFFSET $7
+prisma:query SELECT "public"."PlatformSetting"."id", "public"."PlatformSetting"."key", "public"."PlatformSetting"."value", "public"."PlatformSetting"."createdAt", "public"."PlatformSetting"."updatedAt" FROM "public"."PlatformSetting" WHERE "public"."PlatformSetting"."key" IN ($1,$2,$3,$4,$5,$6) OFFSET $7
+prisma:query SELECT "public"."PlatformSetting"."id", "public"."PlatformSetting"."key", "public"."PlatformSetting"."value", "public"."PlatformSetting"."createdAt", "public"."PlatformSetting"."updatedAt" FROM "public"."PlatformSetting" WHERE "public"."PlatformSetting"."key" IN ($1,$2,$3,$4,$5,$6) OFFSET $7
+ GET /landing 200 in 20.0s (compile: 16.9s, proxy.ts: 295ms, render: 2.8s)
+ GET /landing 200 in 43s (compile: 39.8s, proxy.ts: 24ms, render: 3.3s)
+prisma:query SELECT "public"."PlatformSetting"."id", "public"."PlatformSetting"."key", "public"."PlatformSetting"."value", "public"."PlatformSetting"."createdAt", "public"."PlatformSetting"."updatedAt" FROM "public"."PlatformSetting" WHERE "public"."PlatformSetting"."key" IN ($1,$2,$3,$4,$5,$6) OFFSET $7
+ GET /marketing-assets/hero-dashboard.jpg 404 in 1107ms (compile: 916ms, proxy.ts: 25ms, render: 167ms)
+ GET /api/auth/session 401 in 922ms (compile: 897ms, render: 25ms)
+[Middleware] Raw Host: localhost | Root Domain: lvh.me | Hostname: localhost
+prisma:query SELECT "public"."PlatformSetting"."id", "public"."PlatformSetting"."key", "public"."PlatformSetting"."value", "public"."PlatformSetting"."createdAt", "public"."PlatformSetting"."updatedAt" FROM "public"."PlatformSetting" WHERE "public"."PlatformSetting"."key" IN ($1,$2,$3,$4,$5,$6) OFFSET $7
+ GET /landing 200 in 428ms (compile: 14ms, proxy.ts: 23ms, render: 392ms)
+[Middleware] Raw Host: localhost | Root Domain: lvh.me | Hostname: localhost
+prisma:query SELECT "public"."PlatformSetting"."id", "public"."PlatformSetting"."key", "public"."PlatformSetting"."value", "public"."PlatformSetting"."createdAt", "public"."PlatformSetting"."updatedAt" FROM "public"."PlatformSetting" WHERE "public"."PlatformSetting"."key" IN ($1,$2,$3,$4,$5,$6) OFFSET $7
+ GET /marketing-assets/hero-dashboard.jpg 404 in 818ms (compile: 22ms, proxy.ts: 8ms, render: 788ms)
+✓ Compiled in 760ms
+[Middleware] Raw Host: localhost | Root Domain: lvh.me | Hostname: localhost
+prisma:query SELECT "public"."PlatformSetting"."id", "public"."PlatformSetting"."key", "public"."PlatformSetting"."value", "public"."PlatformSetting"."createdAt", "public"."PlatformSetting"."updatedAt" FROM "public"."PlatformSetting" WHERE "public"."PlatformSetting"."key" IN ($1,$2,$3,$4,$5,$6) OFFSET $7
+ GET /landing 200 in 1860ms (compile: 13ms, proxy.ts: 115ms, render: 1731ms)
+[Middleware] Raw Host: localhost | Root Domain: lvh.me | Hostname: localhost
+prisma:query SELECT "public"."PlatformSetting"."id", "public"."PlatformSetting"."key", "public"."PlatformSetting"."value", "public"."PlatformSetting"."createdAt", "public"."PlatformSetting"."updatedAt" FROM "public"."PlatformSetting" WHERE "public"."PlatformSetting"."key" IN ($1,$2,$3,$4,$5,$6) OFFSET $7
+ GET /features 200 in 2.9s (compile: 1783ms, proxy.ts: 12ms, render: 1070ms)
+[Middleware] Raw Host: localhost | Root Domain: lvh.me | Hostname: localhost
+prisma:query SELECT "public"."PlatformSetting"."id", "public"."PlatformSetting"."key", "public"."PlatformSetting"."value", "public"."PlatformSetting"."createdAt", "public"."PlatformSetting"."updatedAt" FROM "public"."PlatformSetting" WHERE "public"."PlatformSetting"."key" IN ($1,$2,$3,$4,$5,$6) OFFSET $7
+ GET /pricing 200 in 1363ms (compile: 561ms, proxy.ts: 10ms, render: 792ms)
+[Middleware] Raw Host: localhost | Root Domain: lvh.me | Hostname: localhost
+prisma:query SELECT "public"."PlatformSetting"."id", "public"."PlatformSetting"."key", "public"."PlatformSetting"."value", "public"."PlatformSetting"."createdAt", "public"."PlatformSetting"."updatedAt" FROM "public"."PlatformSetting" WHERE "public"."PlatformSetting"."key" IN ($1,$2,$3,$4,$5,$6) OFFSET $7
+ GET /contact 200 in 2.0s (compile: 1694ms, proxy.ts: 8ms, render: 330ms)
+[Middleware] Raw Host: localhost | Root Domain: lvh.me | Hostname: localhost
+prisma:query SELECT "public"."PlatformSetting"."id", "public"."PlatformSetting"."key", "public"."PlatformSetting"."value", "public"."PlatformSetting"."createdAt", "public"."PlatformSetting"."updatedAt" FROM "public"."PlatformSetting" WHERE "public"."PlatformSetting"."key" IN ($1,$2,$3,$4,$5,$6) OFFSET $7
+ GET /login 200 in 1016ms (compile: 903ms, proxy.ts: 7ms, render: 106ms)
+[Middleware] Raw Host: localhost | Root Domain: lvh.me | Hostname: localhost
+[Middleware] Raw Host: localhost | Root Domain: lvh.me | Hostname: localhost
+prisma:query SELECT "public"."PlatformSetting"."id", "public"."PlatformSetting"."key", "public"."PlatformSetting"."value", "public"."PlatformSetting"."createdAt", "public"."PlatformSetting"."updatedAt" FROM "public"."PlatformSetting" WHERE "public"."PlatformSetting"."key" IN ($1,$2,$3,$4,$5,$6) OFFSET $7
+ GET /admin/login 200 in 2.9s (compile: 2.7s, proxy.ts: 31ms, render: 161ms)
+ GET /api/auth/session 401 in 17ms (compile: 8ms, render: 10ms)
+ GET /api/auth/session 401 in 37ms (compile: 8ms, render: 28ms)
+prisma:query SELECT "public"."PlatformSetting"."id", "public"."PlatformSetting"."key", "public"."PlatformSetting"."value", "public"."PlatformSetting"."createdAt", "public"."PlatformSetting"."updatedAt" FROM "public"."PlatformSetting" WHERE "public"."PlatformSetting"."key" IN ($1,$2,$3,$4,$5,$6) OFFSET $7
+ GET /api/branding 200 in 678ms (compile: 592ms, render: 86ms)
+prisma:query SELECT "public"."PlatformSetting"."id", "public"."PlatformSetting"."key", "public"."PlatformSetting"."value", "public"."PlatformSetting"."createdAt", "public"."PlatformSetting"."updatedAt" FROM "public"."PlatformSetting" WHERE "public"."PlatformSetting"."key" IN ($1,$2,$3,$4,$5,$6) OFFSET $7
+ GET /api/branding 200 in 69ms (compile: 6ms, render: 63ms)
+prisma:query SELECT "public"."PlatformSetting"."id", "public"."PlatformSetting"."key", "public"."PlatformSetting"."value", "public"."PlatformSetting"."createdAt", "public"."PlatformSetting"."updatedAt" FROM "public"."PlatformSetting" WHERE "public"."PlatformSetting"."key" IN ($1,$2,$3,$4,$5,$6) OFFSET $7
+ GET /api/branding 200 in 75ms (compile: 4ms, render: 71ms)
+prisma:query SELECT "public"."PlatformSetting"."id", "public"."PlatformSetting"."key", "public"."PlatformSetting"."value", "public"."PlatformSetting"."createdAt", "public"."PlatformSetting"."updatedAt" FROM "public"."PlatformSetting" WHERE "public"."PlatformSetting"."key" IN ($1,$2,$3,$4,$5,$6) OFFSET $7
+ GET /api/branding 200 in 69ms (compile: 5ms, render: 64ms)
+prisma:query SELECT "public"."PlatformSetting"."id", "public"."PlatformSetting"."key", "public"."PlatformSetting"."value", "public"."PlatformSetting"."createdAt", "public"."PlatformSetting"."updatedAt" FROM "public"."PlatformSetting" WHERE "public"."PlatformSetting"."key" IN ($1,$2,$3,$4,$5,$6) OFFSET $7
+ GET /admin/login 200 in 1311ms (compile: 15ms, proxy.ts: 34ms, render: 1262ms)
+[Middleware] Raw Host: localhost | Root Domain: lvh.me | Hostname: localhost
+prisma:query SELECT "public"."PlatformSetting"."id", "public"."PlatformSetting"."key", "public"."PlatformSetting"."value", "public"."PlatformSetting"."createdAt", "public"."PlatformSetting"."updatedAt" FROM "public"."PlatformSetting" WHERE "public"."PlatformSetting"."key" IN ($1,$2,$3,$4,$5,$6) OFFSET $7
+ GET /landing 200 in 240ms (compile: 14ms, proxy.ts: 7ms, render: 219ms)
+[Middleware] Raw Host: localhost | Root Domain: lvh.me | Hostname: localhost
+prisma:query SELECT "public"."PlatformSetting"."id", "public"."PlatformSetting"."key", "public"."PlatformSetting"."value", "public"."PlatformSetting"."createdAt", "public"."PlatformSetting"."updatedAt" FROM "public"."PlatformSetting" WHERE "public"."PlatformSetting"."key" IN ($1,$2,$3,$4,$5,$6) OFFSET $7
+ GET /landing 200 in 1150ms (compile: 103ms, proxy.ts: 85ms, render: 962ms)
+ GET /api/auth/session 401 in 15ms (compile: 6ms, render: 9ms)
+[Middleware] Raw Host: localhost | Root Domain: lvh.me | Hostname: localhost
+prisma:query SELECT "public"."PlatformSetting"."id", "public"."PlatformSetting"."key", "public"."PlatformSetting"."value", "public"."PlatformSetting"."createdAt", "public"."PlatformSetting"."updatedAt" FROM "public"."PlatformSetting" WHERE "public"."PlatformSetting"."key" IN ($1,$2,$3,$4,$5,$6) OFFSET $7
+ GET /landing 200 in 609ms (compile: 10ms, proxy.ts: 11ms, render: 588ms)
+[?25h

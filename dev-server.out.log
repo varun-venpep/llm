@@ -1,0 +1,17 @@
+
+> lms-app@0.1.0 dev
+> next dev -p 3001
+
+▲ Next.js 16.1.6 (Turbopack)
+- Local:         http://localhost:3001
+- Network:       http://169.254.84.102:3001
+- Environments: .env.development, .env
+
+✓ Starting...
+Creating turbopack project { dir: 'C:\\Users\\venpep\\Desktop\\llmm\\llm', testMode: true }
+✓ Ready in 3.7s
+[Middleware] Raw Host: localhost | Root Domain: lvh.me | Hostname: localhost
+prisma:query SELECT "public"."PlatformSetting"."id", "public"."PlatformSetting"."key", "public"."PlatformSetting"."value", "public"."PlatformSetting"."createdAt", "public"."PlatformSetting"."updatedAt" FROM "public"."PlatformSetting" WHERE "public"."PlatformSetting"."key" IN ($1,$2,$3,$4,$5,$6) OFFSET $7
+ GET / 200 in 3.3s (compile: 683ms, proxy.ts: 128ms, render: 2.5s)
+✓ Finished filesystem cache database compaction in 13.9s
+[?25h

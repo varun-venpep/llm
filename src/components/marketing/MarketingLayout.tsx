@@ -1,99 +1,51 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { Plus_Jakarta_Sans } from 'next/font/google';
+import type { LucideIcon } from 'lucide-react';
 import {
+  AlertTriangle,
+  ArrowRight,
   BarChart3,
-  BookOpenCheck,
-  Building2,
   Check,
-  ChevronRight,
   CircleHelp,
-  Clock3,
-  FileCheck2,
-  Globe2,
-  GraduationCap,
-  Layers3,
-  LifeBuoy,
-  LockKeyhole,
-  Mail,
-  MapPin,
-  MessageSquareText,
-  MonitorPlay,
-  Palette,
-  Phone,
-  ShieldCheck,
   Sparkles,
-  UsersRound,
-  Zap,
+  Star,
 } from 'lucide-react';
 import { MarketingHeader } from './MarketingHeader';
-
-const marketingFont = Plus_Jakarta_Sans({
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700', '800'],
-});
+import {
+  faqs,
+  featureGroups,
+  homeHighlights,
+  logoCloud,
+  pricingPlans,
+  problemPoints,
+  roles,
+  solutionPoints,
+  testimonials,
+  workflowSteps,
+} from './marketingData';
 
 const brand = {
   name: 'Lebra.Ai',
-  logo: '/lebra_ai_logo_transparent.png',
   footerLogo: '/lebra_ai_logo_footer.png',
 };
 
-export function MarketingFooter() {
-  return (
-    <footer className="border-t border-slate-800 bg-slate-950 text-white">
-      <div className="mx-auto grid max-w-7xl gap-10 px-5 py-12 sm:px-6 md:grid-cols-[1.3fr_0.7fr_0.7fr_0.7fr] lg:px-8">
-        <div className="space-y-5">
-          <Link href="/landing" className="inline-flex items-center">
-            <Image
-              src={brand.footerLogo}
-              alt={`${brand.name} logo`}
-              width={1340}
-              height={382}
-              className="h-14 w-[250px] object-contain"
-            />
-          </Link>
-          <p className="max-w-sm text-sm leading-6 text-slate-300">
-            A white-label learning platform for teams that need branded training portals, structured content delivery, certificates, analytics, and learner support in one managed system.
-          </p>
-          <div className="flex flex-wrap gap-3 text-xs font-semibold text-slate-300">
-            <span className="rounded-full border border-white/15 px-3 py-1">Multi-tenant LMS</span>
-            <span className="rounded-full border border-white/15 px-3 py-1">White-label ready</span>
-            <span className="rounded-full border border-white/15 px-3 py-1">Built for scale</span>
-          </div>
-        </div>
-        <FooterColumn title="Platform" links={[['Home', '/landing'], ['Features', '/features'], ['Pricing', '/pricing'], ['Contact', '/contact']]} />
-        <FooterColumn title="Use Cases" links={[['Employee training', '/features'], ['Customer academies', '/features'], ['Compliance learning', '/features'], ['Partner enablement', '/features']]} />
-        <FooterColumn title="Access" links={[['Admin login', '/admin/login'], ['Learner login', '/login'], ['Request demo', '/contact'], ['Support', '/contact']]} />
-      </div>
-      <div className="border-t border-white/10">
-        <div className="mx-auto flex max-w-7xl flex-col gap-3 px-5 py-5 text-xs text-slate-400 sm:px-6 md:flex-row md:items-center md:justify-between lg:px-8">
-          <p>Copyright 2026 {brand.name}. All rights reserved.</p>
-          <p>Privacy minded. Enterprise ready. Designed for modern learning teams.</p>
-        </div>
-      </div>
-    </footer>
-  );
-}
+const linkColumns = [
+  { title: 'Product', links: [['Features', '/features'], ['Pricing', '/pricing'], ['Marketplace', '/features'], ['Integrations', '/contact']] },
+  { title: 'Company', links: [['Home', '/landing'], ['Contact', '/contact'], ['Admin Login', '/admin/login'], ['Learner Login', '/login']] },
+  { title: 'Resources', links: [['Docs', '/contact'], ['Help Center', '/contact'], ['Security', '/features'], ['Status', '/contact']] },
+  { title: 'Use Cases', links: [['Employee training', '/features'], ['Customer academies', '/features'], ['Partner enablement', '/features'], ['Compliance learning', '/features']] },
+];
 
-function FooterColumn({ title, links }: { title: string; links: [string, string][] }) {
-  return (
-    <div>
-      <h3 className="text-sm font-bold">{title}</h3>
-      <div className="mt-4 grid gap-3 text-sm text-slate-300">
-        {links.map(([label, href]) => (
-          <Link key={label} href={href} className="transition-colors hover:text-white">
-            {label}
-          </Link>
-        ))}
-      </div>
-    </div>
-  );
+function buttonClass(variant: 'hero' | 'outline' | 'dark' = 'hero') {
+  const base = 'inline-flex items-center justify-center gap-2 rounded-full px-7 py-4 text-sm font-bold transition-all duration-300';
+  if (variant === 'outline') return `${base} border border-border bg-background text-foreground hover:bg-secondary`;
+  if (variant === 'dark') return `${base} border border-white/15 bg-transparent text-white hover:bg-white/10`;
+  return `${base} bg-gradient-to-r from-primary to-primary-glow text-white shadow-[0_15px_40px_-12px_hsl(var(--primary)_/_0.7)] hover:-translate-y-0.5`;
 }
 
 export function MarketingPage({ children }: { children: React.ReactNode }) {
   return (
-    <div className={`${marketingFont.className} min-h-screen bg-slate-50 text-slate-950 overflow-x-hidden`}>
+    <div className="min-h-screen overflow-x-hidden bg-background text-foreground">
       <MarketingHeader />
       <main>{children}</main>
       <MarketingFooter />
@@ -101,221 +53,128 @@ export function MarketingPage({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function Eyebrow({ children, tone = 'blue' }: { children: React.ReactNode; tone?: 'blue' | 'green' | 'amber' | 'rose' }) {
-  const tones = {
-    blue: 'border-blue-200 bg-blue-50 text-blue-700',
-    green: 'border-emerald-200 bg-emerald-50 text-emerald-700',
-    amber: 'border-amber-200 bg-amber-50 text-amber-700',
-    rose: 'border-rose-200 bg-rose-50 text-rose-700',
-  };
-
+export function MarketingFooter() {
   return (
-    <div className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] ${tones[tone]}`}>
+    <footer className="border-t border-border bg-background pt-20 pb-10">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6">
+        <div className="mb-12 grid grid-cols-2 gap-8 md:grid-cols-6">
+          <div className="col-span-2">
+            <Link href="/landing" className="mb-4 inline-flex items-center">
+              <Image src={brand.footerLogo} alt={`${brand.name} logo`} width={1340} height={382} className="h-14 w-[250px] object-contain" />
+            </Link>
+            <p className="max-w-xs text-sm leading-relaxed text-muted-foreground">
+              The modern, multi-tenant learning platform for branded academies, AI-assisted course creation, certificates, and real-time training analytics.
+            </p>
+          </div>
+          {linkColumns.map((column) => (
+            <div key={column.title}>
+              <h4 className="mb-4 text-sm font-bold">{column.title}</h4>
+              <ul className="space-y-2.5">
+                {column.links.map(([label, href]) => (
+                  <li key={label}>
+                    <Link href={href} className="text-sm text-muted-foreground transition-colors hover:text-foreground">
+                      {label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+        <div className="flex flex-col items-center justify-between gap-4 border-t border-border pt-8 sm:flex-row">
+          <p className="text-xs text-muted-foreground">Copyright 2026 {brand.name}. All rights reserved.</p>
+          <p className="text-xs text-muted-foreground">Secure learning. Tenant-ready. Built for scale.</p>
+        </div>
+      </div>
+    </footer>
+  );
+}
+
+export function PillBadge({ children, dark = false }: { children: React.ReactNode; dark?: boolean }) {
+  return (
+    <span className={dark ? 'pill-badge-dark' : 'pill-badge'}>
       <Sparkles className="h-3.5 w-3.5" />
       {children}
+    </span>
+  );
+}
+
+export function SectionHeading({ badge, title, highlight, text, dark = false }: { badge: string; title: string; highlight?: string; text?: string; dark?: boolean }) {
+  return (
+    <div className="mx-auto mb-14 max-w-2xl text-center">
+      <PillBadge dark={dark}>{badge}</PillBadge>
+      <h2 className={`mt-5 text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl ${dark ? 'text-white' : 'text-foreground'}`}>
+        {title} {highlight ? <span className="text-gradient-primary">{highlight}</span> : null}
+      </h2>
+      {text ? <p className={`mt-5 text-lg ${dark ? 'text-white/70' : 'text-muted-foreground'}`}>{text}</p> : null}
     </div>
   );
 }
 
-export function DashboardMockup() {
-  const courses = [
-    ['Cybersecurity Basics', '86%', 'bg-blue-500'],
-    ['Sales Enablement', '72%', 'bg-emerald-500'],
-    ['Workplace Safety', '94%', 'bg-amber-500'],
-  ];
-
+export function HeroSection() {
   return (
-    <div className="relative overflow-hidden rounded-[28px] border border-slate-200 bg-slate-950 p-3 shadow-xl shadow-slate-300/50">
-      <div className="rounded-2xl bg-white">
-        <div className="flex flex-col gap-4 border-b border-slate-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-2">
-            <span className="h-3 w-3 rounded-full bg-rose-400" />
-            <span className="h-3 w-3 rounded-full bg-amber-400" />
-            <span className="h-3 w-3 rounded-full bg-emerald-400" />
-          </div>
-          <div className="h-2 w-28 rounded-full bg-slate-200" />
+    <section className="surface-dark relative overflow-hidden">
+      <div className="glow-orb -left-40 -top-40 h-[600px] w-[600px] bg-primary/30" />
+      <div className="glow-orb -right-32 top-40 h-[500px] w-[500px] bg-primary-glow/25" />
+      <div className="relative mx-auto max-w-7xl px-4 pt-16 pb-20 text-center sm:px-6 lg:pt-24 lg:pb-28">
+        <div className="animate-fade-up inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-xs font-medium text-white/90 backdrop-blur">
+          <Sparkles className="h-3.5 w-3.5 text-accent" />
+          AI quiz generation now live - build courses faster
         </div>
-        <div className="grid min-h-[420px] grid-cols-1 gap-4 sm:grid-cols-[150px_1fr]">
-          <aside className="border-r border-slate-200 bg-slate-50 p-4">
-            <div className="mb-6 h-8 w-20 rounded-lg bg-slate-900" />
-            <div className="space-y-3">
-              {[BookOpenCheck, UsersRound, BarChart3, FileCheck2].map((Icon, index) => (
-                <div key={index} className={`flex h-10 items-center gap-3 rounded-xl px-3 ${index === 0 ? 'bg-blue-600 text-white' : 'bg-white text-slate-500'}`}>
-                  <Icon className="h-4 w-4" />
-                  <span className="hidden h-2 w-16 rounded-full bg-current opacity-30 sm:block" />
-                </div>
-              ))}
-            </div>
-          </aside>
-          <section className="p-4 sm:p-6">
-            <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <div className="mb-2 h-4 w-28 rounded-full bg-blue-100" />
-                <div className="h-7 w-48 rounded-lg bg-slate-900" />
-              </div>
-              <div className="h-10 w-32 rounded-full bg-slate-950" />
-            </div>
-            <div className="grid gap-4 md:grid-cols-3">
-              {[
-                ['Learners', '12,480', 'bg-blue-50 text-blue-700'],
-                ['Completion', '88%', 'bg-emerald-50 text-emerald-700'],
-                ['Certificates', '3,216', 'bg-amber-50 text-amber-700'],
-              ].map(([label, value, color]) => (
-                <div key={label} className="rounded-2xl border border-slate-200 bg-white p-4">
-                  <div className={`mb-5 inline-flex rounded-full px-2.5 py-1 text-xs font-bold ${color}`}>{label}</div>
-                  <div className="text-2xl font-bold">{value}</div>
-                </div>
-              ))}
-            </div>
-            <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_0.7fr]">
-              <div className="rounded-2xl border border-slate-200 p-4">
-                <div className="mb-4 flex items-center justify-between">
-                  <div className="h-4 w-32 rounded-full bg-slate-200" />
-                  <div className="h-8 w-20 rounded-full bg-slate-100" />
-                </div>
-                <div className="flex h-44 items-end gap-3">
-                  {[42, 58, 49, 78, 66, 92, 83].map((height, index) => (
-                    <div key={index} className="flex flex-1 items-end rounded-full bg-slate-100">
-                      <div className="w-full rounded-full bg-blue-500" style={{ height: `${height}%` }} />
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div className="rounded-2xl border border-slate-200 p-4">
-                <div className="mb-4 h-4 w-28 rounded-full bg-slate-200" />
-                <div className="space-y-3">
-                  {courses.map(([title, progress, color]) => (
-                    <div key={title} className="rounded-xl bg-slate-50 p-3">
-                      <div className="mb-2 flex items-center justify-between gap-3 text-xs font-bold">
-                        <span className="truncate">{title}</span>
-                        <span>{progress}</span>
-                      </div>
-                      <div className="h-2 rounded-full bg-slate-200">
-                        <div className={`h-2 rounded-full ${color}`} style={{ width: progress }} />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </section>
+        <h1 className="animate-fade-up mx-auto mt-7 max-w-5xl text-5xl font-extrabold leading-[1.02] text-white [animation-delay:80ms] sm:text-6xl lg:text-7xl xl:text-8xl">
+          Train your entire org on <span className="text-gradient-primary">one beautiful platform.</span>
+        </h1>
+        <p className="animate-fade-up mx-auto mt-7 max-w-2xl text-lg text-white/70 [animation-delay:160ms] sm:text-xl">
+          Lebra.Ai is the multi-tenant LMS that helps you build courses with AI, deliver them across branded workspaces, and track every learner in one place.
+        </p>
+        <div className="animate-fade-up mt-10 flex flex-col justify-center gap-3 [animation-delay:240ms] sm:flex-row">
+          <Link href="/contact" className={`${buttonClass('hero')} group`}>
+            Start Your Workspace <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+          </Link>
+          <Link href="/contact" className={buttonClass('dark')}>
+            Book a 15-min Demo
+          </Link>
         </div>
-      </div>
-    </div>
-  );
-}
-
-export const homeHighlights = [
-  { icon: Palette, title: 'White-label portals', text: 'Launch every academy with your logo, colors, domain, and learner-facing identity.' },
-  { icon: Layers3, title: 'Multi-tenant control', text: 'Manage multiple organizations, teams, admins, learners, and catalogs from one command center.' },
-  { icon: MonitorPlay, title: 'Content-rich courses', text: 'Deliver videos, documents, quizzes, modules, certificates, resources, and progress tracking.' },
-  { icon: ShieldCheck, title: 'Operational governance', text: 'Keep access, reporting, user roles, and platform controls structured for serious teams.' },
-];
-
-export const featureGroups = [
-  { icon: Building2, title: 'Tenant Management', text: 'Create branded workspaces for companies, schools, franchises, or departments with separate users, catalogs, settings, and analytics.' },
-  { icon: GraduationCap, title: 'Learner Experience', text: 'Give learners a focused dashboard with assigned courses, progress, certificates, notes, achievements, and mobile-friendly course playback.' },
-  { icon: BookOpenCheck, title: 'Course Authoring', text: 'Organize learning into courses, modules, lessons, videos, PDFs, resources, quizzes, reviews, and marketplace-ready global content.' },
-  { icon: UsersRound, title: 'Teams and Roles', text: 'Group learners by department, cohort, job role, or client account, then assign targeted content and view segmented performance.' },
-  { icon: BarChart3, title: 'Reports and Insights', text: 'Track completions, enrollment trends, activity, course engagement, certificates, team progress, and platform-level growth.' },
-  { icon: LockKeyhole, title: 'Secure Access', text: 'Support admin, manager, and learner roles with session-based access, tenant-aware routes, and structured permission boundaries.' },
-  { icon: FileCheck2, title: 'Certificates', text: 'Design completion certificates and issue verifiable records that make training outcomes visible and shareable.' },
-  { icon: Globe2, title: 'Localization Ready', text: 'Prepare training experiences for distributed teams with tenant locale settings and translation-ready content workflows.' },
-  { icon: LifeBuoy, title: 'Managed Support', text: 'Operate the platform with admin tooling, recovery paths, audit visibility, and practical support touchpoints for learners and admins.' },
-];
-
-export const pricingPlans = [
-  {
-    name: 'Launch',
-    price: '₹14,999',
-    note: 'per workspace / month',
-    description: 'For small teams launching a branded training portal quickly.',
-    features: ['1 branded tenant', 'Up to 500 learners', 'Course builder', 'Basic reports', 'Email support'],
-  },
-  {
-    name: 'Scale',
-    price: '₹39,999',
-    note: 'per workspace / month',
-    description: 'For growing academies and organizations with multiple teams.',
-    features: ['5 branded tenants', 'Up to 5,000 learners', 'Teams and role assignment', 'Certificates', 'Priority support'],
-    featured: true,
-  },
-  {
-    name: 'Enterprise',
-    price: 'Custom',
-    note: 'tailored agreement',
-    description: 'For high-volume training businesses with complex operating needs.',
-    features: ['Unlimited tenant strategy', 'Custom onboarding', 'Advanced governance', 'Dedicated success support', 'Custom integrations'],
-  },
-];
-
-export const contactMethods = [
-  { icon: Mail, title: 'Email', text: 'skalathmika@gmail.com', href: 'mailto:skalathmika@gmail.com' },
-  { icon: Phone, title: 'Phone', text: 'Schedule a guided call', href: '/contact' },
-  { icon: MapPin, title: 'Region', text: 'Built for distributed teams', href: '/contact' },
-  { icon: MessageSquareText, title: 'Support', text: 'Platform, onboarding, and learner operations', href: '/contact' },
-];
-
-export const faqs = [
-  { q: 'Can every client have a separate branded LMS?', a: 'Yes. The platform is structured for multiple tenant workspaces, each with its own brand, learner access, content, teams, and settings.' },
-  { q: 'Can we sell or distribute shared courses?', a: 'Yes. Global marketplace workflows let platform owners publish reusable content and let tenants claim or use it inside their own workspace.' },
-  { q: 'Does it support certificates and reporting?', a: 'Yes. Certificates, completion tracking, learner activity, admin reports, and team-level progress are core parts of the system.' },
-  { q: 'Can we start with one workspace and grow later?', a: 'Yes. Start with a focused academy, then expand into more tenants, teams, courses, roles, and reporting as your learning operation grows.' },
-];
-
-export function FeatureCard({ icon: Icon, title, text }: { icon: typeof Zap; title: string; text: string }) {
-  return (
-    <div className="rounded-[32px] border border-slate-200 bg-white p-8 shadow-xl shadow-slate-200/40 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl">
-      <div className="mb-5 inline-flex h-14 w-14 items-center justify-center rounded-3xl bg-blue-50 text-blue-700 shadow-sm">
-        <Icon className="h-6 w-6" />
-      </div>
-      <h3 className="text-lg font-bold text-slate-950">{title}</h3>
-      <p className="mt-3 text-sm leading-7 text-slate-600">{text}</p>
-    </div>
-  );
-}
-
-export function PricingCard({ plan }: { plan: (typeof pricingPlans)[number] }) {
-  return (
-    <div className={`rounded-3xl border p-6 shadow-sm ${plan.featured ? 'border-slate-950 bg-slate-950 text-white shadow-xl shadow-slate-300' : 'border-slate-200 bg-white text-slate-950'}`}>
-      {plan.featured && <div className="mb-5 inline-flex rounded-full bg-white px-3 py-1 text-xs font-bold uppercase tracking-[0.16em] text-slate-950">Most Popular</div>}
-      <h3 className="text-2xl font-bold">{plan.name}</h3>
-      <p className={`mt-3 text-sm leading-6 ${plan.featured ? 'text-slate-300' : 'text-slate-600'}`}>{plan.description}</p>
-      <div className="mt-8">
-        <span className="text-4xl font-bold">{plan.price}</span>
-        <p className={`mt-2 text-sm ${plan.featured ? 'text-slate-300' : 'text-slate-500'}`}>{plan.note}</p>
-      </div>
-      <Link href="/contact" className={`mt-8 inline-flex w-full items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-bold transition-transform hover:scale-[1.02] ${plan.featured ? 'bg-white text-slate-950' : 'bg-slate-950 text-white'}`}>
-        Talk to Sales <ChevronRight className="h-4 w-4" />
-      </Link>
-      <div className="mt-8 space-y-4">
-        {plan.features.map((feature) => (
-          <div key={feature} className="flex gap-3 text-sm">
-            <Check className={`mt-0.5 h-4 w-4 flex-none ${plan.featured ? 'text-emerald-300' : 'text-emerald-600'}`} />
-            <span className={plan.featured ? 'text-slate-200' : 'text-slate-700'}>{feature}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-export function FaqSection() {
-  return (
-    <section className="bg-slate-50 px-5 py-20 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-7xl">
-        <div className="max-w-2xl">
-          <Eyebrow tone="amber">Questions</Eyebrow>
-          <h2 className="mt-5 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">Clear answers for serious learning teams.</h2>
+        <div className="animate-fade-up mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-white/60 [animation-delay:320ms]">
+          <span className="flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-accent" /> No credit card needed</span>
+          <span className="flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-accent" /> Setup-friendly workflow</span>
+          <span className="flex items-center gap-1.5"><Star className="h-3 w-3 fill-amber-400 text-amber-400" /> Built for serious learning teams</span>
         </div>
-        <div className="mt-10 grid gap-5 md:grid-cols-2">
-          {faqs.map((item) => (
-            <div key={item.q} className="rounded-2xl border border-slate-200 bg-white p-6">
-              <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-full bg-amber-100 text-amber-700">
-                <CircleHelp className="h-5 w-5" />
-              </div>
-              <h3 className="font-bold text-slate-950">{item.q}</h3>
-              <p className="mt-3 text-sm leading-6 text-slate-600">{item.a}</p>
+        <HeroDashboardImage />
+      </div>
+    </section>
+  );
+}
+
+export function HeroDashboardImage() {
+  return (
+    <div className="animate-fade-up relative mx-auto mt-16 max-w-6xl [animation-delay:400ms] lg:mt-20">
+      <div className="absolute -inset-8 -z-10 bg-gradient-to-tr from-primary/30 via-primary-glow/20 to-accent/20 blur-3xl" />
+      <div className="overflow-hidden rounded-2xl border border-white/10 shadow-[0_40px_120px_-20px_rgba(0,0,0,0.6)] lg:rounded-3xl">
+        <Image
+          src="/marketing-assets/hero-dashboard.jpg"
+          alt="Lebra.Ai course analytics dashboard"
+          width={1536}
+          height={1024}
+          className="block h-auto w-full"
+          priority
+        />
+      </div>
+    </div>
+  );
+}
+
+export function LogoCloud() {
+  return (
+    <section className="border-b border-border bg-background py-16">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6">
+        <p className="mb-10 text-center text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+          Powering learning for modern teams and academies
+        </p>
+        <div className="grid grid-cols-2 items-center gap-x-8 gap-y-6 opacity-70 sm:grid-cols-3 lg:grid-cols-6">
+          {logoCloud.map((logo) => (
+            <div key={logo} className="text-center text-xl font-bold tracking-tight text-foreground/50 transition-colors hover:text-foreground">
+              {logo}
             </div>
           ))}
         </div>
@@ -324,34 +183,45 @@ export function FaqSection() {
   );
 }
 
-export function ProcessBand() {
-  const steps = [
-    ['01', 'Brand the workspace', 'Add identity, domains, colors, logos, and the training model that fits your organization.'],
-    ['02', 'Build the academy', 'Create courses, modules, lessons, quizzes, teams, roles, and certificate templates.'],
-    ['03', 'Launch and measure', 'Invite learners, monitor progress, issue certificates, and improve training with reports.'],
-  ];
-
+export function ProblemSolution() {
   return (
-    <section className="px-5 py-20 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-7xl rounded-[32px] bg-slate-950 p-6 text-white sm:p-10 lg:p-12">
-        <div className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:items-start">
-          <div>
-            <Eyebrow tone="green">Workflow</Eyebrow>
-            <h2 className="mt-5 text-3xl font-bold tracking-tight sm:text-4xl">From empty portal to operating academy.</h2>
-            <p className="mt-5 text-sm leading-7 text-slate-300">
-              Lebra.Ai is designed for the practical work behind learning operations: setup, content, enrollment, governance, measurement, and ongoing support.
-            </p>
-          </div>
-          <div className="grid gap-4">
-            {steps.map(([number, title, text]) => (
-              <div key={number} className="grid gap-4 rounded-2xl border border-white/10 bg-white/5 p-5 sm:grid-cols-[72px_1fr]">
-                <div className="text-2xl font-bold text-emerald-300">{number}</div>
-                <div>
-                  <h3 className="font-bold">{title}</h3>
-                  <p className="mt-2 text-sm leading-6 text-slate-300">{text}</p>
-                </div>
+    <section className="bg-background py-24">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6">
+        <SectionHeading badge="The Problem" title="Your training stack is" highlight="too scattered." text="Most teams stitch together multiple tools to deliver training. Lebra.Ai brings the workflow into one managed LMS." />
+        <div className="mx-auto grid max-w-5xl gap-6 lg:grid-cols-2">
+          <div className="rounded-3xl border border-border bg-secondary/50 p-8">
+            <div className="mb-6 flex items-center gap-2">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-destructive/10">
+                <AlertTriangle className="h-4 w-4 text-destructive" />
               </div>
-            ))}
+              <h3 className="text-lg font-bold">Without Lebra.Ai</h3>
+            </div>
+            <ul className="space-y-3">
+              {problemPoints.map((point) => (
+                <li key={point} className="flex items-start gap-3 text-muted-foreground">
+                  <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-muted-foreground" />
+                  <span className="line-through decoration-muted-foreground/40">{point}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="rounded-3xl border-2 border-primary/30 bg-gradient-to-br from-primary/5 to-primary-glow/5 p-8 shadow-[0_25px_60px_-20px_hsl(var(--primary)_/_0.35)]">
+            <div className="mb-6 flex items-center gap-2">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent-soft">
+                <Check className="h-4 w-4 text-accent" />
+              </div>
+              <h3 className="text-lg font-bold">With Lebra.Ai</h3>
+            </div>
+            <ul className="space-y-3">
+              {solutionPoints.map((point) => (
+                <li key={point} className="flex items-start gap-3">
+                  <span className="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent">
+                    <Check className="h-3 w-3 text-white" strokeWidth={3} />
+                  </span>
+                  <span className="font-medium text-foreground">{point}</span>
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
       </div>
@@ -359,46 +229,277 @@ export function ProcessBand() {
   );
 }
 
-export function MetricStrip() {
+export function FeatureCard({ icon: Icon, title, text }: { icon: LucideIcon; title: string; text: string }) {
   return (
-    <section className="border-y border-slate-200 bg-slate-50 px-5 py-12 sm:px-6 lg:px-8">
-      <div className="mx-auto grid max-w-7xl gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        {[
-          ['99.9%', 'Platform availability target'],
-          ['24/7', 'Learner-ready access'],
-          ['Multi', 'Tenant operating model'],
-          ['1', 'Central admin command center'],
-        ].map(([value, label]) => (
-          <div key={label} className="text-center">
-            <div className="text-4xl font-bold text-slate-950">{value}</div>
-            <p className="mt-2 text-xs font-bold uppercase tracking-[0.16em] text-slate-500">{label}</p>
+    <div className="rounded-2xl border border-border bg-background p-6 transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-[0_8px_30px_-8px_hsl(var(--foreground)_/_0.08)]">
+      <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
+        <Icon className="h-5 w-5 text-primary" />
+      </div>
+      <h3 className="mb-1.5 font-bold">{title}</h3>
+      <p className="text-sm leading-relaxed text-muted-foreground">{text}</p>
+    </div>
+  );
+}
+
+export function FeaturesShowcase() {
+  return (
+    <section className="bg-secondary/30 py-24">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6">
+        <SectionHeading badge="Features" title="Everything you need to" highlight="launch and scale." text="AI-native creation, tenant-aware delivery, certificates, and reporting without stitching tools together." />
+        <div className="mb-6 grid gap-6 lg:grid-cols-2">
+          <ShowcaseCard
+            icon={Sparkles}
+            label="AI-Native"
+            title="Generate full quizzes in seconds"
+            text="Upload a video, PDF, or paste your content. Lebra.Ai creates multiple-choice questions, answer explanations, and difficulty grading for review."
+            image="/marketing-assets/feature-ai.jpg"
+            alt="AI quiz generation"
+          />
+          <ShowcaseCard
+            icon={BarChart3}
+            label="Multi-Tenant"
+            title="A branded portal for every team or client"
+            text="Spin up isolated workspaces with custom branding, domains, learners, course catalogs, and admin controls."
+            image="/marketing-assets/feature-multitenant.jpg"
+            alt="Multi-tenant workspaces"
+          />
+        </div>
+        <div className="mb-6 grid items-center gap-8 rounded-3xl bg-gradient-to-br from-primary to-primary-glow p-8 text-white lg:grid-cols-3 lg:p-12">
+          <div className="lg:col-span-2">
+            <div className="mb-3 flex items-center gap-2 text-white/80">
+              <BarChart3 className="h-5 w-5" />
+              <span className="text-xs font-bold uppercase tracking-wider">Analytics</span>
+            </div>
+            <h3 className="text-2xl font-bold lg:text-3xl">Know exactly who learned what in real time.</h3>
+            <p className="mt-3 max-w-2xl text-white/80">
+              Track completion, lesson position, quiz scores, engagement, and certificates at the learner, course, and team level.
+            </p>
           </div>
-        ))}
+          <div className="grid grid-cols-3 gap-3 text-center md:grid-cols-1">
+            {[
+              ['98%', 'Avg. completion'],
+              ['3.2x', 'Faster onboarding'],
+              ['24/7', 'Live insights'],
+            ].map(([value, label]) => (
+              <div key={label} className="rounded-2xl bg-white/15 p-4 backdrop-blur">
+                <div className="text-3xl font-extrabold">{value}</div>
+                <div className="mt-1 text-xs text-white/70">{label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {featureGroups.slice(0, 6).map((item) => <FeatureCard key={item.title} {...item} />)}
+        </div>
       </div>
     </section>
   );
 }
 
-export function TrustBand() {
+function ShowcaseCard({ icon: Icon, label, title, text, image, alt }: { icon: LucideIcon; label: string; title: string; text: string; image: string; alt: string }) {
   return (
-    <section className="px-5 py-16 sm:px-6 lg:px-8">
-      <div className="mx-auto grid max-w-7xl gap-6 md:grid-cols-3">
-        {[
-          [Clock3, 'Fast setup', 'A practical launch path for teams that do not want months of LMS implementation work.'],
-          [ShieldCheck, 'Structured control', 'Admin, tenant, manager, and learner surfaces keep responsibility clearly separated.'],
-          [Zap, 'Growth ready', 'Start with one branded portal and grow into a managed learning ecosystem.'],
-        ].map(([Icon, title, text]) => (
-          <div key={title as string} className="flex gap-4 rounded-2xl border border-slate-200 bg-white p-5">
-            <div className="inline-flex h-11 w-11 flex-none items-center justify-center rounded-xl bg-blue-50 text-blue-700">
-              <Icon className="h-5 w-5" />
+    <div className="group overflow-hidden rounded-3xl border border-border bg-background shadow-[0_8px_30px_-8px_hsl(var(--foreground)_/_0.08)] transition-all duration-500 hover:shadow-[0_25px_60px_-20px_hsl(var(--primary)_/_0.35)]">
+      <div className="p-8 lg:p-10">
+        <div className="mb-3 flex items-center gap-2">
+          <Icon className="h-5 w-5 text-primary" />
+          <span className="text-xs font-bold uppercase tracking-wider text-primary">{label}</span>
+        </div>
+        <h3 className="text-2xl font-bold tracking-tight lg:text-3xl">{title}</h3>
+        <p className="mt-3 text-muted-foreground">{text}</p>
+      </div>
+      <div className="px-8 pb-2 lg:px-10">
+        <Image src={image} alt={alt} width={1024} height={768} className="w-full rounded-2xl transition-transform duration-500 group-hover:scale-[1.02]" />
+      </div>
+    </div>
+  );
+}
+
+export function HowItWorks() {
+  return (
+    <section className="surface-dark relative overflow-hidden py-24">
+      <div className="glow-orb left-1/4 top-20 h-[400px] w-[400px] bg-primary/20" />
+      <div className="relative mx-auto max-w-7xl px-4 sm:px-6">
+        <SectionHeading badge="How it works" title="From signup to scaled academy" highlight="in 4 steps." dark />
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {workflowSteps.map((step) => (
+            <div key={step.n} className="rounded-2xl border border-surface-dark-border bg-surface-dark-card p-6 transition-all duration-300 hover:border-primary/40">
+              <div className="text-gradient-primary mb-4 text-4xl font-extrabold">{step.n}</div>
+              <h3 className="mb-2 text-lg font-bold text-white">{step.title}</h3>
+              <p className="text-sm leading-relaxed text-white/60">{step.text}</p>
             </div>
-            <div>
-              <h3 className="font-bold text-slate-950">{title as string}</h3>
-              <p className="mt-2 text-sm leading-6 text-slate-600">{text as string}</p>
-            </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </section>
   );
 }
+
+export function RolesSection() {
+  return (
+    <section className="bg-background py-24">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6">
+        <SectionHeading badge="Roles and permissions" title="Built for" highlight="every role." text="Purpose-built surfaces for platform owners, admins, managers, instructors, and learners." />
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {roles.map((role) => <FeatureCard key={role.title} icon={role.icon} title={role.title} text={role.text} />)}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export function TestimonialsSection() {
+  const stats = [
+    ['2,000+', 'Teams supported'],
+    ['2M+', 'Learners enrolled'],
+    ['98%', 'Avg. completion rate'],
+    ['4.9/5', 'Customer rating'],
+  ];
+
+  return (
+    <section className="bg-background py-24">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6">
+        <div className="mx-auto mb-20 grid max-w-5xl grid-cols-2 gap-4 md:grid-cols-4">
+          {stats.map(([value, label]) => (
+            <div key={label} className="text-center">
+              <div className="text-gradient-primary text-4xl font-extrabold sm:text-5xl">{value}</div>
+              <div className="mt-2 text-xs font-medium text-muted-foreground sm:text-sm">{label}</div>
+            </div>
+          ))}
+        </div>
+        <SectionHeading badge="Customer love" title="Loved by" highlight="learning leaders." />
+        <div className="mx-auto grid max-w-6xl gap-6 md:grid-cols-3">
+          {testimonials.map((item) => (
+            <figure key={item.name} className="flex flex-col rounded-3xl border border-border bg-secondary/40 p-8">
+              <div className="mb-4 flex gap-0.5">
+                {[0, 1, 2, 3, 4].map((star) => <Star key={star} className="h-4 w-4 fill-amber-400 text-amber-400" />)}
+              </div>
+              <blockquote className="flex-1 text-[15px] leading-relaxed text-foreground/90">&quot;{item.quote}&quot;</blockquote>
+              <figcaption className="mt-6 flex items-center gap-3 border-t border-border pt-6">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary-glow text-sm font-bold text-white">
+                  {item.name.split(' ').map((name) => name[0]).join('')}
+                </div>
+                <div>
+                  <div className="text-sm font-bold">{item.name}</div>
+                  <div className="text-xs text-muted-foreground">{item.role}, {item.company}</div>
+                </div>
+              </figcaption>
+            </figure>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export function PricingCard({ plan }: { plan: (typeof pricingPlans)[number] }) {
+  return (
+    <div className={`relative flex flex-col rounded-3xl p-8 ${plan.featured ? 'z-10 border-2 border-primary bg-background shadow-[0_25px_60px_-20px_hsl(var(--primary)_/_0.35)] lg:scale-105' : 'border border-border bg-background'}`}>
+      {plan.featured ? <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-primary to-primary-glow px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-white shadow-[0_0_60px_hsl(var(--primary)_/_0.4)]">Most Popular</span> : null}
+      <h3 className="text-xl font-bold">{plan.name}</h3>
+      <p className="mt-1.5 mb-6 min-h-10 text-sm text-muted-foreground">{plan.description}</p>
+      <div className="mb-6">
+        <span className="text-5xl font-extrabold tracking-tight">{plan.price}</span>
+        <p className="mt-2 text-sm text-muted-foreground">{plan.note}</p>
+      </div>
+      <Link href="/contact" className={`${buttonClass(plan.featured ? 'hero' : 'outline')} mb-8 w-full`}>
+        {plan.featured ? 'Start Planning' : 'Talk to Sales'}
+      </Link>
+      <ul className="space-y-3.5">
+        {plan.features.map((feature) => (
+          <li key={feature} className="flex items-start gap-3 text-sm">
+            <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent-soft">
+              <Check className="h-3 w-3 text-accent" strokeWidth={3} />
+            </span>
+            <span className="text-foreground">{feature}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+export function PricingSection() {
+  return (
+    <section className="bg-secondary/30 py-24">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6">
+        <SectionHeading badge="Pricing" title="Simple," highlight="transparent pricing." text="Start focused, then expand into more tenants, learners, certificates, reports, and support as your academy grows." />
+        <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-3">
+          {pricingPlans.map((plan) => <PricingCard key={plan.name} plan={plan} />)}
+        </div>
+        <p className="mt-10 text-center text-sm text-muted-foreground">
+          All plans include secure access, platform updates, branded learning workflows, and a growth path for multi-tenant operations.
+        </p>
+      </div>
+    </section>
+  );
+}
+
+export function FaqSection() {
+  return (
+    <section className="bg-secondary/30 py-24">
+      <div className="mx-auto max-w-3xl px-4 sm:px-6">
+        <SectionHeading badge="FAQ" title="Questions," highlight="answered." />
+        <div className="space-y-3">
+          {faqs.map((item) => (
+            <details key={item.q} className="group rounded-2xl border border-border bg-background px-6 transition-all open:border-primary/30 open:shadow-[0_8px_30px_-8px_hsl(var(--foreground)_/_0.08)]">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-5 text-left font-bold">
+                {item.q}
+                <CircleHelp className="h-4 w-4 shrink-0 text-primary transition-transform group-open:rotate-45" />
+              </summary>
+              <p className="pb-5 leading-relaxed text-muted-foreground">{item.a}</p>
+            </details>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export function CtaSection() {
+  return (
+    <section className="bg-background py-24">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6">
+        <div className="surface-dark relative overflow-hidden rounded-[2rem] p-10 text-center sm:p-16 lg:p-20">
+          <div className="glow-orb -top-40 left-1/4 h-[500px] w-[500px] bg-primary/30" />
+          <div className="glow-orb -bottom-32 right-0 h-[400px] w-[400px] bg-primary-glow/30" />
+          <div className="relative">
+            <h2 className="mx-auto max-w-3xl text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl">
+              Ready to ship your <span className="text-gradient-primary">academy this week?</span>
+            </h2>
+            <p className="mx-auto mt-6 max-w-xl text-lg text-white/70">
+              Start with one branded workspace, add learners and courses, then scale the training operation with confidence.
+            </p>
+            <div className="mt-10 flex flex-col justify-center gap-3 sm:flex-row">
+              <Link href="/contact" className={`${buttonClass('hero')} group`}>
+                Plan My Launch <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </Link>
+              <Link href="/admin/login" className={buttonClass('dark')}>
+                Go to Admin Login
+              </Link>
+            </div>
+            <div className="mt-8 flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm text-white/70">
+              <span className="flex items-center gap-2"><Check className="h-4 w-4 text-accent" strokeWidth={3} /> Workspace strategy</span>
+              <span className="flex items-center gap-2"><Check className="h-4 w-4 text-accent" strokeWidth={3} /> Course planning</span>
+              <span className="flex items-center gap-2"><Check className="h-4 w-4 text-accent" strokeWidth={3} /> Learner reporting</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export function CapabilityGrid() {
+  return (
+    <section className="bg-secondary/30 py-24">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6">
+        <SectionHeading badge="Capability Map" title="Everything needed to run learning" highlight="as an organized service." />
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {featureGroups.map((item) => <FeatureCard key={item.title} {...item} />)}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export { homeHighlights, pricingPlans };
