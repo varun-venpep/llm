@@ -2,6 +2,32 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import { checkSession, requireTenantPermission } from '@/lib/auth';
+import { Prisma, Role } from '@prisma/client';
+import { normalizeTenantAdminPermissions } from '@/lib/permissions';
+
+const editableRoles = new Set<Role>([
+    Role.LEARNER,
+    Role.TENANT_ADMIN,
+    Role.INSTRUCTOR,
+    Role.TEACHER,
+    Role.PLATFORM_MANAGER
+]);
+
+const getEditableRole = (value: unknown) => {
+    if (typeof value !== 'string') return Role.LEARNER;
+    const role = value.toUpperCase() as Role;
+    return editableRoles.has(role) ? role : Role.LEARNER;
+};
+
+const ensureTenantAdminPermissionsColumn = () => prisma.$executeRaw`
+    ALTER TABLE "User"
+    ADD COLUMN IF NOT EXISTS "tenantAdminPermissions" TEXT[] DEFAULT ARRAY[]::TEXT[]
+`;
+
+const hasAnyTenantPermission = (
+    session: Awaited<ReturnType<typeof checkSession>>,
+    permissions: string[]
+) => permissions.some(permission => requireTenantPermission(session, permission));
 
 export async function POST(
     req: NextRequest,
@@ -11,6 +37,10 @@ export async function POST(
         const { domain } = await params;
         const body = await req.json();
         const { email, name, password, jobRoleIds, teamIds, managedTeamIds } = body;
+        const role = getEditableRole(body.role);
+        const tenantAdminPermissions = normalizeTenantAdminPermissions(body.tenantAdminPermissions);
+
+        await ensureTenantAdminPermissionsColumn();
 
         const tenant = await prisma.tenant.findUnique({
             where: { subdomain: domain },
@@ -21,8 +51,13 @@ export async function POST(
         }
 
         const session = await checkSession(req, domain, ['TENANT_ADMIN', 'SUPER_ADMIN']);
-        if (!requireTenantPermission(session, 'learners.manage')) {
-            return NextResponse.json({ error: 'You do not have permission to create learners' }, { status: 403 });
+        const requiredPermission = role === Role.LEARNER ? 'learners.manage' : 'people.manage';
+        if (!requireTenantPermission(session, requiredPermission)) {
+            return NextResponse.json({
+                error: role === Role.LEARNER
+                    ? 'You do not have permission to create learners'
+                    : 'You do not have permission to manage admins'
+            }, { status: 403 });
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -32,7 +67,7 @@ export async function POST(
                 email,
                 name,
                 password: hashedPassword,
-                role: 'LEARNER',
+                role,
                 tenantId: tenant.id,
                 jobRoles: {
                     connect: (jobRoleIds || []).map((id: string) => ({ id }))
@@ -45,6 +80,12 @@ export async function POST(
                 }
             },
         });
+
+        await prisma.$executeRaw`
+            UPDATE "User"
+            SET "tenantAdminPermissions" = ARRAY[${Prisma.join(tenantAdminPermissions)}]::TEXT[]
+            WHERE "id" = ${learner.id}
+        `;
 
         // 2. Auto-enroll in team-assigned courses (Internal Library / Marketplace)
         if (teamIds && teamIds.length > 0) {
@@ -79,7 +120,7 @@ export async function POST(
         return NextResponse.json({
             success: true,
             learnerId: learner.id,
-            message: 'Learner created successfully'
+            message: 'User created successfully'
         });
 
     } catch (error: any) {
@@ -96,15 +137,16 @@ export async function GET(
 ) {
     try {
         const { domain } = await params;
+        await ensureTenantAdminPermissionsColumn();
         const session = await checkSession(req, domain, ['TENANT_ADMIN', 'SUPER_ADMIN']);
-        if (!requireTenantPermission(session, 'learners.manage')) {
-            return NextResponse.json({ error: 'You do not have permission to view learners' }, { status: 403 });
+        if (!hasAnyTenantPermission(session, ['learners.manage', 'people.manage'])) {
+            return NextResponse.json({ error: 'You do not have permission to view users' }, { status: 403 });
         }
 
         const learners = await prisma.user.findMany({
             where: {
                 tenant: { subdomain: domain },
-                role: 'LEARNER',
+                role: { not: 'SUPER_ADMIN' },
             },
             include: {
                 jobRoles: { select: { id: true, name: true } },
@@ -147,7 +189,21 @@ export async function GET(
             },
             orderBy: { createdAt: 'desc' },
         });
-        return NextResponse.json(learners);
+        const formattedLearners = await Promise.all(learners.map(async learner => {
+            const permissionRows = await prisma.$queryRaw<{ tenantAdminPermissions: string[] | null }[]>`
+                SELECT "tenantAdminPermissions"
+                FROM "User"
+                WHERE "id" = ${learner.id}
+                LIMIT 1
+            `;
+
+            return {
+                ...learner,
+                tenantAdminPermissions: permissionRows[0]?.tenantAdminPermissions || []
+            };
+        }));
+
+        return NextResponse.json(formattedLearners);
     } catch (error) {
         console.error('Learners GET Error:', error);
         return NextResponse.json({ error: 'Failed to fetch learners' }, { status: 500 });
@@ -162,23 +218,42 @@ export async function PUT(
         const { domain } = await params;
         const body = await req.json();
         const { learnerId, newPassword, isActive, name, email, jobRoleIds, teamIds, managedTeamIds } = body;
+        const shouldUpdateRole = body.role !== undefined;
+        const role = shouldUpdateRole ? getEditableRole(body.role) : undefined;
+        const shouldUpdateTenantAdminPermissions = body.tenantAdminPermissions !== undefined;
+        const tenantAdminPermissions = normalizeTenantAdminPermissions(body.tenantAdminPermissions);
+
+        await ensureTenantAdminPermissionsColumn();
 
         const tenant = await prisma.tenant.findUnique({
             where: { subdomain: domain }
         });
 
         if (!tenant) return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
+        const targetUser = !role && learnerId
+            ? await prisma.user.findFirst({
+                where: { id: learnerId, tenantId: tenant.id },
+                select: { role: true }
+            })
+            : null;
 
         const session = await checkSession(req, domain, ['TENANT_ADMIN', 'SUPER_ADMIN']);
-        if (!requireTenantPermission(session, 'learners.manage')) {
-            return NextResponse.json({ error: 'You do not have permission to update learners' }, { status: 403 });
+        const targetRole = role || targetUser?.role;
+        const requiredPermission = targetRole === Role.LEARNER ? 'learners.manage' : 'people.manage';
+        if (!requireTenantPermission(session, requiredPermission)) {
+            return NextResponse.json({
+                error: requiredPermission === 'learners.manage'
+                    ? 'You do not have permission to update learners'
+                    : 'You do not have permission to manage admins'
+            }, { status: 403 });
         }
 
-        await prisma.user.update({
+        const updatedUser = await prisma.user.update({
             where: { id: learnerId, tenantId: tenant.id },
             data: {
                 ...(name && { name }),
                 ...(email && { email }),
+                ...(role && { role }),
                 ...(newPassword && { password: await bcrypt.hash(newPassword, 10) }),
                 ...(typeof isActive === 'boolean' && { isActive }),
                 ...(jobRoleIds !== undefined && {
@@ -190,8 +265,17 @@ export async function PUT(
                 ...(teamIds !== undefined && {
                     teams: { set: teamIds.map((id: string) => ({ id })) }
                 })
-            }
+            },
+            select: { id: true, role: true }
         });
+
+        if (shouldUpdateRole || shouldUpdateTenantAdminPermissions) {
+            await prisma.$executeRaw`
+                UPDATE "User"
+                SET "tenantAdminPermissions" = ARRAY[${Prisma.join(tenantAdminPermissions)}]::TEXT[]
+                WHERE "id" = ${updatedUser.id}
+            `;
+        }
 
         // Audit Log: Learner Update
         if (session) {
@@ -230,7 +314,7 @@ export async function PUT(
             }
         }
 
-        return NextResponse.json({ success: true, message: 'Learner updated successfully' });
+        return NextResponse.json({ success: true, message: 'User updated successfully' });
     } catch (error) {
         return NextResponse.json({ error: 'Failed to update learner' }, { status: 500 });
     }

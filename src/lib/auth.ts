@@ -44,7 +44,8 @@ export async function checkSession(req: NextRequest, domain: string, requiredRol
 
     if (requiredRole) {
         const roles = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
-        if (!roles.includes(user.role)) return null;
+        const hasExplicitDomainPermissions = userWithPermissions.tenantAdminPermissions.length > 0;
+        if (!roles.includes(user.role) && !hasExplicitDomainPermissions) return null;
     }
 
     return userWithPermissions;

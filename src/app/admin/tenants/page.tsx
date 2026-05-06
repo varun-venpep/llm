@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { Search, MoreVertical, Building2, CheckCircle2, ShieldCheck, Edit2, Trash2, AlertTriangle, Loader2, ExternalLink, Copy, Check, Eye, EyeOff } from 'lucide-react';
-import { ALL_TENANT_ADMIN_PERMISSIONS, normalizeTenantAdminPermissions, TENANT_ADMIN_PERMISSIONS, type TenantAdminPermission } from '@/lib/permissions';
 
 interface Tenant {
     id: string;
@@ -21,7 +20,6 @@ interface Tenant {
     customRevenueCurrency?: string;
     globalMarketplaceEnabled?: boolean;
     courseCredits?: number;
-    tenantAdminPermissions?: string[];
 }
 
 const getCurrencySymbol = (currencyCode?: string) => {
@@ -44,22 +42,6 @@ type EditForm = {
     customRevenueCurrency: string;
     globalMarketplaceEnabled: boolean;
     courseCredits: number;
-    tenantAdminPermissions: TenantAdminPermission[];
-};
-
-const getTenantAdminAccess = (permissions?: string[]) => {
-    const enabledPermissions = permissions?.length
-        ? normalizeTenantAdminPermissions(permissions)
-        : ALL_TENANT_ADMIN_PERMISSIONS;
-    const enabledLabels = TENANT_ADMIN_PERMISSIONS
-        .filter(permission => enabledPermissions.includes(permission.key))
-        .map(permission => permission.label);
-
-    return {
-        enabledCount: enabledPermissions.length,
-        isRestricted: enabledPermissions.length < ALL_TENANT_ADMIN_PERMISSIONS.length,
-        title: enabledLabels.length ? enabledLabels.join(', ') : 'No tenant admin permissions enabled'
-    };
 };
 
 export default function TenantsPage() {
@@ -81,7 +63,6 @@ export default function TenantsPage() {
         customRevenueCurrency: 'USD',
         globalMarketplaceEnabled: false,
         courseCredits: 0,
-        tenantAdminPermissions: ALL_TENANT_ADMIN_PERMISSIONS
     });
     const [isUpdating, setIsUpdating] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
@@ -126,19 +107,9 @@ export default function TenantsPage() {
             customRevenueCurrency: tenant.customRevenueCurrency || 'USD',
             globalMarketplaceEnabled: tenant.globalMarketplaceEnabled || false,
             courseCredits: tenant.courseCredits || 0,
-            tenantAdminPermissions: tenant.tenantAdminPermissions?.length ? normalizeTenantAdminPermissions(tenant.tenantAdminPermissions) : ALL_TENANT_ADMIN_PERMISSIONS
         });
         setIsEditModalOpen(true);
         setActiveDropdown(null);
-    };
-
-    const toggleTenantAdminPermission = (permission: TenantAdminPermission) => {
-        setEditForm(prev => ({
-            ...prev,
-            tenantAdminPermissions: prev.tenantAdminPermissions.includes(permission)
-                ? prev.tenantAdminPermissions.filter(item => item !== permission)
-                : [...prev.tenantAdminPermissions, permission]
-        }));
     };
 
     const handleDeleteClick = (tenant: Tenant) => {
@@ -225,16 +196,15 @@ export default function TenantsPage() {
                                 <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest text-muted-foreground">Stats</th>
                                 <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest text-muted-foreground">Financials</th>
                                 <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest text-muted-foreground">Status</th>
-                                <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest text-muted-foreground">Admin Access</th>
                                 <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest text-muted-foreground">Created</th>
                                 <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest text-muted-foreground text-right px-10">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border/50">
                             {loading ? (
-                                <tr><td colSpan={8} className="text-center py-20 font-medium text-muted-foreground italic">Syncing with cloud...</td></tr>
+                                <tr><td colSpan={7} className="text-center py-20 font-medium text-muted-foreground italic">Syncing with cloud...</td></tr>
                             ) : tenants.length === 0 ? (
-                                <tr><td colSpan={8} className="text-center py-20 font-medium text-muted-foreground italic">No active deployments found.</td></tr>
+                                <tr><td colSpan={7} className="text-center py-20 font-medium text-muted-foreground italic">No active deployments found.</td></tr>
                             ) : tenants.map((tenant) => (
                                 <tr key={tenant.id} className="hover:bg-secondary/20 transition-colors group">
                                     <td className="px-6 py-4">
@@ -279,30 +249,6 @@ export default function TenantsPage() {
                                                 Offline
                                             </span>
                                         )}
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        {(() => {
-                                            const access = getTenantAdminAccess(tenant.tenantAdminPermissions);
-
-                                            if (tenant.subdomain === 'admin-system') {
-                                                return (
-                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 text-[10px] font-bold uppercase">
-                                                        <ShieldCheck className="w-3 h-3" /> Core Admin
-                                                    </span>
-                                                );
-                                            }
-
-                                            return (
-                                                <div className="flex flex-col gap-1" title={access.title}>
-                                                    <span className={`inline-flex w-fit items-center gap-1.5 px-2.5 py-0.5 rounded-full border text-[10px] font-bold uppercase ${access.isRestricted ? 'bg-amber-500/10 border-amber-500/20 text-amber-500' : 'bg-blue-500/10 border-blue-500/20 text-blue-400'}`}>
-                                                        {access.isRestricted ? 'Restricted' : 'Full access'}
-                                                    </span>
-                                                    <span className="font-mono text-[10px] text-muted-foreground uppercase">
-                                                        {access.enabledCount}/{ALL_TENANT_ADMIN_PERMISSIONS.length} permissions
-                                                    </span>
-                                                </div>
-                                            );
-                                        })()}
                                     </td>
                                     <td className="px-6 py-4 text-sm text-muted-foreground font-mono">{new Date(tenant.createdAt).toLocaleDateString()}</td>
                                     <td className="px-6 py-4 text-right relative px-10">
@@ -519,47 +465,6 @@ export default function TenantsPage() {
                                             <p className="text-[9px] text-muted-foreground italic px-1">Each claim costs 1 credit. Set to 0 to restrict access temporarily.</p>
                                         </div>
                                     )}
-                                </div>
-
-                                {/* Workspace Status Toggle */}
-                                <div className="md:col-span-2 space-y-3 pt-2 border-t border-border/50">
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Tenant Admin Permissions</p>
-                                            <p className="text-[10px] text-muted-foreground">Controls what this workspace admin can access.</p>
-                                        </div>
-                                        <button
-                                            type="button"
-                                            onClick={() => setEditForm(prev => ({ ...prev, tenantAdminPermissions: ALL_TENANT_ADMIN_PERMISSIONS }))}
-                                            className="text-[10px] font-black uppercase tracking-widest text-blue-400 hover:underline"
-                                        >
-                                            Select All
-                                        </button>
-                                    </div>
-                                    <div className="grid gap-2 md:grid-cols-2">
-                                        {TENANT_ADMIN_PERMISSIONS.map(permission => {
-                                            const isEnabled = editForm.tenantAdminPermissions.includes(permission.key);
-
-                                            return (
-                                                <button
-                                                    key={permission.key}
-                                                    type="button"
-                                                    role="switch"
-                                                    aria-checked={isEnabled}
-                                                    onClick={() => toggleTenantAdminPermission(permission.key)}
-                                                    className="flex w-full cursor-pointer items-center justify-between gap-2 rounded-xl border border-border/40 bg-secondary/20 p-3 text-left transition-colors hover:bg-secondary/30"
-                                                >
-                                                    <span className="min-w-0">
-                                                        <span className="block text-[11px] font-bold">{permission.label}</span>
-                                                        <span className="block text-[9px] text-muted-foreground">{permission.description}</span>
-                                                    </span>
-                                                    <span className={`flex h-5 w-9 shrink-0 items-center rounded-full p-0.5 transition-all ${isEnabled ? 'bg-blue-500' : 'bg-secondary'}`}>
-                                                        <span className={`h-4 w-4 rounded-full bg-white shadow transition-all ${isEnabled ? 'translate-x-4' : 'translate-x-0'}`} />
-                                                    </span>
-                                                </button>
-                                            );
-                                        })}
-                                    </div>
                                 </div>
 
                                 <div className="flex items-center gap-3 p-4 bg-secondary/20 rounded-2xl border border-border/50 group cursor-pointer hover:bg-secondary/30 transition-all md:col-span-2" onClick={() => editingTenant?.subdomain !== 'admin-system' && setEditForm({ ...editForm, isActive: !editForm.isActive })}>
