@@ -116,7 +116,7 @@ export function HeroSection() {
     <section className="surface-dark relative overflow-hidden">
       <div className="glow-orb -left-40 -top-40 h-[600px] w-[600px] bg-primary/30" />
       <div className="glow-orb -right-32 top-40 h-[500px] w-[500px] bg-primary-glow/25" />
-      <div className="relative mx-auto max-w-7xl px-4 pt-16 pb-20 text-center sm:px-6 lg:pt-24 lg:pb-28">
+      <div className="relative mx-auto max-w-7xl px-4 pt-32 pb-20 text-center sm:px-6 lg:pt-40 lg:pb-28">
         <div className="animate-fade-up inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-xs font-medium text-white/90 backdrop-blur">
           <Sparkles className="h-3.5 w-3.5 text-accent" />
           AI quiz generation now live - build courses faster

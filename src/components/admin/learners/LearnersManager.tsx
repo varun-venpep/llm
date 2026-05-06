@@ -9,11 +9,14 @@ import {
 } from 'lucide-react';
 import { SearchableSelect } from '../shared/SearchableSelect';
 import { PeopleMultiSelect } from '../shared/PeopleMultiSelect';
+import { ALL_TENANT_ADMIN_PERMISSIONS, TENANT_ADMIN_PERMISSIONS, type TenantAdminPermission } from '@/lib/permissions';
 
 interface Learner {
     id: string;
     email: string;
     name: string | null;
+    role: string;
+    tenantAdminPermissions?: TenantAdminPermission[];
     isActive: boolean;
     createdAt: string;
     jobRoles?: { id: string, name: string }[];
@@ -32,6 +35,7 @@ function LearnerSlideOver({
     onClose, 
     learner, 
     isCreating,
+    mode,
     roles, 
     teams, 
     onSubmit, 
@@ -45,6 +49,7 @@ function LearnerSlideOver({
     onClose: () => void;
     learner: any;
     isCreating: boolean;
+    mode: 'learners' | 'admins';
     roles: any[];
     teams: any[];
     onSubmit: (data: any) => void;
@@ -68,10 +73,38 @@ function LearnerSlideOver({
     if (!isOpen || !formData) return null;
 
     const handleCopy = (text: string, type: 'pwd' | 'link') => {
-        navigator.clipboard.writeText(text);
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(text);
+        } else {
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+        }
         setCopyStatus(type);
         setTimeout(() => setCopyStatus(null), 2000);
     };
+
+    const accountRole = formData.role || 'LEARNER';
+    const isAdminsMode = mode === 'admins';
+    const tenantAdminPermissions = Array.isArray(formData.tenantAdminPermissions)
+        ? formData.tenantAdminPermissions
+        : [];
+    const toggleTenantAdminPermission = (permission: TenantAdminPermission) => {
+        const nextPermissions = tenantAdminPermissions.includes(permission)
+            ? tenantAdminPermissions.filter((item: TenantAdminPermission) => item !== permission)
+            : [...tenantAdminPermissions, permission];
+        setFormData({ ...formData, tenantAdminPermissions: nextPermissions });
+    };
+    const accessUrl = (() => {
+        if (typeof window === 'undefined') return `/t/${formData.domain}/login?forceLogin=1`;
+        const isTenantSubdomain = window.location.hostname.startsWith(`${formData.domain}.`);
+        return isTenantSubdomain
+            ? `${window.location.origin}/login?forceLogin=1`
+            : `${window.location.origin}/t/${formData.domain}/login?forceLogin=1`;
+    })();
 
     return (
         <>
@@ -84,11 +117,11 @@ function LearnerSlideOver({
                         <div className="flex items-center gap-2 mb-1">
                             <Users className="text-primary w-4 h-4" />
                             <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-                                {isCreating ? 'Onboard New talent' : 'Edit Learner Profile'}
+                                {isCreating ? (isAdminsMode ? 'Create Admin User' : 'Create Learner') : (isAdminsMode ? 'Edit Admin User' : 'Edit Learner')}
                             </p>
                         </div>
                         <h2 className="text-2xl font-black truncate max-w-md">
-                            {justCreated ? 'Creation Successful!' : isCreating ? 'New Learner' : formData.name || 'Edit Learner'}
+                            {justCreated ? 'Creation Successful!' : isCreating ? (isAdminsMode ? 'New Admin' : 'New Learner') : formData.name || (isAdminsMode ? 'Edit Admin' : 'Edit Learner')}
                         </h2>
                     </div>
                     <button onClick={onClose} className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary transition-all">
@@ -104,7 +137,7 @@ function LearnerSlideOver({
                                     <UserCheck size={32} className="text-emerald-500" />
                                 </div>
                                 <h3 className="text-lg font-bold text-emerald-400">Identity Registered</h3>
-                                <p className="text-sm text-muted-foreground mt-1 px-4">The learner account has been successfully provisioned. Share the credentials below.</p>
+                                <p className="text-sm text-muted-foreground mt-1 px-4">The account has been successfully provisioned. Share the credentials below.</p>
                             </div>
 
                             <div className="space-y-4">
@@ -125,9 +158,9 @@ function LearnerSlideOver({
                                 <div className="p-4 rounded-xl border border-blue-500/10 bg-blue-500/5">
                                     <p className="text-[10px] font-black uppercase tracking-widest text-blue-400 mb-2">Access Endpoint</p>
                                     <div className="flex items-center justify-between gap-3">
-                                        <code className="text-xs text-blue-300 truncate font-mono">{window.location.origin}/t/{formData.domain}/login</code>
+                                        <code className="text-xs text-blue-300 truncate font-mono">{accessUrl}</code>
                                         <button 
-                                            onClick={() => handleCopy(`${window.location.origin}/t/${formData.domain}/login`, 'link')}
+                                            onClick={() => handleCopy(accessUrl, 'link')}
                                             className="p-2 text-blue-400 hover:text-blue-300 text-[10px] font-bold uppercase transition-colors"
                                         >
                                             {copyStatus === 'link' ? 'Copied' : 'Copy Link'}
@@ -167,8 +200,69 @@ function LearnerSlideOver({
                                             className="w-full bg-secondary/30 border border-border/50 rounded-xl px-4 py-3 text-sm font-semibold focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all"
                                         />
                                     </div>
+                                    {isAdminsMode && (
+                                        <div className="space-y-1.5">
+                                            <label className="text-xs font-bold text-muted-foreground ml-1">Account Type</label>
+                                            <select
+                                                value={accountRole}
+                                                onChange={e => {
+                                                    const nextRole = e.target.value;
+                                                    setFormData({
+                                                        ...formData,
+                                                        role: nextRole,
+                                                        tenantAdminPermissions
+                                                    });
+                                                }}
+                                                className="w-full bg-secondary/30 border border-border/50 rounded-xl px-4 py-3 text-sm font-semibold focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all"
+                                            >
+                                                <option value="TENANT_ADMIN">Domain Admin</option>
+                                                <option value="PLATFORM_MANAGER">Platform Manager</option>
+                                                <option value="INSTRUCTOR">Instructor</option>
+                                                <option value="TEACHER">Teacher</option>
+                                            </select>
+                                        </div>
+                                    )}
                                 </div>
                             </section>
+
+                            {isAdminsMode && <section className="space-y-4">
+                                <div className="flex items-center justify-between gap-3">
+                                    <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                                        <ShieldCheck size={11} className="text-primary" /> Domain Permissions
+                                    </h3>
+                                    <button
+                                        type="button"
+                                        onClick={() => setFormData({ ...formData, tenantAdminPermissions: ALL_TENANT_ADMIN_PERMISSIONS })}
+                                        className="text-[10px] font-black uppercase tracking-widest text-primary hover:underline"
+                                    >
+                                        Select All
+                                    </button>
+                                </div>
+                                <div className="grid gap-2">
+                                    {TENANT_ADMIN_PERMISSIONS.map(permission => {
+                                        const isEnabled = tenantAdminPermissions.includes(permission.key);
+
+                                        return (
+                                            <button
+                                                key={permission.key}
+                                                type="button"
+                                                role="switch"
+                                                aria-checked={isEnabled}
+                                                onClick={() => toggleTenantAdminPermission(permission.key)}
+                                                className="flex w-full cursor-pointer items-center justify-between gap-3 rounded-xl border border-border/40 bg-secondary/20 p-3 text-left transition-colors hover:bg-secondary/30"
+                                            >
+                                                <span className="min-w-0">
+                                                    <span className="block text-xs font-bold">{permission.label}</span>
+                                                    <span className="block text-[10px] text-muted-foreground">{permission.description}</span>
+                                                </span>
+                                                <span className={`flex h-5 w-9 shrink-0 items-center rounded-full p-0.5 transition-all ${isEnabled ? 'bg-primary' : 'bg-secondary'}`}>
+                                                    <span className={`h-4 w-4 rounded-full bg-white shadow transition-all ${isEnabled ? 'translate-x-4' : 'translate-x-0'}`} />
+                                                </span>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </section>}
 
                             {/* Organization Section */}
                             <section className="space-y-4">
@@ -278,7 +372,7 @@ function LearnerSlideOver({
                             onClick={() => onSubmit(formData)} 
                             className="flex-1 py-3 bg-primary text-primary-foreground rounded-xl font-bold text-sm hover:opacity-90 flex items-center justify-center gap-2 shadow-lg shadow-primary/20"
                         >
-                            {isSubmitting ? <Loader2 size={16} className="animate-spin" /> : isCreating ? 'Enroll Private' : 'Save Profile'}
+                            {isSubmitting ? <Loader2 size={16} className="animate-spin" /> : isCreating ? (isAdminsMode ? 'Create Admin' : 'Create Learner') : 'Save Profile'}
                         </button>
                     </div>
                 )}
@@ -428,7 +522,7 @@ function LearnerInsightsSlideOver({
 // ─────────────────────────────────────────────
 // Main LearnersManager
 // ─────────────────────────────────────────────
-export function LearnersManager({ domain, addToast }: { domain: string, addToast: (msg: string, type?: 'success'|'error') => void }) {
+export function LearnersManager({ domain, addToast, mode = 'learners' }: { domain: string, addToast: (msg: string, type?: 'success'|'error') => void, mode?: 'learners' | 'admins' }) {
     const [learners, setLearners] = useState<Learner[]>([]);
     const [roles, setRoles] = useState<any[]>([]);
     const [teams, setTeams] = useState<any[]>([]);
@@ -445,6 +539,8 @@ export function LearnersManager({ domain, addToast }: { domain: string, addToast
     // Insights Panel
     const [insightsLearner, setInsightsLearner] = useState<Learner | null>(null);
     const [isInsightsOpen, setIsInsightsOpen] = useState(false);
+    const isAdminsMode = mode === 'admins';
+    const visibleUsers = learners.filter(user => isAdminsMode ? user.role !== 'LEARNER' : user.role === 'LEARNER');
 
     useEffect(() => {
         fetchData();
@@ -472,10 +568,12 @@ export function LearnersManager({ domain, addToast }: { domain: string, addToast
         setEditingLearner({ 
             name: '', 
             email: '', 
+            role: isAdminsMode ? 'TENANT_ADMIN' : 'LEARNER',
             password, 
             jobRoleIds: [], 
             teamIds: [],
             managedTeamIds: [],
+            tenantAdminPermissions: isAdminsMode ? ALL_TENANT_ADMIN_PERMISSIONS : [],
             isCreating: true,
             domain
         });
@@ -490,6 +588,7 @@ export function LearnersManager({ domain, addToast }: { domain: string, addToast
             teamIds: learner.teams?.map(t => t.id) || [],
             managedTeamIds: learner.managedTeams?.map(t => t.id) || [],
             jobRoleIds: learner.jobRoles?.map(r => r.id) || [],
+            tenantAdminPermissions: learner.tenantAdminPermissions || [],
             isCreating: false,
             domain
         });
@@ -508,19 +607,21 @@ export function LearnersManager({ domain, addToast }: { domain: string, addToast
                     body: JSON.stringify({
                         name: data.name,
                         email: data.email,
+                        role: isAdminsMode ? data.role : 'LEARNER',
                         password: data.password,
                         jobRoleIds: data.jobRoleIds,
                         teamIds: data.teamIds,
-                        managedTeamIds: data.managedTeamIds
+                        managedTeamIds: data.managedTeamIds,
+                        tenantAdminPermissions: isAdminsMode ? (data.tenantAdminPermissions || []) : []
                     })
                 });
                 if (res.ok) {
-                    addToast('Learner enrolled successfully', 'success');
+                    addToast('User created successfully', 'success');
                     setJustCreated({ password: data.password });
                     fetchData();
                 } else {
                     const err = await res.json();
-                    addToast(err.error || 'Failed to onboard learner', 'error');
+                    addToast(err.error || `Failed to create ${isAdminsMode ? 'admin' : 'learner'}`, 'error');
                 }
             } else {
                 const res = await fetch(`/api/t/${domain}/learners`, {
@@ -530,9 +631,11 @@ export function LearnersManager({ domain, addToast }: { domain: string, addToast
                         learnerId: data.id,
                         name: data.name,
                         email: data.email,
+                        role: isAdminsMode ? data.role : 'LEARNER',
                         jobRoleIds: data.jobRoleIds,
                         teamIds: data.teamIds,
-                        managedTeamIds: data.managedTeamIds
+                        managedTeamIds: data.managedTeamIds,
+                        tenantAdminPermissions: isAdminsMode ? (data.tenantAdminPermissions || []) : []
                     })
                 });
                 if (res.ok) {
@@ -540,11 +643,12 @@ export function LearnersManager({ domain, addToast }: { domain: string, addToast
                     setIsPanelOpen(false);
                     fetchData();
                 } else {
-                    addToast('Failed to update profile', 'error');
+                    const err = await res.json().catch(() => null);
+                    addToast(err?.error || 'Failed to update profile', 'error');
                 }
             }
         } catch (e) {
-            addToast('Unexpected error', 'error');
+            addToast(`Unexpected error while saving ${isAdminsMode ? 'admin' : 'learner'}`, 'error');
         } finally {
             setIsSubmitting(false);
         }
@@ -602,15 +706,17 @@ export function LearnersManager({ domain, addToast }: { domain: string, addToast
                     <div className="flex items-center gap-3">
                         <Users className="text-primary w-6 h-6" />
                         <div>
-                            <h2 className="text-xl font-black uppercase tracking-tight">Talent Roster</h2>
-                            <p className="text-sm text-muted-foreground">Manage organizational structure and student access.</p>
+                            <h2 className="text-xl font-black uppercase tracking-tight">{isAdminsMode ? 'Manage Admins' : 'Learner Roster'}</h2>
+                            <p className="text-sm text-muted-foreground">
+                                {isAdminsMode ? 'Create admin accounts and assign domain permissions.' : 'Create and manage learner accounts only.'}
+                            </p>
                         </div>
                     </div>
                     <button 
                         onClick={handleOnboard}
                         className="px-6 py-3 bg-primary text-primary-foreground rounded-2xl font-black text-sm uppercase tracking-widest hover:opacity-90 flex items-center gap-2 shadow-xl shadow-primary/20"
                     >
-                        <Plus size={18} /> Onboard talent
+                        <Plus size={18} /> {isAdminsMode ? 'Add admin' : 'Add learner'}
                     </button>
                 </div>
 
@@ -642,12 +748,12 @@ export function LearnersManager({ domain, addToast }: { domain: string, addToast
                         <tbody className="divide-y divide-border/10">
                             {loading ? (
                                 <tr><td colSpan={5} className="py-20 text-center"><Loader2 className="animate-spin text-primary inline-block" /></td></tr>
-                            ) : learners.filter(l => 
+                            ) : visibleUsers.filter(l => 
                                 (l.name?.toLowerCase().includes(searchQuery.toLowerCase()) || 
                                  l.email?.toLowerCase().includes(searchQuery.toLowerCase()))
                             ).length === 0 ? (
-                                <tr><td colSpan={5} className="py-20 text-center text-muted-foreground text-sm italic">No matching learners found.</td></tr>
-                            ) : learners
+                                <tr><td colSpan={5} className="py-20 text-center text-muted-foreground text-sm italic">No matching {isAdminsMode ? 'admins' : 'learners'} found.</td></tr>
+                            ) : visibleUsers
                                 .filter(l => 
                                     (l.name?.toLowerCase().includes(searchQuery.toLowerCase()) || 
                                      l.email?.toLowerCase().includes(searchQuery.toLowerCase()))
@@ -667,6 +773,14 @@ export function LearnersManager({ domain, addToast }: { domain: string, addToast
                                     </td>
                                     <td className="px-6 py-5">
                                         <div className="flex flex-col gap-1.5">
+                                            <span className="w-fit rounded-full border border-primary/20 bg-primary/10 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-primary">
+                                                {l.role === 'TENANT_ADMIN' ? 'Domain Admin' : l.role.replace('_', ' ')}
+                                            </span>
+                                            {isAdminsMode && (
+                                                <span className="text-[9px] font-bold text-muted-foreground">
+                                                    {l.tenantAdminPermissions?.length || 0}/{ALL_TENANT_ADMIN_PERMISSIONS.length} permissions
+                                                </span>
+                                            )}
                                             <div className="flex flex-wrap gap-1 mt-1.5 max-w-[200px]">
                                                 {l.jobRoles && l.jobRoles.length > 0 ? l.jobRoles.map((r: any) => (
                                                     <span key={r.id} className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-widest bg-emerald-500/10 text-emerald-500 flex items-center gap-1 border border-emerald-500/20">
@@ -738,6 +852,7 @@ export function LearnersManager({ domain, addToast }: { domain: string, addToast
                 onClose={() => setIsPanelOpen(false)}
                 learner={editingLearner}
                 isCreating={editingLearner?.isCreating}
+                mode={mode}
                 roles={roles.map(r => ({ id: r.id, name: r.name, description: r.description }))}
                 teams={teams.map(t => ({ id: t.id, name: t.name, email: '' }))} // Transforming teams to match Person interface for multi-select
                 onSubmit={handleSubmit}

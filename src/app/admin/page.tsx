@@ -4,7 +4,6 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { useState, useEffect } from 'react';
 import { Building2, Users, BookOpen, TrendingUp, ArrowUpRight, Loader2, Zap, Globe } from 'lucide-react';
 import Link from 'next/link';
-import { ALL_TENANT_ADMIN_PERMISSIONS, TENANT_ADMIN_PERMISSIONS } from '@/lib/permissions';
 
 interface Stats {
     tenantCount: number;
@@ -37,7 +36,6 @@ interface SpinoffForm {
     adminEmail: string;
     adminPassword: string;
     globalMarketplaceEnabled: boolean;
-    tenantAdminPermissions: string[];
 }
 
 export default function SuperAdminDashboard() {
@@ -50,7 +48,6 @@ export default function SuperAdminDashboard() {
         adminEmail: '',
         adminPassword: '',
         globalMarketplaceEnabled: false,
-        tenantAdminPermissions: ALL_TENANT_ADMIN_PERMISSIONS
     });
     const [formErrors, setFormErrors] = useState<Record<string, string>>({});
     const [spinning, setSpinning] = useState(false);
@@ -150,15 +147,6 @@ export default function SuperAdminDashboard() {
         purple: 'from-purple-500/20 to-purple-600/5 border-purple-500/20 text-purple-400',
         emerald: 'from-emerald-500/20 to-emerald-600/5 border-emerald-500/20 text-emerald-400',
         orange: 'from-orange-500/20 to-orange-600/5 border-orange-500/20 text-orange-400',
-    };
-
-    const togglePermission = (permission: string) => {
-        setForm(prev => ({
-            ...prev,
-            tenantAdminPermissions: prev.tenantAdminPermissions.includes(permission)
-                ? prev.tenantAdminPermissions.filter(item => item !== permission)
-                : [...prev.tenantAdminPermissions, permission]
-        }));
     };
 
     return (
@@ -306,46 +294,6 @@ export default function SuperAdminDashboard() {
                                     </div>
                                     <div className={`w-10 h-6 rounded-full p-1 flex items-center transition-all ${form.globalMarketplaceEnabled ? 'bg-indigo-500' : 'bg-secondary'}`}>
                                         <div className={`w-4 h-4 rounded-full bg-white shadow transition-all ${form.globalMarketplaceEnabled ? 'translate-x-4' : 'translate-x-0'}`} />
-                                    </div>
-                                </div>
-
-                                <div className="space-y-3 rounded-2xl border border-border/50 bg-secondary/20 p-4">
-                                    <div className="flex items-center justify-between gap-3">
-                                        <div>
-                                            <p className="text-sm font-bold">Tenant Admin Permissions</p>
-                                            <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Choose what this admin can access</p>
-                                        </div>
-                                        <button
-                                            type="button"
-                                            onClick={() => setForm(prev => ({ ...prev, tenantAdminPermissions: ALL_TENANT_ADMIN_PERMISSIONS }))}
-                                            className="text-[10px] font-black uppercase tracking-widest text-blue-400 hover:underline"
-                                        >
-                                            Select All
-                                        </button>
-                                    </div>
-                                    <div className="grid gap-2">
-                                        {TENANT_ADMIN_PERMISSIONS.map(permission => {
-                                            const isEnabled = form.tenantAdminPermissions.includes(permission.key);
-
-                                            return (
-                                                <button
-                                                    key={permission.key}
-                                                    type="button"
-                                                    role="switch"
-                                                    aria-checked={isEnabled}
-                                                    onClick={() => togglePermission(permission.key)}
-                                                    className="flex w-full cursor-pointer items-center justify-between gap-3 rounded-xl border border-border/40 bg-background/40 p-3 text-left transition-colors hover:bg-background/70"
-                                                >
-                                                    <span className="min-w-0">
-                                                        <span className="block text-xs font-bold">{permission.label}</span>
-                                                        <span className="block text-[10px] text-muted-foreground">{permission.description}</span>
-                                                    </span>
-                                                    <span className={`flex h-5 w-9 shrink-0 items-center rounded-full p-0.5 transition-all ${isEnabled ? 'bg-blue-500' : 'bg-secondary'}`}>
-                                                        <span className={`h-4 w-4 rounded-full bg-white shadow transition-all ${isEnabled ? 'translate-x-4' : 'translate-x-0'}`} />
-                                                    </span>
-                                                </button>
-                                            );
-                                        })}
                                     </div>
                                 </div>
 

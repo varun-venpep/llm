@@ -25,10 +25,10 @@ export function normalizeTenantAdminPermissions(value: unknown): TenantAdminPerm
 
 export function hasTenantPermission(user: { role?: string; tenantAdminPermissions?: string[] | null }, permission: string) {
   if (user.role === 'SUPER_ADMIN') return true;
-  if (user.role !== 'TENANT_ADMIN') return false;
 
   const permissions = normalizeTenantAdminPermissions(user.tenantAdminPermissions);
-  if (permissions.length === 0) return true;
+  if (user.role === 'TENANT_ADMIN' && permissions.length === 0) return true;
+  if (permissions.length === 0) return false;
 
   return isTenantAdminPermission(permission) && permissions.includes(permission);
 }

@@ -24,7 +24,7 @@ import CertificateManager from '@/components/admin/certificates/CertificateManag
 import CertificateDesigner from '@/components/admin/certificates/CertificateDesigner';
 import { ALL_TENANT_ADMIN_PERMISSIONS } from '@/lib/permissions';
 
-type Tab = 'overview' | 'courses' | 'learners' | 'announcements' | 'branding' | 'domains' | 'settings' | 'certificates' | 'reports' | 'roles' | 'teams' | 'audit';
+type Tab = 'overview' | 'courses' | 'learners' | 'admins' | 'announcements' | 'branding' | 'domains' | 'settings' | 'certificates' | 'reports' | 'roles' | 'teams' | 'audit';
 
 // Toast Types
 type ToastType = 'success' | 'error' | 'info';
@@ -191,6 +191,7 @@ export default function ClientAdminDashboard() {
     const tabPermissions: Partial<Record<Tab, string>> = {
         courses: 'courses.manage',
         learners: 'learners.manage',
+        admins: 'people.manage',
         roles: 'people.manage',
         teams: 'people.manage',
         announcements: 'announcements.manage',
@@ -214,6 +215,7 @@ export default function ClientAdminDashboard() {
         ['settings', 'Settings', Settings],
         ['certificates', 'Certificates', Award],
         ['reports', 'Reports', BarChart3],
+        ['admins', 'Manage Admins', Shield],
         ['audit', 'Audit Monitor', Shield],
     ] as [Tab, string, any][]).filter(([tab]) => !tabPermissions[tab] || can(tabPermissions[tab]!));
 
@@ -413,9 +415,11 @@ export default function ClientAdminDashboard() {
                 return;
             }
             const { user } = await sessionRes.json();
-            
-            // Double check role
-            if (user.role === 'LEARNER') {
+
+            const assignedPermissions = Array.isArray(user.tenantAdminPermissions) ? user.tenantAdminPermissions : [];
+
+            // Users with explicit domain permissions can access the admin portal, regardless of account type.
+            if (user.role !== 'TENANT_ADMIN' && user.role !== 'SUPER_ADMIN' && assignedPermissions.length === 0) {
                 router.push(`/t/${domain}/dashboard`);
                 return;
             }
@@ -423,8 +427,8 @@ export default function ClientAdminDashboard() {
             setUserId(user.id);
             setUserName(user.name || 'Admin');
             setUserEmail(user.email || '');
-            const permissions = Array.isArray(user.tenantAdminPermissions) && user.tenantAdminPermissions.length > 0
-                ? user.tenantAdminPermissions
+            const permissions = assignedPermissions.length > 0 || (user.role !== 'TENANT_ADMIN' && user.role !== 'SUPER_ADMIN')
+                ? assignedPermissions
                 : ALL_TENANT_ADMIN_PERMISSIONS;
             setAdminPermissions(permissions);
             if (tabPermissions[activeTab] && !permissions.includes(tabPermissions[activeTab]!)) {
@@ -2072,7 +2076,12 @@ export default function ClientAdminDashboard() {
 
                 {/* ── LEARNERS ── */}
                 {activeTab === 'learners' && (
-                    <LearnersManager domain={domain} addToast={addToast} />
+                    <LearnersManager domain={domain} addToast={addToast} mode="learners" />
+                )}
+
+                {/* â”€â”€ MANAGE ADMINS â”€â”€ */}
+                {activeTab === 'admins' && (
+                    <LearnersManager domain={domain} addToast={addToast} mode="admins" />
                 )}
 
                 {/* ── ANNOUNCEMENTS ── */}
