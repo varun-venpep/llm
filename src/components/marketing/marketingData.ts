@@ -79,14 +79,16 @@ export const roles = [
 export const pricingPlans = [
   {
     name: 'Starter',
-    price: 'Rs. 14,999',
+    currency: 'SGD',
+    price: '799',
     note: 'per workspace / month',
     description: 'Perfect for small teams getting started with a branded academy.',
     features: ['Up to 500 learners', 'Course builder', 'Basic analytics', 'Standard certificates', 'Email support'],
   },
   {
     name: 'Professional',
-    price: 'Rs. 39,999',
+    currency: 'SGD',
+    price: '1,499',
     note: 'per workspace / month',
     description: 'For growing learning teams that need AI, branding, and team controls.',
     features: ['Up to 5,000 learners', 'AI quiz generation', 'Custom branding and domain', 'Teams and roles', 'Priority support'],

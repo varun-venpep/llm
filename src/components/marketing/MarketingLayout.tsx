@@ -398,7 +398,10 @@ export function PricingCard({ plan }: { plan: (typeof pricingPlans)[number] }) {
       <h3 className="text-xl font-bold">{plan.name}</h3>
       <p className="mt-1.5 mb-6 min-h-10 text-sm text-muted-foreground">{plan.description}</p>
       <div className="mb-6">
-        <span className="text-5xl font-extrabold tracking-tight">{plan.price}</span>
+        <div className="flex items-baseline gap-2">
+          {'currency' in plan ? <span className="text-2xl font-semibold tracking-normal text-foreground">{plan.currency}</span> : null}
+          <span className="text-5xl font-extrabold tracking-tight">{plan.price}</span>
+        </div>
         <p className="mt-2 text-sm text-muted-foreground">{plan.note}</p>
       </div>
       <Link href="/contact" className={`${buttonClass(plan.featured ? 'hero' : 'outline')} mb-8 w-full`}>
