@@ -19,6 +19,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 import { Providers } from "@/components/Providers";
 import ChatWidget from "@/components/chat/ChatWidget";
+import Script from "next/script";
 
 export default function RootLayout({
   children,
@@ -27,20 +28,19 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <head>
-        <script async src="https://www.googletagmanager.com/gtag/js?id=G-SEPPX2BQF7"></script>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              window.dataLayer = window.dataLayer || [];
-              function gtag(){dataLayer.push(arguments);}
-              gtag('js', new Date());
-              gtag('config', 'G-SEPPX2BQF7');
-            `,
-          }}
-        />
-      </head>
       <body className="antialiased" suppressHydrationWarning>
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-SEPPX2BQF7"
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-SEPPX2BQF7');
+          `}
+        </Script>
         <Providers>
           {children}
           <ChatWidget />
