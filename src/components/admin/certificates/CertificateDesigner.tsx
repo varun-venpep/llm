@@ -24,7 +24,7 @@ interface Template {
 interface CertificateDesignerProps {
     template: Template;
     onBack: () => void;
-    onSave: (id: string, designFields: { fields: DesignField[] }, backgroundImage: string) => void | Promise<void>;
+    onSave: (id: string, designFields: { fields: DesignField[] }, backgroundImage: string, name: string) => void | Promise<void>;
 }
 
 const DEFAULT_FIELDS: DesignField[] = [
@@ -91,6 +91,7 @@ export default function CertificateDesigner({ template, onBack, onSave }: Certif
     const [backgroundImage, setBackgroundImage] = useState(() => resolveImageUrl(template.backgroundImage));
     const [backgroundError, setBackgroundError] = useState(false);
     const [backgroundErrorDetail, setBackgroundErrorDetail] = useState('');
+    const [name, setName] = useState(template.name);
     const [saving, setSaving] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
     const nextFieldIdRef = useRef(0);
@@ -165,7 +166,7 @@ export default function CertificateDesigner({ template, onBack, onSave }: Certif
 
     const handleSave = async () => {
         setSaving(true);
-        await onSave(template.id, { fields: normalizeFields(fields) }, backgroundImage);
+        await onSave(template.id, { fields: normalizeFields(fields) }, backgroundImage, name);
         setSaving(false);
     };
 
@@ -199,7 +200,7 @@ export default function CertificateDesigner({ template, onBack, onSave }: Certif
                     </button>
                     <div className="flex items-center gap-3">
                          <span className="text-xs font-bold text-muted-foreground bg-secondary/50 px-3 py-1 rounded-full border border-border/50">
-                            Editing: <span className="text-primary">{template.name}</span>
+                            Editing: <span className="text-primary">{name}</span>
                          </span>
                          <button 
                             onClick={handleSave} 
@@ -289,6 +290,19 @@ export default function CertificateDesigner({ template, onBack, onSave }: Certif
 
                 <div className="space-y-3">
                     <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                        <Type size={10} /> Template Name
+                    </label>
+                    <input
+                        type="text"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        placeholder="e.g. My Certificate"
+                        className="w-full bg-secondary/30 border border-border/50 rounded-xl px-3 py-2.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    />
+                </div>
+
+                <div className="space-y-3">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
                         <ImageIcon size={10} /> Background Image URL
                     </label>
                     <input
@@ -346,7 +360,7 @@ export default function CertificateDesigner({ template, onBack, onSave }: Certif
                             Reset Default Fields
                         </button>
                     </div>
-                </div>
+                </div> 
 
                 {!selectedField ? (
                     <div className="p-8 border-2 border-dashed border-border/50 rounded-3xl flex flex-col items-center justify-center text-center space-y-3 bg-secondary/5">

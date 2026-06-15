@@ -422,21 +422,27 @@ export default function CoursePlayer({ params: paramsPromise }: { params: Promis
                     <button onClick={() => setSidebarOpen(true)} className={`lg:hidden ${sidebarOpen ? 'hidden' : 'block'}`}>
                         <Menu className="w-6 h-6" />
                     </button>
-                    <div className="flex-1 lg:ml-0 ml-4">
-                        <button onClick={() => router.push(`/t/${domain}/dashboard`)} className="flex items-center gap-2 text-xs font-bold text-muted-foreground hover:text-foreground transition-colors group mb-1">
-                            <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> Back to Dashboard
-                        </button>
-                        <div className="flex items-center gap-4">
-                            <h1 className="font-bold text-xl truncate">{course.title}</h1>
-                            {completedLessonIds.length >= allActiveLessons.length && allActiveLessons.length > 0 && course.certificateEnabled && (
+                    <div className="flex-1 lg:ml-0 ml-4 relative flex items-center justify-center min-h-[40px]">
+                        <div className="absolute left-0">
+                            <button onClick={() => router.push(`/t/${domain}/dashboard`)} className="flex items-center gap-2 text-xs font-bold text-muted-foreground hover:text-foreground transition-colors group whitespace-nowrap">
+                                <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> Back to Dashboard
+                            </button>
+                        </div>
+                        
+                        <div className="flex items-center justify-center gap-4 max-w-[50%] px-4">
+                            <h1 className="font-bold text-xl truncate text-center">{course.title}</h1>
+                        </div>
+
+                        {completedLessonIds.length >= allActiveLessons.length && allActiveLessons.length > 0 && course.certificateEnabled && (
+                            <div className="absolute right-0">
                                 <button 
                                     onClick={() => router.push(`/t/${domain}/certificate/${courseId}`)}
-                                    className="px-4 py-1.5 bg-yellow-500 text-yellow-950 text-[10px] font-black uppercase tracking-widest rounded-full flex items-center gap-2 animate-bounce-subtle shadow-lg shadow-yellow-500/20"
+                                    className="px-4 py-1.5 bg-yellow-500 text-yellow-950 text-[10px] font-black uppercase tracking-widest rounded-full flex items-center gap-2 animate-bounce-subtle shadow-lg shadow-yellow-500/20 whitespace-nowrap"
                                 >
                                     <Award size={12} /> Claim Certificate
                                 </button>
-                            )}
-                        </div>
+                            </div>
+                        )}
                     </div>
                 </header>
 

@@ -44,6 +44,56 @@ async function main() {
     });
 
     console.log('Super Admin Seeded:', superAdmin.email);
+
+    // Seed Venpep Tenant (Tenant Admin & Learner)
+    console.log('Seeding Venpep Tenant...');
+    const venpepTenant = await prisma.tenant.upsert({
+        where: { subdomain: 'venpep' },
+        update: {},
+        create: {
+            name: 'Venpep Academy',
+            subdomain: 'venpep',
+            isActive: true,
+        }
+    });
+
+    const tenantAdmin = await prisma.user.upsert({
+        where: {
+            email_tenantId: {
+                email: 'admin@venpep.com',
+                tenantId: venpepTenant.id
+            }
+        },
+        update: { password: hashedPassword },
+        create: {
+            email: 'admin@venpep.com',
+            name: 'Venpep Admin',
+            password: hashedPassword,
+            role: 'TENANT_ADMIN',
+            tenantId: venpepTenant.id
+        }
+    });
+
+    const learner = await prisma.user.upsert({
+        where: {
+            email_tenantId: {
+                email: 'learner@venpep.com',
+                tenantId: venpepTenant.id
+            }
+        },
+        update: { password: hashedPassword },
+        create: {
+            email: 'learner@venpep.com',
+            name: 'Venpep Learner',
+            password: hashedPassword,
+            role: 'LEARNER',
+            tenantId: venpepTenant.id
+        }
+    });
+
+    console.log('Venpep Tenant Seeded:', venpepTenant.subdomain);
+    console.log('Admin:', tenantAdmin.email, '/ password123');
+    console.log('Learner:', learner.email, '/ password123');
 }
 
 main()

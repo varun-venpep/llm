@@ -19,6 +19,9 @@ const getEditableRole = (value: unknown) => {
     return editableRoles.has(role) ? role : Role.LEARNER;
 };
 
+// NOTE: tenantAdminPermissions column is managed via Prisma migrations.
+// Do NOT run DDL here — this function is retained only for the POST/PUT paths
+// that still need it during the transition period.
 const ensureTenantAdminPermissionsColumn = () => prisma.$executeRaw`
     ALTER TABLE "User"
     ADD COLUMN IF NOT EXISTS "tenantAdminPermissions" TEXT[] DEFAULT ARRAY[]::TEXT[]
@@ -81,11 +84,19 @@ export async function POST(
             },
         });
 
-        await prisma.$executeRaw`
-            UPDATE "User"
-            SET "tenantAdminPermissions" = ARRAY[${Prisma.join(tenantAdminPermissions)}]::TEXT[]
-            WHERE "id" = ${learner.id}
-        `;
+        if (tenantAdminPermissions.length > 0) {
+            await prisma.$executeRaw`
+                UPDATE "User"
+                SET "tenantAdminPermissions" = ARRAY[${Prisma.join(tenantAdminPermissions)}]::TEXT[]
+                WHERE "id" = ${learner.id}
+            `;
+        } else {
+            await prisma.$executeRaw`
+                UPDATE "User"
+                SET "tenantAdminPermissions" = ARRAY[]::TEXT[]
+                WHERE "id" = ${learner.id}
+            `;
+        }
 
         // 2. Auto-enroll in team-assigned courses (Internal Library / Marketplace)
         if (teamIds && teamIds.length > 0) {
@@ -137,7 +148,7 @@ export async function GET(
 ) {
     try {
         const { domain } = await params;
-        await ensureTenantAdminPermissionsColumn();
+        // BUG-007: Removed ensureTenantAdminPermissionsColumn() — DDL must not run per-request.
         const session = await checkSession(req, domain, ['TENANT_ADMIN', 'SUPER_ADMIN']);
         if (!hasAnyTenantPermission(session, ['learners.manage', 'people.manage'])) {
             return NextResponse.json({ error: 'You do not have permission to view users' }, { status: 403 });
@@ -189,19 +200,33 @@ export async function GET(
             },
             orderBy: { createdAt: 'desc' },
         });
-        const formattedLearners = await Promise.all(learners.map(async learner => {
-            const permissionRows = await prisma.$queryRaw<{ tenantAdminPermissions: string[] | null }[]>`
-                SELECT "tenantAdminPermissions"
-                FROM "User"
-                WHERE "id" = ${learner.id}
-                LIMIT 1
-            `;
 
+        // BUG-006: Batch-fetch all tenantAdminPermissions in a single query instead of N+1
+        const learnerIds = learners.map(l => l.id);
+        let permissionsMap: Record<string, string[]> = {};
+        if (learnerIds.length > 0) {
+            try {
+                const permRows = await prisma.$queryRaw<{ id: string; tenantAdminPermissions: string[] | null }[]>`
+                    SELECT "id", "tenantAdminPermissions"
+                    FROM "User"
+                    WHERE "id" = ANY(${learnerIds})
+                `;
+                permRows.forEach(r => {
+                    permissionsMap[r.id] = r.tenantAdminPermissions || [];
+                });
+            } catch {
+                // column may not exist yet — fall back to empty
+            }
+        }
+
+        // BUG-001: Strip password hash from every returned user object
+        const formattedLearners = learners.map(learner => {
+            const { password: _omit, ...safeUser } = learner as any;
             return {
-                ...learner,
-                tenantAdminPermissions: permissionRows[0]?.tenantAdminPermissions || []
+                ...safeUser,
+                tenantAdminPermissions: permissionsMap[learner.id] || []
             };
-        }));
+        });
 
         return NextResponse.json(formattedLearners);
     } catch (error) {
@@ -270,11 +295,19 @@ export async function PUT(
         });
 
         if (shouldUpdateRole || shouldUpdateTenantAdminPermissions) {
-            await prisma.$executeRaw`
-                UPDATE "User"
-                SET "tenantAdminPermissions" = ARRAY[${Prisma.join(tenantAdminPermissions)}]::TEXT[]
-                WHERE "id" = ${updatedUser.id}
-            `;
+            if (tenantAdminPermissions.length > 0) {
+                await prisma.$executeRaw`
+                    UPDATE "User"
+                    SET "tenantAdminPermissions" = ARRAY[${Prisma.join(tenantAdminPermissions)}]::TEXT[]
+                    WHERE "id" = ${updatedUser.id}
+                `;
+            } else {
+                await prisma.$executeRaw`
+                    UPDATE "User"
+                    SET "tenantAdminPermissions" = ARRAY[]::TEXT[]
+                    WHERE "id" = ${updatedUser.id}
+                `;
+            }
         }
 
         // Audit Log: Learner Update

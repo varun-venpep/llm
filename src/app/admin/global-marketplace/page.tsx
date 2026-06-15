@@ -14,6 +14,47 @@ import {
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell, PieChart, Pie } from 'recharts';
 import { uploadFile } from '@/lib/upload';
 
+const showSwal = async (title: string, text: string, icon: 'success' | 'error' | 'warning' | 'info') => {
+    if (typeof window === 'undefined') return;
+    const win = window as any;
+    if (!win.Swal) {
+        // Load CSS
+        if (!document.getElementById('sweetalert2-css')) {
+            const link = document.createElement('link');
+            link.id = 'sweetalert2-css';
+            link.rel = 'stylesheet';
+            link.href = 'https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css';
+            document.head.appendChild(link);
+        }
+        // Load JS
+        await new Promise<void>((resolve) => {
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/sweetalert2@11';
+            script.onload = () => resolve();
+            script.onerror = () => resolve();
+            document.body.appendChild(script);
+        });
+    }
+    if (win.Swal) {
+        return win.Swal.fire({
+            title,
+            text,
+            icon,
+            background: 'var(--background)',
+            color: 'var(--foreground)',
+            customClass: {
+                popup: 'rounded-[2rem] border border-border bg-background text-foreground shadow-2xl p-8',
+                title: 'text-lg font-black uppercase tracking-tight text-foreground !m-0 !pt-2 font-sans',
+                htmlContainer: 'text-sm text-muted-foreground font-medium !mt-2 !mb-6 font-sans',
+                confirmButton: 'px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-black uppercase tracking-widest text-[10px] rounded-xl transition-all shadow-xl shadow-indigo-500/20 cursor-pointer font-sans'
+            },
+            buttonsStyling: false
+        });
+    } else {
+        alert(`${title}: ${text}`);
+    }
+};
+
 interface GlobalCourse {
     id: string;
     title: string;
@@ -123,6 +164,15 @@ export default function GlobalMarketplacePage() {
     const [claimsRegistry, setClaimsRegistry] = useState<any[]>([]);
     const [loadingGlobal, setLoadingGlobal] = useState(false);
 
+    const getValidationError = (key: string): string | null => {
+        if (!validationErrors) return null;
+        const err = validationErrors[key];
+        if (!err) return null;
+        if (typeof err === 'string') return err;
+        if (typeof err === 'object' && err.title) return err.title;
+        return null;
+    };
+
     const fetchCourses = useCallback(async () => {
         try {
             const res = await fetch('/api/admin/global-courses');
@@ -189,7 +239,25 @@ export default function GlobalMarketplacePage() {
     const createCourse = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!courseForm.title.trim()) {
-            setValidationErrors({ course: { title: 'Title is required' } });
+            showSwal('Required Field', 'Blueprint Title is required', 'error');
+            return;
+        }
+        if (!courseForm.description?.trim()) {
+            showSwal('Required Field', 'Mission Abstract is required', 'error');
+            return;
+        }
+
+        // Check for duplicate name
+        const titleExists = courses.some(c => c.title.trim().toLowerCase() === courseForm.title.trim().toLowerCase());
+        if (titleExists) {
+            showSwal('Duplicate Name', 'Blueprint Title already exists', 'error');
+            return;
+        }
+
+        // Check for duplicate description
+        const descExists = courses.some(c => c.description?.trim().toLowerCase() === courseForm.description.trim().toLowerCase());
+        if (descExists) {
+            showSwal('Duplicate Abstract', 'Mission Abstract already exists', 'error');
             return;
         }
 
@@ -204,15 +272,43 @@ export default function GlobalMarketplacePage() {
                 await fetchCourses();
                 setShowCourseModal(false);
                 fetchCourseDetails(data.id);
+                showSwal('Success', 'Blueprint forged successfully!', 'success');
+            } else {
+                const data = await res.json();
+                showSwal('Error', data.error || 'Failed to forge blueprint', 'error');
             }
         } catch (e) {
             console.error(e);
+            showSwal('Error', 'An error occurred', 'error');
         }
     };
 
     const updateCourse = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!selectedCourse) return;
+
+        if (!courseForm.title.trim()) {
+            showSwal('Required Field', 'Blueprint Title is required', 'error');
+            return;
+        }
+        if (!courseForm.description?.trim()) {
+            showSwal('Required Field', 'Mission Abstract is required', 'error');
+            return;
+        }
+
+        // Check for duplicate name
+        const titleExists = courses.some(c => c.title.trim().toLowerCase() === courseForm.title.trim().toLowerCase() && c.id !== selectedCourse.id);
+        if (titleExists) {
+            showSwal('Duplicate Name', 'Blueprint Title already exists', 'error');
+            return;
+        }
+
+        // Check for duplicate description
+        const descExists = courses.some(c => c.description?.trim().toLowerCase() === courseForm.description.trim().toLowerCase() && c.id !== selectedCourse.id);
+        if (descExists) {
+            showSwal('Duplicate Abstract', 'Mission Abstract already exists', 'error');
+            return;
+        }
 
         try {
             const res = await fetch(`/api/admin/global-courses/${selectedCourse.id}`, {
@@ -221,29 +317,82 @@ export default function GlobalMarketplacePage() {
                 body: JSON.stringify(courseForm)
             });
             if (res.ok) {
+                await fetchCourses();
                 await fetchCourseDetails(selectedCourse.id);
                 setShowCourseModal(false);
+                showSwal('Success', 'Blueprint refined successfully!', 'success');
+            } else {
+                const data = await res.json();
+                showSwal('Error', data.error || 'Failed to refine blueprint', 'error');
             }
         } catch (e) {
             console.error(e);
+            showSwal('Error', 'An error occurred', 'error');
         }
     };
 
     const deleteCourse = async (e: React.MouseEvent, id: string) => {
         e.stopPropagation();
-        if (!confirm('Are you sure you want to delete this global master course? All tenant claims will be affected.')) return;
+
+        if (typeof window === 'undefined') return;
+        const win = window as any;
+        if (!win.Swal) {
+            // Load CSS
+            if (!document.getElementById('sweetalert2-css')) {
+                const link = document.createElement('link');
+                link.id = 'sweetalert2-css';
+                link.rel = 'stylesheet';
+                link.href = 'https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css';
+                document.head.appendChild(link);
+            }
+            // Load JS
+            await new Promise<void>((resolve) => {
+                const script = document.createElement('script');
+                script.src = 'https://cdn.jsdelivr.net/npm/sweetalert2@11';
+                script.onload = () => resolve();
+                script.onerror = () => resolve();
+                document.body.appendChild(script);
+            });
+        }
+
+        if (win.Swal) {
+            const result = await win.Swal.fire({
+                title: 'Delete Master Blueprint?',
+                text: 'Are you sure you want to delete this global master course? All tenant claims will be affected.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, Delete Master',
+                cancelButtonText: 'Cancel',
+                background: 'var(--background)',
+                color: 'var(--foreground)',
+                customClass: {
+                    popup: 'rounded-[2rem] border border-border bg-background text-foreground shadow-2xl p-8',
+                    title: 'text-lg font-black uppercase tracking-tight text-foreground !m-0 !pt-2 font-sans',
+                    htmlContainer: 'text-sm text-muted-foreground font-medium !mt-2 !mb-6 font-sans',
+                    confirmButton: 'px-6 py-3 bg-red-600 hover:bg-red-500 text-white font-black uppercase tracking-widest text-[10px] rounded-xl transition-all shadow-xl shadow-red-500/20 cursor-pointer font-sans mr-2',
+                    cancelButton: 'px-6 py-3 bg-secondary hover:bg-secondary/80 text-foreground font-black uppercase tracking-widest text-[10px] rounded-xl transition-all cursor-pointer font-sans ml-2'
+                },
+                buttonsStyling: false
+            });
+
+            if (!result.isConfirmed) return;
+        } else {
+            if (!confirm('Are you sure you want to delete this global master course? All tenant claims will be affected.')) return;
+        }
 
         try {
             const res = await fetch(`/api/admin/global-courses/${id}`, { method: 'DELETE' });
             if (res.ok) {
                 setCourses(prev => prev.filter(c => c.id !== id));
                 if (selectedCourse?.id === id) setSelectedCourse(null);
+                showSwal('Success', 'Blueprint deleted successfully!', 'success');
             } else {
                 const data = await res.json();
-                alert(data.error || 'Failed to delete course');
+                showSwal('Error', data.error || 'Failed to delete course', 'error');
             }
         } catch (e) {
             console.error(e);
+            showSwal('Error', 'An error occurred', 'error');
         }
     };
 
@@ -296,9 +445,14 @@ export default function GlobalMarketplacePage() {
             if (res.ok) {
                 setNewModuleTitle('');
                 fetchCourseDetails(courseId);
+                showSwal('Module Added', 'New module has been created successfully!', 'success');
+            } else {
+                const data = await res.json().catch(() => ({}));
+                showSwal('Error', data.error || 'Failed to add module', 'error');
             }
         } catch (e) {
             console.error(e);
+            showSwal('Error', 'An error occurred while adding the module', 'error');
         }
     };
 
@@ -322,7 +476,53 @@ export default function GlobalMarketplacePage() {
 
     const deleteModule = async (e: React.MouseEvent, moduleId: string) => {
         e.stopPropagation();
-        if (!selectedCourse || !confirm('Delete this module?')) return;
+        if (!selectedCourse) return;
+
+        if (typeof window === 'undefined') return;
+        const win = window as any;
+        if (!win.Swal) {
+            // Load CSS
+            if (!document.getElementById('sweetalert2-css')) {
+                const link = document.createElement('link');
+                link.id = 'sweetalert2-css';
+                link.rel = 'stylesheet';
+                link.href = 'https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css';
+                document.head.appendChild(link);
+            }
+            // Load JS
+            await new Promise<void>((resolve) => {
+                const script = document.createElement('script');
+                script.src = 'https://cdn.jsdelivr.net/npm/sweetalert2@11';
+                script.onload = () => resolve();
+                script.onerror = () => resolve();
+                document.body.appendChild(script);
+            });
+        }
+
+        if (win.Swal) {
+            const result = await win.Swal.fire({
+                title: 'Delete Module?',
+                text: 'Are you sure you want to delete this module? All lessons within this module will be deleted.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, Delete Module',
+                cancelButtonText: 'Cancel',
+                background: 'var(--background)',
+                color: 'var(--foreground)',
+                customClass: {
+                    popup: 'rounded-[2rem] border border-border bg-background text-foreground shadow-2xl p-8',
+                    title: 'text-lg font-black uppercase tracking-tight text-foreground !m-0 !pt-2 font-sans',
+                    htmlContainer: 'text-sm text-muted-foreground font-medium !mt-2 !mb-6 font-sans',
+                    confirmButton: 'px-6 py-3 bg-red-600 hover:bg-red-500 text-white font-black uppercase tracking-widest text-[10px] rounded-xl transition-all shadow-xl shadow-red-500/20 cursor-pointer font-sans mr-2',
+                    cancelButton: 'px-6 py-3 bg-secondary hover:bg-secondary/80 text-foreground font-black uppercase tracking-widest text-[10px] rounded-xl transition-all cursor-pointer font-sans ml-2'
+                },
+                buttonsStyling: false
+            });
+
+            if (!result.isConfirmed) return;
+        } else {
+            if (!confirm('Delete this module?')) return;
+        }
 
         try {
             const res = await fetch(`/api/admin/global-courses/${selectedCourse.id}/modules`, {
@@ -330,7 +530,10 @@ export default function GlobalMarketplacePage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ moduleId })
             });
-            if (res.ok) fetchCourseDetails(selectedCourse.id);
+            if (res.ok) {
+                fetchCourseDetails(selectedCourse.id);
+                showSwal('Success', 'Module deleted successfully!', 'success');
+            }
         } catch (e) {
             console.error(e);
         }
@@ -374,7 +577,53 @@ export default function GlobalMarketplacePage() {
 
     const deleteLesson = async (e: React.MouseEvent, moduleId: string, lessonId: string) => {
         e.stopPropagation();
-        if (!selectedCourse || !confirm('Delete this lesson?')) return;
+        if (!selectedCourse) return;
+
+        if (typeof window === 'undefined') return;
+        const win = window as any;
+        if (!win.Swal) {
+            // Load CSS
+            if (!document.getElementById('sweetalert2-css')) {
+                const link = document.createElement('link');
+                link.id = 'sweetalert2-css';
+                link.rel = 'stylesheet';
+                link.href = 'https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css';
+                document.head.appendChild(link);
+            }
+            // Load JS
+            await new Promise<void>((resolve) => {
+                const script = document.createElement('script');
+                script.src = 'https://cdn.jsdelivr.net/npm/sweetalert2@11';
+                script.onload = () => resolve();
+                script.onerror = () => resolve();
+                document.body.appendChild(script);
+            });
+        }
+
+        if (win.Swal) {
+            const result = await win.Swal.fire({
+                title: 'Delete Lesson?',
+                text: 'Are you sure you want to delete this lesson?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, Delete Lesson',
+                cancelButtonText: 'Cancel',
+                background: 'var(--background)',
+                color: 'var(--foreground)',
+                customClass: {
+                    popup: 'rounded-[2rem] border border-border bg-background text-foreground shadow-2xl p-8',
+                    title: 'text-lg font-black uppercase tracking-tight text-foreground !m-0 !pt-2 font-sans',
+                    htmlContainer: 'text-sm text-muted-foreground font-medium !mt-2 !mb-6 font-sans',
+                    confirmButton: 'px-6 py-3 bg-red-600 hover:bg-red-500 text-white font-black uppercase tracking-widest text-[10px] rounded-xl transition-all shadow-xl shadow-red-500/20 cursor-pointer font-sans mr-2',
+                    cancelButton: 'px-6 py-3 bg-secondary hover:bg-secondary/80 text-foreground font-black uppercase tracking-widest text-[10px] rounded-xl transition-all cursor-pointer font-sans ml-2'
+                },
+                buttonsStyling: false
+            });
+
+            if (!result.isConfirmed) return;
+        } else {
+            if (!confirm('Delete this lesson?')) return;
+        }
 
         try {
             const res = await fetch(`/api/admin/global-courses/${selectedCourse.id}/modules/${moduleId}/lessons`, {
@@ -382,7 +631,10 @@ export default function GlobalMarketplacePage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ lessonId })
             });
-            if (res.ok) fetchCourseDetails(selectedCourse.id);
+            if (res.ok) {
+                fetchCourseDetails(selectedCourse.id);
+                showSwal('Success', 'Lesson deleted successfully!', 'success');
+            }
         } catch (e) {
             console.error(e);
         }
@@ -784,9 +1036,15 @@ export default function GlobalMarketplacePage() {
                                                 </div>
 
                                                 <div className="space-y-1">
-                                                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Lesson Title</label>
-                                                    <input
-                                                        className="w-full bg-black border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all font-bold"
+                                                    <div className="flex justify-between items-center">
+                                                        <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Lesson Title</label>
+                                                        {getValidationError(`lesson-${mod.id}`) && (
+                                                            <span className="text-[10px] font-bold text-red-500 animate-in fade-in slide-in-from-right-1 mr-1 uppercase tracking-tight">
+                                                                {getValidationError(`lesson-${mod.id}`)}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <input className={`w-full bg-black border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 transition-all font-bold ${getValidationError(`lesson-${mod.id}`) ? 'border-red-500/50 focus:ring-red-500/50' : 'border-white/10 focus:ring-primary/50'}`}
                                                         placeholder="e.g. Introduction to React..."
                                                         value={newLessonForms[mod.id]?.title || ''}
                                                         onChange={e => setNewLessonForms(prev => ({ ...prev, [mod.id]: { ...(prev[mod.id] || {}), title: e.target.value } }))}
@@ -794,8 +1052,7 @@ export default function GlobalMarketplacePage() {
                                                 </div>
 
                                                 {newLessonForms[mod.id]?.type === 'TEXT' && (
-                                                    <textarea
-                                                        placeholder="Lesson text content / instructions..."
+                                                    <textarea placeholder="Lesson text content / instructions..."
                                                         rows={4}
                                                         className="w-full bg-black border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50 resize-none animate-in fade-in duration-300"
                                                         value={newLessonForms[mod.id]?.content || ''}
@@ -820,12 +1077,31 @@ export default function GlobalMarketplacePage() {
                                                             type="file"
                                                             className="hidden"
                                                             id={`main-file-${mod.id}`}
+                                                            accept={newLessonForms[mod.id]?.type === 'VIDEO' ? '.mp4,.avi,.mov,.wmv,.webm,video/*' : '.ppt,.pptx,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation'}
                                                             onChange={async e => {
                                                                 const file = e.target.files?.[0];
                                                                 if (!file) return;
+
+                                                                const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+                                                                if (newLessonForms[mod.id]?.type === 'VIDEO') {
+                                                                    const allowedVideoExts = ['.mp4', '.avi', '.mov', '.wmv', '.webm'];
+                                                                    if (!allowedVideoExts.includes(ext)) {
+                                                                        showSwal('Invalid File Type', 'Please upload a valid video format (.mp4, .avi, .mov, .wmv, .webm)', 'error');
+                                                                        e.target.value = '';
+                                                                        return;
+                                                                    }
+                                                                } else {
+                                                                    const allowedPptExts = ['.ppt', '.pptx'];
+                                                                    if (!allowedPptExts.includes(ext)) {
+                                                                        showSwal('Invalid File Type', 'Please upload a valid PowerPoint format (.ppt, .pptx)', 'error');
+                                                                        e.target.value = '';
+                                                                        return;
+                                                                    }
+                                                                }
+
                                                                 setUploadProgress(prev => ({ ...prev, [mod.id]: 0 }));
                                                                 try {
-                                                                    const data = await uploadFile(file, 
+                                                                    const data = await uploadFile(file,
                                                                         { tenantId: 'system', courseId: selectedCourse?.id || 'global' },
                                                                         (percent) => setUploadProgress(prev => ({ ...prev, [mod.id]: percent }))
                                                                     );
@@ -833,7 +1109,7 @@ export default function GlobalMarketplacePage() {
                                                                         ...prev,
                                                                         [mod.id]: {
                                                                             ...prev[mod.id],
-                                                                            [newLessonForms[mod.id].type === 'VIDEO' ? 'videoUrl' : 'pdfUrl']: data.url
+                                                                            [newLessonForms[mod.id]?.type === 'VIDEO' ? 'videoUrl' : 'pdfUrl']: data.url
                                                                         }
                                                                     }));
                                                                 } catch (err) {
@@ -861,7 +1137,7 @@ export default function GlobalMarketplacePage() {
                                                         <button
                                                             onClick={() => {
                                                                 setActiveQuizLesson({ moduleId: mod.id, lessonId: editingLessonIds[mod.id] || 'new' });
-                                                                setQuizForm({ title: newLessonForms[mod.id].title || 'Untitled Quiz', description: '', passingScore: 70, questions: [], isRandomized: false, randomCount: 0 });
+                                                                setQuizForm({ title: newLessonForms[mod.id]?.title || 'Untitled Quiz', description: '', passingScore: 70, questions: [], isRandomized: false, randomCount: 0 });
                                                             }}
                                                             className="px-8 py-3 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-500/20 transition-all flex items-center gap-2"
                                                         >
@@ -884,12 +1160,12 @@ export default function GlobalMarketplacePage() {
                                                 {/* Resources Preview */}
                                                 {newLessonForms[mod.id]?.resources?.length > 0 && (
                                                     <div className="flex flex-wrap gap-2 pt-1">
-                                                        {newLessonForms[mod.id].resources.map((res: any, idx: number) => (
+                                                        {newLessonForms[mod.id]?.resources?.map((res: any, idx: number) => (
                                                             <div key={idx} className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-[10px] text-muted-foreground">
                                                                 <FileText size={10} className="text-primary/50" />
                                                                 <span className="truncate max-w-[120px]">{res.name}</span>
                                                                 <button onClick={() => {
-                                                                    const resArr = [...newLessonForms[mod.id].resources];
+                                                                    const resArr = [...(newLessonForms[mod.id]?.resources || [])];
                                                                     resArr.splice(idx, 1);
                                                                     setNewLessonForms(prev => ({ ...prev, [mod.id]: { ...prev[mod.id], resources: resArr } }));
                                                                 }} className="text-red-400 hover:text-red-300"><XCircle size={10} /></button>
@@ -939,17 +1215,29 @@ export default function GlobalMarketplacePage() {
                                 </div>
                             ))}
 
-                            <div className="flex gap-3">
-                                <input
-                                    className="flex-1 bg-white/[0.03] border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all font-bold"
-                                    placeholder="New module title..."
-                                    value={newModuleTitle}
-                                    onChange={e => setNewModuleTitle(e.target.value)}
-                                    onKeyDown={e => e.key === 'Enter' && addModule(selectedCourse.id)}
-                                />
+                            <div className="flex gap-3 items-start">
+                                <div className="flex-1 flex flex-col gap-1.5">
+                                    <input
+                                        className={`w-full bg-white/[0.03] border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 transition-all font-bold ${getValidationError('newModule') ? 'border-red-500/50 focus:ring-red-500/50' : 'border-white/10 focus:ring-primary/50'}`}
+                                        placeholder="New module title..."
+                                        value={newModuleTitle}
+                                        onChange={e => {
+                                            setNewModuleTitle(e.target.value);
+                                            if (getValidationError('newModule')) {
+                                                setValidationErrors((prev: any) => ({ ...prev, newModule: null }));
+                                            }
+                                        }}
+                                        onKeyDown={e => e.key === 'Enter' && addModule(selectedCourse.id)}
+                                    />
+                                    {getValidationError('newModule') && (
+                                        <p className="text-[11px] font-bold text-red-500 animate-in fade-in slide-in-from-top-1 ml-1 uppercase tracking-wider">
+                                            {getValidationError('newModule')}
+                                        </p>
+                                    )}
+                                </div>
                                 <button
                                     onClick={() => addModule(selectedCourse.id)}
-                                    className="px-6 py-3 bg-white text-black rounded-xl font-bold text-sm hover:opacity-90 flex items-center gap-2"
+                                    className="px-6 py-3 bg-white text-black rounded-xl font-bold text-sm hover:opacity-90 flex items-center gap-2 h-[46px]"
                                 >
                                     <Plus size={16} /> Add Module
                                 </button>
@@ -1541,7 +1829,7 @@ export default function GlobalMarketplacePage() {
                                         setUploadProgress(prev => ({ ...prev, [`res-${managingResources.id}`]: 0 }));
 
                                         try {
-                                            const data = await uploadFile(file, 
+                                            const data = await uploadFile(file,
                                                 { tenantId: 'system', courseId: selectedCourse?.id || 'global' },
                                                 (percent) => setUploadProgress(prev => ({ ...prev, [`res-${managingResources.id}`]: percent }))
                                             );

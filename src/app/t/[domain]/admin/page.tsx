@@ -10,7 +10,7 @@ import {
     Trash2, Edit3, CheckCircle2, Megaphone, Loader2,
     MoreVertical, GripVertical, Eye, EyeOff, Video, FileText, Lock,
     BarChart3, Clock, UserCheck, Award, CheckCircle, AlertCircle, Info, Bell, Mic, Archive, LogOut, User, Shield, UsersRound,
-    Filter, TrendingUp, Medal, Calendar, Target, Activity, Users2, Download, ScanSearch, UserCircle, LayoutList, Trash
+    Filter, TrendingUp, Medal, Calendar, Target, Activity, Users2, Download, ScanSearch, UserCircle, LayoutList, Trash, Menu, X
 } from 'lucide-react';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -68,9 +68,21 @@ export default function ClientAdminDashboard() {
     const [mounted, setMounted] = useState(false);
     const [activeTab, setActiveTab] = useState<Tab>('overview');
 
+    const [sidebarOpen, setSidebarOpen] = useState(false);
+
     useEffect(() => {
         setMounted(true);
+        const savedTab = localStorage.getItem('admin_active_tab') as Tab;
+        if (savedTab) {
+            setActiveTab(savedTab);
+        }
     }, []);
+
+    useEffect(() => {
+        if (activeTab) {
+            localStorage.setItem('admin_active_tab', activeTab);
+        }
+    }, [activeTab]);
 
     // Profile State
     const [showProfileModal, setShowProfileModal] = useState(false);
@@ -162,28 +174,94 @@ export default function ClientAdminDashboard() {
     const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({});
     const [validationErrors, setValidationErrors] = useState<Record<string, any>>({});
 
-    // Toast State
-    const [toasts, setToasts] = useState<Toast[]>([]);
-    const [confirmModal, setConfirmModal] = useState<{
-        title: string;
-        message: string;
-        resolve: (v: boolean) => void;
-        variant?: 'danger' | 'info'
-    } | null>(null);
-
-    const askConfirmation = (title: string, message: string, variant: 'danger' | 'info' = 'danger') => {
-        return new Promise<boolean>((resolve) => {
-            setConfirmModal({ title, message, resolve, variant });
-        });
+    const addToast = async (message: string, type: ToastType = 'success') => {
+        if (typeof window === 'undefined') return;
+        const win = window as any;
+        if (!win.Swal) {
+            // Load CSS
+            if (!document.getElementById('sweetalert2-css')) {
+                const link = document.createElement('link');
+                link.id = 'sweetalert2-css';
+                link.rel = 'stylesheet';
+                link.href = 'https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css';
+                document.head.appendChild(link);
+            }
+            // Load JS
+            await new Promise<void>((resolve) => {
+                const script = document.createElement('script');
+                script.src = 'https://cdn.jsdelivr.net/npm/sweetalert2@11';
+                script.onload = () => resolve();
+                script.onerror = () => resolve();
+                document.body.appendChild(script);
+            });
+        }
+        if (win.Swal) {
+            win.Swal.fire({
+                title: type.charAt(0).toUpperCase() + type.slice(1),
+                text: message,
+                icon: type,
+                background: 'var(--background)',
+                color: 'var(--foreground)',
+                customClass: {
+                    popup: 'rounded-[2rem] border border-border bg-background text-foreground shadow-2xl p-8',
+                    title: 'text-lg font-black uppercase tracking-tight text-foreground !m-0 !pt-2 font-sans',
+                    htmlContainer: 'text-sm text-muted-foreground font-medium !mt-2 !mb-6 font-sans',
+                    confirmButton: 'px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-black uppercase tracking-widest text-[10px] rounded-xl transition-all shadow-xl shadow-indigo-500/20 cursor-pointer font-sans'
+                },
+                buttonsStyling: false
+            });
+        } else {
+            alert(message);
+        }
     };
 
+    const askConfirmation = async (title: string, message: string, variant: 'danger' | 'info' = 'danger'): Promise<boolean> => {
+        if (typeof window === 'undefined') return false;
+        const win = window as any;
+        if (!win.Swal) {
+            // Load CSS
+            if (!document.getElementById('sweetalert2-css')) {
+                const link = document.createElement('link');
+                link.id = 'sweetalert2-css';
+                link.rel = 'stylesheet';
+                link.href = 'https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css';
+                document.head.appendChild(link);
+            }
+            // Load JS
+            await new Promise<void>((resolve) => {
+                const script = document.createElement('script');
+                script.src = 'https://cdn.jsdelivr.net/npm/sweetalert2@11';
+                script.onload = () => resolve();
+                script.onerror = () => resolve();
+                document.body.appendChild(script);
+            });
+        }
 
-    const addToast = (message: string, type: ToastType = 'success') => {
-        const id = Math.random().toString(36).substring(2, 9);
-        setToasts(prev => [...prev, { id, message, type }]);
-        setTimeout(() => {
-            setToasts(prev => prev.filter(t => t.id !== id));
-        }, 3000);
+        if (win.Swal) {
+            const result = await win.Swal.fire({
+                title,
+                text: message,
+                icon: variant === 'info' ? 'info' : 'warning',
+                showCancelButton: true,
+                confirmButtonText: variant === 'info' ? 'Confirm' : 'Confirm Delete',
+                cancelButtonText: 'Cancel',
+                background: 'var(--background)',
+                color: 'var(--foreground)',
+                customClass: {
+                    popup: 'rounded-[2rem] border border-border bg-background text-foreground shadow-2xl p-8',
+                    title: 'text-lg font-black uppercase tracking-tight text-foreground !m-0 !pt-2 font-sans',
+                    htmlContainer: 'text-sm text-muted-foreground font-medium !mt-2 !mb-6 font-sans',
+                    confirmButton: variant === 'info' 
+                        ? 'px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-black uppercase tracking-widest text-[10px] rounded-xl transition-all shadow-xl shadow-indigo-500/20 cursor-pointer font-sans mr-2'
+                        : 'px-6 py-3 bg-red-600 hover:bg-red-500 text-white font-black uppercase tracking-widest text-[10px] rounded-xl transition-all shadow-xl shadow-red-500/20 cursor-pointer font-sans mr-2',
+                    cancelButton: 'px-6 py-3 bg-secondary hover:bg-secondary/80 text-foreground font-black uppercase tracking-widest text-[10px] rounded-xl transition-all cursor-pointer font-sans ml-2'
+                },
+                buttonsStyling: false
+            });
+            return !!result.isConfirmed;
+        } else {
+            return confirm(message);
+        }
     };
 
     const can = useCallback((permission: string) => adminPermissions.length === 0 || adminPermissions.includes(permission), [adminPermissions]);
@@ -1264,6 +1342,23 @@ export default function ClientAdminDashboard() {
         }
         setValidationErrors(prev => ({ ...prev, announcement: null }));
 
+        // Check for duplicates
+        const isDuplicateTitle = announcements.some(
+            (ann) => ann.title.trim().toLowerCase() === announcementForm.title.trim().toLowerCase()
+        );
+        const isDuplicateBody = announcements.some(
+            (ann) => ann.body.trim().toLowerCase() === announcementForm.body.trim().toLowerCase()
+        );
+
+        if (isDuplicateTitle) {
+            addToast('An announcement with this title already exists', 'error');
+            return;
+        }
+        if (isDuplicateBody) {
+            addToast('An announcement with this message content already exists', 'error');
+            return;
+        }
+
         try {
             const res = await fetch(`/api/t/${domain}/announcements`, {
                 method: 'POST',
@@ -1292,9 +1387,31 @@ export default function ClientAdminDashboard() {
 
     return (
         <div className="min-h-screen bg-background flex">
+            {/* Mobile sidebar overlay */}
+            {sidebarOpen && (
+                <div
+                    className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm md:hidden"
+                    onClick={() => setSidebarOpen(false)}
+                />
+            )}
+
             {/* Sidebar */}
-            <aside className="w-64 border-r border-border bg-secondary/10 p-6 flex flex-col gap-8 sticky top-0 h-screen">
+            <aside className={`
+                fixed top-0 left-0 h-screen z-50 w-64 border-r border-border bg-secondary/10 p-6 flex flex-col gap-8
+                transition-transform duration-300 ease-in-out
+                md:sticky md:translate-x-0 md:z-auto
+                ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+            `}>
                 <div className="flex items-center gap-3 px-2">
+                    {/* Close button — mobile only */}
+                    <button
+                        onClick={() => setSidebarOpen(false)}
+                        className="md:hidden absolute top-4 right-4 p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-all"
+                        aria-label="Close sidebar"
+                    >
+                        <X size={18} />
+                    </button>
+
                     {(branding.logoDark || branding.logoLight) ? (
                         <div className="h-14 w-auto min-w-[3rem] flex items-center justify-center bg-transparent">
                             <img 
@@ -1314,9 +1431,9 @@ export default function ClientAdminDashboard() {
                     </div>
                 </div>
 
-                <nav className="space-y-1 flex-1">
+                <nav className="space-y-1 flex-1 overflow-y-auto min-h-0 pr-1 no-scrollbar">
                     {visibleTabs.map(([tab, label, Icon]) => (
-                        <button key={tab} onClick={() => { setActiveTab(tab); setSelectedCourse(null); }}
+                        <button key={tab} onClick={() => { setActiveTab(tab); setSelectedCourse(null); setSidebarOpen(false); }}
                             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === tab ? 'bg-primary/10 text-primary border border-primary/20' : 'text-muted-foreground hover:bg-secondary/50 hover:text-foreground'}`}>
                             <Icon size={18} />
                             {label}
@@ -1331,11 +1448,21 @@ export default function ClientAdminDashboard() {
             </aside>
 
             {/* Main Content */}
-            <main className="flex-1 p-8 overflow-auto">
+            <main className="flex-1 p-4 md:p-8 overflow-auto min-w-0">
                 <header className="flex justify-between items-center mb-8">
-                    <h2 className="text-2xl font-black uppercase tracking-tight">
-                        {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
-                    </h2>
+                    <div className="flex items-center gap-3">
+                        {/* Hamburger — mobile only */}
+                        <button
+                            onClick={() => setSidebarOpen(true)}
+                            className="md:hidden p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-all"
+                            aria-label="Open sidebar"
+                        >
+                            <Menu size={20} />
+                        </button>
+                        <h2 className="text-2xl font-black uppercase tracking-tight">
+                            {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
+                        </h2>
+                    </div>
                     <div className="flex items-center gap-4">
                         {activeTab === 'courses' && !selectedCourse && (
                             <button onClick={() => setShowCourseModal(true)} className="px-4 py-2 bg-primary text-primary-foreground rounded-xl font-bold text-sm flex items-center gap-2 hover:opacity-90 transition-opacity whitespace-nowrap">
@@ -2033,12 +2160,12 @@ export default function ClientAdminDashboard() {
                                                     )}
                                                     <div className="absolute top-3 left-3 flex flex-col gap-1.5 pointer-events-none">
                                                         {course.exclusiveRole && (
-                                                            <span className="px-2 py-1 text-[10px] font-black uppercase rounded-lg bg-indigo-500/20 border border-indigo-500/30 text-indigo-400 backdrop-blur-md flex items-center gap-1 shadow-2xl">
+                                                            <span className="px-2 py-1 text-[10px] font-black uppercase rounded-lg bg-indigo-950/90 border border-indigo-500/50 text-indigo-300 backdrop-blur-md flex items-center gap-1 shadow-2xl">
                                                                 <Lock size={10} /> Exclusive: {course.exclusiveRole.name}
                                                             </span>
                                                         )}
                                                         {course.exclusiveTeam && (
-                                                            <span className="px-2 py-1 text-[10px] font-black uppercase rounded-lg bg-cyan-500/20 border border-cyan-500/30 text-cyan-400 backdrop-blur-md flex items-center gap-1 shadow-2xl">
+                                                            <span className="px-2 py-1 text-[10px] font-black uppercase rounded-lg bg-cyan-950/90 border border-cyan-500/50 text-cyan-300 backdrop-blur-md flex items-center gap-1 shadow-2xl">
                                                                 <UsersRound size={10} /> Team: {course.exclusiveTeam.name}
                                                             </span>
                                                         )}
@@ -2762,18 +2889,30 @@ export default function ClientAdminDashboard() {
                                 key={editingTemplate.id}
                                 template={editingTemplate} 
                                 onBack={() => { setEditingTemplate(null); fetchAvailableTemplates(); }}
-                                onSave={async (id, designFields, backgroundImage) => {
+                                onSave={async (id, designFields, backgroundImage, name) => {
                                     try {
-                                        const res = await fetch(`/api/t/${domain}/certificates/${id}`, {
-                                            method: 'PATCH',
+                                        const isNew = id === 'new';
+                                        const url = isNew 
+                                            ? `/api/t/${domain}/certificates` 
+                                            : `/api/t/${domain}/certificates/${id}`;
+                                        const method = isNew ? 'POST' : 'PATCH';
+                                        
+                                        const res = await fetch(url, {
+                                            method,
                                             headers: { 'Content-Type': 'application/json' },
-                                            body: JSON.stringify({ designFields, backgroundImage })
+                                            body: JSON.stringify({ designFields, backgroundImage, name })
                                         });
+                                        const data = await res.json();
                                         if (res.ok) {
                                             addToast('Design saved successfully.', 'success');
+                                            setEditingTemplate(null);
+                                            fetchAvailableTemplates();
+                                        } else {
+                                            addToast(data.error || 'Failed to save design.', 'error');
                                         }
                                     } catch (e) {
                                         console.error(e);
+                                        addToast('Network error while saving design.', 'error');
                                     }
                                 }}
                             />
@@ -2782,6 +2921,7 @@ export default function ClientAdminDashboard() {
                                 domain={domain as string} 
                                 addToast={addToast} 
                                 onEditTemplate={(t) => setEditingTemplate(t)}
+                                askConfirmation={askConfirmation}
                             />
                         )}
                     </div>
@@ -2791,12 +2931,12 @@ export default function ClientAdminDashboard() {
             {/* Modals */}
             {showCourseModal && (
                 <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/70 backdrop-blur-sm">
-                    <div className="bg-background border border-border w-full max-w-md rounded-3xl p-8 space-y-6 shadow-2xl">
-                        <div className="flex justify-between items-center">
+                    <div className="bg-background border border-border w-full max-w-2xl max-h-[90vh] rounded-3xl p-8 space-y-6 shadow-2xl flex flex-col">
+                        <div className="flex justify-between items-center shrink-0">
                             <h3 className="text-xl font-black">{selectedCourse && showCourseModal ? 'Edit Course' : 'Create New Course'}</h3>
                             <button onClick={() => { setShowCourseModal(false); if (selectedCourse) setCourseForm({ title: '', description: '', thumbnail: '', skillLevel: 'All Levels', languages: 'English', captions: false, isMarketplace: false, exclusiveRoleId: '', exclusiveTeamId: '', certificateEnabled: false, certificateTemplateId: '' }); }} className="text-muted-foreground hover:text-foreground"><XCircle size={24} /></button>
                         </div>
-                        <form onSubmit={selectedCourse ? updateCourse : createCourse} className="space-y-4">
+                        <form onSubmit={selectedCourse ? updateCourse : createCourse} className="space-y-4 flex-1 overflow-y-auto pr-2 custom-scrollbar">
                             <div className="space-y-1.5">
                                 <div className="flex justify-between items-center">
                                     <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Course Title</label>
@@ -2900,25 +3040,39 @@ export default function ClientAdminDashboard() {
                             )}
                             {/* Exclusive Role/Team Gating */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-1.5">
-                                    <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Exclusive to Role (Optional)</label>
-                                    <select value={courseForm.exclusiveRoleId} onChange={e => setCourseForm({ ...courseForm, exclusiveRoleId: e.target.value, isMarketplace: (e.target.value || courseForm.exclusiveTeamId) ? false : courseForm.isMarketplace })}
-                                        className="w-full bg-secondary/30 border border-border/50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all">
-                                        <option value="">No Restriction — All Learners</option>
-                                        {availableRoles.map((r: any) => <option key={r.id} value={r.id}>{r.name} Only</option>)}
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Exclusive to Role (Optional)</label>
+                                    <select 
+                                        value={courseForm.exclusiveRoleId} 
+                                        onChange={e => setCourseForm({ ...courseForm, exclusiveRoleId: e.target.value, isMarketplace: (e.target.value || courseForm.exclusiveTeamId) ? false : courseForm.isMarketplace })}
+                                        className="w-full bg-secondary/50 border border-border/50 rounded-2xl px-5 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all hover:border-primary/30 cursor-pointer font-bold text-foreground"
+                                    >
+                                        <option value="" className="bg-background">No Restriction — All Learners</option>
+                                        {availableRoles.map((r: any) => <option key={r.id} value={r.id} className="bg-background">{r.name} Only</option>)}
                                     </select>
                                 </div>
-                                <div className="space-y-1.5">
-                                    <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Exclusive to Team (Optional)</label>
-                                    <select value={courseForm.exclusiveTeamId} onChange={e => setCourseForm({ ...courseForm, exclusiveTeamId: e.target.value, isMarketplace: (e.target.value || courseForm.exclusiveRoleId) ? false : courseForm.isMarketplace })}
-                                        className="w-full bg-secondary/30 border border-border/50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all">
-                                        <option value="">No Restriction — All Learners</option>
-                                        {availableTeams.map((t: any) => <option key={t.id} value={t.id}>{t.name} Only</option>)}
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Exclusive to Team (Optional)</label>
+                                    <select 
+                                        value={courseForm.exclusiveTeamId} 
+                                        onChange={e => setCourseForm({ ...courseForm, exclusiveTeamId: e.target.value, isMarketplace: (e.target.value || courseForm.exclusiveRoleId) ? false : courseForm.isMarketplace })}
+                                        className="w-full bg-secondary/50 border border-border/50 rounded-2xl px-5 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all hover:border-primary/30 cursor-pointer font-bold text-foreground"
+                                    >
+                                        <option value="" className="bg-background">No Restriction — All Learners</option>
+                                        {availableTeams.map((t: any) => <option key={t.id} value={t.id} className="bg-background">{t.name} Only</option>)}
                                     </select>
                                 </div>
                             </div>
                             {(courseForm.exclusiveRoleId || courseForm.exclusiveTeamId) && (
-                                <p className="text-[10px] text-amber-600/80 font-bold">⚠ Exclusive courses are hidden from the Marketplace and invisible to learners without this {courseForm.exclusiveRoleId && courseForm.exclusiveTeamId ? 'role and team' : courseForm.exclusiveRoleId ? 'role' : 'team'}.</p>
+                                <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-medium flex items-start gap-3 animate-in slide-in-from-top-2 duration-300">
+                                    <span className="text-base mt-0.5">⚠️</span>
+                                    <div className="space-y-1">
+                                        <p className="font-black uppercase tracking-wider text-[10px] text-amber-400">Exclusive Gating Active</p>
+                                        <p className="text-muted-foreground/80 leading-relaxed font-bold">
+                                            Exclusive courses are hidden from the Marketplace and invisible to learners without this {courseForm.exclusiveRoleId && courseForm.exclusiveTeamId ? 'role and team' : courseForm.exclusiveRoleId ? 'role' : 'team'}.
+                                        </p>
+                                    </div>
+                                </div>
                             )}
                             <button type="submit" className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-bold hover:opacity-90">
                                 {selectedCourse ? 'Save Changes' : 'Create Course'}
@@ -3271,12 +3425,12 @@ export default function ClientAdminDashboard() {
 
             {showAnnouncementModal && (
                 <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/70 backdrop-blur-sm">
-                    <div className="bg-background border border-border w-full max-w-md rounded-3xl p-8 space-y-6 shadow-2xl">
-                        <div className="flex justify-between items-center">
+                    <div className="bg-background border border-border w-full max-w-2xl max-h-[90vh] rounded-3xl p-8 space-y-6 shadow-2xl flex flex-col">
+                        <div className="flex justify-between items-center shrink-0">
                             <h3 className="text-xl font-black">Post Announcement</h3>
                             <button onClick={() => setShowAnnouncementModal(false)} className="text-muted-foreground hover:text-foreground"><XCircle size={24} /></button>
                         </div>
-                        <form onSubmit={createAnnouncement} className="space-y-4">
+                        <form onSubmit={createAnnouncement} className="space-y-4 flex-1 overflow-y-auto pr-2 custom-scrollbar">
                             <div className="space-y-1.5">
                                 <div className="flex justify-between items-center">
                                     <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Title</label>
@@ -3510,8 +3664,8 @@ export default function ClientAdminDashboard() {
 
             {/* ── AUDIT LOG METADATA PANEL ── */}
             {selectedLogMetadata && (
-                <div className="fixed inset-0 z-[500] flex justify-end bg-black/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setSelectedLogMetadata(null)}>
-                    <div className="w-full max-w-lg bg-background border-l border-border/50 h-full flex flex-col shadow-2xl animate-in slide-in-from-right duration-300" onClick={e => e.stopPropagation()}>
+                <div className="fixed inset-0 z-[500] flex items-center justify-center p-6 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setSelectedLogMetadata(null)}>
+                    <div className="w-full max-w-2xl bg-background border border-border/50 max-h-[90vh] rounded-3xl flex flex-col shadow-2xl animate-in zoom-in-95 duration-300" onClick={e => e.stopPropagation()}>
                         <div className="px-8 py-6 border-b border-border/50 flex justify-between items-center bg-secondary/10">
                             <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
@@ -3713,10 +3867,10 @@ export default function ClientAdminDashboard() {
             )}
             {showProfileModal && (
                 <div className="fixed inset-0 z-[400] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md animate-in fade-in duration-300">
-                    <div className="bg-background border border-border/50 w-full max-w-md rounded-[2rem] p-8 space-y-6 shadow-2xl relative overflow-hidden">
-                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-blue-500" />
+                    <div className="bg-background border border-border/50 w-full max-w-md max-h-[90vh] rounded-[2rem] p-8 space-y-6 shadow-2xl relative overflow-hidden flex flex-col">
+                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-blue-500 shrink-0" />
 
-                        <div className="flex justify-between items-center">
+                        <div className="flex justify-between items-center shrink-0">
                             <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
                                     <Settings className="w-6 h-6 text-primary" />
@@ -3728,7 +3882,7 @@ export default function ClientAdminDashboard() {
                             </button>
                         </div>
 
-                        <form onSubmit={handleUpdateProfile} className="space-y-4">
+                        <form onSubmit={handleUpdateProfile} className="space-y-4 flex-1 overflow-y-auto pr-2 custom-scrollbar">
                             <div className="p-4 rounded-2xl bg-secondary/20 border border-border/50 space-y-3">
                                 <div className="flex items-center gap-3">
                                     <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center font-black text-primary border border-primary/20">
@@ -3794,45 +3948,7 @@ export default function ClientAdminDashboard() {
                     </div>
                 </div>
             )}
-            {confirmModal && (
-                <div className="fixed inset-0 z-[300] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md animate-in fade-in duration-300">
-                    <div className="bg-background border border-border/50 w-full max-w-sm rounded-[2rem] p-8 space-y-6 shadow-2xl relative overflow-hidden">
-                        <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${confirmModal.variant === 'info' ? 'from-indigo-500/50 via-indigo-500 to-indigo-500/50' : 'from-red-500/50 via-red-500 to-red-500/50'}`} />
 
-                        <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 ${confirmModal.variant === 'info' ? 'bg-indigo-500/10' : 'bg-red-500/10'}`}>
-                            {confirmModal.variant === 'info' ? <Info className="w-10 h-10 text-indigo-500" /> : <Trash2 className="w-10 h-10 text-red-500" />}
-                        </div>
-
-                        <div className="text-center space-y-2">
-                            <h3 className="text-2xl font-black">{confirmModal.title}</h3>
-                            <p className="text-muted-foreground text-sm">
-                                {confirmModal.message}
-                            </p>
-                        </div>
-
-                        <div className="flex gap-4 pt-4">
-                            <button
-                                onClick={() => {
-                                    confirmModal.resolve(false);
-                                    setConfirmModal(null);
-                                }}
-                                className="flex-1 py-4 bg-secondary hover:bg-secondary/80 rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={() => {
-                                    confirmModal.resolve(true);
-                                    setConfirmModal(null);
-                                }}
-                                className={`flex-1 py-4 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-lg hover:scale-[1.02] transition-all ${confirmModal.variant === 'info' ? 'bg-indigo-600 shadow-indigo-500/20' : 'bg-red-500 shadow-red-500/20'}`}
-                            >
-                                {confirmModal.variant === 'info' ? 'Confirm' : 'Confirm Delete'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }

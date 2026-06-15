@@ -42,8 +42,9 @@ function TeamSlideOver({ editingTeam, learners, setEditingTeam, onSave, onDelete
                 onClick={() => setEditingTeam(null)}
             />
 
-            {/* Slide-over panel */}
-            <div className="fixed inset-y-0 right-0 z-[300] w-full max-w-2xl flex flex-col bg-background border-l border-border/60 shadow-2xl animate-in slide-in-from-right duration-300">
+            {/* Centered Modal */}
+            <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 pointer-events-none">
+                <div className="pointer-events-auto w-full max-w-2xl max-h-[90vh] flex flex-col bg-background border border-border/60 rounded-3xl shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden">
 
                 {/* ── Header ── */}
                 <div className="flex items-start justify-between px-8 py-6 border-b border-border/50 flex-shrink-0 bg-gradient-to-r from-primary/5 to-transparent">
@@ -196,7 +197,8 @@ function TeamSlideOver({ editingTeam, learners, setEditingTeam, onSave, onDelete
                     </button>
                 </div>
             </div>
-        </>
+        </div>
+    </>
     );
 }
 
@@ -233,7 +235,23 @@ export function TeamsManager({ domain, addToast }: { domain: string, addToast: (
     };
 
     const handleCreateTeam = async () => {
-        if (!editingTeam?.name?.trim()) return;
+        if (!editingTeam?.name?.trim()) {
+            addToast('Team name is required', 'error');
+            return;
+        }
+        if (!editingTeam?.description?.trim()) {
+            addToast('Description is required', 'error');
+            return;
+        }
+
+        // Check for duplicate team name
+        const targetName = editingTeam.name.trim().toLowerCase();
+        const nameExists = teams.some(t => t.name.trim().toLowerCase() === targetName);
+        if (nameExists) {
+            addToast('Team name already exists in this workspace', 'error');
+            return;
+        }
+
         setIsSubmitting(true);
         try {
             const res = await fetch(`/api/t/${domain}/teams`, {
@@ -263,6 +281,24 @@ export function TeamsManager({ domain, addToast }: { domain: string, addToast: (
 
     const handleUpdateTeam = async () => {
         if (!editingTeam) return;
+        if (!editingTeam?.name?.trim()) {
+            addToast('Team name is required', 'error');
+            return;
+        }
+        if (!editingTeam?.description?.trim()) {
+            addToast('Description is required', 'error');
+            return;
+        }
+
+        // Check for duplicate team name
+        const targetName = editingTeam.name.trim().toLowerCase();
+        const nameExists = teams.some(t => t.name.trim().toLowerCase() === targetName && t.id !== editingTeam.id);
+        if (nameExists) {
+            addToast('Team name already exists in this workspace', 'error');
+            return;
+        }
+
+        setIsSubmitting(true);
         try {
             const res = await fetch(`/api/t/${domain}/teams`, {
                 method: 'PUT',
@@ -285,6 +321,8 @@ export function TeamsManager({ domain, addToast }: { domain: string, addToast: (
             }
         } catch (e) {
             addToast('Error updating team', 'error');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 

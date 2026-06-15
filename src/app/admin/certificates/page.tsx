@@ -11,6 +11,47 @@ interface Template {
     createdAt: string;
 }
 
+const showSwal = async (title: string, text: string, icon: 'success' | 'error' | 'warning' | 'info') => {
+    if (typeof window === 'undefined') return;
+    const win = window as any;
+    if (!win.Swal) {
+        // Load CSS
+        if (!document.getElementById('sweetalert2-css')) {
+            const link = document.createElement('link');
+            link.id = 'sweetalert2-css';
+            link.rel = 'stylesheet';
+            link.href = 'https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css';
+            document.head.appendChild(link);
+        }
+        // Load JS
+        await new Promise<void>((resolve) => {
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/sweetalert2@11';
+            script.onload = () => resolve();
+            script.onerror = () => resolve();
+            document.body.appendChild(script);
+        });
+    }
+    if (win.Swal) {
+        return win.Swal.fire({
+            title,
+            text,
+            icon,
+            background: 'var(--background)',
+            color: 'var(--foreground)',
+            customClass: {
+                popup: 'rounded-[2rem] border border-border bg-background text-foreground shadow-2xl p-8',
+                title: 'text-lg font-black uppercase tracking-tight text-foreground !m-0 !pt-2 font-sans',
+                htmlContainer: 'text-sm text-muted-foreground font-medium !mt-2 !mb-6 font-sans',
+                confirmButton: 'px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-black uppercase tracking-widest text-[10px] rounded-xl transition-all shadow-xl shadow-indigo-500/20 cursor-pointer font-sans'
+            },
+            buttonsStyling: false
+        });
+    } else {
+        alert(`${title}: ${text}`);
+    }
+};
+
 export default function SuperAdminCertificates() {
     const [templates, setTemplates] = useState<Template[]>([]);
     const [loading, setLoading] = useState(true);
@@ -18,7 +59,6 @@ export default function SuperAdminCertificates() {
     const [uploading, setUploading] = useState(false);
     const [newTemplate, setNewTemplate] = useState({ name: '', image: '' });
     const [search, setSearch] = useState('');
-    const [deletingId, setDeletingId] = useState<string | null>(null);
     const [uploadError, setUploadError] = useState('');
 
     useEffect(() => {
@@ -68,23 +108,78 @@ export default function SuperAdminCertificates() {
                 setShowUpload(false);
                 setNewTemplate({ name: '', image: '' });
                 setUploadError('');
+                showSwal('Success', 'Template added successfully!', 'success');
+            } else {
+                const data = await res.json();
+                showSwal('Error', data.error || 'Failed to add template', 'error');
             }
         } catch (e) {
             console.error(e);
+            showSwal('Error', 'An error occurred', 'error');
         } finally {
             setUploading(false);
         }
     };
 
     const deleteTemplate = async (id: string) => {
+        if (typeof window === 'undefined') return;
+        const win = window as any;
+        if (!win.Swal) {
+            // Load CSS
+            if (!document.getElementById('sweetalert2-css')) {
+                const link = document.createElement('link');
+                link.id = 'sweetalert2-css';
+                link.rel = 'stylesheet';
+                link.href = 'https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css';
+                document.head.appendChild(link);
+            }
+            // Load JS
+            await new Promise<void>((resolve) => {
+                const script = document.createElement('script');
+                script.src = 'https://cdn.jsdelivr.net/npm/sweetalert2@11';
+                script.onload = () => resolve();
+                script.onerror = () => resolve();
+                document.body.appendChild(script);
+            });
+        }
+
+        if (win.Swal) {
+            const result = await win.Swal.fire({
+                title: 'Delete Certificate Template?',
+                text: 'Are you sure you want to delete this global certificate background template?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, Delete Template',
+                cancelButtonText: 'Cancel',
+                background: 'var(--background)',
+                color: 'var(--foreground)',
+                customClass: {
+                    popup: 'rounded-[2rem] border border-border bg-background text-foreground shadow-2xl p-8',
+                    title: 'text-lg font-black uppercase tracking-tight text-foreground !m-0 !pt-2 font-sans',
+                    htmlContainer: 'text-sm text-muted-foreground font-medium !mt-2 !mb-6 font-sans',
+                    confirmButton: 'px-6 py-3 bg-red-600 hover:bg-red-500 text-white font-black uppercase tracking-widest text-[10px] rounded-xl transition-all shadow-xl shadow-red-500/20 cursor-pointer font-sans mr-2',
+                    cancelButton: 'px-6 py-3 bg-secondary hover:bg-secondary/80 text-foreground font-black uppercase tracking-widest text-[10px] rounded-xl transition-all cursor-pointer font-sans ml-2'
+                },
+                buttonsStyling: false
+            });
+
+            if (!result.isConfirmed) return;
+        } else {
+            if (!confirm('Are you sure you want to delete this global certificate background template?')) return;
+        }
+
         try {
             const res = await fetch(`/api/admin/certificates?id=${id}`, { method: 'DELETE' });
             if (res.ok) {
                 fetchTemplates();
-                setDeletingId(null);
+                showSwal('Success', 'Template deleted successfully!', 'success');
+            } else {
+                const data = await res.json();
+                showSwal('Error', data.error || 'Failed to delete template', 'error');
             }
         } catch (e) {
             console.error(e);
+            showSwal('Error', 'An error occurred', 'error');
         }
     };
 
@@ -154,12 +249,11 @@ export default function SuperAdminCertificates() {
                                 <button
                                     onClick={(e) => {
                                         e.stopPropagation();
-                                        if (deletingId === template.id) { deleteTemplate(template.id); }
-                                        else { setDeletingId(template.id); setTimeout(() => setDeletingId(null), 3000); }
+                                        deleteTemplate(template.id);
                                     }}
-                                    className={`p-2.5 rounded-xl transition-all flex items-center gap-2 ${deletingId === template.id ? 'bg-red-500 text-white px-4 scale-110 shadow-lg' : 'hover:bg-red-500/10 text-muted-foreground hover:text-red-500 opacity-0 group-hover:opacity-100'}`}
+                                    className="p-2.5 rounded-xl transition-all flex items-center gap-2 hover:bg-red-500/10 text-muted-foreground hover:text-red-500 opacity-0 group-hover:opacity-100"
                                 >
-                                    {deletingId === template.id ? <span className="text-[10px] font-black uppercase tracking-widest">Confirm?</span> : <Trash2 className="w-5 h-5" />}
+                                    <Trash2 className="w-5 h-5" />
                                 </button>
                             </div>
                         </div>

@@ -24,7 +24,8 @@ export async function checkSession(req: NextRequest, domain: string, requiredRol
         }
     });
 
-    if (!user || user.tenant.subdomain !== domain) return null;
+    const isPlatformStaff = user?.role === 'SUPER_ADMIN' || user?.role === 'PLATFORM_MANAGER';
+    if (!user || (user.tenant.subdomain !== domain && !isPlatformStaff)) return null;
 
     let permissionRows: { tenantAdminPermissions: string[] | null }[] = [];
     try {

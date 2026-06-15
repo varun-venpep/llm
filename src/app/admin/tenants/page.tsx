@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search, MoreVertical, Building2, CheckCircle2, ShieldCheck, Edit2, Trash2, AlertTriangle, Loader2, ExternalLink, Copy, Check, Eye, EyeOff } from 'lucide-react';
+import { Search, MoreVertical, Building2, CheckCircle2, ShieldCheck, Edit2, Trash2, AlertTriangle, Loader2, ExternalLink, Copy, Check, Eye, EyeOff, Plus } from 'lucide-react';
 
 interface Tenant {
     id: string;
@@ -28,6 +28,47 @@ const getCurrencySymbol = (currencyCode?: string) => {
         case 'GBP': return '£';
         case 'INR': return '₹';
         case 'USD': default: return '$';
+    }
+};
+
+const showSwal = async (title: string, text: string, icon: 'success' | 'error' | 'warning' | 'info') => {
+    if (typeof window === 'undefined') return;
+    const win = window as any;
+    if (!win.Swal) {
+        // Load CSS
+        if (!document.getElementById('sweetalert2-css')) {
+            const link = document.createElement('link');
+            link.id = 'sweetalert2-css';
+            link.rel = 'stylesheet';
+            link.href = 'https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css';
+            document.head.appendChild(link);
+        }
+        // Load JS
+        await new Promise<void>((resolve) => {
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/sweetalert2@11';
+            script.onload = () => resolve();
+            script.onerror = () => resolve();
+            document.body.appendChild(script);
+        });
+    }
+    if (win.Swal) {
+        return win.Swal.fire({
+            title,
+            text,
+            icon,
+            background: 'var(--background)',
+            color: 'var(--foreground)',
+            customClass: {
+                popup: 'rounded-[2rem] border border-border bg-background text-foreground shadow-2xl p-8',
+                title: 'text-lg font-black uppercase tracking-tight text-foreground !m-0 !pt-2 font-sans',
+                htmlContainer: 'text-sm text-muted-foreground font-medium !mt-2 !mb-6 font-sans',
+                confirmButton: 'px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white font-black uppercase tracking-widest text-[10px] rounded-xl transition-all shadow-xl shadow-blue-500/20 cursor-pointer font-sans'
+            },
+            buttonsStyling: false
+        });
+    } else {
+        alert(`${title}: ${text}`);
     }
 };
 
@@ -72,6 +113,67 @@ export default function TenantsPage() {
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [deletingTenant, setDeletingTenant] = useState<Tenant | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
+
+    // Create Modal State
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [isCreating, setIsCreating] = useState(false);
+    const [createForm, setCreateForm] = useState({
+        name: '',
+        subdomain: '',
+        adminEmail: '',
+        adminPassword: '',
+        globalMarketplaceEnabled: false,
+        courseCredits: 0,
+    });
+    const [showCreatePassword, setShowCreatePassword] = useState(false);
+
+    const handleCreate = async (e: React.FormEvent) => {
+        e.preventDefault();
+        
+        // Check for duplicate name
+        const nameExists = tenants.some(t => t.name.trim().toLowerCase() === createForm.name.trim().toLowerCase());
+        if (nameExists) {
+            showSwal('Duplicate Name', 'Organization name already exists', 'error');
+            return;
+        }
+
+        // Check for duplicate subdomain
+        const subdomainExists = tenants.some(t => t.subdomain.trim().toLowerCase() === createForm.subdomain.trim().toLowerCase());
+        if (subdomainExists) {
+            showSwal('Duplicate Subdomain', 'Subdomain already exists', 'error');
+            return;
+        }
+
+        setIsCreating(true);
+        try {
+            const res = await fetch('/api/admin/tenants', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(createForm)
+            });
+            if (res.ok) {
+                await fetchTenants();
+                setIsCreateModalOpen(false);
+                setCreateForm({
+                    name: '',
+                    subdomain: '',
+                    adminEmail: '',
+                    adminPassword: '',
+                    globalMarketplaceEnabled: false,
+                    courseCredits: 0,
+                });
+                showSwal('Success', 'Workspace created successfully!', 'success');
+            } else {
+                const data = await res.json();
+                showSwal('Error', data.error || 'Failed to create tenant', 'error');
+            }
+        } catch (err) {
+            console.error(err);
+            showSwal('Error', 'An error occurred', 'error');
+        } finally {
+            setIsCreating(false);
+        }
+    };
 
     const fetchTenants = async () => {
         try {
@@ -121,6 +223,21 @@ export default function TenantsPage() {
     const handleUpdate = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!editingTenant) return;
+
+        // Check for duplicate name
+        const nameExists = tenants.some(t => t.name.trim().toLowerCase() === editForm.name.trim().toLowerCase() && t.id !== editingTenant.id);
+        if (nameExists) {
+            showSwal('Duplicate Name', 'Organization name already exists', 'error');
+            return;
+        }
+
+        // Check for duplicate subdomain
+        const subdomainExists = tenants.some(t => t.subdomain.trim().toLowerCase() === editForm.subdomain.trim().toLowerCase() && t.id !== editingTenant.id);
+        if (subdomainExists) {
+            showSwal('Duplicate Subdomain', 'Subdomain already exists', 'error');
+            return;
+        }
+
         setIsUpdating(true);
         try {
             const res = await fetch(`/api/admin/tenants/${editingTenant.id}`, {
@@ -132,13 +249,14 @@ export default function TenantsPage() {
                 await fetchTenants();
                 setIsEditModalOpen(false);
                 setEditForm(prev => ({ ...prev, newPassword: '' }));
+                showSwal('Success', 'Workspace updated successfully!', 'success');
             } else {
                 const data = await res.json();
-                alert(data.error || 'Failed to update tenant');
+                showSwal('Error', data.error || 'Failed to update tenant', 'error');
             }
         } catch (err) {
             console.error(err);
-            alert('An error occurred');
+            showSwal('Error', 'An error occurred', 'error');
         } finally {
             setIsUpdating(false);
         }
@@ -154,13 +272,14 @@ export default function TenantsPage() {
             if (res.ok) {
                 await fetchTenants();
                 setIsDeleteModalOpen(false);
+                showSwal('Success', 'Workspace deleted successfully!', 'success');
             } else {
                 const data = await res.json();
-                alert(data.error || 'Failed to delete tenant');
+                showSwal('Error', data.error || 'Failed to delete tenant', 'error');
             }
         } catch (err) {
             console.error(err);
-            alert('An error occurred');
+            showSwal('Error', 'An error occurred', 'error');
         } finally {
             setIsDeleting(false);
         }
@@ -173,6 +292,12 @@ export default function TenantsPage() {
                     <h1 className="text-2xl font-black tracking-tight uppercase">Tenant Management</h1>
                     <p className="text-muted-foreground text-sm font-medium">Manage all active and inactive client workspaces across the platform.</p>
                 </div>
+                <button
+                    onClick={() => setIsCreateModalOpen(true)}
+                    className="flex items-center gap-2 px-5 py-3 bg-blue-600 hover:bg-blue-500 text-white font-black uppercase tracking-widest text-xs rounded-xl transition-all shadow-xl shadow-blue-500/20 group"
+                >
+                    <Plus className="w-4 h-4 group-hover:scale-110 transition-transform" /> Create Tenant
+                </button>
             </div>
 
             <div className="glassmorphism rounded-2xl overflow-hidden border border-border/50">
@@ -490,6 +615,126 @@ export default function TenantsPage() {
                                     className="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white font-black uppercase tracking-widest text-xs rounded-xl transition-all shadow-xl shadow-blue-500/20 disabled:opacity-50 flex items-center justify-center gap-2 group"
                                 >
                                     {isUpdating ? <><Loader2 className="w-4 h-4 animate-spin" /> Syncing Changes...</> : <>Save Workspace Configuration <Check className="w-4 h-4 group-hover:scale-110 transition-transform" /></>}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Create Tenant Modal */}
+            {isCreateModalOpen && (
+                <div className="fixed inset-0 z-[200] flex items-center justify-center overflow-y-auto p-4 sm:p-6 bg-black/70 backdrop-blur-sm">
+                    <div className="bg-background border border-border w-full max-w-lg max-h-[calc(100vh-2rem)] sm:max-h-[calc(100vh-3rem)] rounded-3xl shadow-2xl p-6 sm:p-8 my-auto space-y-6 overflow-y-auto">
+                        <div className="flex justify-between items-center">
+                            <h3 className="text-xl font-black uppercase tracking-tight flex items-center gap-2">
+                                <Plus className="w-5 h-5 text-emerald-400" /> Create Workspace
+                            </h3>
+                            <button onClick={() => setIsCreateModalOpen(false)} className="text-muted-foreground hover:text-foreground text-2xl">&times;</button>
+                        </div>
+
+                        <form onSubmit={handleCreate} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-6 md:col-span-2">
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Organization Name</label>
+                                    <input
+                                        type="text"
+                                        className="w-full bg-secondary/50 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                                        value={createForm.name}
+                                        onChange={e => setCreateForm({ ...createForm, name: e.target.value })}
+                                        required
+                                        placeholder="e.g. Acme Corporation"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Subdomain</label>
+                                <input
+                                    type="text"
+                                    className="w-full bg-secondary/50 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 font-mono"
+                                    value={createForm.subdomain}
+                                    onChange={e => setCreateForm({ ...createForm, subdomain: e.target.value })}
+                                    required
+                                    placeholder="acme"
+                                />
+                                {createForm.subdomain && (
+                                    <span className="text-[9px] text-blue-400 font-mono block px-1">
+                                        http://{createForm.subdomain.toLowerCase().trim()}.{process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'lvh.me:3000'}/login
+                                    </span>
+                                )}
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Admin Email Address</label>
+                                <input
+                                    type="email"
+                                    className="w-full bg-secondary/50 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                                    value={createForm.adminEmail}
+                                    onChange={e => setCreateForm({ ...createForm, adminEmail: e.target.value })}
+                                    required
+                                    placeholder="admin@acme.com"
+                                />
+                            </div>
+
+                            <div className="space-y-1.5 md:col-span-2">
+                                <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Admin Password</label>
+                                <div className="relative">
+                                    <input
+                                        type={showCreatePassword ? "text" : "password"}
+                                        className="w-full bg-secondary/50 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                                        value={createForm.adminPassword}
+                                        onChange={e => setCreateForm({ ...createForm, adminPassword: e.target.value })}
+                                        required
+                                        placeholder="Set admin password..."
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowCreatePassword(!showCreatePassword)}
+                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1 transition-colors"
+                                    >
+                                        {showCreatePassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="md:col-span-2 space-y-4 pt-2">
+                                <div className="space-y-3 pt-2 border-t border-border/50">
+                                    <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Global Marketplace</p>
+                                    <div
+                                        className={`flex items-center justify-between p-4 rounded-2xl border cursor-pointer transition-all ${createForm.globalMarketplaceEnabled ? 'bg-indigo-500/10 border-indigo-500/30' : 'bg-secondary/20 border-border/50'}`}
+                                        onClick={() => setCreateForm({ ...createForm, globalMarketplaceEnabled: !createForm.globalMarketplaceEnabled })}
+                                    >
+                                        <div>
+                                            <p className="text-sm font-bold">Enable Global Course Marketplace</p>
+                                            <p className="text-[10px] text-muted-foreground">Allow this workspace to discover and claim global courses</p>
+                                        </div>
+                                        <div className={`w-10 h-6 rounded-full p-1 flex items-center transition-all ${createForm.globalMarketplaceEnabled ? 'bg-indigo-500' : 'bg-secondary'}`}>
+                                            <div className={`w-4 h-4 rounded-full bg-white shadow transition-all ${createForm.globalMarketplaceEnabled ? 'translate-x-4' : 'translate-x-0'}`} />
+                                        </div>
+                                    </div>
+                                    {createForm.globalMarketplaceEnabled && (
+                                        <div className="space-y-1.5">
+                                            <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Course Credits</label>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                className="w-full bg-secondary/50 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                                                value={createForm.courseCredits || ''}
+                                                onChange={e => setCreateForm({ ...createForm, courseCredits: parseInt(e.target.value) || 0 })}
+                                                placeholder="0"
+                                            />
+                                            <p className="text-[9px] text-muted-foreground italic px-1">Each claim costs 1 credit. Set to 0 to restrict access temporarily.</p>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <button
+                                    type="submit"
+                                    disabled={isCreating}
+                                    className="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white font-black uppercase tracking-widest text-xs rounded-xl transition-all shadow-xl shadow-blue-500/20 disabled:opacity-50 flex items-center justify-center gap-2 group"
+                                >
+                                    {isCreating ? <><Loader2 className="w-4 h-4 animate-spin" /> Creating Workspace...</> : <>Create Workspace <Check className="w-4 h-4 group-hover:scale-110 transition-transform" /></>}
                                 </button>
                             </div>
                         </form>

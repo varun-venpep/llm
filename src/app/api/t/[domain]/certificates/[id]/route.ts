@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { checkSession, requireTenantPermission } from '@/lib/auth';
 
 export async function PATCH(
     req: NextRequest,
@@ -7,6 +8,12 @@ export async function PATCH(
 ) {
     const { domain, id } = await params;
     try {
+        // BUG-003: Require admin session for updating templates
+        const session = await checkSession(req, domain, ['TENANT_ADMIN', 'SUPER_ADMIN']);
+        if (!session || !requireTenantPermission(session, 'certificates.manage')) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
         const tenant = await prisma.tenant.findUnique({
             where: { subdomain: domain }
         });
@@ -47,6 +54,12 @@ export async function DELETE(
 ) {
     const { domain, id } = await params;
     try {
+        // BUG-003: Require admin session for deleting templates
+        const session = await checkSession(req, domain, ['TENANT_ADMIN', 'SUPER_ADMIN']);
+        if (!session || !requireTenantPermission(session, 'certificates.manage')) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
         const tenant = await prisma.tenant.findUnique({
             where: { subdomain: domain }
         });

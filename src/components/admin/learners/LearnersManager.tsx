@@ -109,9 +109,10 @@ function LearnerSlideOver({
     return (
         <>
             <div className="fixed inset-0 z-[290] bg-black/60 backdrop-blur-sm animate-in fade-in duration-200" onClick={onClose} />
-            <div className="fixed inset-y-0 right-0 z-[300] w-full max-w-xl flex flex-col bg-background border-l border-border/60 shadow-2xl animate-in slide-in-from-right duration-300">
-                
-                {/* Header */}
+            <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 pointer-events-none">
+                <div className="pointer-events-auto w-full max-w-2xl max-h-[90vh] flex flex-col bg-background border border-border/60 rounded-3xl shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden">
+                    
+                    {/* Header */}
                 <div className="flex items-start justify-between px-8 py-6 border-b border-border/50 bg-gradient-to-r from-primary/5 to-transparent">
                     <div>
                         <div className="flex items-center gap-2 mb-1">
@@ -377,7 +378,8 @@ function LearnerSlideOver({
                     </div>
                 )}
             </div>
-        </>
+        </div>
+    </>
     );
 }
 
@@ -411,7 +413,8 @@ function LearnerInsightsSlideOver({
     return (
         <>
             <div className="fixed inset-0 z-[290] bg-black/60 backdrop-blur-sm animate-in fade-in duration-200" onClick={onClose} />
-            <div className="fixed inset-y-0 right-0 z-[300] w-full max-w-xl flex flex-col bg-background border-l border-border/60 shadow-2xl animate-in slide-in-from-right duration-300">
+            <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 pointer-events-none">
+                <div className="pointer-events-auto w-full max-w-2xl max-h-[90vh] flex flex-col bg-background border border-border/60 rounded-3xl shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden">
                 
                 {/* Header */}
                 <div className="flex items-start justify-between px-8 py-6 border-b border-border/50 bg-gradient-to-r from-primary/5 to-transparent">
@@ -515,6 +518,7 @@ function LearnerInsightsSlideOver({
                     </button>
                 </div>
             </div>
+            </div>
         </>
     );
 }
@@ -598,6 +602,31 @@ export function LearnersManager({ domain, addToast, mode = 'learners' }: { domai
     };
 
     const handleSubmit = async (data: any) => {
+        if (!data.name?.trim()) {
+            addToast('Name is required', 'error');
+            return;
+        }
+        if (!data.email?.trim()) {
+            addToast('Email is required', 'error');
+            return;
+        }
+
+        // Email duplicate check
+        const targetEmail = data.email.trim().toLowerCase();
+        if (data.isCreating) {
+            const emailExists = learners.some(l => l.email.toLowerCase() === targetEmail);
+            if (emailExists) {
+                addToast('Learner email already exists in this workspace', 'error');
+                return;
+            }
+        } else {
+            const emailExists = learners.some(l => l.email.toLowerCase() === targetEmail && l.id !== data.id);
+            if (emailExists) {
+                addToast('Learner email already exists in this workspace', 'error');
+                return;
+            }
+        }
+
         setIsSubmitting(true);
         try {
             if (data.isCreating) {
