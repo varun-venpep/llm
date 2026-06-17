@@ -227,7 +227,7 @@ export default function SuperAdminDashboard() {
             {/* Quick Spin-off Modal */}
             {showSpinoff && (
                 <div className="fixed inset-0 z-[200] flex items-center justify-center overflow-y-auto p-4 sm:p-6 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="bg-background border border-border w-full max-w-lg max-h-[calc(100vh-2rem)] sm:max-h-[calc(100vh-3rem)] rounded-3xl shadow-2xl p-6 sm:p-8 space-y-6 overflow-y-auto">
+                    <div className="bg-background border border-border w-full max-w-2xl max-h-[calc(100vh-2rem)] sm:max-h-[calc(100vh-3rem)] rounded-3xl shadow-2xl p-6 sm:p-8 space-y-6 overflow-y-auto">
                         <div className="flex justify-between items-center">
                             <div>
                                 <h3 className="text-xl font-black uppercase tracking-tight flex items-center gap-2"><Zap className="w-5 h-5 text-blue-400" /> Deploy New Workspace</h3>

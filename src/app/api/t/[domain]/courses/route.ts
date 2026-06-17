@@ -14,6 +14,7 @@ export async function GET(
 
         const { searchParams } = new URL(req.url);
         const view = searchParams.get('view');
+        let sessionUser: any = null;
 
         if (view !== 'learner') {
             const session = await checkSession(req, domain, ['TENANT_ADMIN', 'SUPER_ADMIN']);
@@ -26,6 +27,7 @@ export async function GET(
         let visibilityFilter = {};
         if (view === 'learner') {
             const session = await checkSession(req, domain);
+            sessionUser = session;
             if (session) {
                 const user = await prisma.user.findUnique({
                     where: { id: session.id },
@@ -90,7 +92,55 @@ export async function GET(
             },
             orderBy: { createdAt: 'desc' }
         });
-        return NextResponse.json(courses);
+        const session = sessionUser;
+        let completedLessonIds = new Set<string>();
+
+        if (session) {
+            const userProgress = await prisma.lessonProgress.findMany({
+                where: {
+                    userId: session.id,
+                    completed: true,
+                    lesson: {
+                        module: {
+                            course: {
+                                tenantId: tenant.id
+                            }
+                        }
+                    }
+                },
+                select: {
+                    lessonId: true
+                }
+            });
+            completedLessonIds = new Set(userProgress.map((p: { lessonId: string }) => p.lessonId));
+        }
+
+        const coursesWithStatus = courses.map(course => {
+            if (view !== 'learner') return course;
+
+            const allLessons = course.modules.flatMap(m => m.lessons.filter(l => l.isActive));
+            const totalLessons = allLessons.length;
+            
+            if (totalLessons === 0) {
+                return { ...course, status: 'NEW', progressPercentage: 0 };
+            }
+
+            const completedCount = allLessons.filter(l => completedLessonIds.has(l.id)).length;
+            const progressPercentage = Math.round((completedCount / totalLessons) * 100);
+
+            let status = 'NEW';
+            if (completedCount > 0) {
+                status = completedCount === totalLessons ? 'COMPLETED' : 'IN_PROGRESS';
+            }
+
+            return {
+                ...course,
+                status,
+                progressPercentage
+            };
+        });
+
+        return NextResponse.json(coursesWithStatus);
     } catch (e) {
         console.error('Failed to fetch courses:', e);
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
@@ -149,7 +199,11 @@ export async function POST(
             });
         }
 
-        return NextResponse.json(course, { status: 201 });
+        return NextResponse.json({
+            success: true,
+            message: 'Course created successfully',
+            data: course
+        }, { status: 201 });
     } catch (e) {
         console.error('Failed to create course:', e);
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
@@ -211,7 +265,11 @@ export async function PUT(
             });
         }
 
-        return NextResponse.json(course);
+        return NextResponse.json({
+            success: true,
+            message: 'Course updated successfully',
+            data: course
+        });
     } catch (e) {
         console.error('Failed to update course:', e);
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

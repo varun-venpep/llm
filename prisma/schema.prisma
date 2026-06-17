@@ -67,6 +67,7 @@ model User {
   managedTeams      Team[]                 @relation("ManagerTeams")
   teams             Team[]                 @relation("MemberTeams")
   jobRoles          JobRole[]              @relation("UserJobRoles")
+  announcementReads AnnouncementRead[]
 
   @@unique([email, tenantId])
 }
@@ -233,15 +234,27 @@ model Enrollment {
 }
 
 model Announcement {
-  id          String   @id @default(cuid())
+  id          String             @id @default(cuid())
   title       String
   body        String
   tenantId    String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
   documentUrl String?
   imageUrl    String?
-  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  tenant      Tenant             @relation(fields: [tenantId], references: [id])
+  reads       AnnouncementRead[]
+}
+
+model AnnouncementRead {
+  id             String       @id @default(cuid())
+  userId         String
+  announcementId String
+  readAt         DateTime     @default(now())
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  announcement   Announcement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, announcementId])
 }
 
 model Assignment {

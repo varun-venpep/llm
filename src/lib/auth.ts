@@ -3,7 +3,14 @@ import { prisma } from '@/lib/prisma';
 import { hasTenantPermission } from '@/lib/permissions';
 
 export async function checkSession(req: NextRequest, domain: string, requiredRole?: string | string[]) {
-    const sessionId = req.cookies.get('session-token')?.value;
+    let sessionId = req.cookies.get('session-token')?.value;
+
+    if (!sessionId) {
+        const authHeader = req.headers.get('Authorization');
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+            sessionId = authHeader.substring(7);
+        }
+    }
 
     if (!sessionId) return null;
 

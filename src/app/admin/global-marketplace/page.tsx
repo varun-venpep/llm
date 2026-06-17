@@ -1593,7 +1593,7 @@ export default function GlobalMarketplacePage() {
             {/* Modals & Portals (Uniform Stylistic Clones) */}
             {showCourseModal && (
                 <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/95 backdrop-blur-2xl animate-in fade-in duration-500">
-                    <div className="bg-[#0A0A0A] border border-white/[0.08] w-full max-w-lg rounded-[3rem] shadow-2xl p-12 space-y-10 animate-in zoom-in-95 duration-500">
+                    <div className="bg-[#0A0A0A] border border-white/[0.08] w-full max-w-2xl rounded-[3rem] shadow-2xl p-12 space-y-10 animate-in zoom-in-95 duration-500">
                         <div className="flex justify-between items-center">
                             <h3 className="text-3xl font-black uppercase tracking-tighter text-white">{selectedCourse ? 'Refine Blueprint' : 'Forge Blueprint'}</h3>
                             <button onClick={() => setShowCourseModal(false)} className="w-12 h-12 rounded-full hover:bg-white/5 flex items-center justify-center transition-colors border border-white/[0.08] text-2xl font-light">&times;</button>

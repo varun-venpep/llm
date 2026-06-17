@@ -34,7 +34,9 @@ export async function POST(req: NextRequest) {
 
         const response = NextResponse.json({
             success: true,
-            user: { id: user.id, name: user.name, email: user.email, role: user.role }
+            message: 'Login successful',
+            user: { id: user.id, name: user.name, email: user.email, role: user.role },
+            token: user.id
         });
 
         // Set session cookie for auth persistence

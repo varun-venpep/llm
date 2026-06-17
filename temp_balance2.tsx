@@ -8,8 +8,8 @@ import {
     LayoutDashboard, BookOpen, Users, Settings, Palette,
     Globe, Plus, XCircle, ChevronRight, ChevronLeft, Save, Upload,
     Trash2, Edit3, CheckCircle2, Megaphone, Loader2, MoreVertical, GripVertical, Eye, EyeOff, Video, FileText, Lock,
-    BarChart3, Clock, UserCheck, Award, CheckCircle, AlertCircle, Info, Bell, Mic, Archive, 
-    LogOut, User, Shield, UsersRound, Filter, TrendingUp, Medal, Calendar, Target, Activity, 
+    BarChart3, Clock, UserCheck, Award, CheckCircle, AlertCircle, Info, Bell, Mic, Archive,
+    LogOut, User, Shield, UsersRound, Filter, TrendingUp, Medal, Calendar, Target, Activity,
     Users2, Download, ScanSearch, UserCircle, LayoutList, Trash, Settings2
 } from 'lucide-react';
 import {
@@ -108,8 +108,8 @@ export default function ClientAdminDashboard() {
     const [availableRoles, setAvailableRoles] = useState<any[]>([]);
     const [availableTeams, setAvailableTeams] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
-    const [branding, setBranding] = useState({ 
-        name: domain.charAt(0).toUpperCase() + domain.slice(1), 
+    const [branding, setBranding] = useState({
+        name: domain.charAt(0).toUpperCase() + domain.slice(1),
         primaryColor: '#3b82f6',
         logoLight: null as string | null,
         logoDark: null as string | null,
@@ -127,15 +127,15 @@ export default function ClientAdminDashboard() {
     // Course Builder state
     const [showCourseModal, setShowCourseModal] = useState(false);
     const [courseFilter, setCourseFilter] = useState<'all' | 'published' | 'draft'>('all');
-    const [courseForm, setCourseForm] = useState({ 
-        title: '', 
-        description: '', 
-        thumbnail: '', 
-        skillLevel: 'All Levels', 
-        languages: 'English', 
-        captions: false, 
-        isMarketplace: false, 
-        exclusiveRoleId: '', 
+    const [courseForm, setCourseForm] = useState({
+        title: '',
+        description: '',
+        thumbnail: '',
+        skillLevel: 'All Levels',
+        languages: 'English',
+        captions: false,
+        isMarketplace: false,
+        exclusiveRoleId: '',
         exclusiveTeamId: '',
         certificateEnabled: false,
         certificateTemplateId: ''
@@ -197,19 +197,19 @@ export default function ClientAdminDashboard() {
     const [selectedAnnouncement, setSelectedAnnouncement] = useState<any | null>(null);
     const [announcementPage, setAnnouncementPage] = useState(1);
     const ANNOUNCEMENTS_PER_PAGE = 5;
-    
+
     // Audit state
     const [auditLogs, setAuditLogs] = useState<any[]>([]);
     const [auditPagination, setAuditPagination] = useState({ total: 0, pages: 1, currentPage: 1 });
     const [auditLoading, setAuditLoading] = useState(false);
     const [auditSearch, setAuditSearch] = useState('');
-    
+
     // Audit Details State
     const [selectedLogMetadata, setSelectedLogMetadata] = useState<any | null>(null);
     const [insightsUserId, setInsightsUserId] = useState<string | null>(null);
     const [insightsUser, setInsightsUser] = useState<any | null>(null);
     const [isFetchingUserDetail, setIsFetchingUserDetail] = useState(false);
-    
+
     // Translation Management State
     const [showTranslationModal, setShowTranslationModal] = useState(false);
     const [translatingContent, setTranslatingContent] = useState<{ id: string, type: 'COURSE' | 'LESSON', title: string } | null>(null);
@@ -238,7 +238,7 @@ export default function ClientAdminDashboard() {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `audit-log-${log.id}-${new Date().getTime(</div>.json`;
+        a.download = `audit-log-${log.id}-${new Date().getTime(</div >.json`;
         a.click();
         URL.revokeObjectURL(url);
         addToast('Log exported successfully', 'success');
@@ -246,7 +246,7 @@ export default function ClientAdminDashboard() {
 
     const fetchBranding = useCallback(async () => {
         try {
-            const res = await fetch(`/api/t/${domain}/admin/branding`);
+            const res = await fetch(`/ api / t / ${ domain } / admin / branding`);
             if (res.ok) {
                 const data = await res.json();
                 setBranding(data);
@@ -285,7 +285,8 @@ export default function ClientAdminDashboard() {
             if (res.ok) {
                 const data = await res.json();
                 setBranding(prev => ({ ...prev, [type]: data.url }));
-                addToast(`${type.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase()</div> uploaded successfully`, 'success');
+                addToast(`${
+            type.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase()</div > uploaded successfully`, 'success');
             } else {
                 addToast('Upload failed', 'error');
             }
@@ -302,7 +303,7 @@ export default function ClientAdminDashboard() {
 
     const handleSaveBranding = async () => {
         try {
-            const res = await fetch(`/api/t/${domain}/admin/branding`, {
+            const res = await fetch(`/ api / t / ${ domain } / admin / branding`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(branding)
@@ -321,7 +322,7 @@ export default function ClientAdminDashboard() {
 
     const fetchLocalesConfig = useCallback(async () => {
         try {
-            const res = await fetch(`/api/t/${domain}/admin/settings/i18n`);
+            const res = await fetch(`/ api / t / ${ domain } / admin / settings / i18n`);
             if (res.ok) {
                 const data = await res.json();
                 setLocalesConfig(data);
@@ -334,7 +335,7 @@ export default function ClientAdminDashboard() {
     const handleSaveLocales = async () => {
         setIsSavingLocales(true);
         try {
-            const res = await fetch(`/api/t/${domain}/admin/settings/i18n`, {
+            const res = await fetch(`/ api / t / ${ domain } / admin / settings / i18n`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(localesConfig)
@@ -358,7 +359,7 @@ export default function ClientAdminDashboard() {
             params.set('page', page.toString());
             if (search) params.set('search', search);
 
-            const res = await fetch(`/api/t/${domain}/admin/audit?${params}`);
+            const res = await fetch(`/ api / t / ${ domain } / admin / audit ? ${ params }`);
             if (res.ok) {
                 const data = await res.json();
                 setAuditLogs(data.logs);
@@ -382,7 +383,7 @@ export default function ClientAdminDashboard() {
 
         setIsUpdatingProfile(true);
         try {
-            const res = await fetch(`/api/t/${domain}/learner/profile`, {
+            const res = await fetch(`/ api / t / ${ domain } / learner / profile`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -397,7 +398,7 @@ export default function ClientAdminDashboard() {
                 setShowProfileModal(false);
                 setProfileForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
                 // Refresh profile data
-                const profileRes = await fetch(`/api/t/${domain}/learner/profile?userId=${userId}`);
+                const profileRes = await fetch(`/ api / t / ${ domain } / learner / profile ? userId = ${ userId }`);
                 if (profileRes.ok) {
                     const profileData = await profileRes.json();
                     setUserName(profileData.name || 'Admin');
@@ -415,7 +416,7 @@ export default function ClientAdminDashboard() {
 
     const fetchTranslations = async (contentId: string, contentType: 'COURSE' | 'LESSON') => {
         try {
-            const res = await fetch(`/api/t/${domain}/translate?contentId=${contentId}&contentType=${contentType}`);
+            const res = await fetch(`/ api / t / ${ domain } / translate ? contentId = ${ contentId } & contentType=${ contentType }`);
             if (res.ok) {
                 setTranslations(await res.json());
             }
@@ -427,13 +428,14 @@ export default function ClientAdminDashboard() {
     const requestTranslation = async (contentId: string, contentType: 'COURSE' | 'LESSON', targetLocale: string) => {
         setIsTranslating(true);
         try {
-            const res = await fetch(`/api/t/${domain}/translate`, {
+            const res = await fetch(`/ api / t / ${ domain } / translate`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ contentId, contentType, targetLocale })
             });
             if (res.ok) {
-                addToast(`Translation drafted for ${targetLocale.toUpperCase(</div>`, 'success');
+                addToast(`Translation drafted for ${
+            targetLocale.toUpperCase(</div > `, 'success');
                 fetchTranslations(contentId, contentType);
             } else {
                 addToast('Translation request failed', 'error');
@@ -447,13 +449,14 @@ export default function ClientAdminDashboard() {
 
     const handleUpdateTranslation = async (translationId: string, status: 'APPROVED' | 'PENDING', title?: string, description?: string) => {
         try {
-            const res = await fetch(`/api/t/${domain}/translate`, {
+            const res = await fetch(`/ api / t / ${ domain } / translate`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ id: translationId, status, title, description })
             });
             if (res.ok) {
-                addToast(`Translation ${status.toLowerCase(</div>`, 'success');
+                addToast(`Translation ${
+                status.toLowerCase(</div > `, 'success');
                 if (translatingContent) fetchTranslations(translatingContent.id, translatingContent.type);
             }
         } catch (e) {
@@ -463,7 +466,7 @@ export default function ClientAdminDashboard() {
 
     const updateCourseStatus = async (courseId: string, updates: Partial<any>) => {
         try {
-            const res = await fetch(`/api/t/${domain}/admin/courses/${courseId}`, {
+            const res = await fetch(`/ api / t / ${ domain } / admin / courses / ${ courseId }`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(updates)
@@ -499,11 +502,11 @@ export default function ClientAdminDashboard() {
                     <div className="space-y-4">
                         <div className="flex items-center justify-between">
                             <label className="text-[10px] font-black uppercase tracking-widest text-indigo-500/80">Visibility & Status</label>
-                            <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-tighter border ${
-                                course.status === 'PUBLISHED' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 
-                                course.status === 'DRAFT' ? 'bg-orange-500/10 text-orange-400 border-orange-500/20' : 
-                                'bg-red-500/10 text-red-400 border-red-500/20'
-                            }`}>
+                            <span className={`px - 2 py - 0.5 rounded - full text - [9px] font - black uppercase tracking - tighter border ${
+                    course.status === 'PUBLISHED' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                        course.status === 'DRAFT' ? 'bg-orange-500/10 text-orange-400 border-orange-500/20' :
+                            'bg-red-500/10 text-red-400 border-red-500/20'
+                }`}>
                                 {course.status}
                             </span>
                         </div>
@@ -577,14 +580,14 @@ export default function ClientAdminDashboard() {
             // VERIFY SESSION FIRST
             const sessionRes = await fetch('/api/auth/session');
             if (!sessionRes.ok) {
-                router.push(`/t/${domain}/login`);
+                router.push(`/ t / ${ domain } / login`);
                 return;
             }
             const { user } = await sessionRes.json();
             
             // Double check role
             if (user.role === 'LEARNER') {
-                router.push(`/t/${domain}/dashboard`);
+                router.push(`/ t / ${ domain } / dashboard`);
                 return;
             }
 
@@ -593,12 +596,12 @@ export default function ClientAdminDashboard() {
             setUserEmail(user.email || '');
 
             const [statsRes, coursesRes, annRes, rolesRes, teamsRes, certsRes] = await Promise.all([
-                fetch(`/api/t/${domain}/admin/stats`),
-                fetch(`/api/t/${domain}/courses`),
-                fetch(`/api/t/${domain}/announcements`),
-                fetch(`/api/t/${domain}/roles`),
-                fetch(`/api/t/${domain}/teams`),
-                fetch(`/api/t/${domain}/certificates`)
+                fetch(`/ api / t / ${ domain } / admin / stats`),
+                fetch(`/ api / t / ${ domain } / courses`),
+                fetch(`/ api / t / ${ domain } / announcements`),
+                fetch(`/ api / t / ${ domain } / roles`),
+                fetch(`/ api / t / ${ domain } / teams`),
+                fetch(`/ api / t / ${ domain } / certificates`)
             ]);
 
             if (statsRes.ok) {
@@ -628,7 +631,7 @@ export default function ClientAdminDashboard() {
 
     const fetchAvailableTemplates = async () => {
         try {
-            const res = await fetch(`/api/t/${domain}/certificates`);
+            const res = await fetch(`/ api / t / ${ domain } / certificates`);
             if (res.ok) setAvailableTemplates(await res.json());
         } catch (e) {
             console.error(e);
@@ -643,7 +646,7 @@ export default function ClientAdminDashboard() {
             if (endDate) params.set('endDate', endDate);
             if (teamId) params.set('teamId', teamId);
             if (roleId) params.set('roleId', roleId);
-            const res = await fetch(`/api/t/${domain}/admin/stats?${params}`);
+            const res = await fetch(`/ api / t / ${ domain } / admin / stats ? ${ params }`);
             if (res.ok) {
                 const data = await res.json();
                 setStats(data.stats);
@@ -668,7 +671,7 @@ export default function ClientAdminDashboard() {
     const fetchCourseStats = async (courseId: string) => {
         setLoadingStats(true);
         try {
-            const res = await fetch(`/api/t/${domain}/courses/${courseId}/stats`);
+            const res = await fetch(`/ api / t / ${ domain } / courses / ${ courseId } / stats`);
             const data = await res.json();
             setCourseStats(data);
         } catch (e) {
@@ -692,7 +695,7 @@ export default function ClientAdminDashboard() {
 
         const interval = setInterval(async () => {
             try {
-                const res = await fetch(`/api/t/${domain}/courses/${selectedCourse.id}`);
+                const res = await fetch(`/ api / t / ${ domain } / courses / ${ selectedCourse.id }`);
                 if (res.ok) {
                     const updated = await res.json();
                     setSelectedCourse(updated);
@@ -739,7 +742,7 @@ export default function ClientAdminDashboard() {
     // Update platform identity (Title & Favicon)
     useEffect(() => {
         if (branding.name) {
-            document.title = `${branding.name} | Admin Portal`;
+            document.title = `${ branding.name } | Admin Portal`;
         }
         if (branding.favicon) {
             let link: HTMLLinkElement | null = document.querySelector("link[rel~='icon']");
@@ -761,7 +764,7 @@ export default function ClientAdminDashboard() {
         }
         setValidationErrors(prev => ({ ...prev, course: null }));
         try {
-            const res = await fetch(`/api/t/${domain}/courses`, {
+            const res = await fetch(`/ api / t / ${ domain } / courses`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(courseForm)
@@ -797,7 +800,7 @@ export default function ClientAdminDashboard() {
         e.preventDefault();
         if (!selectedCourse) return;
         try {
-            const res = await fetch(`/api/t/${domain}/courses`, {
+            const res = await fetch(`/ api / t / ${ domain } / courses`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ ...courseForm, id: selectedCourse.id })
@@ -826,7 +829,7 @@ export default function ClientAdminDashboard() {
         }
 
         try {
-            const res = await fetch(`/api/t/${domain}/courses/${course.id}`, {
+            const res = await fetch(`/ api / t / ${ domain } / courses / ${ course.id }`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ ...course, isPublished: !originalStatus })
@@ -882,7 +885,7 @@ export default function ClientAdminDashboard() {
         );
         if (!confirmed) return;
         try {
-            const res = await fetch(`/api/t/${domain}/courses/${courseId}`, { method: 'DELETE' });
+            const res = await fetch(`/ api / t / ${ domain } / courses / ${ courseId }`, { method: 'DELETE' });
 
             if (res.ok) {
                 setSelectedCourse(null);
@@ -909,7 +912,7 @@ export default function ClientAdminDashboard() {
             return;
         }
         setValidationErrors(prev => ({ ...prev, newModule: null }));
-        const res = await fetch(`/api/t/${domain}/courses/${courseId}/modules`, {
+        const res = await fetch(`/ api / t / ${ domain } / courses / ${ courseId } / modules`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ title: newModuleTitle })
@@ -918,7 +921,7 @@ export default function ClientAdminDashboard() {
         if (res.ok) {
             setNewModuleTitle('');
             // Fetch updated course data immediately to reflect the new module
-            const courseRes = await fetch(`/api/t/${domain}/courses/${courseId}`);
+            const courseRes = await fetch(`/ api / t / ${ domain } / courses / ${ courseId }`);
             const updatedCourse = await courseRes.json();
             setSelectedCourse(updatedCourse);
             fetchAll(); // Refresh the main courses list in background
@@ -957,7 +960,7 @@ export default function ClientAdminDashboard() {
             xhr.upload.onprogress = (e) => {
                 if (e.lengthComputable) {
                     const percentComplete = Math.round((e.loaded / e.total) * 100);
-                    setUploadProgress(prev => ({ ...prev, [`res-${moduleId}`]: percentComplete }));
+                    setUploadProgress(prev => ({ ...prev, [`res - ${ moduleId }`]: percentComplete }));
                 }
             };
 
@@ -982,7 +985,7 @@ export default function ClientAdminDashboard() {
                     });
                     setUploadProgress(prev => {
                         const next = { ...prev };
-                        delete next[`res-${moduleId}`];
+                        delete next[`res - ${ moduleId }`];
                         return next;
                     });
                     resolve();
@@ -991,7 +994,7 @@ export default function ClientAdminDashboard() {
                     addToast(error.error || 'Upload failed', 'error');
                     setUploadProgress(prev => {
                         const next = { ...prev };
-                        delete next[`res-${moduleId}`];
+                        delete next[`res - ${ moduleId }`];
                         return next;
                     });
                     reject();
@@ -1002,7 +1005,7 @@ export default function ClientAdminDashboard() {
                 addToast('Upload error. Check connection.', 'error');
                 setUploadProgress(prev => {
                     const next = { ...prev };
-                    delete next[`res-${moduleId}`];
+                    delete next[`res - ${ moduleId }`];
                     return next;
                 });
                 reject();
@@ -1044,7 +1047,7 @@ export default function ClientAdminDashboard() {
                             [type === 'VIDEO' ? 'videoUrl' : 'pdfUrl']: data.url
                         }
                     }));
-                    addToast(`${type === 'VIDEO' ? 'Video' : 'File'} uploaded successfully`);
+                    addToast(`${ type === 'VIDEO' ? 'Video' : 'File'} uploaded successfully`);
                     setUploadProgress(prev => {
                         const next = { ...prev };
                         delete next[moduleId];
@@ -1088,7 +1091,7 @@ export default function ClientAdminDashboard() {
             const uploadRes = await fetch('/api/upload', { method: 'POST', body: formData });
             const uploadData = await uploadRes.json();
 
-            const res = await fetch(`/api/t/${domain}/resources`, {
+            const res = await fetch(`/ api / t / ${ domain } / resources`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -1131,7 +1134,7 @@ export default function ClientAdminDashboard() {
         if (!(await askConfirmation('Delete Resource?', 'Are you sure you want to delete this resource?'))) return;
         if (!managingResources) return;
         try {
-            const res = await fetch(`/api/t/${domain}/resources/${resourceId}`, { method: 'DELETE' });
+            const res = await fetch(`/ api / t / ${ domain } / resources / ${ resourceId }`, { method: 'DELETE' });
             if (res.ok) {
                 setManagingResources(prev => prev ? { ...prev, resources: prev.resources.filter(r => r.id !== resourceId) } : null);
                 if (selectedCourse) {
@@ -1164,13 +1167,13 @@ export default function ClientAdminDashboard() {
             const courseId = selectedCourse?.id;
             if (!courseId) throw new Error('No course selected');
 
-            const resDel = await fetch(`/api/t/${domain}/courses/${courseId}/modules/${moduleId}/lessons/${lessonId}`, {
+            const resDel = await fetch(`/ api / t / ${ domain } / courses / ${ courseId } / modules / ${ moduleId } / lessons / ${ lessonId }`, {
                 method: 'DELETE'
             });
 
             if (resDel.ok) {
                 addToast('Lesson deleted successfully', 'success');
-                const res = await fetch(`/api/t/${domain}/courses/${courseId}`);
+                const res = await fetch(`/ api / t / ${ domain } / courses / ${ courseId }`);
                 if (res.ok) {
                     const data = await res.json();
                     setSelectedCourse(data);
@@ -1195,18 +1198,18 @@ export default function ClientAdminDashboard() {
     const addOrUpdateLesson = async (moduleId: string, closeAfter: boolean = true) => {
         const lessonForm = newLessonForms[moduleId];
         if (!lessonForm?.title?.trim()) {
-            setValidationErrors(prev => ({ ...prev, [`lesson-${moduleId}`]: { title: 'Lesson title is required' } }));
+            setValidationErrors(prev => ({ ...prev, [`lesson - ${ moduleId }`]: { title: 'Lesson title is required' } }));
             addToast('Lesson title is required', 'error');
             return null;
         }
-        setValidationErrors(prev => ({ ...prev, [`lesson-${moduleId}`]: null }));
+        setValidationErrors(prev => ({ ...prev, [`lesson - ${ moduleId }`]: null }));
 
         const courseId = selectedCourse?.id;
         const editingId = editingLessonIds[moduleId];
 
         const url = editingId
-            ? `/api/t/${domain}/courses/${courseId}/modules/${moduleId}/lessons/${editingId}`
-            : `/api/t/${domain}/courses/${courseId}/modules/${moduleId}/lessons`;
+            ? `/ api / t / ${ domain } / courses / ${ courseId } / modules / ${ moduleId } / lessons / ${ editingId }`
+            : `/ api / t / ${ domain } / courses / ${ courseId } / modules / ${ moduleId } / lessons`;
 
         const resUpdate = await fetch(url, {
             method: editingId ? 'PUT' : 'POST',
@@ -1257,322 +1260,322 @@ export default function ClientAdminDashboard() {
         if (!selectedCourse) return;
         setIsGeneratingQuiz(true);
         try {
-            const url = `/api/t/${domain}/courses/${selectedCourse.id}/generate-quiz${activeQuizLesson?.lessonId ? `?lessonId=${activeQuizLesson.lessonId}` : ''}`;
-            const res = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ count: 10 }) // Default to 10 questions for a pool
-            });
-            const data = await res.json();
-            if (res.ok && data.questions) {
-                setQuizForm(prev => ({
-                    ...prev,
-                    questions: [...prev.questions, ...data.questions],
-                    isRandomized: (prev.questions.length + data.questions.length) > 5,
-                    randomCount: Math.min(5, prev.questions.length + data.questions.length)
-                }));
-                addToast('AI generated ' + data.questions.length + ' questions!');
-            } else {
-                addToast(data.error || 'Failed to generate quiz', 'error');
-            }
-        } catch (e) {
-            addToast('AI Generation failed', 'error');
-        } finally {
-            setIsGeneratingQuiz(false);
+            const url = `/ api / t / ${ domain } / courses / ${ selectedCourse.id } / generate - quiz${ activeQuizLesson?.lessonId? `?lessonId=${activeQuizLesson.lessonId}` : ''}`;
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ count: 10 }) // Default to 10 questions for a pool
+        });
+        const data = await res.json();
+        if (res.ok && data.questions) {
+            setQuizForm(prev => ({
+                ...prev,
+                questions: [...prev.questions, ...data.questions],
+                isRandomized: (prev.questions.length + data.questions.length) > 5,
+                randomCount: Math.min(5, prev.questions.length + data.questions.length)
+            }));
+            addToast('AI generated ' + data.questions.length + ' questions!');
+        } else {
+            addToast(data.error || 'Failed to generate quiz', 'error');
         }
-    };
+    } catch (e) {
+        addToast('AI Generation failed', 'error');
+    } finally {
+        setIsGeneratingQuiz(false);
+    }
+};
 
-    const toggleLessonStatus = async (moduleId: string, lesson: any) => {
-        const originalStatus = lesson.isActive;
+const toggleLessonStatus = async (moduleId: string, lesson: any) => {
+    const originalStatus = lesson.isActive;
 
-        // Optimistic Update
+    // Optimistic Update
+    if (selectedCourse) {
+        const updatedModules = selectedCourse.modules.map((m: any) => {
+            if (m.id !== moduleId) return m;
+            return {
+                ...m,
+                lessons: m.lessons.map((l: any) => l.id === lesson.id ? { ...l, isActive: !originalStatus } : l)
+            };
+        });
+        setSelectedCourse({ ...selectedCourse, modules: updatedModules });
+    }
+
+    try {
+        const courseId = selectedCourse?.id;
+        const resUpdate = await fetch(`/api/t/${domain}/courses/${courseId}/modules/${moduleId}/lessons/${lesson.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...lesson, isActive: !originalStatus })
+        });
+
+        if (!resUpdate.ok) throw new Error();
+        addToast(`Lesson ${!originalStatus ? 'activated' : 'deactivated'}`);
+    } catch (e) {
+        // Rollback
         if (selectedCourse) {
-            const updatedModules = selectedCourse.modules.map((m: any) => {
+            const rolledBackModules = selectedCourse.modules.map((m: any) => {
                 if (m.id !== moduleId) return m;
                 return {
                     ...m,
-                    lessons: m.lessons.map((l: any) => l.id === lesson.id ? { ...l, isActive: !originalStatus } : l)
+                    lessons: m.lessons.map((l: any) => l.id === lesson.id ? { ...l, isActive: originalStatus } : l)
                 };
             });
-            setSelectedCourse({ ...selectedCourse, modules: updatedModules });
+            setSelectedCourse({ ...selectedCourse, modules: rolledBackModules });
         }
+        addToast('Failed to update lesson status', 'error');
+    }
+};
 
-        try {
-            const courseId = selectedCourse?.id;
-            const resUpdate = await fetch(`/api/t/${domain}/courses/${courseId}/modules/${moduleId}/lessons/${lesson.id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ...lesson, isActive: !originalStatus })
-            });
+const toggleModuleStatus = async (module: any) => {
+    const courseId = selectedCourse?.id;
+    const resUpdate = await fetch(`/api/t/${domain}/courses/${courseId}/modules/${module.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: module.title, isActive: !module.isActive })
+    });
+    if (resUpdate.ok) {
+        fetchCourseDetails(courseId);
+    }
+};
 
-            if (!resUpdate.ok) throw new Error();
-            addToast(`Lesson ${!originalStatus ? 'activated' : 'deactivated'}`);
-        } catch (e) {
-            // Rollback
-            if (selectedCourse) {
-                const rolledBackModules = selectedCourse.modules.map((m: any) => {
-                    if (m.id !== moduleId) return m;
-                    return {
-                        ...m,
-                        lessons: m.lessons.map((l: any) => l.id === lesson.id ? { ...l, isActive: originalStatus } : l)
-                    };
-                });
-                setSelectedCourse({ ...selectedCourse, modules: rolledBackModules });
-            }
-            addToast('Failed to update lesson status', 'error');
-        }
-    };
+const updateModuleTitle = async (moduleId: string) => {
+    if (!moduleEditTitle.trim()) {
+        setValidationErrors(prev => ({ ...prev, [`module-${moduleId}`]: { title: 'Module title is required' } }));
+        return;
+    }
+    setValidationErrors(prev => ({ ...prev, [`module-${moduleId}`]: null }));
 
-    const toggleModuleStatus = async (module: any) => {
-        const courseId = selectedCourse?.id;
-        const resUpdate = await fetch(`/api/t/${domain}/courses/${courseId}/modules/${module.id}`, {
+    const courseId = selectedCourse?.id;
+    try {
+        const resUpdate = await fetch(`/api/t/${domain}/courses/${courseId}/modules/${moduleId}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ title: module.title, isActive: !module.isActive })
+            body: JSON.stringify({ title: moduleEditTitle })
         });
         if (resUpdate.ok) {
+            setEditingModuleId(null);
+            setModuleEditTitle('');
             fetchCourseDetails(courseId);
+            addToast('Module updated');
+        } else {
+            addToast('Failed to update module', 'error');
         }
-    };
+    } catch (e) {
+        console.error(e);
+        addToast('Error updating module', 'error');
+    }
+};
 
-    const updateModuleTitle = async (moduleId: string) => {
-        if (!moduleEditTitle.trim()) {
-            setValidationErrors(prev => ({ ...prev, [`module-${moduleId}`]: { title: 'Module title is required' } }));
-            return;
-        }
-        setValidationErrors(prev => ({ ...prev, [`module-${moduleId}`]: null }));
+const deleteModule = async (e: React.MouseEvent, moduleId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
 
-        const courseId = selectedCourse?.id;
-        try {
-            const resUpdate = await fetch(`/api/t/${domain}/courses/${courseId}/modules/${moduleId}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ title: moduleEditTitle })
-            });
-            if (resUpdate.ok) {
-                setEditingModuleId(null);
-                setModuleEditTitle('');
-                fetchCourseDetails(courseId);
-                addToast('Module updated');
-            } else {
-                addToast('Failed to update module', 'error');
-            }
-        } catch (e) {
-            console.error(e);
-            addToast('Error updating module', 'error');
-        }
-    };
+    if (!(await askConfirmation('Delete Module?', 'Are you sure you want to delete this module and all its lessons?'))) return;
+    const courseId = selectedCourse?.id;
+    try {
+        const resDelete = await fetch(`/api/t/${domain}/courses/${courseId}/modules/${moduleId}`, { method: 'DELETE' });
 
-    const deleteModule = async (e: React.MouseEvent, moduleId: string) => {
-        e.preventDefault();
-        e.stopPropagation();
-
-        if (!(await askConfirmation('Delete Module?', 'Are you sure you want to delete this module and all its lessons?'))) return;
-        const courseId = selectedCourse?.id;
-        try {
-            const resDelete = await fetch(`/api/t/${domain}/courses/${courseId}/modules/${moduleId}`, { method: 'DELETE' });
-
-            if (resDelete.ok) {
-                fetchCourseDetails(courseId);
-                fetchAll();
-                addToast('Module deleted successfully', 'success');
-            } else {
-                const data = await resDelete.json();
-                if (resDelete.status === 409) {
-                    if (await askConfirmation('Deactivate Module?', 'This module cannot be deleted because learners have already started or completed it. Would you like to deactivate it instead to hide it from learners?', 'info')) {
-                        const mod = selectedCourse.modules.find((m: any) => m.id === moduleId);
-                        if (mod) toggleModuleStatus(mod);
-                    }
-                } else {
-                    addToast(data.error || 'Failed to delete module', 'error');
+        if (resDelete.ok) {
+            fetchCourseDetails(courseId);
+            fetchAll();
+            addToast('Module deleted successfully', 'success');
+        } else {
+            const data = await resDelete.json();
+            if (resDelete.status === 409) {
+                if (await askConfirmation('Deactivate Module?', 'This module cannot be deleted because learners have already started or completed it. Would you like to deactivate it instead to hide it from learners?', 'info')) {
+                    const mod = selectedCourse.modules.find((m: any) => m.id === moduleId);
+                    if (mod) toggleModuleStatus(mod);
                 }
-            }
-        } catch (error) {
-            console.error('Delete module failed', error);
-            addToast('Error deleting module', 'error');
-        }
-    };
-
-    const fetchCourseDetails = async (courseId: string) => {
-        setLoading(true);
-        try {
-            const res = await fetch(`/api/t/${domain}/courses/${courseId}`);
-            if (res.ok) {
-                const data = await res.json();
-                setSelectedCourse(data);
             } else {
-                addToast('Failed to fetch course details', 'error');
+                addToast(data.error || 'Failed to delete module', 'error');
             }
-        } catch (e) {
-            console.error(e);
-            addToast('Error fetching course', 'error');
-        } finally {
-            setLoading(false);
         }
-    };
+    } catch (error) {
+        console.error('Delete module failed', error);
+        addToast('Error deleting module', 'error');
+    }
+};
 
-    const saveQuiz = async () => {
-        if (!activeQuizLesson) return;
+const fetchCourseDetails = async (courseId: string) => {
+    setLoading(true);
+    try {
+        const res = await fetch(`/api/t/${domain}/courses/${courseId}`);
+        if (res.ok) {
+            const data = await res.json();
+            setSelectedCourse(data);
+        } else {
+            addToast('Failed to fetch course details', 'error');
+        }
+    } catch (e) {
+        console.error(e);
+        addToast('Error fetching course', 'error');
+    } finally {
+        setLoading(false);
+    }
+};
 
-        // Validation
-        const errors: Record<string, any> = {};
-        if (!quizForm.title.trim()) errors.title = 'Quiz title is required';
+const saveQuiz = async () => {
+    if (!activeQuizLesson) return;
 
-        const questionErrors: Record<number, any> = {};
-        quizForm.questions.forEach((q, idx) => {
-            const qErr: any = {};
-            if (!q.text.trim()) qErr.text = 'Question text is required';
-            const optErrors: Record<number, string> = {};
-            q.options.forEach((o: any, oIdx: number) => {
-                if (!o.text.trim()) optErrors[oIdx] = 'Option text is required';
-            });
-            if (Object.keys(optErrors).length > 0) qErr.options = optErrors;
-            if (Object.keys(qErr).length > 0) questionErrors[idx] = qErr;
+    // Validation
+    const errors: Record<string, any> = {};
+    if (!quizForm.title.trim()) errors.title = 'Quiz title is required';
+
+    const questionErrors: Record<number, any> = {};
+    quizForm.questions.forEach((q, idx) => {
+        const qErr: any = {};
+        if (!q.text.trim()) qErr.text = 'Question text is required';
+        const optErrors: Record<number, string> = {};
+        q.options.forEach((o: any, oIdx: number) => {
+            if (!o.text.trim()) optErrors[oIdx] = 'Option text is required';
+        });
+        if (Object.keys(optErrors).length > 0) qErr.options = optErrors;
+        if (Object.keys(qErr).length > 0) questionErrors[idx] = qErr;
+    });
+
+    if (Object.keys(questionErrors).length > 0) errors.questions = questionErrors;
+
+    if (Object.keys(errors).length > 0) {
+        setValidationErrors(prev => ({ ...prev, quiz: errors }));
+        addToast('Please fix the errors in the quiz', 'error');
+        return;
+    }
+    setValidationErrors(prev => ({ ...prev, quiz: null }));
+
+    const { moduleId, lessonId } = activeQuizLesson;
+    const courseId = selectedCourse?.id;
+
+    try {
+        const resQuiz = await fetch(`/api/t/${domain}/courses/${courseId}/modules/${moduleId}/lessons/${lessonId}/quiz`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(quizForm)
         });
 
-        if (Object.keys(questionErrors).length > 0) errors.questions = questionErrors;
-
-        if (Object.keys(errors).length > 0) {
-            setValidationErrors(prev => ({ ...prev, quiz: errors }));
-            addToast('Please fix the errors in the quiz', 'error');
-            return;
+        if (resQuiz.ok) {
+            setActiveQuizLesson(null);
+            fetchCourseDetails(courseId);
+            addToast('Quiz saved successfully');
+        } else {
+            addToast('Failed to save quiz', 'error');
         }
-        setValidationErrors(prev => ({ ...prev, quiz: null }));
+    } catch (e) {
+        console.error(e);
+        addToast('Error saving quiz', 'error');
+    }
+};
 
-        const { moduleId, lessonId } = activeQuizLesson;
-        const courseId = selectedCourse?.id;
+const createAnnouncement = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-        try {
-            const resQuiz = await fetch(`/api/t/${domain}/courses/${courseId}/modules/${moduleId}/lessons/${lessonId}/quiz`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(quizForm)
-            });
+    // Validation
+    const errors: Record<string, string> = {};
+    if (!announcementForm.title.trim()) errors.title = 'Title is required';
+    if (!announcementForm.body.trim()) errors.body = 'Content is required';
 
-            if (resQuiz.ok) {
-                setActiveQuizLesson(null);
-                fetchCourseDetails(courseId);
-                addToast('Quiz saved successfully');
-            } else {
-                addToast('Failed to save quiz', 'error');
-            }
-        } catch (e) {
-            console.error(e);
-            addToast('Error saving quiz', 'error');
+    if (Object.keys(errors).length > 0) {
+        setValidationErrors(prev => ({ ...prev, announcement: errors }));
+        return;
+    }
+    setValidationErrors(prev => ({ ...prev, announcement: null }));
+
+    try {
+        const res = await fetch(`/api/t/${domain}/announcements`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(announcementForm)
+        });
+        if (res.ok) {
+            setShowAnnouncementModal(false);
+            setAnnouncementForm({ title: '', body: '', imageUrl: '', documentUrl: '' });
+            fetchAll();
+            addToast('Announcement posted');
+        } else {
+            addToast('Failed to post announcement', 'error');
         }
-    };
+    } catch (e) {
+        console.error(e);
+        addToast('Error saving announcement', 'error');
+    }
+};
 
-    const createAnnouncement = async (e: React.FormEvent) => {
-        e.preventDefault();
+const deleteAnnouncement = async (id: string) => {
+    if (!(await askConfirmation('Delete Announcement?', 'Are you sure you want to delete this announcement?'))) return;
+    await fetch(`/api/t/${domain}/announcements?id=${id}`, { method: 'DELETE' });
+    fetchAll();
+};
 
-        // Validation
-        const errors: Record<string, string> = {};
-        if (!announcementForm.title.trim()) errors.title = 'Title is required';
-        if (!announcementForm.body.trim()) errors.body = 'Content is required';
-
-        if (Object.keys(errors).length > 0) {
-            setValidationErrors(prev => ({ ...prev, announcement: errors }));
-            return;
-        }
-        setValidationErrors(prev => ({ ...prev, announcement: null }));
-
-        try {
-            const res = await fetch(`/api/t/${domain}/announcements`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(announcementForm)
-            });
-            if (res.ok) {
-                setShowAnnouncementModal(false);
-                setAnnouncementForm({ title: '', body: '', imageUrl: '', documentUrl: '' });
-                fetchAll();
-                addToast('Announcement posted');
-            } else {
-                addToast('Failed to post announcement', 'error');
-            }
-        } catch (e) {
-            console.error(e);
-            addToast('Error saving announcement', 'error');
-        }
-    };
-
-    const deleteAnnouncement = async (id: string) => {
-        if (!(await askConfirmation('Delete Announcement?', 'Are you sure you want to delete this announcement?'))) return;
-        await fetch(`/api/t/${domain}/announcements?id=${id}`, { method: 'DELETE' });
-        fetchAll();
-    };
-
-    return (
-        <div className="min-h-screen bg-background flex">
-            {/* Sidebar */}
-            <aside className="w-64 border-r border-border bg-secondary/10 p-6 flex flex-col gap-8 sticky top-0 h-screen">
-                <div className="flex items-center gap-3 px-2">
-                    {(branding.logoDark || branding.logoLight) ? (
-                        <div className="h-14 w-auto min-w-[3rem] flex items-center justify-center bg-transparent">
-                            <img 
-                                src={mounted ? (resolvedTheme === 'dark' ? (branding.logoDark || branding.logoLight) : (branding.logoLight || branding.logoDark)) : (branding.logoDark || branding.logoLight</div> 
-                                alt={branding.name} 
-                                className="h-full w-auto object-contain"
+return (
+    <div className="min-h-screen bg-background flex">
+        {/* Sidebar */}
+        <aside className="w-64 border-r border-border bg-secondary/10 p-6 flex flex-col gap-8 sticky top-0 h-screen">
+            <div className="flex items-center gap-3 px-2">
+                {(branding.logoDark || branding.logoLight) ? (
+                    <div className="h-14 w-auto min-w-[3rem] flex items-center justify-center bg-transparent">
+                        <img
+                            src={mounted ? (resolvedTheme === 'dark' ? (branding.logoDark || branding.logoLight) : (branding.logoLight || branding.logoDark)) : (branding.logoDark || branding.logoLight</div> 
+                                alt={branding.name}
+                className="h-full w-auto object-contain"
                             />
-                        </div>
-                    ) : (
-                        <div className="w-10 h-10 rounded-lg flex items-center justify-center font-black text-white text-sm" style={{ backgroundColor: branding.primaryColor }}>
-                            {branding.name.charAt(0</div>
-                        </div>
-                    </div>
-                    <div className="min-w-0">
-                        <p className="font-bold text-sm leading-tight truncate">{branding.name}</p>
-                        <p className="text-[10px] text-muted-foreground uppercase tracking-widest truncate">Admin Portal</p>
-                    </div>
-                </div>
+            </div>
+            ) : (
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center font-black text-white text-sm" style={{ backgroundColor: branding.primaryColor }}>
+                {branding.name.charAt(0</div>
+    </div>
+                    </div >
+    <div className="min-w-0">
+        <p className="font-bold text-sm leading-tight truncate">{branding.name}</p>
+        <p className="text-[10px] text-muted-foreground uppercase tracking-widest truncate">Admin Portal</p>
+    </div>
+                </div >
 
-                <nav className="space-y-1 flex-1">
-                    {([
-                        ['overview', 'Overview', LayoutDashboard],
-                        ['courses', 'Courses', BookOpen],
-                        ['learners', 'Learners', Users],
-                        ['roles', 'Job Roles', Shield],
-                        ['teams', 'Teams', UsersRound],
-                        ['announcements', 'Announcements', Megaphone],
-                        ['branding', 'Branding', Palette],
-                        ['i18n', 'i18n & AI', Globe],
-                        ['domains', 'Domains', Globe],
-                        ['settings', 'Settings', Settings],
-                        ['certificates', 'Certificates', Award],
-                        ['reports', 'Reports', BarChart3],
-                        ['audit', 'Audit Monitor', Shield],
-                    ] as [Tab, string, any][]).map(([tab, label, Icon]) => (
-                        <button key={tab} onClick={() => { setActiveTab(tab); setSelectedCourse(null); }}
-                            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === tab ? 'bg-primary/10 text-primary border border-primary/20' : 'text-muted-foreground hover:bg-secondary/50 hover:text-foreground'}`}>
-                            <Icon size={18} />
-                            {label}
-                            {activeTab === tab && <ChevronRight size={14} className="ml-auto" />}
-                        </button>
-                    )</div>
-                </nav>
+    <nav className="space-y-1 flex-1">
+        {([
+            ['overview', 'Overview', LayoutDashboard],
+            ['courses', 'Courses', BookOpen],
+            ['learners', 'Learners', Users],
+            ['roles', 'Job Roles', Shield],
+            ['teams', 'Teams', UsersRound],
+            ['announcements', 'Announcements', Megaphone],
+            ['branding', 'Branding', Palette],
+            ['i18n', 'i18n & AI', Globe],
+            ['domains', 'Domains', Globe],
+            ['settings', 'Settings', Settings],
+            ['certificates', 'Certificates', Award],
+            ['reports', 'Reports', BarChart3],
+            ['audit', 'Audit Monitor', Shield],
+        ] as [Tab, string, any][]).map(([tab, label, Icon]) => (
+            <button key={tab} onClick={() => { setActiveTab(tab); setSelectedCourse(null); }}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === tab ? 'bg-primary/10 text-primary border border-primary/20' : 'text-muted-foreground hover:bg-secondary/50 hover:text-foreground'}`}>
+                <Icon size={18} />
+                {label}
+                {activeTab === tab && <ChevronRight size={14} className="ml-auto" />}
+            </button>
+        )</div>
+                </nav >
 
-                <button onClick={() => window.open(`/t/${domain}/dashboard`, '_blank'</div> className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-muted-foreground hover:text-foreground border border-border hover:bg-secondary/50 transition-all">
-                    <Eye size={14} /> Preview as Learner
-                </button>
-            </aside>
+    <button onClick={() => window.open(`/t/${domain}/dashboard`, '_blank'</div > className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-muted-foreground hover:text-foreground border border-border hover:bg-secondary/50 transition-all" >
+        <Eye size={14} /> Preview as Learner
+                </button >
+            </aside >
 
-            {/* Main Content */}
-            <main className="flex-1 p-8 overflow-auto">
+        {/* Main Content */ }
+        < main className = "flex-1 p-8 overflow-auto" >
                 <header className="flex justify-between items-center mb-8">
                     <h2 className="text-2xl font-black uppercase tracking-tight">
                         {activeTab.charAt(0).toUpperCase() + activeTab.slice(1</div>
                     </h2>
                     <div className="flex items-center gap-4">
                         {activeTab === 'courses' && !selectedCourse && (
-                            <button onClick={() => setShowCourseModal(true</div> className="px-4 py-2 bg-primary text-primary-foreground rounded-xl font-bold text-sm flex items-center gap-2 hover:opacity-90 transition-opacity whitespace-nowrap">
-                                <Plus size={16} /> New Course
-                            </button>
-                        </div>
-                        {activeTab === 'announcements' && (
-                            <button onClick={() => setShowAnnouncementModal(true</div> className="px-4 py-2 bg-primary text-primary-foreground rounded-xl font-bold text-sm flex items-center gap-2 hover:opacity-90 whitespace-nowrap">
-                                <Plus size={16} /> New Announcement
-                            </button>
-                        </div>
+                            <button onClick={() => setShowCourseModal(true</div> className = "px-4 py-2 bg-primary text-primary-foreground rounded-xl font-bold text-sm flex items-center gap-2 hover:opacity-90 transition-opacity whitespace-nowrap" >
+    <Plus size={16} /> New Course
+                            </button >
+                        </div >
+        { activeTab === 'announcements' && (
+            <button onClick={() => setShowAnnouncementModal(true</div > className="px-4 py-2 bg-primary text-primary-foreground rounded-xl font-bold text-sm flex items-center gap-2 hover:opacity-90 whitespace-nowrap" >
+                <Plus size={16} /> New Announcement
+                            </button >
+                        </div >
 
                         <div className="h-6 w-px bg-border/50 mx-2" />
                         <ThemeToggle />
@@ -1580,28 +1583,28 @@ export default function ClientAdminDashboard() {
                         <div className="flex items-center gap-2">
                             <button
                                 onClick={() => setShowProfileModal(true</div>
-                                className="w-10 h-10 rounded-full border-2 border-primary/20 bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center font-black text-white text-sm hover:scale-105 transition-transform"
-                                title="Profile Settings"
-                            >
-                                <User size={18} />
-                            </button>
-                            <button
-                                onClick={async () => {
-                                    await fetch(`/api/logout`, { method: 'POST' }).catch(() => {});
-                                    localStorage.removeItem(`${domain}_userId`);
-                                    router.push(`/t/${domain}/login`);
-                                }}
-                                className="p-2 text-muted-foreground hover:text-red-400 hover:bg-red-500/10 rounded-full transition-all"
-                                title="Sign Out"
-                            >
-                                <LogOut className="w-5 h-5" />
-                            </button>
-                        </div>
-                    </div>
-                </header>
+                                className = "w-10 h-10 rounded-full border-2 border-primary/20 bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center font-black text-white text-sm hover:scale-105 transition-transform"
+                                title = "Profile Settings"
+                >
+                <User size={18} />
+                            </button >
+                <button
+                    onClick={async () => {
+                        await fetch(`/api/logout`, { method: 'POST' }).catch(() => { });
+                        localStorage.removeItem(`${domain}_userId`);
+                        router.push(`/t/${domain}/login`);
+                    }}
+                    className="p-2 text-muted-foreground hover:text-red-400 hover:bg-red-500/10 rounded-full transition-all"
+                    title="Sign Out"
+                >
+                    <LogOut className="w-5 h-5" />
+                </button>
+                        </div >
+                    </div >
+                </header >
 
-                {/* ── OVERVIEW ── */}
-                {activeTab === 'overview' && (
+                {/* ── OVERVIEW ── */ }
+                { activeTab === 'overview' && (
                     <div className="space-y-8 animate-in fade-in duration-500">
                         <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
                             {[
@@ -1648,15 +1651,15 @@ export default function ClientAdminDashboard() {
                                             </div>
                                             <span className="text-[10px] text-muted-foreground whitespace-nowrap">{new Date(activity.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }</div></span>
                                         </div>
-                                    )</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                )</div >
+                                </div >
+                            </div >
+                        </div >
+                    </div >
+                </div >
 
-                {/* ── COURSES ── */}
-                {activeTab === 'courses' && (
+                {/* ── COURSES ── */ }
+                { activeTab === 'courses' && (
                     <div className="animate-in fade-in duration-500">
                         {selectedCourse ? (
                             // Course Builder View
@@ -2464,149 +2467,153 @@ export default function ClientAdminDashboard() {
                                     </div>
                                 </>
                             );
-                        })(</div>
+                        })(</div >
+                    </div >
+                </div >
+
+    { activeTab === 'roles' && (
+        <RolesManager domain={domain as string} addToast={addToast} />
+                </div >
+
+    { activeTab === 'teams' && (
+        <TeamsManager domain={domain as string} addToast={addToast} />
+                </div >
+
+    { activeTab === 'reports' && (() => {
+        const CHART_COLORS = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#ec4899'];
+        return (
+            <div className="space-y-6 animate-in fade-in duration-500 pb-10">
+
+                {/* ── Filter Bar ── */}
+                <div className="glassmorphism rounded-2xl border border-border/50 p-4 flex flex-col lg:flex-row items-start lg:items-center gap-4 flex-wrap">
+                    <div className="flex items-center gap-2 text-muted-foreground font-bold text-sm shrink-0">
+                        <Filter size={16} /> Filters
                     </div>
-                </div>
-
-                {activeTab === 'roles' && (
-                    <RolesManager domain={domain as string} addToast={addToast} />
-                </div>
-
-                {activeTab === 'teams' && (
-                    <TeamsManager domain={domain as string} addToast={addToast} />
-                </div>
-
-                {activeTab === 'reports' && (() => {
-                    const CHART_COLORS = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#ec4899'];
-                    return (
-                        <div className="space-y-6 animate-in fade-in duration-500 pb-10">
-
-                        {/* ── Filter Bar ── */}
-                        <div className="glassmorphism rounded-2xl border border-border/50 p-4 flex flex-col lg:flex-row items-start lg:items-center gap-4 flex-wrap">
-                            <div className="flex items-center gap-2 text-muted-foreground font-bold text-sm shrink-0">
-                                <Filter size={16} /> Filters
-                            </div>
-                            <div className="flex items-center gap-2 flex-wrap flex-1">
-                                <div className="flex items-center gap-2 bg-secondary/40 border border-border/50 rounded-xl px-3 py-2">
-                                    <Calendar size={14} className="text-muted-foreground" />
-                                    <input type="date" value={reportStartDate} onChange={e => setReportStartDate(e.target.value</div>
+                    <div className="flex items-center gap-2 flex-wrap flex-1">
+                        <div className="flex items-center gap-2 bg-secondary/40 border border-border/50 rounded-xl px-3 py-2">
+                            <Calendar size={14} className="text-muted-foreground" />
+                            <input type="date" value={reportStartDate} onChange={e => setReportStartDate(e.target.value</div>
                                         className="bg-transparent text-sm focus:outline-none w-32" />
-                                    <span className="text-muted-foreground text-xs">to</span>
-                                    <input type="date" value={reportEndDate} onChange={e => setReportEndDate(e.target.value</div>
+                        <span className="text-muted-foreground text-xs">to</span>
+                        <input type="date" value={reportEndDate} onChange={e => setReportEndDate(e.target.value</div>
                                         className="bg-transparent text-sm focus:outline-none w-32" />
+                </div>
+                <select value={reportTeamId} onChange={e => { setReportTeamId(e.target.value); setReportRoleId(''); }}
+                    className="bg-secondary/40 border border-border/50 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50">
+                    <option value="">All Teams</option>
+                    {availableTeams.map((t: any) => <option key={t.id} value={t.id}>{t.name}</option></div>
+                                </select >
+            <select value={reportRoleId} onChange={e => { setReportRoleId(e.target.value); setReportTeamId(''); }}
+                className="bg-secondary/40 border border-border/50 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50">
+                <option value="">All Roles</option>
+                {availableRoles.map((r: any) => <option key={r.id} value={r.id}>{r.name}</option></div>
+                                </select >
+            <button onClick={() => fetchReportStats(reportStartDate, reportEndDate, reportTeamId, reportRoleId</div >
+                className="px-4 py-2 bg-primary text-primary-foreground font-bold rounded-xl text-sm hover:opacity-90 transition-all flex items-center gap-2" >
+                { reportLoading?<Loader2 size = { 14 } className = "animate-spin" /> : <Activity size={14} />}
+                Apply
+                                </ button>
+                {(reportStartDate || reportEndDate || reportTeamId || reportRoleId) && (
+                    <button onClick={() => { setReportStartDate(''); setReportEndDate(''); setReportTeamId(''); setReportRoleId(''); fetchReportStats('', '', '', ''); }}
+                        className="text-xs font-bold text-red-400 hover:text-red-300 px-2">
+                        Clear
+                    </button>
                                 </div>
-                                <select value={reportTeamId} onChange={e => { setReportTeamId(e.target.value); setReportRoleId(''); }}
-                                    className="bg-secondary/40 border border-border/50 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50">
-                                    <option value="">All Teams</option>
-                                    {availableTeams.map((t: any) => <option key={t.id} value={t.id}>{t.name}</option></div>
-                                </select>
-                                <select value={reportRoleId} onChange={e => { setReportRoleId(e.target.value); setReportTeamId(''); }}
-                                    className="bg-secondary/40 border border-border/50 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50">
-                                    <option value="">All Roles</option>
-                                    {availableRoles.map((r: any) => <option key={r.id} value={r.id}>{r.name}</option></div>
-                                </select>
-                                <button onClick={() => fetchReportStats(reportStartDate, reportEndDate, reportTeamId, reportRoleId</div>
-                                    className="px-4 py-2 bg-primary text-primary-foreground font-bold rounded-xl text-sm hover:opacity-90 transition-all flex items-center gap-2">
-                                    {reportLoading ? <Loader2 size={14} className="animate-spin" /> : <Activity size={14} />}
-                                    Apply
-                                </button>
-                                {(reportStartDate || reportEndDate || reportTeamId || reportRoleId) && (
-                                    <button onClick={() => { setReportStartDate(''); setReportEndDate(''); setReportTeamId(''); setReportRoleId(''); fetchReportStats('', '', '', ''); }}
-                                        className="text-xs font-bold text-red-400 hover:text-red-300 px-2">
-                                        Clear
-                                    </button>
-                                </div>
-                            </div>
-                            {reportLoading && <span className="text-xs text-muted-foreground animate-pulse">Updating…</span>}
-                        </div>
+                            </div >
+            { reportLoading && <span className="text-xs text-muted-foreground animate-pulse">Updating…</span>
+    }
+                        </div >
 
-                        {/* ── KPI Cards ── */}
-                        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
-                            {[
-                                { label: 'Learners', value: stats.learners, icon: Users2, color: 'blue' },
-                                { label: 'Courses', value: stats.courses, icon: BookOpen, color: 'purple' },
-                                { label: 'Enrollments', value: stats.enrollments, icon: Target, color: 'cyan' },
-                                { label: 'Completions', value: stats.completions ?? 0, icon: CheckCircle, color: 'emerald' },
-                                { label: 'Completion Rate', value: `${stats.completionRate}%`, icon: TrendingUp, color: 'green' },
-                                { label: 'Avg Progress', value: `${stats.avgProgress}%`, icon: BarChart3, color: 'orange' },
+    {/* ── KPI Cards ── */ }
+    < div className = "grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4" >
+        {
+            [
+                { label: 'Learners', value: stats.learners, icon: Users2, color: 'blue' },
+                { label: 'Courses', value: stats.courses, icon: BookOpen, color: 'purple' },
+                { label: 'Enrollments', value: stats.enrollments, icon: Target, color: 'cyan' },
+                { label: 'Completions', value: stats.completions ?? 0, icon: CheckCircle, color: 'emerald' },
+                { label: 'Completion Rate', value: `${stats.completionRate}%`, icon: TrendingUp, color: 'green' },
+                { label: 'Avg Progress', value: `${stats.avgProgress}%`, icon: BarChart3, color: 'orange' },
                             ].map(({ label, value, icon: Icon, color }) => (
-                                <div key={label} className={`glassmorphism p-4 rounded-2xl border border-${color}-500/20 hover:border-${color}-500/40 transition-colors`}>
-                                    <div className={`w-8 h-8 rounded-xl bg-${color}-500/10 text-${color}-400 flex items-center justify-center mb-3`}>
-                                        <Icon size={16} />
-                                    </div>
-                                    <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{label}</p>
-                                    <p className="text-2xl font-black mt-0.5">{value}</p>
-                                </div>
-                            )</div>
+                    <div key={label} className={`glassmorphism p-4 rounded-2xl border border-${color}-500/20 hover:border-${color}-500/40 transition-colors`}>
+                        <div className={`w-8 h-8 rounded-xl bg-${color}-500/10 text-${color}-400 flex items-center justify-center mb-3`}>
+                            <Icon size={16} />
                         </div>
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{label}</p>
+                        <p className="text-2xl font-black mt-0.5">{value}</p>
+                    </div>
+                )</div >
+                        </div >
 
-                        {/* ── Charts Row ── */}
-                        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-                            {/* Enrollment Trend */}
-                            <div className="xl:col-span-2 glassmorphism rounded-2xl border border-border/50 p-6">
-                                <div className="flex items-center justify-between mb-4">
-                                    <h3 className="font-bold flex items-center gap-2 text-sm uppercase tracking-widest text-muted-foreground">
-                                        <TrendingUp size={14} className="text-blue-400" /> Enrollment Trend (6 months)
-                                    </h3>
+                    {/* ── Charts Row ── */ }
+                    < div className = "grid grid-cols-1 xl:grid-cols-3 gap-6" >
+                    {/* Enrollment Trend */ }
+                    < div className = "xl:col-span-2 glassmorphism rounded-2xl border border-border/50 p-6" >
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="font-bold flex items-center gap-2 text-sm uppercase tracking-widest text-muted-foreground">
+                            <TrendingUp size={14} className="text-blue-400" /> Enrollment Trend (6 months)
+                        </h3>
+                    </div>
+                                {
+                        enrollmentTrendData.length > 0 ? (
+                            <ResponsiveContainer width="100%" height={200}>
+                                <AreaChart data={enrollmentTrendData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+                                    <defs>
+                                        <linearGradient id="enrollGrad" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
+                                            <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                                        </linearGradient>
+                                    </defs>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" />
+                                    <XAxis dataKey="date" stroke="#ffffff40" fontSize={11} tickLine={false} axisLine={false} />
+                                    <YAxis stroke="#ffffff40" fontSize={11} tickLine={false} axisLine={false} />
+                                    <Tooltip contentStyle={{ backgroundColor: '#09090b', borderRadius: '12px', borderColor: '#ffffff15', fontSize: 12 }} cursor={{ fill: '#ffffff05' }} />
+                                    <Area type="monotone" dataKey="enrollments" name="New Enrollments" stroke="#3b82f6" fill="url(#enrollGrad)" strokeWidth={2} dot={false} />
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        ) : (
+                            <div className="h-48 flex items-center justify-center text-muted-foreground text-sm italic">No enrollment data in the last 6 months</div>
                                 </div>
-                                {enrollmentTrendData.length > 0 ? (
-                                    <ResponsiveContainer width="100%" height={200}>
-                                        <AreaChart data={enrollmentTrendData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
-                                            <defs>
-                                                <linearGradient id="enrollGrad" x1="0" y1="0" x2="0" y2="1">
-                                                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                                                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                                                </linearGradient>
-                                            </defs>
-                                            <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" />
-                                            <XAxis dataKey="date" stroke="#ffffff40" fontSize={11} tickLine={false} axisLine={false} />
-                                            <YAxis stroke="#ffffff40" fontSize={11} tickLine={false} axisLine={false} />
-                                            <Tooltip contentStyle={{ backgroundColor: '#09090b', borderRadius: '12px', borderColor: '#ffffff15', fontSize: 12 }} cursor={{ fill: '#ffffff05' }} />
-                                            <Area type="monotone" dataKey="enrollments" name="New Enrollments" stroke="#3b82f6" fill="url(#enrollGrad)" strokeWidth={2} dot={false} />
-                                        </AreaChart>
-                                    </ResponsiveContainer>
-                                ) : (
-                                    <div className="h-48 flex items-center justify-center text-muted-foreground text-sm italic">No enrollment data in the last 6 months</div>
+                            </div >
+
+                    {/* Role Distribution */ }
+                    < div className = "glassmorphism rounded-2xl border border-border/50 p-6" >
+                    <h3 className="font-bold flex items-center gap-2 text-sm uppercase tracking-widest text-muted-foreground mb-4">
+                        <Users2 size={14} className="text-purple-400" /> Role Distribution
+                    </h3>
+                                {
+                        roleDistribution.filter(r => r.value > 0).length > 0 ? (
+                            <>
+                                <ResponsiveContainer width="100%" height={140}>
+                                    <PieChart>
+                                        <Pie data={roleDistribution.filter(r => r.value > 0</div> cx="50%" cy="50%" innerRadius={40} outerRadius={65} dataKey="value" paddingAngle={4}>
+                                    {roleDistribution.filter(r => r.value > 0).map((_: any, i: number) => (
+                                        <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
+                                    )</div>
+                            </Pie>
+                    <Tooltip contentStyle={{ backgroundColor: '#09090b', borderRadius: '12px', borderColor: '#ffffff15', fontSize: 11 }} />
+                                            </PieChart >
+                                        </ResponsiveContainer >
+                    <div className="mt-2 space-y-1.5">
+                        {roleDistribution.filter(r => r.value > 0).map((r: any, i: number) => (
+                            <div key={r.name} className="flex items-center justify-between text-xs">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }} />
+                                    <span className="text-muted-foreground font-medium truncate max-w-[100px]">{r.name}</span>
                                 </div>
+                                <span className="font-bold">{r.value}</span>
                             </div>
-
-                            {/* Role Distribution */}
-                            <div className="glassmorphism rounded-2xl border border-border/50 p-6">
-                                <h3 className="font-bold flex items-center gap-2 text-sm uppercase tracking-widest text-muted-foreground mb-4">
-                                    <Users2 size={14} className="text-purple-400" /> Role Distribution
-                                </h3>
-                                {roleDistribution.filter(r => r.value > 0).length > 0 ? (
-                                    <>
-                                        <ResponsiveContainer width="100%" height={140}>
-                                            <PieChart>
-                                                <Pie data={roleDistribution.filter(r => r.value > 0</div> cx="50%" cy="50%" innerRadius={40} outerRadius={65} dataKey="value" paddingAngle={4}>
-                                                    {roleDistribution.filter(r => r.value > 0).map((_: any, i: number) => (
-                                                        <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
-                                                    )</div>
-                                                </Pie>
-                                                <Tooltip contentStyle={{ backgroundColor: '#09090b', borderRadius: '12px', borderColor: '#ffffff15', fontSize: 11 }} />
-                                            </PieChart>
-                                        </ResponsiveContainer>
-                                        <div className="mt-2 space-y-1.5">
-                                            {roleDistribution.filter(r => r.value > 0).map((r: any, i: number) => (
-                                                <div key={r.name} className="flex items-center justify-between text-xs">
-                                                    <div className="flex items-center gap-2">
-                                                        <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }} />
-                                                        <span className="text-muted-foreground font-medium truncate max-w-[100px]">{r.name}</span>
-                                                    </div>
-                                                    <span className="font-bold">{r.value}</span>
-                                                </div>
-                                            )</div>
-                                        </div>
+                        )</div>
+                                        </div >
                                     </>
                                 ) : (
-                                    <div className="h-48 flex items-center justify-center text-muted-foreground text-sm italic">No roles assigned</div>
-                                </div>
-                            </div>
-                        </div>
+                            <div className="h-48 flex items-center justify-center text-muted-foreground text-sm italic">No roles assigned</div>
+                                </div >
+                            </div >
+                        </div >
 
-                        {/* ── Course Performance ── */}
-                        <div className="glassmorphism rounded-2xl border border-border/50 overflow-hidden">
+                            {/* ── Course Performance ── */ }
+                            < div className = "glassmorphism rounded-2xl border border-border/50 overflow-hidden" >
                             <div className="p-5 border-b border-border/50 flex justify-between items-center bg-secondary/10">
                                 <h3 className="font-bold flex items-center gap-2 text-sm uppercase tracking-widest text-muted-foreground">
                                     <BarChart3 size={14} className="text-primary" /> Course Performance
@@ -2653,15 +2660,15 @@ export default function ClientAdminDashboard() {
                                                 </tr>
                                             );
                                         }</div>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
+                                    </tbody >
+                                </table >
+                            </div >
+                        </div >
 
-                        {/* ── Team Performance + Top Learners ── */}
-                        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                            {/* Team Performance */}
-                            <div className="glassmorphism rounded-2xl border border-border/50 overflow-hidden">
+                            {/* ── Team Performance + Top Learners ── */ }
+                            < div className = "grid grid-cols-1 xl:grid-cols-2 gap-6" >
+                            {/* Team Performance */ }
+                            < div className = "glassmorphism rounded-2xl border border-border/50 overflow-hidden" >
                                 <div className="p-5 border-b border-border/50 bg-secondary/10">
                                     <h3 className="font-bold flex items-center gap-2 text-sm uppercase tracking-widest text-muted-foreground">
                                         <UsersRound size={14} className="text-cyan-400" /> Team Performance
@@ -2688,11 +2695,11 @@ export default function ClientAdminDashboard() {
                                             </div>
                                         </div>
                                     )</div>
-                                </div>
-                            </div>
+                                </div >
+                            </div >
 
-                            {/* Top Learners */}
-                            <div className="glassmorphism rounded-2xl border border-border/50 overflow-hidden">
+                            {/* Top Learners */ }
+                            < div className = "glassmorphism rounded-2xl border border-border/50 overflow-hidden" >
                                 <div className="p-5 border-b border-border/50 bg-secondary/10">
                                     <h3 className="font-bold flex items-center gap-2 text-sm uppercase tracking-widest text-muted-foreground">
                                         <Medal size={14} className="text-amber-400" /> Top Learners
@@ -2718,17 +2725,18 @@ export default function ClientAdminDashboard() {
                                                 <span className="text-[11px] font-bold text-amber-400 w-7">{l.avgProgress}%</span>
                                             </div>
                                         </div>
-                                    )</div>
-                                </div>
-                            </div>
-                        </div>
+                        )</div >
+                                </div >
+                            </div >
+                        </div >
                     );
-                })(</div>
-                </div>
-            </div>
+                }) (</div >
+                </div >
+            </div >
 
-                {/* ── i18n & AI ── */}
-                {activeTab === 'i18n' && (
+    {/* ── i18n & AI ── */ }
+{
+    activeTab === 'i18n' && (
                     <div className="space-y-8 animate-in fade-in duration-500">
                         <div className="flex flex-col gap-1">
                             <h3 className="text-xl font-black flex items-center gap-2">
@@ -2840,49 +2848,49 @@ export default function ClientAdminDashboard() {
                                             )</div>
                                         </select>
                                         <p className="text-[10px] text-muted-foreground italic ml-1">Users will see this language by default if no preference is set.</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                                    </div >
+                                </div >
+                            </div >
+                        </div >
 
-                        <div className="flex justify-end pt-4">
-                            <button
-                                onClick={handleSaveLocales}
-                                disabled={isSavingLocales}
-                                className="px-8 py-4 bg-primary text-primary-foreground rounded-2xl font-black flex items-center gap-3 hover:scale-105 transition-transform shadow-xl disabled:opacity-50"
-                            >
-                                {isSavingLocales ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
-                                Save i18n & AI Configuration
-                            </button>
-                        </div>
+        <div className="flex justify-end pt-4">
+            <button
+                onClick={handleSaveLocales}
+                disabled={isSavingLocales}
+                className="px-8 py-4 bg-primary text-primary-foreground rounded-2xl font-black flex items-center gap-3 hover:scale-105 transition-transform shadow-xl disabled:opacity-50"
+            >
+                {isSavingLocales ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+                Save i18n & AI Configuration
+            </button>
+        </div>
+                    </div >
+                </div >
+
+        { activeTab === 'audit' && (
+            <div className="space-y-6 animate-in fade-in duration-500 pb-20">
+                {/* Header & Search */}
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <h1 className="text-2xl font-black tracking-tight uppercase flex items-center gap-3">
+                            <Shield className="w-7 h-7 text-primary" /> Audit Monitor
+                        </h1>
+                        <p className="text-muted-foreground text-sm font-medium mt-1">
+                            Track all administrative and learner activity across the workspace.
+                        </p>
                     </div>
-                </div>
-
-                {activeTab === 'audit' && (
-                    <div className="space-y-6 animate-in fade-in duration-500 pb-20">
-                        {/* Header & Search */}
-                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                            <div>
-                                <h1 className="text-2xl font-black tracking-tight uppercase flex items-center gap-3">
-                                    <Shield className="w-7 h-7 text-primary" /> Audit Monitor
-                                </h1>
-                                <p className="text-muted-foreground text-sm font-medium mt-1">
-                                    Track all administrative and learner activity across the workspace.
-                                </p>
-                            </div>
-                            <div className="relative w-full md:w-96">
-                                <Filter className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                                <input 
-                                    type="text"
-                                    placeholder="Search by action, name or email..."
-                                    value={auditSearch}
-                                    onChange={(e) => setAuditSearch(e.target.value</div>
-                                    className="w-full bg-secondary/50 border border-border/50 rounded-2xl pl-12 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all uppercase font-bold tracking-tight"
+                    <div className="relative w-full md:w-96">
+                        <Filter className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <input
+                            type="text"
+                            placeholder="Search by action, name or email..."
+                            value={auditSearch}
+                            onChange={(e) => setAuditSearch(e.target.value</div>
+                    className="w-full bg-secondary/50 border border-border/50 rounded-2xl pl-12 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all uppercase font-bold tracking-tight"
                                 />
-                            </div>
-                        </div>
+                </div>
+            </div>
 
-                        {/* Logs Table */}
+                        {/* Logs Table */ }
                         <div className="glassmorphism rounded-[2rem] border border-border/50 overflow-hidden shadow-2xl">
                             <div className="overflow-x-auto">
                                 <table className="w-full text-left border-collapse">
@@ -2956,27 +2964,28 @@ export default function ClientAdminDashboard() {
                                                             <ScanSearch size={16} />
                                                         </button>
                                                     </td>
-                                                </tr>
+                                                </tr >
                                             ))
-                                        </div>
-                                    </tbody>
-                                </table>
-                            </div>
+                                        </div >
+                                    </tbody >
+                                </table >
+                            </div >
 
-                            {/* Pagination */}
-                            {auditPagination.pages > 1 && (
-                                <div className="p-6 bg-secondary/10 border-t border-border/50 flex items-center justify-between">
-                                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
-                                        Showing {(auditPagination.currentPage - 1) * auditPagination.limit + 1} - {Math.min(auditPagination.currentPage * auditPagination.limit, auditPagination.total</div> of {auditPagination.total} logs
-                                    </p>
-                                    <div className="flex items-center gap-2">
-                                        <button 
-                                            disabled={auditPagination.currentPage === 1 || auditLoading}
-                                            onClick={() => fetchAuditLogs(auditPagination.currentPage - 1, auditSearch</div>
-                                            className="p-2 rounded-xl bg-background border border-border/50 hover:bg-secondary disabled:opacity-50 transition-all"
-                                        >
-                                            <ChevronLeft size={20} />
-                                        </button>
+        {/* Pagination */ }
+    {
+        auditPagination.pages > 1 && (
+            <div className="p-6 bg-secondary/10 border-t border-border/50 flex items-center justify-between">
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
+                    Showing {(auditPagination.currentPage - 1) * auditPagination.limit + 1} - {Math.min(auditPagination.currentPage * auditPagination.limit, auditPagination.total</div> of { auditPagination.total } logs
+                                    </p >
+            <div className="flex items-center gap-2">
+                <button
+                    disabled={auditPagination.currentPage === 1 || auditLoading}
+                    onClick={() => fetchAuditLogs(auditPagination.currentPage - 1, auditSearch</div>
+        className = "p-2 rounded-xl bg-background border border-border/50 hover:bg-secondary disabled:opacity-50 transition-all"
+            >
+            <ChevronLeft size={20} />
+                                        </button >
                                         <span className="text-sm font-black px-4">
                                             {auditPagination.currentPage} / {auditPagination.pages}
                                         </span>
@@ -3102,11 +3111,12 @@ export default function ClientAdminDashboard() {
                                             </div>
                                         )</div>
                                     </div>
-                                </section>
+                                </section >
 
-                                {/* Real-time Preview */}
-                                <div className="p-8 rounded-[2rem] border-2 border-dashed bg-secondary/5 relative overflow-hidden" 
-                                    style={{ borderColor: branding.primaryColor + '30' }}>
+            {/* Real-time Preview */ }
+            < div className = "p-8 rounded-[2rem] border-2 border-dashed bg-secondary/5 relative overflow-hidden"
+        style = {{ borderColor: branding.primaryColor + '30' }
+    }>
                                     <div className="absolute -top-12 -right-12 w-32 h-32 rounded-full blur-3xl opacity-20" style={{ backgroundColor: branding.primaryColor }} />
                                     
                                     <div className="flex items-center gap-3 mb-6">
@@ -3130,81 +3140,83 @@ export default function ClientAdminDashboard() {
                                         <button className="w-full py-2.5 rounded-xl text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-black/5" 
                                             style={{ backgroundColor: branding.primaryColor }}>
                     </div>
+                    </div >
+                    </div >
+                </div >
+
+        {/* ── DOMAINS ── */ }
+    {
+        activeTab === 'domains' && (
+            <div className="max-w-2xl space-y-6 animate-in fade-in duration-500">
+                <div className="glassmorphism p-8 rounded-3xl border border-border/50 space-y-6">
+                    <div>
+                        <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">Current Platform Subdomain</p>
+                        <p className="font-mono font-bold text-blue-400">{domain}.lvh.me:3000</p>
                     </div>
+                    <div className="space-y-2">
+                        <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Custom Domain</label>
+                        <div className="flex gap-3">
+                            <input type="text" placeholder="academy.yourcompany.com"
+                                className="flex-1 bg-secondary/50 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
+                            <button className="px-6 py-3 bg-primary text-primary-foreground rounded-xl font-bold text-sm hover:opacity-90">Save</button>
+                        </div>
+                    </div>
+                    <div className="p-6 bg-blue-500/5 border border-blue-500/20 rounded-2xl space-y-4">
+                        <p className="font-bold text-blue-400 text-sm">DNS Setup Instructions</p>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="bg-background/80 p-4 rounded-xl border border-blue-500/20">
+                                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Record Type</p>
+                                <p className="font-mono font-bold text-sm text-blue-400">CNAME</p>
+                            </div>
+                            <div className="bg-background/80 p-4 rounded-xl border border-blue-500/20">
+                                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Target Value</p>
+                                <p className="font-mono font-bold text-sm text-blue-400">cname.infinitelms.com</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
+            </div>
+                </div >
 
-                {/* ── DOMAINS ── */}
-                {activeTab === 'domains' && (
-                    <div className="max-w-2xl space-y-6 animate-in fade-in duration-500">
-                        <div className="glassmorphism p-8 rounded-3xl border border-border/50 space-y-6">
+            {/* ── SETTINGS ── */ }
+        {
+            activeTab === 'settings' && (
+                <div className="max-w-2xl space-y-6 animate-in fade-in duration-500">
+                    <div className="glassmorphism p-8 rounded-3xl border border-border/50 space-y-6">
+                        <h3 className="font-bold text-lg">Workspace Configuration</h3>
+                        <div className="space-y-2">
+                            <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Support Email</label>
+                            <input type="email" placeholder="support@yourcompany.com"
+                                className="w-full bg-secondary/50 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
+                        </div>
+                        <div className="flex items-center justify-between p-4 rounded-xl border border-border/50">
                             <div>
-                                <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">Current Platform Subdomain</p>
-                                <p className="font-mono font-bold text-blue-400">{domain}.lvh.me:3000</p>
+                                <p className="font-bold text-sm">Allow Learner Self-Registration</p>
+                                <p className="text-xs text-muted-foreground">Learners can sign up without an invite.</p>
                             </div>
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Custom Domain</label>
-                                <div className="flex gap-3">
-                                    <input type="text" placeholder="academy.yourcompany.com"
-                                        className="flex-1 bg-secondary/50 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
-                                    <button className="px-6 py-3 bg-primary text-primary-foreground rounded-xl font-bold text-sm hover:opacity-90">Save</button>
-                                </div>
-                            </div>
-                            <div className="p-6 bg-blue-500/5 border border-blue-500/20 rounded-2xl space-y-4">
-                                <p className="font-bold text-blue-400 text-sm">DNS Setup Instructions</p>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="bg-background/80 p-4 rounded-xl border border-blue-500/20">
-                                        <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Record Type</p>
-                                        <p className="font-mono font-bold text-sm text-blue-400">CNAME</p>
-                                    </div>
-                                    <div className="bg-background/80 p-4 rounded-xl border border-blue-500/20">
-                                        <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Target Value</p>
-                                        <p className="font-mono font-bold text-sm text-blue-400">cname.infinitelms.com</p>
-                                    </div>
-                                </div>
+                            <div className="w-12 h-6 rounded-full bg-secondary border border-border relative">
+                                <div className="w-4 h-4 rounded-full bg-muted-foreground absolute top-1 left-1" />
                             </div>
                         </div>
+                        <button className="flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-xl font-bold text-sm hover:scale-105 transition-transform">
+                            <Save size={16} /> Save Settings
+                        </button>
+                    </div>
+                    <div className="glassmorphism p-8 rounded-3xl border border-red-500/20 bg-red-500/5">
+                        <h3 className="font-bold text-red-400 mb-2">Danger Zone</h3>
+                        <p className="text-sm text-red-400/70 mb-4">Irreversible workspace actions.</p>
+                        <button className="px-4 py-2 bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white font-bold rounded-lg text-sm transition-all">
+                            Delete Workspace
+                        </button>
                     </div>
                 </div>
+                </div >
 
-                {/* ── SETTINGS ── */}
-                {activeTab === 'settings' && (
-                    <div className="max-w-2xl space-y-6 animate-in fade-in duration-500">
-                        <div className="glassmorphism p-8 rounded-3xl border border-border/50 space-y-6">
-                            <h3 className="font-bold text-lg">Workspace Configuration</h3>
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Support Email</label>
-                                <input type="email" placeholder="support@yourcompany.com"
-                                    className="w-full bg-secondary/50 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
-                            </div>
-                            <div className="flex items-center justify-between p-4 rounded-xl border border-border/50">
-                                <div>
-                                    <p className="font-bold text-sm">Allow Learner Self-Registration</p>
-                                    <p className="text-xs text-muted-foreground">Learners can sign up without an invite.</p>
-                                </div>
-                                <div className="w-12 h-6 rounded-full bg-secondary border border-border relative">
-                                    <div className="w-4 h-4 rounded-full bg-muted-foreground absolute top-1 left-1" />
-                                </div>
-                            </div>
-                            <button className="flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-xl font-bold text-sm hover:scale-105 transition-transform">
-                                <Save size={16} /> Save Settings
-                            </button>
-                        </div>
-                        <div className="glassmorphism p-8 rounded-3xl border border-red-500/20 bg-red-500/5">
-                            <h3 className="font-bold text-red-400 mb-2">Danger Zone</h3>
-                            <p className="text-sm text-red-400/70 mb-4">Irreversible workspace actions.</p>
-                            <button className="px-4 py-2 bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white font-bold rounded-lg text-sm transition-all">
-                                Delete Workspace
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                {activeTab === 'certificates' && (
+                { activeTab === 'certificates' && (
                     <div className="space-y-6 animate-in fade-in duration-500 pb-20">
                         {editingTemplate ? (
-                            <CertificateDesigner 
-                                template={editingTemplate} 
+                            <CertificateDesigner
+                                template={editingTemplate}
                                 onBack={() => { setEditingTemplate(null); fetchAvailableTemplates(); }}
                                 onSave={async (id, designFields) => {
                                     try {
@@ -3222,17 +3234,18 @@ export default function ClientAdminDashboard() {
                                 }}
                             />
                         ) : (
-                            <CertificateManager 
-                                domain={domain as string} 
-                                addToast={addToast} 
+                            <CertificateManager
+                                domain={domain as string}
+                                addToast={addToast}
                                 onEditTemplate={(t) => setEditingTemplate(t</div>
-                            />
-                        </div>
-                    </div>
-                </div>
+                    />
+                        </div >
+                    </div >
+                </div >
 
-            {/* Modals */}
-            {showCourseModal && (
+                {/* Modals */ }
+            {
+                showCourseModal && (
                 <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/70 backdrop-blur-sm">
                     <div className="bg-background border border-border w-full max-w-md rounded-3xl p-8 space-y-6 shadow-2xl">
                         <div className="flex justify-between items-center">
@@ -3299,45 +3312,49 @@ export default function ClientAdminDashboard() {
                                         <option value="Intermediate">Intermediate</option>
                                         <option value="Advanced">Advanced</option>
                                     </select>
-                                </div>
-                                <div className="space-y-1.5">
-                                    <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Languages</label>
-                                    <input placeholder="e.g. English, Spanish" value={courseForm.languages} onChange={e => setCourseForm({ ...courseForm, languages: e.target.value }</div>
-                                        className="w-full bg-secondary/50 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
-                                </div>
-                            </div>
-                            {/* Certificate Section - Moved Higher & Highlighted */}
-                            <div className={`p-4 rounded-2xl border-2 transition-all duration-300 ${courseForm.certificateEnabled ? 'bg-indigo-500/5 border-indigo-500/20 shadow-lg shadow-indigo-500/5' : 'bg-secondary/20 border-border/50 opacity-80'}`}>
-                                <div className="flex items-center justify-between mb-2">
-                                    <label className="text-xs font-black uppercase tracking-widest text-indigo-500 flex items-center gap-2">
-                                        <Award size={16} /> Certificate of Achievement
-                                    </label>
-                                    <button 
-                                        type="button"
-                                        onClick={() => setCourseForm({ ...courseForm, certificateEnabled: !courseForm.certificateEnabled }</div>
-                                        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none bg-secondary ${courseForm.certificateEnabled ? 'bg-indigo-600' : ''}`}
+                                </div >
+                    <div className="space-y-1.5">
+                        <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Languages</label>
+                        <input placeholder="e.g. English, Spanish" value={courseForm.languages} onChange={e => setCourseForm({ ...courseForm, languages: e.target.value }</div>
+                className = "w-full bg-secondary/50 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
+                                </div >
+                            </div >
+                    {/* Certificate Section - Moved Higher & Highlighted */ }
+                    < div className = {`p-4 rounded-2xl border-2 transition-all duration-300 ${courseForm.certificateEnabled ? 'bg-indigo-500/5 border-indigo-500/20 shadow-lg shadow-indigo-500/5' : 'bg-secondary/20 border-border/50 opacity-80'}`
+            }>
+                <div className="flex items-center justify-between mb-2">
+                    <label className="text-xs font-black uppercase tracking-widest text-indigo-500 flex items-center gap-2">
+                        <Award size={16} /> Certificate of Achievement
+                    </label>
+                    <button
+                        type="button"
+                        onClick={() => setCourseForm({ ...courseForm, certificateEnabled: !courseForm.certificateEnabled }</div>
+            className = {`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none bg-secondary ${courseForm.certificateEnabled ? 'bg-indigo-600' : ''}`
+        }
                                     >
-                                        <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${courseForm.certificateEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
-                                    </button>
-                                </div>
-                                <p className="text-[10px] text-muted-foreground mb-3 font-medium">Issue a professional certificate to learners upon course completion.</p>
-                                
-                                {courseForm.certificateEnabled && (
-                                    <div className="space-y-1.5 animate-in slide-in-from-top-2 duration-300 pt-2 border-t border-indigo-500/10">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-indigo-400/70">Design Template</label>
-                                        <select 
-                                            value={courseForm.certificateTemplateId} 
-                                            onChange={e => setCourseForm({ ...courseForm, certificateTemplateId: e.target.value }</div>
-                                            className="w-full bg-background border border-indigo-500/20 rounded-xl px-4 py-2.5 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all appearance-none cursor-pointer"
-                                        >
-                                            <option value="">-- Use Default Template --</option>
-                                            {availableTemplates.map((t: any) => (
-                                                <option key={t.id} value={t.id}>{t.name} {t.isGlobal ? '🌍' : '🏠'}</option>
-                                            )</div>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
+            <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${courseForm.certificateEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
+                                    </button >
+                                </div >
+            <p className="text-[10px] text-muted-foreground mb-3 font-medium">Issue a professional certificate to learners upon course completion.</p>
+
+        {
+            courseForm.certificateEnabled && (
+                <div className="space-y-1.5 animate-in slide-in-from-top-2 duration-300 pt-2 border-t border-indigo-500/10">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-indigo-400/70">Design Template</label>
+                    <select
+                        value={courseForm.certificateTemplateId}
+                        onChange={e => setCourseForm({ ...courseForm, certificateTemplateId: e.target.value }</div>
+                                            className = "w-full bg-background border border-indigo-500/20 rounded-xl px-4 py-2.5 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all appearance-none cursor-pointer"
+                >
+                <option value="">-- Use Default Template --</option>
+            {
+                availableTemplates.map((t: any) => (
+                    <option key={t.id} value={t.id}>{t.name} {t.isGlobal ? '🌍' : '🏠'}</option>
+                )</div >
+                                        </select >
+                                    </div >
+                                </div >
+                            </div >
 
                             <div className="flex flex-col gap-3 py-2">
                                 <div className="flex items-center gap-2 px-1">
@@ -3347,42 +3364,44 @@ export default function ClientAdminDashboard() {
                                 </div>
                                 <div className="flex items-center gap-2 px-1">
                                     <input type="checkbox" id="course-marketplace" checked={courseForm.isMarketplace} onChange={e => setCourseForm({ ...courseForm, isMarketplace: e.target.checked }</div>
-                                        className="rounded border-border/50 bg-secondary/30 text-amber-500 focus:ring-amber-500/20" />
-                                    <label htmlFor="course-marketplace" className="text-xs font-bold uppercase tracking-widest text-amber-600/80 cursor-pointer">Publish to Internal Marketplace</label>
-                                </div>
-                            </div>
-                            {/* Exclusive Role/Team Gating */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-1.5">
-                                    <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Exclusive to Role (Optional)</label>
-                                    <select value={courseForm.exclusiveRoleId} onChange={e => setCourseForm({ ...courseForm, exclusiveRoleId: e.target.value, isMarketplace: (e.target.value || courseForm.exclusiveTeamId) ? false : courseForm.isMarketplace }</div>
-                                        className="w-full bg-secondary/30 border border-border/50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all">
-                                        <option value="">No Restriction — All Learners</option>
-                                        {availableRoles.map((r: any) => <option key={r.id} value={r.id}>{r.name} Only</option></div>
-                                    </select>
-                                </div>
-                                <div className="space-y-1.5">
-                                    <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Exclusive to Team (Optional)</label>
-                                    <select value={courseForm.exclusiveTeamId} onChange={e => setCourseForm({ ...courseForm, exclusiveTeamId: e.target.value, isMarketplace: (e.target.value || courseForm.exclusiveRoleId) ? false : courseForm.isMarketplace }</div>
-                                        className="w-full bg-secondary/30 border border-border/50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all">
-                                        <option value="">No Restriction — All Learners</option>
-                                        {availableTeams.map((t: any) => <option key={t.id} value={t.id}>{t.name} Only</option></div>
-                                    </select>
-                                </div>
-                            </div>
-                            {(courseForm.exclusiveRoleId || courseForm.exclusiveTeamId) && (
-                                <p className="text-[10px] text-amber-600/80 font-bold">⚠ Exclusive courses are hidden from the Marketplace and invisible to learners without this {courseForm.exclusiveRoleId && courseForm.exclusiveTeamId ? 'role and team' : courseForm.exclusiveRoleId ? 'role' : 'team'}.</p>
-                            </div>
-                            <button type="submit" className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-bold hover:opacity-90">
-                                {selectedCourse ? 'Save Changes' : 'Create Course'}
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            </div>
+                                        className = "rounded border-border/50 bg-secondary/30 text-amber-500 focus:ring-amber-500/20" />
+                    <label htmlFor="course-marketplace" className="text-xs font-bold uppercase tracking-widest text-amber-600/80 cursor-pointer">Publish to Internal Marketplace</label>
+                                </div >
+                            </div >
+                    {/* Exclusive Role/Team Gating */ }
+                    < div className = "grid grid-cols-1 md:grid-cols-2 gap-4" >
+                    <div className="space-y-1.5">
+                        <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Exclusive to Role (Optional)</label>
+                        <select value={courseForm.exclusiveRoleId} onChange={e => setCourseForm({ ...courseForm, exclusiveRoleId: e.target.value, isMarketplace: (e.target.value || courseForm.exclusiveTeamId) ? false : courseForm.isMarketplace }</div>
+                                        className = "w-full bg-secondary/30 border border-border/50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all" >
+                    <option value="">No Restriction — All Learners</option>
+                                        {
+                        availableRoles.map((r: any) => <option key={r.id} value={r.id}>{r.name} Only</option></div >
+                                    </select >
+                                </div >
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Exclusive to Team (Optional)</label>
+                                <select value={courseForm.exclusiveTeamId} onChange={e => setCourseForm({ ...courseForm, exclusiveTeamId: e.target.value, isMarketplace: (e.target.value || courseForm.exclusiveRoleId) ? false : courseForm.isMarketplace }</div>
+                                        className = "w-full bg-secondary/30 border border-border/50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all" >
+                            <option value="">No Restriction — All Learners</option>
+                                        {
+                                availableTeams.map((t: any) => <option key={t.id} value={t.id}>{t.name} Only</option></div >
+                                    </select >
+                                </div >
+                            </div >
+                                    {(courseForm.exclusiveRoleId || courseForm.exclusiveTeamId) && (
+                                        <p className="text-[10px] text-amber-600/80 font-bold">⚠ Exclusive courses are hidden from the Marketplace and invisible to learners without this {courseForm.exclusiveRoleId && courseForm.exclusiveTeamId ? 'role and team' : courseForm.exclusiveRoleId ? 'role' : 'team'}.</p>
+                            </div >
+                                    <button type="submit" className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-bold hover:opacity-90">
+                                        {selectedCourse ? 'Save Changes' : 'Create Course'}
+                                    </button>
+                        </form >
+                    </div >
+                </div >
+            </div >
 
 
-            {activeQuizLesson && (
+                                    { activeQuizLesson && (
                 <div className="fixed inset-0 z-[300] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md">
                     <div className="bg-background border border-border w-full max-w-4xl max-h-[90vh] rounded-3xl p-8 flex flex-col shadow-2xl animate-in zoom-in duration-300">
                         <div className="flex justify-between items-center mb-6">
@@ -3435,294 +3454,296 @@ export default function ClientAdminDashboard() {
                                         className="w-full bg-secondary/30 border border-border/50 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/50"
                                     />
                                 </div>
-                            </div>
+                            </div >
 
-                            <div className="grid grid-cols-2 gap-6 bg-secondary/5 rounded-2xl p-6 border border-border/30">
-                                <div className="space-y-4">
-                                    <div className="flex items-center gap-2">
-                                        <input
-                                            type="checkbox" id="retake-allowed"
-                                            checked={quizForm.retakeAllowed}
-                                            onChange={(e) => setQuizForm({ ...quizForm, retakeAllowed: e.target.checked }</div>
+                                    <div className="grid grid-cols-2 gap-6 bg-secondary/5 rounded-2xl p-6 border border-border/30">
+                                        <div className="space-y-4">
+                                            <div className="flex items-center gap-2">
+                                                <input
+                                                    type="checkbox" id="retake-allowed"
+                                                    checked={quizForm.retakeAllowed}
+                                                    onChange={(e) => setQuizForm({ ...quizForm, retakeAllowed: e.target.checked }</div>
                                             className="rounded border-border text-primary focus:ring-primary/20"
                                         />
-                                        <label htmlFor="retake-allowed" className="text-xs font-bold uppercase tracking-widest text-muted-foreground cursor-pointer">Allow Retakes</label>
-                                    </div>
-                                    {quizForm.retakeAllowed && (
-                                        <div className="space-y-1.5 ml-6">
-                                            <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Max Attempts (0 = unlimited)</label>
-                                            <input
-                                                type="number" min="0"
-                                                value={quizForm.maxAttempts}
-                                                onChange={(e) => setQuizForm({ ...quizForm, maxAttempts: parseInt(e.target.value) || 0 }</div>
+                                            <label htmlFor="retake-allowed" className="text-xs font-bold uppercase tracking-widest text-muted-foreground cursor-pointer">Allow Retakes</label>
+                                        </div>
+                                        {quizForm.retakeAllowed && (
+                                            <div className="space-y-1.5 ml-6">
+                                                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Max Attempts (0 = unlimited)</label>
+                                                <input
+                                                    type="number" min="0"
+                                                    value={quizForm.maxAttempts}
+                                                    onChange={(e) => setQuizForm({ ...quizForm, maxAttempts: parseInt(e.target.value) || 0 }</div>
                                                 className="w-full bg-secondary/30 border border-border/50 rounded-xl px-4 py-2 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/50"
                                             />
+                                    </div>
+                                    </div >
+                                </div >
+                                    <div className="space-y-4 border-l border-border/30 pl-6">
+                                        <div className="flex items-center gap-2">
+                                            <input
+                                                type="checkbox" id="is-randomized"
+                                                checked={quizForm.isRandomized}
+                                                onChange={(e) => {
+                                                    const checked = e.target.checked;
+                                                    setQuizForm(prev => ({
+                                                        ...prev,
+                                                        isRandomized: checked,
+                                                        randomCount: (checked && (prev.randomCount === 0 || prev.randomCount > prev.questions.length)) ? prev.questions.length : prev.randomCount
+                                                    }));
+                                                }}
+                                                className="rounded border-border text-primary focus:ring-primary/20"
+                                            />
+                                            <label htmlFor="is-randomized" className="text-xs font-bold uppercase tracking-widest text-muted-foreground cursor-pointer">Randomize Questions</label>
                                         </div>
-                                    </div>
-                                </div>
-                                <div className="space-y-4 border-l border-border/30 pl-6">
-                                    <div className="flex items-center gap-2">
-                                        <input
-                                            type="checkbox" id="is-randomized"
-                                            checked={quizForm.isRandomized}
-                                            onChange={(e) => {
-                                                const checked = e.target.checked;
-                                                setQuizForm(prev => ({
-                                                    ...prev,
-                                                    isRandomized: checked,
-                                                    randomCount: (checked && (prev.randomCount === 0 || prev.randomCount > prev.questions.length)) ? prev.questions.length : prev.randomCount
-                                                }));
-                                            }}
-                                            className="rounded border-border text-primary focus:ring-primary/20"
-                                        />
-                                        <label htmlFor="is-randomized" className="text-xs font-bold uppercase tracking-widest text-muted-foreground cursor-pointer">Randomize Questions</label>
-                                    </div>
-                                    {quizForm.isRandomized && (
-                                        <div className="space-y-4 ml-6 animate-in fade-in slide-in-from-left-2 transition-all duration-300">
-                                            <div className="flex flex-col gap-1">
-                                                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-1 flex justify-between">
-                                                    <span>Exam Subset Size</span>
-                                                    <span className="text-primary font-black">{quizForm.randomCount} OF {quizForm.questions.length || 0}</span>
-                                                </label>
-                                                <p className="text-[9px] text-muted-foreground/60 px-1 italic">
-                                                    {quizForm.questions.length > 0
-                                                        ? `Each learner will see ${quizForm.randomCount} random questions from your pool.`
-                                                        : "Add questions below to build your pool first."}
-                                                </p>
-                                            </div>
+                                        {quizForm.isRandomized && (
+                                            <div className="space-y-4 ml-6 animate-in fade-in slide-in-from-left-2 transition-all duration-300">
+                                                <div className="flex flex-col gap-1">
+                                                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-1 flex justify-between">
+                                                        <span>Exam Subset Size</span>
+                                                        <span className="text-primary font-black">{quizForm.randomCount} OF {quizForm.questions.length || 0}</span>
+                                                    </label>
+                                                    <p className="text-[9px] text-muted-foreground/60 px-1 italic">
+                                                        {quizForm.questions.length > 0
+                                                            ? `Each learner will see ${quizForm.randomCount} random questions from your pool.`
+                                                            : "Add questions below to build your pool first."}
+                                                    </p>
+                                                </div>
 
-                                            {quizForm.questions.length > 0 ? (
-                                                <div className="flex items-center gap-4 bg-secondary/20 rounded-xl px-4 py-2 border border-border/50">
-                                                    <input
-                                                        type="range"
-                                                        min="1"
-                                                        max={quizForm.questions.length}
-                                                        value={quizForm.randomCount}
-                                                        onChange={(e) => setQuizForm({ ...quizForm, randomCount: parseInt(e.target.value) }</div>
+                                                {quizForm.questions.length > 0 ? (
+                                                    <div className="flex items-center gap-4 bg-secondary/20 rounded-xl px-4 py-2 border border-border/50">
+                                                        <input
+                                                            type="range"
+                                                            min="1"
+                                                            max={quizForm.questions.length}
+                                                            value={quizForm.randomCount}
+                                                            onChange={(e) => setQuizForm({ ...quizForm, randomCount: parseInt(e.target.value) }</div>
                                                         className="flex-1 accent-primary cursor-pointer h-1.5 bg-secondary rounded-lg appearance-none"
                                                     />
-                                                    <input
-                                                        type="number"
-                                                        min="1"
-                                                        max={quizForm.questions.length}
-                                                        value={quizForm.randomCount}
-                                                        onChange={(e) => {
-                                                            const val = Math.max(1, Math.min(parseInt(e.target.value) || 1, quizForm.questions.length));
-                                                            setQuizForm({ ...quizForm, randomCount: val });
-                                                        }}
-                                                        className="w-16 bg-secondary/50 text-center rounded-lg py-1 text-xs font-black border border-border/50 focus:outline-none focus:ring-1 focus:ring-primary/50"
-                                                    />
-                                                </div>
-                                            ) : (
-                                                <div className="text-[10px] font-bold text-amber-500/80 bg-amber-500/5 border border-amber-500/20 rounded-lg p-3 flex items-center gap-2">
-                                                    <AlertCircle size={14} /> <span>Your question pool is currently empty.</span>
-                                                </div>
+                                                <input
+                                                    type="number"
+                                                    min="1"
+                                                    max={quizForm.questions.length}
+                                                    value={quizForm.randomCount}
+                                                    onChange={(e) => {
+                                                        const val = Math.max(1, Math.min(parseInt(e.target.value) || 1, quizForm.questions.length));
+                                                        setQuizForm({ ...quizForm, randomCount: val });
+                                                    }}
+                                                    className="w-16 bg-secondary/50 text-center rounded-lg py-1 text-xs font-black border border-border/50 focus:outline-none focus:ring-1 focus:ring-primary/50"
+                                                />
                                             </div>
+                                        ) : (
+                                        <div className="text-[10px] font-bold text-amber-500/80 bg-amber-500/5 border border-amber-500/20 rounded-lg p-3 flex items-center gap-2">
+                                            <AlertCircle size={14} /> <span>Your question pool is currently empty.</span>
                                         </div>
                                     </div>
-                                </div>
-                            </div>
+                                        </div >
+                                    </div >
+                                </div >
+                            </div >
 
-                            <div className="space-y-6">
-                                <div className="flex items-center justify-between border-b border-border/50 pb-4">
-                                    <h4 className="font-black text-lg flex items-center gap-2"><Plus size={20} className="text-primary" /> Questions</h4>
-                                    <div className="flex gap-2">
-                                        <button
-                                            disabled={isGeneratingQuiz}
-                                            onClick={generateAIQuiz}
-                                            className="px-4 py-2 bg-indigo-600 text-white rounded-xl font-bold text-xs hover:bg-indigo-500 transition-colors flex items-center gap-2 disabled:opacity-50 group/whisper"
-                                        >
-                                            {isGeneratingQuiz ? <Loader2 size={14} className="animate-spin" /> : <Mic size={14} className="group-hover/whisper:scale-125 transition-transform" />}
-                                            {isGeneratingQuiz ? 'Whisper generating...' : 'Whisper AI Generate'}
-                                        </button>
-                                        <button
-                                            onClick={() => setQuizForm({ ...quizForm, questions: [...quizForm.questions, { text: '', type: 'MULTIPLE_CHOICE', options: [{ text: '', isCorrect: true }, { text: '', isCorrect: false }, { text: '', isCorrect: false }, { text: '', isCorrect: false }] }] }</div>
+                                    <div className="space-y-6">
+                                        <div className="flex items-center justify-between border-b border-border/50 pb-4">
+                                            <h4 className="font-black text-lg flex items-center gap-2"><Plus size={20} className="text-primary" /> Questions</h4>
+                                            <div className="flex gap-2">
+                                                <button
+                                                    disabled={isGeneratingQuiz}
+                                                    onClick={generateAIQuiz}
+                                                    className="px-4 py-2 bg-indigo-600 text-white rounded-xl font-bold text-xs hover:bg-indigo-500 transition-colors flex items-center gap-2 disabled:opacity-50 group/whisper"
+                                                >
+                                                    {isGeneratingQuiz ? <Loader2 size={14} className="animate-spin" /> : <Mic size={14} className="group-hover/whisper:scale-125 transition-transform" />}
+                                                    {isGeneratingQuiz ? 'Whisper generating...' : 'Whisper AI Generate'}
+                                                </button>
+                                                <button
+                                                    onClick={() => setQuizForm({ ...quizForm, questions: [...quizForm.questions, { text: '', type: 'MULTIPLE_CHOICE', options: [{ text: '', isCorrect: true }, { text: '', isCorrect: false }, { text: '', isCorrect: false }, { text: '', isCorrect: false }] }] }</div>
                                             className="px-4 py-2 bg-primary text-primary-foreground rounded-xl font-bold text-xs hover:scale-105 transition-transform"
                                         >
                                             Add Question
                                         </button>
                                     </div>
-                                </div>
+                                </div >
 
-                                {quizForm.questions.map((q, qIdx) => (
-                                    <div key={qIdx} className="p-6 rounded-2xl bg-secondary/10 border border-border/50 space-y-4 group">
-                                        <div className="space-y-1">
-                                            <div className="flex justify-between items-center px-1">
-                                                <span className="w-8 h-8 rounded-full bg-primary/20 text-primary flex items-center justify-center font-black text-xs">0{qIdx + 1}</span>
-                                                {validationErrors.quiz?.questions?.[qIdx]?.text && <span className="text-[10px] font-bold text-red-500 animate-in fade-in slide-in-from-right-1">{validationErrors.quiz.questions[qIdx].text}</span>}
-                                                <button
-                                                    onClick={() => {
-                                                        const newQs = [...quizForm.questions];
-                                                        newQs.splice(qIdx, 1);
-                                                        setQuizForm({ ...quizForm, questions: newQs });
-                                                    }}
-                                                    className="p-1.5 text-red-400 hover:bg-red-500/10 rounded-lg opacity-0 group-hover:opacity-100 transition-all"
-                                                >
-                                                    <Trash2 size={16} />
-                                                </button>
-                                            </div>
+                                    {
+                                        quizForm.questions.map((q, qIdx) => (
+                                            <div key={qIdx} className="p-6 rounded-2xl bg-secondary/10 border border-border/50 space-y-4 group">
+                                                <div className="space-y-1">
+                                                    <div className="flex justify-between items-center px-1">
+                                                        <span className="w-8 h-8 rounded-full bg-primary/20 text-primary flex items-center justify-center font-black text-xs">0{qIdx + 1}</span>
+                                                        {validationErrors.quiz?.questions?.[qIdx]?.text && <span className="text-[10px] font-bold text-red-500 animate-in fade-in slide-in-from-right-1">{validationErrors.quiz.questions[qIdx].text}</span>}
+                                                        <button
+                                                            onClick={() => {
+                                                                const newQs = [...quizForm.questions];
+                                                                newQs.splice(qIdx, 1);
+                                                                setQuizForm({ ...quizForm, questions: newQs });
+                                                            }}
+                                                            className="p-1.5 text-red-400 hover:bg-red-500/10 rounded-lg opacity-0 group-hover:opacity-100 transition-all"
+                                                        >
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    </div>
 
-                                            {/* Question Type Selector */}
-                                            <div className="flex gap-2 pt-1">
-                                                {[
-                                                    { value: 'MULTIPLE_CHOICE', label: '⦿ Single Answer' },
-                                                    { value: 'MULTIPLE_SELECT', label: '☑ Multi-Select' },
-                                                    { value: 'FILL_BLANK', label: '✏ Fill in Blank' },
-                                                ].map(t => (
-                                                    <button
-                                                        key={t.value}
-                                                        onClick={() => {
-                                                            const newQs = [...quizForm.questions];
-                                                            const prev = newQs[qIdx].type;
-                                                            // Clone the question object to avoid direct mutation
-                                                            newQs[qIdx] = {
-                                                                ...newQs[qIdx],
-                                                                type: t.value as any,
-                                                                // Reset options when switching types
-                                                                options: t.value === 'FILL_BLANK'
-                                                                    ? [{ text: '', isCorrect: true }]
-                                                                    : (prev === 'FILL_BLANK' ? [{ text: '', isCorrect: true }, { text: '', isCorrect: false }, { text: '', isCorrect: false }, { text: '', isCorrect: false }] : newQs[qIdx].options)
-                                                            };
-                                                            setQuizForm({ ...quizForm, questions: newQs });
-                                                        }}
-                                                        className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${(q.type || 'MULTIPLE_CHOICE') === t.value
-                                                                ? 'bg-primary/20 border-primary/40 text-primary'
-                                                                : 'border-border/50 text-muted-foreground hover:border-primary/30'
-                                                            }`}
-                                                    >
-                                                        {t.label}
-                                                    </button>
-                                                )</div>
-                                            </div>
+                                                    {/* Question Type Selector */}
+                                                    <div className="flex gap-2 pt-1">
+                                                        {[
+                                                            { value: 'MULTIPLE_CHOICE', label: '⦿ Single Answer' },
+                                                            { value: 'MULTIPLE_SELECT', label: '☑ Multi-Select' },
+                                                            { value: 'FILL_BLANK', label: '✏ Fill in Blank' },
+                                                        ].map(t => (
+                                                            <button
+                                                                key={t.value}
+                                                                onClick={() => {
+                                                                    const newQs = [...quizForm.questions];
+                                                                    const prev = newQs[qIdx].type;
+                                                                    // Clone the question object to avoid direct mutation
+                                                                    newQs[qIdx] = {
+                                                                        ...newQs[qIdx],
+                                                                        type: t.value as any,
+                                                                        // Reset options when switching types
+                                                                        options: t.value === 'FILL_BLANK'
+                                                                            ? [{ text: '', isCorrect: true }]
+                                                                            : (prev === 'FILL_BLANK' ? [{ text: '', isCorrect: true }, { text: '', isCorrect: false }, { text: '', isCorrect: false }, { text: '', isCorrect: false }] : newQs[qIdx].options)
+                                                                    };
+                                                                    setQuizForm({ ...quizForm, questions: newQs });
+                                                                }}
+                                                                className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${(q.type || 'MULTIPLE_CHOICE') === t.value
+                                                                    ? 'bg-primary/20 border-primary/40 text-primary'
+                                                                    : 'border-border/50 text-muted-foreground hover:border-primary/30'
+                                                                    }`}
+                                                            >
+                                                                {t.label}
+                                                            </button>
+                                                        )</div>
+                                                </div>
 
-                                            <input
-                                                placeholder="Enter question text..."
-                                                className={`w-full bg-transparent border-b px-2 py-3 text-lg font-bold focus:outline-none transition-all ${validationErrors.quiz?.questions?.[qIdx]?.text ? 'border-red-500' : 'border-border/50 focus:border-primary'}`}
-                                                value={q.text}
-                                                onChange={(e) => {
-                                                    const newQs = [...quizForm.questions];
-                                                    newQs[qIdx].text = e.target.value;
-                                                    setQuizForm({ ...quizForm, questions: newQs });
-                                                    if (validationErrors.quiz?.questions?.[qIdx]?.text) {
-                                                        const newErrors = { ...validationErrors.quiz };
-                                                        delete newErrors.questions[qIdx].text;
-                                                        setValidationErrors(prev => ({ ...prev, quiz: newErrors }));
-                                                    }
-                                                }}
-                                            />
-                                        </div>
-
-                                        {/* FILL IN BLANK */}
-                                        {(q.type || 'MULTIPLE_CHOICE') === 'FILL_BLANK' ? (
-                                            <div className="space-y-2">
-                                                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Correct Answer (case-insensitive match)</label>
                                                 <input
-                                                    placeholder="Type the expected answer..."
-                                                    className="w-full bg-background/50 border border-primary/30 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/50"
-                                                    value={q.options[0]?.text || ''}
+                                                    placeholder="Enter question text..."
+                                                    className={`w-full bg-transparent border-b px-2 py-3 text-lg font-bold focus:outline-none transition-all ${validationErrors.quiz?.questions?.[qIdx]?.text ? 'border-red-500' : 'border-border/50 focus:border-primary'}`}
+                                                    value={q.text}
                                                     onChange={(e) => {
                                                         const newQs = [...quizForm.questions];
-                                                        newQs[qIdx].options = [{ text: e.target.value, isCorrect: true }];
+                                                        newQs[qIdx].text = e.target.value;
                                                         setQuizForm({ ...quizForm, questions: newQs });
+                                                        if (validationErrors.quiz?.questions?.[qIdx]?.text) {
+                                                            const newErrors = { ...validationErrors.quiz };
+                                                            delete newErrors.questions[qIdx].text;
+                                                            setValidationErrors(prev => ({ ...prev, quiz: newErrors }));
+                                                        }
                                                     }}
                                                 />
-                                                <p className="text-[10px] text-muted-foreground italic">Learners will type their answer. It will be matched against this text.</p>
                                             </div>
-                                        ) : (
-                                            /* MULTIPLE CHOICE / MULTIPLE SELECT */
-                                            <div className="grid grid-cols-2 gap-4 pt-2">
-                                                {(() => {
-                                                    const isMultiSelect = (q.type || 'MULTIPLE_CHOICE') === 'MULTIPLE_SELECT';
-                                                    return (<>
-                                                        {q.options.map((o: any, oIdx: number) => {
-                                                            return (
-                                                                <div key={oIdx} className="space-y-1">
-                                                                    <div className={`flex items-center gap-3 p-3 rounded-xl bg-background/50 border transition-all focus-within:ring-1 ${validationErrors.quiz?.questions?.[qIdx]?.options?.[oIdx] ? 'border-red-500 focus-within:ring-red-500/50' : 'border-border/50 focus-within:ring-primary/50'}`}>
-                                                                        <button
-                                                                            onClick={() => {
-                                                                                const newQs = [...quizForm.questions];
-                                                                                if (isMultiSelect) {
-                                                                                    // Toggle for multi-select
-                                                                                    newQs[qIdx].options[oIdx].isCorrect = !newQs[qIdx].options[oIdx].isCorrect;
-                                                                                } else {
-                                                                                    // Single select — only one correct
-                                                                                    newQs[qIdx].options = newQs[qIdx].options.map((opt: any, idx: number) => ({ ...opt, isCorrect: idx === oIdx }));
-                                                                                }
-                                                                                setQuizForm({ ...quizForm, questions: newQs });
-                                                                            }}
-                                                                            className={`w-5 h-5 flex-shrink-0 border-2 flex items-center justify-center transition-all ${isMultiSelect ? 'rounded-md' : 'rounded-full'
-                                                                                } ${o.isCorrect ? 'bg-primary border-primary' : 'border-border'}`}
-                                                                        >
-                                                                            {o.isCorrect && <CheckCircle2 size={12} className="text-white" />}
-                                                                        </button>
-                                                                        <input
-                                                                            placeholder={`Option ${oIdx + 1}`}
-                                                                            className="flex-1 bg-transparent text-sm focus:outline-none font-medium"
-                                                                            value={o.text}
-                                                                            onChange={(e) => {
-                                                                                const newQs = [...quizForm.questions];
-                                                                                newQs[qIdx].options[oIdx].text = e.target.value;
-                                                                                setQuizForm({ ...quizForm, questions: newQs });
-                                                                                if (validationErrors.quiz?.questions?.[qIdx]?.options?.[oIdx]) {
-                                                                                    const newErrors = { ...validationErrors.quiz };
-                                                                                    delete newErrors.questions[qIdx].options[oIdx];
-                                                                                    setValidationErrors(prev => ({ ...prev, quiz: newErrors }));
-                                                                                }
-                                                                            }}
-                                                                        />
-                                                                        {q.options.length > 2 && (
+
+                                        {/* FILL IN BLANK */ }
+                                        {(q.type || 'MULTIPLE_CHOICE') === 'FILL_BLANK' ? (
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Correct Answer (case-insensitive match)</label>
+                                                    <input
+                                                        placeholder="Type the expected answer..."
+                                                        className="w-full bg-background/50 border border-primary/30 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/50"
+                                                        value={q.options[0]?.text || ''}
+                                                        onChange={(e) => {
+                                                            const newQs = [...quizForm.questions];
+                                                            newQs[qIdx].options = [{ text: e.target.value, isCorrect: true }];
+                                                            setQuizForm({ ...quizForm, questions: newQs });
+                                                        }}
+                                                    />
+                                                    <p className="text-[10px] text-muted-foreground italic">Learners will type their answer. It will be matched against this text.</p>
+                                                </div>
+                                            ) : (
+                                                /* MULTIPLE CHOICE / MULTIPLE SELECT */
+                                                <div className="grid grid-cols-2 gap-4 pt-2">
+                                                    {(() => {
+                                                        const isMultiSelect = (q.type || 'MULTIPLE_CHOICE') === 'MULTIPLE_SELECT';
+                                                        return (<>
+                                                            {q.options.map((o: any, oIdx: number) => {
+                                                                return (
+                                                                    <div key={oIdx} className="space-y-1">
+                                                                        <div className={`flex items-center gap-3 p-3 rounded-xl bg-background/50 border transition-all focus-within:ring-1 ${validationErrors.quiz?.questions?.[qIdx]?.options?.[oIdx] ? 'border-red-500 focus-within:ring-red-500/50' : 'border-border/50 focus-within:ring-primary/50'}`}>
                                                                             <button
                                                                                 onClick={() => {
                                                                                     const newQs = [...quizForm.questions];
-                                                                                    newQs[qIdx].options.splice(oIdx, 1);
+                                                                                    if (isMultiSelect) {
+                                                                                        // Toggle for multi-select
+                                                                                        newQs[qIdx].options[oIdx].isCorrect = !newQs[qIdx].options[oIdx].isCorrect;
+                                                                                    } else {
+                                                                                        // Single select — only one correct
+                                                                                        newQs[qIdx].options = newQs[qIdx].options.map((opt: any, idx: number) => ({ ...opt, isCorrect: idx === oIdx }));
+                                                                                    }
                                                                                     setQuizForm({ ...quizForm, questions: newQs });
                                                                                 }}
-                                                                                className="text-muted-foreground hover:text-red-400"
+                                                                                className={`w-5 h-5 flex-shrink-0 border-2 flex items-center justify-center transition-all ${isMultiSelect ? 'rounded-md' : 'rounded-full'
+                                                                                    } ${o.isCorrect ? 'bg-primary border-primary' : 'border-border'}`}
                                                                             >
-                                                                                <Trash2 size={14} />
+                                                                                {o.isCorrect && <CheckCircle2 size={12} className="text-white" />}
                                                                             </button>
+                                                                            <input
+                                                                                placeholder={`Option ${oIdx + 1}`}
+                                                                                className="flex-1 bg-transparent text-sm focus:outline-none font-medium"
+                                                                                value={o.text}
+                                                                                onChange={(e) => {
+                                                                                    const newQs = [...quizForm.questions];
+                                                                                    newQs[qIdx].options[oIdx].text = e.target.value;
+                                                                                    setQuizForm({ ...quizForm, questions: newQs });
+                                                                                    if (validationErrors.quiz?.questions?.[qIdx]?.options?.[oIdx]) {
+                                                                                        const newErrors = { ...validationErrors.quiz };
+                                                                                        delete newErrors.questions[qIdx].options[oIdx];
+                                                                                        setValidationErrors(prev => ({ ...prev, quiz: newErrors }));
+                                                                                    }
+                                                                                }}
+                                                                            />
+                                                                            {q.options.length > 2 && (
+                                                                                <button
+                                                                                    onClick={() => {
+                                                                                        const newQs = [...quizForm.questions];
+                                                                                        newQs[qIdx].options.splice(oIdx, 1);
+                                                                                        setQuizForm({ ...quizForm, questions: newQs });
+                                                                                    }}
+                                                                                    className="text-muted-foreground hover:text-red-400"
+                                                                                >
+                                                                                    <Trash2 size={14} />
+                                                                                </button>
                                                                         </div>
                                                                     </div>
-                                                                    {validationErrors.quiz?.questions?.[qIdx]?.options?.[oIdx] && <span className="text-[9px] font-bold text-red-500 animate-in fade-in slide-in-from-top-1 ml-1">{validationErrors.quiz.questions[qIdx].options[oIdx]}</span>}
-                                                                </div>
+                                                                    { validationErrors.quiz?.questions?.[qIdx]?.options?.[oIdx] && <span className="text-[9px] font-bold text-red-500 animate-in fade-in slide-in-from-top-1 ml-1">{validationErrors.quiz.questions[qIdx].options[oIdx]}</span> }
+                                                                </div >
                                                             );
                                                         }</div>
-                                                        {q.options.length < 6 && (
-                                                            <button
-                                                                onClick={() => {
-                                                                    const newQs = [...quizForm.questions];
-                                                                    newQs[qIdx].options.push({ text: '', isCorrect: false });
-                                                                    setQuizForm({ ...quizForm, questions: newQs });
-                                                                }}
-                                                                className="col-span-2 py-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors border border-dashed border-border/50 rounded-xl"
-                                                            >
-                                                                + Add Option
-                                                            </button>
+                                                        {
+                                                q.options.length < 6 && (
+                                                    <button
+                                                        onClick={() => {
+                                                            const newQs = [...quizForm.questions];
+                                                            newQs[qIdx].options.push({ text: '', isCorrect: false });
+                                                            setQuizForm({ ...quizForm, questions: newQs });
+                                                        }}
+                                                        className="col-span-2 py-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors border border-dashed border-border/50 rounded-xl"
+                                                    >
+                                                        + Add Option
+                                                    </button>
                                                         </div>
-                                                        <p className="col-span-2 text-[10px] text-muted-foreground italic px-1">
-                                                            {isMultiSelect
-                                                                ? 'Check all correct answers — learners must select all of them.'
-                                                                : 'Click the circle to mark the single correct answer.'}
-                                                        </p>
+                                            <p className="col-span-2 text-[10px] text-muted-foreground italic px-1">
+                                                {isMultiSelect
+                                                    ? 'Check all correct answers — learners must select all of them.'
+                                                    : 'Click the circle to mark the single correct answer.'}
+                                            </p>
                                                     </>);
-                                                })(</div>
-                                            </div>
-                                        </div>
-                                    </div>
+                                    })(</div >
+                                            </div >
+                                        </div >
+                                    </div >
                                 )</div>
 
-                            </div>
-                        </div>
+                            </div >
+                        </div >
 
-                        <div className="flex gap-4 mt-8 pt-6 border-t border-border/50">
-                            <button onClick={() => setActiveQuizLesson(null</div> className="flex-1 py-4 bg-secondary hover:bg-secondary/80 rounded-2xl font-black uppercase tracking-[0.2em] text-xs transition-all">Discard Changes</button>
-                            <button onClick={saveQuiz} className="flex-1 py-4 bg-primary text-primary-foreground rounded-2xl font-black uppercase tracking-[0.2em] text-xs shadow-xl shadow-primary/20 hover:scale-[1.02] transition-all">Save Quiz Configuration</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+                            <div className="flex gap-4 mt-8 pt-6 border-t border-border/50">
+                                <button onClick={() => setActiveQuizLesson(null</div> className = "flex-1 py-4 bg-secondary hover:bg-secondary/80 rounded-2xl font-black uppercase tracking-[0.2em] text-xs transition-all" > Discard Changes</button >
+                        <button onClick={saveQuiz} className="flex-1 py-4 bg-primary text-primary-foreground rounded-2xl font-black uppercase tracking-[0.2em] text-xs shadow-xl shadow-primary/20 hover:scale-[1.02] transition-all">Save Quiz Configuration</button>
+                        </div >
+                    </div >
+                </div >
+            </div >
 
-            {showAnnouncementModal && (
+                            { showAnnouncementModal && (
                 <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/70 backdrop-blur-sm">
                     <div className="bg-background border border-border w-full max-w-md rounded-3xl p-8 space-y-6 shadow-2xl">
                         <div className="flex justify-between items-center">
@@ -3813,11 +3834,11 @@ export default function ClientAdminDashboard() {
                                 <Megaphone size={16} className="inline mr-2" />Publish Announcement
                             </button>
                         </form>
-                    </div>
-                </div>
-            </div>
+                    </div >
+                </div >
+            </div >
 
-            {selectedAnnouncement && (
+                            { selectedAnnouncement && (
                 <div className="fixed inset-0 z-[300] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md animate-in fade-in duration-300">
                     <div className="bg-background border border-border/50 w-full max-w-2xl rounded-[2rem] p-8 space-y-6 shadow-2xl relative overflow-hidden flex flex-col max-h-[90vh]">
                         <button onClick={() => setSelectedAnnouncement(null</div> className="absolute top-6 right-6 p-2 bg-secondary/80 hover:bg-secondary rounded-full transition-all">
@@ -3833,39 +3854,40 @@ export default function ClientAdminDashboard() {
                                     {new Date(selectedAnnouncement.createdAt).toLocaleDateString(</div>
                                 </div>
                             </div>
-                        </div>
-                        <div className="flex-1 overflow-y-auto pr-2 space-y-6">
-                            <p className="text-sm whitespace-pre-wrap leading-relaxed">{selectedAnnouncement.body}</p>
+                        </div >
+                            <div className="flex-1 overflow-y-auto pr-2 space-y-6">
+                                <p className="text-sm whitespace-pre-wrap leading-relaxed">{selectedAnnouncement.body}</p>
 
-                            {selectedAnnouncement.imageUrl && (
-                                <div className="space-y-2">
-                                    <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Attached Image</h4>
-                                    <div className="rounded-xl overflow-hidden border border-border/50 bg-secondary/10">
-                                        <img src={selectedAnnouncement.imageUrl} alt="Announcement Attachment" className="w-full h-auto max-h-[400px] object-contain" />
+                                {selectedAnnouncement.imageUrl && (
+                                    <div className="space-y-2">
+                                        <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Attached Image</h4>
+                                        <div className="rounded-xl overflow-hidden border border-border/50 bg-secondary/10">
+                                            <img src={selectedAnnouncement.imageUrl} alt="Announcement Attachment" className="w-full h-auto max-h-[400px] object-contain" />
+                                        </div>
                                     </div>
-                                </div>
                             </div>
 
-                            {selectedAnnouncement.documentUrl && (
-                                <div className="space-y-2">
-                                    <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Attached Document</h4>
-                                    <a href={selectedAnnouncement.documentUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 p-4 rounded-xl border border-border/50 bg-secondary/20 hover:bg-secondary/40 hover:border-primary/30 transition-all group">
-                                        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                                            <FileText size={20} className="text-primary" />
-                                        </div>
-                                        <div className="flex-1">
-                                            <p className="font-bold text-sm group-hover:text-primary transition-colors">Download Attachment</p>
-                                            <p className="text-xs text-muted-foreground">Click to view or download file</p>
-                                        </div>
-                                        <Upload size={16} className="text-muted-foreground group-hover:text-primary transition-colors transform rotate-90" />
-                                    </a>
-                                </div>
+                            {
+                                selectedAnnouncement.documentUrl && (
+                                    <div className="space-y-2">
+                                        <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Attached Document</h4>
+                                        <a href={selectedAnnouncement.documentUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 p-4 rounded-xl border border-border/50 bg-secondary/20 hover:bg-secondary/40 hover:border-primary/30 transition-all group">
+                                            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                                                <FileText size={20} className="text-primary" />
+                                            </div>
+                                            <div className="flex-1">
+                                                <p className="font-bold text-sm group-hover:text-primary transition-colors">Download Attachment</p>
+                                                <p className="text-xs text-muted-foreground">Click to view or download file</p>
+                                            </div>
+                                            <Upload size={16} className="text-muted-foreground group-hover:text-primary transition-colors transform rotate-90" />
+                                        </a>
+                                    </div>
                             </div>
-                    </div>
-                </div>
-            </div>
-            {/* Target Resource Management Dialog */}
-            {managingResources && (
+                    </div >
+                </div >
+            </div >
+                            {/* Target Resource Management Dialog */ }
+            { managingResources && (
                 <div className="fixed inset-0 z-[250] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md animate-in fade-in duration-300">
                     <div className="bg-background border border-border w-full max-w-xl rounded-[2.5rem] p-10 space-y-8 shadow-2xl relative overflow-hidden flex flex-col max-h-[90vh]">
                         <button onClick={() => setManagingResources(null</div> className="absolute top-8 right-8 p-2 bg-secondary/50 hover:bg-secondary rounded-full transition-all group">
@@ -3911,133 +3933,134 @@ export default function ClientAdminDashboard() {
                                         </div>
                                     </div>
                                 </div>
-                            </label>
-                        </div>
+                            </label >
+                        </div >
 
-                        <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
-                            <div className="space-y-3">
-                                {managingResources.resources.length === 0 ? (
-                                    <div className="text-center py-10 opacity-40">
-                                        <FileText size={48} className="mx-auto mb-3" />
-                                        <p className="text-sm font-bold uppercase tracking-widest">No resources added yet</p>
-                                    </div>
-                                ) : (
-                                    managingResources.resources.map((res: any) => (
-                                        <div key={res.id} className="flex items-center justify-between p-4 rounded-2xl bg-secondary/30 border border-border/50 group hover:bg-secondary/50 transition-all">
-                                            <div className="flex items-center gap-4">
-                                                <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
-                                                    <FileText size={18} className="text-primary" />
-                                                </div>
-                                                <div className="min-w-0">
-                                                    <p className="font-bold text-sm truncate">{res.name}</p>
-                                                    <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-black">{res.type} &middot; {res.size ? `${(res.size / 1024).toFixed(0</div> KB` : 'N/A'}</p>
-                                                </div>
-                                            </div>
-                                            <div className="flex gap-2">
-                                                <a href={res.url} target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg bg-background border border-border/50 hover:bg-primary/10 hover:text-primary transition-all">
-                                                    <Eye size={16} />
-                                                </a>
-                                                <button onClick={() => deleteTargetResource(res.id</div> className="p-2 rounded-lg bg-background border border-border/50 hover:bg-red-500/10 hover:text-red-400 transition-all">
-                                                    <Trash2 size={16} />
-                                                </button>
-                                            </div>
+                            <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
+                                <div className="space-y-3">
+                                    {managingResources.resources.length === 0 ? (
+                                        <div className="text-center py-10 opacity-40">
+                                            <FileText size={48} className="mx-auto mb-3" />
+                                            <p className="text-sm font-bold uppercase tracking-widest">No resources added yet</p>
                                         </div>
+                                    ) : (
+                                        managingResources.resources.map((res: any) => (
+                                            <div key={res.id} className="flex items-center justify-between p-4 rounded-2xl bg-secondary/30 border border-border/50 group hover:bg-secondary/50 transition-all">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
+                                                        <FileText size={18} className="text-primary" />
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <p className="font-bold text-sm truncate">{res.name}</p>
+                                                        <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-black">{res.type} &middot; {res.size ? `${(res.size / 1024).toFixed(0</div> KB` : 'N/A'}</p>
+                                            </div>
+                                            </div>
+                                <div className="flex gap-2">
+                                    <a href={res.url} target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg bg-background border border-border/50 hover:bg-primary/10 hover:text-primary transition-all">
+                                        <Eye size={16} />
+                                    </a>
+                                    <button onClick={() => deleteTargetResource(res.id</div> className="p-2 rounded-lg bg-background border border-border/50 hover:bg-red-500/10 hover:text-red-400 transition-all">
+                                <Trash2 size={16} />
+                            </button>
+                                            </div >
+                                        </div >
                                     ))
+                                </div >
+                            </div >
+                        </div >
+
+                    <div className="pt-6 border-t border-border/50">
+                        <button onClick={() => setManagingResources(null</div> className = "w-full py-4 bg-secondary hover:bg-secondary/80 rounded-2xl font-black uppercase tracking-[0.2em] text-xs transition-all shadow-lg hover:shadow-xl active:scale-[0.98]" >
+                            Done
+                            </button >
+                        </div >
+                    </div >
+                </div >
+            </div >
+
+                    {/* ── AUDIT LOG METADATA PANEL ── */ }
+                {
+                    selectedLogMetadata && (
+                        <div className="fixed inset-0 z-[500] flex justify-end bg-black/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setSelectedLogMetadata(null</div >>
+                            <div className="w-full max-w-2xl bg-background border-l border-border/50 h-full flex flex-col shadow-2xl animate-in slide-in-from-right duration-300" onClick={e => e.stopPropagation(</div >>
+                                <div className="px-8 py-6 border-b border-border/50 flex justify-between items-center bg-secondary/10">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                                            <ScanSearch className="w-6 h-6 text-primary" />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-xl font-black uppercase tracking-tight">Log Insight</h3>
+                                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{selectedLogMetadata.id}</p>
+                                        </div>
+                                    </div>
+                                    <button onClick={() => setSelectedLogMetadata(null</div> className = "p-2 hover:bg-secondary rounded-xl transition-all" >
+                                    <XCircle size={20} className="text-muted-foreground" />
+                            </button >
+                        </div >
+                                <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+                                    <div className="space-y-8">
+                                        {/* Human Narrative */}
+                                        <div className="p-6 rounded-3xl bg-primary/5 border border-primary/10 relative overflow-hidden group">
+                                            <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
+                                                <Activity size={48} />
+                                            </div>
+                                            <h4 className="text-[10px] font-black uppercase tracking-widest text-primary mb-2">Narrative Context</h4>
+                                            <p className="text-sm font-bold leading-relaxed">
+                                                User <span className="text-primary">{selectedLogMetadata.user.name}</span> performed a <span className="text-primary">{selectedLogMetadata.action.replace(/_/g, ' '</div></span> operation on the workspace entity.
+                                        </p>
+                                    </div>
+
+                                    <div className="space-y-4">
+                                        <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                                            <Shield size={12} className="text-primary" /> Authority Context
+                                        </h4>
+                                        <div className="p-5 rounded-2xl bg-secondary/20 border border-border/50 divide-y divide-border/30">
+                                            <div className="flex justify-between items-center py-3">
+                                                <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Action Type</span>
+                                                <span className="text-xs font-black text-primary">{selectedLogMetadata.action}</span>
+                                            </div>
+                                            <div className="flex justify-between items-center py-3">
+                                                <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Timestamp</span>
+                                                <span className="text-[11px] font-bold">{new Date(selectedLogMetadata.createdAt).toLocaleString(</div></span>
+                                    </div>
                                 </div>
+                               </div >
+
+                                <div className="space-y-4">
+                                    <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                                        <LayoutList size={12} className="text-primary" /> Resource Properties
+                                    </h4>
+                                    <div className="grid grid-cols-1 gap-3">
+                                        {Object.entries(selectedLogMetadata.metadata || {}).map(([key, value]) => (
+                                            <div key={key} className="p-4 rounded-2xl bg-secondary/10 border border-border/40 hover:border-primary/20 transition-all">
+                                                <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 mb-1">{getMetadataLabel(key</div></p>
+                                    <p className="text-xs font-bold break-all">{typeof value === 'object' ? JSON.stringify(value) : String(value</div></p >
+                                           </div >
+                                       )</ div>
                             </div>
-                        </div>
+                               </div >
+                           </div >
+                        </div >
 
-                        <div className="pt-6 border-t border-border/50">
-                            <button onClick={() => setManagingResources(null</div> className="w-full py-4 bg-secondary hover:bg-secondary/80 rounded-2xl font-black uppercase tracking-[0.2em] text-xs transition-all shadow-lg hover:shadow-xl active:scale-[0.98]">
-                                Done
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* ── AUDIT LOG METADATA PANEL ── */}
-            {selectedLogMetadata && (
-                <div className="fixed inset-0 z-[500] flex justify-end bg-black/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setSelectedLogMetadata(null</div>>
-                    <div className="w-full max-w-lg bg-background border-l border-border/50 h-full flex flex-col shadow-2xl animate-in slide-in-from-right duration-300" onClick={e => e.stopPropagation(</div>>
-                        <div className="px-8 py-6 border-b border-border/50 flex justify-between items-center bg-secondary/10">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                                    <ScanSearch className="w-6 h-6 text-primary" />
-                                </div>
-                                <div>
-                                    <h3 className="text-xl font-black uppercase tracking-tight">Log Insight</h3>
-                                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{selectedLogMetadata.id}</p>
-                                </div>
-                            </div>
-                            <button onClick={() => setSelectedLogMetadata(null</div> className="p-2 hover:bg-secondary rounded-xl transition-all">
-                                <XCircle size={20} className="text-muted-foreground" />
-                            </button>
-                        </div>
-                        <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
-                           <div className="space-y-8">
-                               {/* Human Narrative */}
-                               <div className="p-6 rounded-3xl bg-primary/5 border border-primary/10 relative overflow-hidden group">
-                                   <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
-                                       <Activity size={48} />
-                                   </div>
-                                   <h4 className="text-[10px] font-black uppercase tracking-widest text-primary mb-2">Narrative Context</h4>
-                                   <p className="text-sm font-bold leading-relaxed">
-                                       User <span className="text-primary">{selectedLogMetadata.user.name}</span> performed a <span className="text-primary">{selectedLogMetadata.action.replace(/_/g, ' '</div></span> operation on the workspace entity.
-                                   </p>
-                               </div>
-
-                               <div className="space-y-4">
-                                   <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                                       <Shield size={12} className="text-primary" /> Authority Context
-                                   </h4>
-                                   <div className="p-5 rounded-2xl bg-secondary/20 border border-border/50 divide-y divide-border/30">
-                                       <div className="flex justify-between items-center py-3">
-                                           <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Action Type</span>
-                                           <span className="text-xs font-black text-primary">{selectedLogMetadata.action}</span>
-                                       </div>
-                                       <div className="flex justify-between items-center py-3">
-                                           <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Timestamp</span>
-                                           <span className="text-[11px] font-bold">{new Date(selectedLogMetadata.createdAt).toLocaleString(</div></span>
-                                       </div>
-                                   </div>
-                               </div>
-
-                               <div className="space-y-4">
-                                   <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                                       <LayoutList size={12} className="text-primary" /> Resource Properties
-                                   </h4>
-                                   <div className="grid grid-cols-1 gap-3">
-                                       {Object.entries(selectedLogMetadata.metadata || {}).map(([key, value]) => (
-                                           <div key={key} className="p-4 rounded-2xl bg-secondary/10 border border-border/40 hover:border-primary/20 transition-all">
-                                               <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 mb-1">{getMetadataLabel(key</div></p>
-                                               <p className="text-xs font-bold break-all">{typeof value === 'object' ? JSON.stringify(value) : String(value</div></p>
-                                           </div>
-                                       )</div>
-                                   </div>
-                               </div>
-                           </div>
-                        </div>
-
-                        <div className="p-8 border-t border-border/50">
-                            <button 
-                                onClick={() => exportAuditLog(selectedLogMetadata</div>
-                                className="w-full py-4 bg-primary text-primary-foreground rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] transition-all shadow-lg hover:shadow-primary/20 active:scale-[0.98] flex items-center justify-center gap-2"
+                            <div className="p-8 border-t border-border/50">
+                                <button
+                                    onClick={() => exportAuditLog(selectedLogMetadata</div>
+                                className = "w-full py-4 bg-primary text-primary-foreground rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] transition-all shadow-lg hover:shadow-primary/20 active:scale-[0.98] flex items-center justify-center gap-2"
                             >
-                                <Download size={14} /> Export Insight Data
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+                            <Download size={14} /> Export Insight Data
+                            </button >
+                        </div >
+                    </div >
+                </div >
+            </div >
 
-            {/* ── USER INSIGHTS PANEL ── */}
-            {insightsUserId && (
-                <div className="fixed inset-0 z-[500] flex justify-end bg-black/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => { setInsightsUserId(null); setInsightsUser(null); }}>
-                    <div className="w-full max-w-xl bg-background border-l border-border/50 h-full flex flex-col shadow-2xl animate-in slide-in-from-right duration-300" onClick={e => e.stopPropagation(</div>>
-                        
-                        {/* Header */}
-                        <div className="flex items-start justify-between px-8 py-6 border-b border-border/50 bg-gradient-to-r from-primary/5 to-transparent">
+                            {/* ── USER INSIGHTS PANEL ── */ }
+            { insightsUserId && (
+                                <div className="fixed inset-0 z-[500] flex justify-end bg-black/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => { setInsightsUserId(null); setInsightsUser(null); }}>
+                                    <div className="w-full max-w-xl bg-background border-l border-border/50 h-full flex flex-col shadow-2xl animate-in slide-in-from-right duration-300" onClick={e => e.stopPropagation(</div> >
+
+                                {/* Header */ }
+                                < div className = "flex items-start justify-between px-8 py-6 border-b border-border/50 bg-gradient-to-r from-primary/5 to-transparent" >
                             <div className="flex items-center gap-4">
                                 <div className="w-12 h-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-black text-xl shadow-lg shadow-primary/5">
                                     {isFetchingUserDetail ? <Loader2 size={24} className="animate-spin" /> : insightsUser?.name?.[0]?.toUpperCase() || '?'}
@@ -4050,74 +4073,74 @@ export default function ClientAdminDashboard() {
                             <button onClick={() => { setInsightsUserId(null); setInsightsUser(null); }} className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary transition-all">
                                 <XCircle size={20} />
                             </button>
-                        </div>
-                        
-                        <div className="flex-1 overflow-y-auto custom-scrollbar">
-                            {!isFetchingUserDetail && insightsUser ? (
-                                <div className="p-8 space-y-10">
-                                    {/* Calculated Metrics */}
-                                    {(() => {
-                                        const totalEnrollments = insightsUser.enrollments?.length || 0;
-                                        const totalLessons = insightsUser.enrollments?.reduce((acc: number, en: any) => acc + (en.totalLessons || 0), 0) || 0;
-                                        const completedLessons = insightsUser.enrollments?.reduce((acc: number, en: any) => acc + (en.completedLessons || 0), 0) || 0;
-                                        const avgProgress = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
-                                        const quizAccuracy = insightsUser.quizAttempts?.length > 0
-                                            ? Math.round(insightsUser.quizAttempts.reduce((acc: any, curr: any) => acc + (curr.score || 0), 0) / insightsUser.quizAttempts.length)
-                                            : 0;
+                        </div >
 
-                                        return (
-                                            <>
-                                                {/* KPI Grid */}
-                                                <div className="grid grid-cols-3 gap-4">
-                                                    <div className="p-4 rounded-2xl bg-secondary/20 border border-border/50 space-y-1">
-                                                        <p className="text-[9px] font-black uppercase text-muted-foreground tracking-widest">Enrollments</p>
-                                                        <p className="text-2xl font-black text-foreground">{totalEnrollments}</p>
-                                                    </div>
-                                                    <div className="p-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/10 space-y-1">
-                                                        <p className="text-[9px] font-black uppercase text-emerald-500/70 tracking-widest">Avg Progress</p>
-                                                        <p className="text-2xl font-black text-emerald-400">{avgProgress}%</p>
-                                                    </div>
-                                                    <div className="p-4 rounded-2xl bg-blue-500/5 border border-blue-500/10 space-y-1">
-                                                        <p className="text-[9px] font-black uppercase text-blue-500/70 tracking-widest">Assessment</p>
-                                                        <p className="text-2xl font-black text-blue-400">{quizAccuracy}%</p>
-                                                    </div>
-                                                </div>
+                            <div className="flex-1 overflow-y-auto custom-scrollbar">
+                                {!isFetchingUserDetail && insightsUser ? (
+                                    <div className="p-8 space-y-10">
+                                        {/* Calculated Metrics */}
+                                        {(() => {
+                                            const totalEnrollments = insightsUser.enrollments?.length || 0;
+                                            const totalLessons = insightsUser.enrollments?.reduce((acc: number, en: any) => acc + (en.totalLessons || 0), 0) || 0;
+                                            const completedLessons = insightsUser.enrollments?.reduce((acc: number, en: any) => acc + (en.completedLessons || 0), 0) || 0;
+                                            const avgProgress = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
+                                            const quizAccuracy = insightsUser.quizAttempts?.length > 0
+                                                ? Math.round(insightsUser.quizAttempts.reduce((acc: any, curr: any) => acc + (curr.score || 0), 0) / insightsUser.quizAttempts.length)
+                                                : 0;
 
-                                                {/* Course Breakdown */}
-                                                <section className="space-y-4">
-                                                    <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                                                        <BookOpen size={11} className="text-primary" /> Enrollment Velocity
-                                                    </h3>
-                                                    <div className="grid grid-cols-1 gap-3">
-                                                        {insightsUser.enrollments?.length > 0 ? insightsUser.enrollments.map((en: any) => (
-                                                            <div key={en.id} className="p-4 rounded-2xl bg-secondary/10 border border-border/40 hover:border-primary/30 transition-all group">
-                                                                <div className="flex justify-between items-start mb-3">
-                                                                    <div className="min-w-0">
-                                                                        <p className="text-xs font-bold truncate group-hover:text-primary transition-colors">{en.course?.title}</p>
-                                                                        <p className="text-[9px] text-muted-foreground uppercase font-black tracking-tight mt-0.5">
-                                                                            {en.completedLessons} / {en.totalLessons} Lessons Completed
-                                                                        </p>
-                                                                    </div>
-                                                                    <span className="text-[10px] font-black text-primary">{en.progressPercentage}%</span>
-                                                                </div>
-                                                                <div className="h-1.5 w-full bg-secondary rounded-full overflow-hidden">
-                                                                    <div 
-                                                                        className="h-full bg-primary transition-all duration-1000" 
-                                                                        style={{ width: `${en.progressPercentage}%` }} 
-                                                                    />
-                                                                </div>
-                                                            </div>
-                                                        )) : (
-                                                            <div className="text-center py-6 text-muted-foreground text-xs italic">No active enrollments found.</div>
+                                            return (
+                                                <>
+                                                    {/* KPI Grid */}
+                                                    <div className="grid grid-cols-3 gap-4">
+                                                        <div className="p-4 rounded-2xl bg-secondary/20 border border-border/50 space-y-1">
+                                                            <p className="text-[9px] font-black uppercase text-muted-foreground tracking-widest">Enrollments</p>
+                                                            <p className="text-2xl font-black text-foreground">{totalEnrollments}</p>
+                                                        </div>
+                                                        <div className="p-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/10 space-y-1">
+                                                            <p className="text-[9px] font-black uppercase text-emerald-500/70 tracking-widest">Avg Progress</p>
+                                                            <p className="text-2xl font-black text-emerald-400">{avgProgress}%</p>
+                                                        </div>
+                                                        <div className="p-4 rounded-2xl bg-blue-500/5 border border-blue-500/10 space-y-1">
+                                                            <p className="text-[9px] font-black uppercase text-blue-500/70 tracking-widest">Assessment</p>
+                                                            <p className="text-2xl font-black text-blue-400">{quizAccuracy}%</p>
                                                         </div>
                                                     </div>
-                                                </section>
+
+                                                    {/* Course Breakdown */}
+                                                    <section className="space-y-4">
+                                                        <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                                                            <BookOpen size={11} className="text-primary" /> Enrollment Velocity
+                                                        </h3>
+                                                        <div className="grid grid-cols-1 gap-3">
+                                                            {insightsUser.enrollments?.length > 0 ? insightsUser.enrollments.map((en: any) => (
+                                                                <div key={en.id} className="p-4 rounded-2xl bg-secondary/10 border border-border/40 hover:border-primary/30 transition-all group">
+                                                                    <div className="flex justify-between items-start mb-3">
+                                                                        <div className="min-w-0">
+                                                                            <p className="text-xs font-bold truncate group-hover:text-primary transition-colors">{en.course?.title}</p>
+                                                                            <p className="text-[9px] text-muted-foreground uppercase font-black tracking-tight mt-0.5">
+                                                                                {en.completedLessons} / {en.totalLessons} Lessons Completed
+                                                                            </p>
+                                                                        </div>
+                                                                        <span className="text-[10px] font-black text-primary">{en.progressPercentage}%</span>
+                                                                    </div>
+                                                                    <div className="h-1.5 w-full bg-secondary rounded-full overflow-hidden">
+                                                                        <div
+                                                                            className="h-full bg-primary transition-all duration-1000"
+                                                                            style={{ width: `${en.progressPercentage}%` }}
+                                                                        />
+                                                                    </div>
+                                                                </div>
+                                                            )) : (
+                                                                <div className="text-center py-6 text-muted-foreground text-xs italic">No active enrollments found.</div>
+                                                        </div>
+                                                    </div>
+                                                </section >
                                             </>
-                                        );
+                                );
                                     })(</div>
 
-                                    {/* Activity Timeline */}
-                                    <section className="space-y-4">
+                                    {/* Activity Timeline */ }
+                            < section className = "space-y-4" >
                                         <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
                                             <Clock size={11} className="text-primary" /> Activity Stream
                                         </h3>
@@ -4129,37 +4152,37 @@ export default function ClientAdminDashboard() {
                                                         <p className="text-xs font-bold leading-none">{log.action.replace(/_/g, ' '</div></p>
                                                         <p className="text-[10px] text-muted-foreground mt-1.5 font-medium uppercase">
                                                             {new Date(log.createdAt).toLocaleDateString(</div> &middot; {new Date(log.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }</div>
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            )</div>
-                                            {(!insightsUser.activityLogs || insightsUser.activityLogs.length === 0) && (
-                                                <div className="text-muted-foreground text-xs italic pl-2">No recent activity recorded.</div>
+                                                        </p >
+                                                    </div >
+                                                </div >
+                                            )</ div>
+                            {(!insightsUser.activityLogs || insightsUser.activityLogs.length === 0) && (
+                                <div className="text-muted-foreground text-xs italic pl-2">No recent activity recorded.</div>
                                             </div>
-                                        </div>
-                                    </section>
-                                </div>
+                                        </div >
+                                    </section >
+                                </div >
                             ) : (
-                                <div className="h-full flex flex-col items-center justify-center p-8 opacity-40 animate-pulse">
-                                    <Loader2 size={48} className="animate-spin mb-4 text-primary" />
-                                    <p className="text-sm font-bold uppercase tracking-widest">Hydrating User Insight...</p>
-                                </div>
-                            </div>
+                        <div className="h-full flex flex-col items-center justify-center p-8 opacity-40 animate-pulse">
+                            <Loader2 size={48} className="animate-spin mb-4 text-primary" />
+                            <p className="text-sm font-bold uppercase tracking-widest">Hydrating User Insight...</p>
                         </div>
+                            </div >
+                        </div >
 
-                        {/* Footer */}
-                        <div className="p-6 border-t border-border/50 bg-background/80 backdrop-blur-sm mt-auto">
-                            <button 
+                        {/* Footer */ }
+                        < div className = "p-6 border-t border-border/50 bg-background/80 backdrop-blur-sm mt-auto" >
+                            <button
                                 onClick={() => { setInsightsUserId(null); setInsightsUser(null); }}
                                 className="w-full py-4 bg-secondary text-foreground rounded-2xl font-black uppercase tracking-widest text-sm hover:bg-secondary/80 transition-all shadow-lg active:scale-[0.98]"
                             >
                                 Close Insights
                             </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            {showProfileModal && (
+                        </div >
+                    </div >
+                </div >
+            </div >
+                        { showProfileModal && (
                 <div className="fixed inset-0 z-[400] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md animate-in fade-in duration-300">
                     <div className="bg-background border border-border/50 w-full max-w-md rounded-[2rem] p-8 space-y-6 shadow-2xl relative overflow-hidden">
                         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-blue-500" />
@@ -4224,107 +4247,108 @@ export default function ClientAdminDashboard() {
                                             type="password"
                                             value={profileForm.confirmPassword}
                                             onChange={e => setProfileForm({ ...profileForm, confirmPassword: e.target.value }</div>
-                                            placeholder="••••••••"
-                                            className="w-full bg-secondary/30 border border-border/50 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all text-foreground placeholder:text-muted-foreground/30"
-                                        />
+                                            placeholder = "••••••••"
+                    className = "w-full bg-secondary/30 border border-border/50 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all text-foreground placeholder:text-muted-foreground/30"
+                        />
+                                    </div >
+                                </div >
+                            </div >
+
+                        <button
+                            type="submit"
+                            disabled={isUpdatingProfile}
+                            className="w-full py-4 mt-4 bg-primary text-primary-foreground rounded-2xl font-black uppercase tracking-[0.2em] text-xs transition-all shadow-lg hover:shadow-primary/20 active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
+                        >
+                            {isUpdatingProfile ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Update Security Settings'}
+                        </button>
+                        </form >
+                    </div >
+                </div >
+            </div >
+                        { confirmModal && (
+                            <div className="fixed inset-0 z-[300] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md animate-in fade-in duration-300">
+                                <div className="bg-background border border-border/50 w-full max-w-sm rounded-[2rem] p-8 space-y-6 shadow-2xl relative overflow-hidden">
+                                    <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${confirmModal.variant === 'info' ? 'from-indigo-500/50 via-indigo-500 to-indigo-500/50' : 'from-red-500/50 via-red-500 to-red-500/50'}`} />
+
+                                    <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 ${confirmModal.variant === 'info' ? 'bg-indigo-500/10' : 'bg-red-500/10'}`}>
+                                        {confirmModal.variant === 'info' ? <Info className="w-10 h-10 text-indigo-500" /> : <Trash2 className="w-10 h-10 text-red-500" />}
+                                    </div>
+
+                                    <div className="text-center space-y-2">
+                                        <h3 className="text-2xl font-black">{confirmModal.title}</h3>
+                                        <p className="text-muted-foreground text-sm">
+                                            {confirmModal.message}
+                                        </p>
+                                    </div>
+
+                                    <div className="flex gap-4 pt-4">
+                                        <button
+                                            onClick={() => {
+                                                confirmModal.resolve(false);
+                                                setConfirmModal(null);
+                                            }}
+                                            className="flex-1 py-4 bg-secondary hover:bg-secondary/80 rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                confirmModal.resolve(true);
+                                                setConfirmModal(null);
+                                            }}
+                                            className={`flex-1 py-4 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-lg hover:scale-[1.02] transition-all ${confirmModal.variant === 'info' ? 'bg-indigo-600 shadow-indigo-500/20' : 'bg-red-500 shadow-red-500/20'}`}
+                                        >
+                                            {confirmModal.variant === 'info' ? 'Confirm' : 'Confirm Delete'}
+                                        </button>
                                     </div>
                                 </div>
                             </div>
-
-                            <button
-                                type="submit"
-                                disabled={isUpdatingProfile}
-                                className="w-full py-4 mt-4 bg-primary text-primary-foreground rounded-2xl font-black uppercase tracking-[0.2em] text-xs transition-all shadow-lg hover:shadow-primary/20 active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
-                            >
-                                {isUpdatingProfile ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Update Security Settings'}
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-            {confirmModal && (
-                <div className="fixed inset-0 z-[300] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md animate-in fade-in duration-300">
-                    <div className="bg-background border border-border/50 w-full max-w-sm rounded-[2rem] p-8 space-y-6 shadow-2xl relative overflow-hidden">
-                        <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${confirmModal.variant === 'info' ? 'from-indigo-500/50 via-indigo-500 to-indigo-500/50' : 'from-red-500/50 via-red-500 to-red-500/50'}`} />
-
-                        <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 ${confirmModal.variant === 'info' ? 'bg-indigo-500/10' : 'bg-red-500/10'}`}>
-                            {confirmModal.variant === 'info' ? <Info className="w-10 h-10 text-indigo-500" /> : <Trash2 className="w-10 h-10 text-red-500" />}
-                        </div>
-
-                        <div className="text-center space-y-2">
-                            <h3 className="text-2xl font-black">{confirmModal.title}</h3>
-                            <p className="text-muted-foreground text-sm">
-                                {confirmModal.message}
-                            </p>
-                        </div>
-
-                        <div className="flex gap-4 pt-4">
-                            <button
-                                onClick={() => {
-                                    confirmModal.resolve(false);
-                                    setConfirmModal(null);
-                                }}
-                                className="flex-1 py-4 bg-secondary hover:bg-secondary/80 rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={() => {
-                                    confirmModal.resolve(true);
-                                    setConfirmModal(null);
-                                }}
-                                className={`flex-1 py-4 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-lg hover:scale-[1.02] transition-all ${confirmModal.variant === 'info' ? 'bg-indigo-600 shadow-indigo-500/20' : 'bg-red-500 shadow-red-500/20'}`}
-                            >
-                                {confirmModal.variant === 'info' ? 'Confirm' : 'Confirm Delete'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            {/* ── TRANSLATION MODAL ── */}
-            {showTranslationModal && translatingContent && (
-                <div className="fixed inset-0 z-[400] flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowTranslationModal(false</div> />
-                    <div className="relative w-full max-w-4xl glassmorphism rounded-[2.5rem] border border-white/10 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-                        <div className="p-8 border-b border-white/5 flex items-center justify-between bg-gradient-to-r from-indigo-500/10 to-purple-500/10">
-                            <div>
-                                <div className="flex items-center gap-3 mb-1">
-                                    <div className="w-10 h-10 rounded-2xl bg-indigo-500/20 flex items-center justify-center text-indigo-400">
-                                        <Globe size={20} />
+            </div >
+                        {/* ── TRANSLATION MODAL ── */ }
+                    {
+                        showTranslationModal && translatingContent && (
+                            <div className="fixed inset-0 z-[400] flex items-center justify-center p-4">
+                                <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowTranslationModal(false</div> />
+                            <div className="relative w-full max-w-4xl glassmorphism rounded-[2.5rem] border border-white/10 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+                                <div className="p-8 border-b border-white/5 flex items-center justify-between bg-gradient-to-r from-indigo-500/10 to-purple-500/10">
+                                    <div>
+                                        <div className="flex items-center gap-3 mb-1">
+                                            <div className="w-10 h-10 rounded-2xl bg-indigo-500/20 flex items-center justify-center text-indigo-400">
+                                                <Globe size={20} />
+                                            </div>
+                                            <h3 className="text-2xl font-black tracking-tight">Content Translation</h3>
+                                        </div>
+                                        <p className="text-sm text-muted-foreground font-medium">Managing localization for: <span className="text-foreground font-bold">{translatingContent.title}</span></p>
                                     </div>
-                                    <h3 className="text-2xl font-black tracking-tight">Content Translation</h3>
-                                </div>
-                                <p className="text-sm text-muted-foreground font-medium">Managing localization for: <span className="text-foreground font-bold">{translatingContent.title}</span></p>
-                            </div>
-                            <button onClick={() => setShowTranslationModal(false</div> className="p-3 rounded-2xl hover:bg-white/5 transition-all text-muted-foreground hover:text-foreground">
+                                    <button onClick={() => setShowTranslationModal(false</div> className="p-3 rounded-2xl hover:bg-white/5 transition-all text-muted-foreground hover:text-foreground">
                                 <XCircle size={24} />
                             </button>
-                        </div>
+                        </div >
 
-                        <div className="flex-1 overflow-auto p-8 space-y-8 text-foreground">
-                            {/* Translation Request Area */}
-                            <div className="space-y-4">
-                                <h4 className="text-xs font-black uppercase tracking-[0.2em] text-indigo-400">Request New Translation</h4>
-                                <div className="flex flex-wrap gap-3">
-                                    {localesConfig.availableLocales.filter(l => l !== 'en').map(locale => {
-                                        const existing = translations.find(t => t.locale === locale);
-                                        return (
-                                            <button
-                                                key={locale}
-                                                disabled={isTranslating || (existing && existing.status === 'APPROVED'</div>
-                                                onClick={() => requestTranslation(translatingContent.id, translatingContent.type, locale</div>
-                                                className="px-6 py-3 rounded-2xl bg-indigo-600 text-white font-black text-xs flex items-center gap-2 hover:scale-105 active:scale-95 transition-all shadow-lg shadow-indigo-500/20 disabled:opacity-50 disabled:grayscale"
+                            <div className="flex-1 overflow-auto p-8 space-y-8 text-foreground">
+                                {/* Translation Request Area */}
+                                <div className="space-y-4">
+                                    <h4 className="text-xs font-black uppercase tracking-[0.2em] text-indigo-400">Request New Translation</h4>
+                                    <div className="flex flex-wrap gap-3">
+                                        {localesConfig.availableLocales.filter(l => l !== 'en').map(locale => {
+                                            const existing = translations.find(t => t.locale === locale);
+                                            return (
+                                                <button
+                                                    key={locale}
+                                                    disabled={isTranslating || (existing && existing.status === 'APPROVED'</div>
+                                    onClick={() => requestTranslation(translatingContent.id, translatingContent.type, locale</div>
+                                className="px-6 py-3 rounded-2xl bg-indigo-600 text-white font-black text-xs flex items-center gap-2 hover:scale-105 active:scale-95 transition-all shadow-lg shadow-indigo-500/20 disabled:opacity-50 disabled:grayscale"
                                             >
-                                                {isTranslating ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
-                                                Draft AI Translation ({locale.toUpperCase(</div>)
-                                            </button>
+                                {isTranslating ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
+                                Draft AI Translation ({locale.toUpperCase(</div>)
+                                            </button >
                                         );
-                                    }</div>
-                                </div>
-                            </div>
+                    }</div >
+                                </div >
+                            </div >
 
-                            {/* Existing Translations List */}
-                            <div className="space-y-6">
+                        {/* Existing Translations List */ }
+                        < div className = "space-y-6" >
                                 <h4 className="text-xs font-black uppercase tracking-[0.2em] text-indigo-400">Verified & Drafted Content</h4>
                                 <div className="space-y-4">
                                     {translations.length === 0 ? (
@@ -4354,13 +4378,13 @@ export default function ClientAdminDashboard() {
                                                     {t.status === 'APPROVED' && (
                                                         <button 
                                                             onClick={() => handleUpdateTranslation(t.id, 'PENDING'</div>
-                                                            className="px-4 py-1.5 rounded-xl bg-orange-500/10 text-orange-400 border border-orange-500/20 font-bold text-[10px] hover:bg-orange-500/20 transition-all font-mono"
-                                                        >
-                                                            Revoke Approval
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </div>
+                    className = "px-4 py-1.5 rounded-xl bg-orange-500/10 text-orange-400 border border-orange-500/20 font-bold text-[10px] hover:bg-orange-500/20 transition-all font-mono"
+                        >
+                        Revoke Approval
+                                                        </button >
+                                                    </div >
+                                                </div >
+                                            </div >
 
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-2">
                                                 <div className="space-y-1">
@@ -4387,20 +4411,20 @@ export default function ClientAdminDashboard() {
                                                             setTranslations(prev => prev.map(item => item.id === t.id ? { ...item, description: newDesc } : item));
                                                         }}
                                                         onBlur={() => handleUpdateTranslation(t.id, t.status, t.title, t.description</div>
-                                                        className="w-full bg-background border border-border/50 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500/50 outline-none min-h-[80px]"
-                                                    />
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            </main>
-        </div>
+                    className = "w-full bg-background border border-border/50 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500/50 outline-none min-h-[80px]"
+                        />
+                                                </div >
+                                            </div >
+                                        </div >
+                                    )</div >
+                                </div >
+                            </div >
+                        </div >
+                    </div >
+                </div >
+            </div >
+            </main >
+        </div >
     );
-}
+                }
 

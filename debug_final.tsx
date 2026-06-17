@@ -8,8 +8,8 @@ import {
     LayoutDashboard, BookOpen, Users, Settings, Palette,
     Globe, Plus, XCircle, ChevronRight, ChevronLeft, Save, Upload,
     Trash2, Edit3, CheckCircle2, Megaphone, Loader2, MoreVertical, GripVertical, Eye, EyeOff, Video, FileText, Lock,
-    BarChart3, Clock, UserCheck, Award, CheckCircle, AlertCircle, Info, Bell, Mic, Archive, 
-    LogOut, User, Shield, UsersRound, Filter, TrendingUp, Medal, Calendar, Target, Activity, 
+    BarChart3, Clock, UserCheck, Award, CheckCircle, AlertCircle, Info, Bell, Mic, Archive,
+    LogOut, User, Shield, UsersRound, Filter, TrendingUp, Medal, Calendar, Target, Activity,
     Users2, Download, ScanSearch, UserCircle, LayoutList, Trash, Settings2
 } from 'lucide-react';
 import {
@@ -108,8 +108,8 @@ export default function ClientAdminDashboard() {
     const [availableRoles, setAvailableRoles] = useState<any[]>([]);
     const [availableTeams, setAvailableTeams] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
-    const [branding, setBranding] = useState({ 
-        name: domain.charAt(0).toUpperCase() + domain.slice(1), 
+    const [branding, setBranding] = useState({
+        name: domain.charAt(0).toUpperCase() + domain.slice(1),
         primaryColor: '#3b82f6',
         logoLight: null as string | null,
         logoDark: null as string | null,
@@ -127,15 +127,15 @@ export default function ClientAdminDashboard() {
     // Course Builder state
     const [showCourseModal, setShowCourseModal] = useState(false);
     const [courseFilter, setCourseFilter] = useState<'all' | 'published' | 'draft'>('all');
-    const [courseForm, setCourseForm] = useState({ 
-        title: '', 
-        description: '', 
-        thumbnail: '', 
-        skillLevel: 'All Levels', 
-        languages: 'English', 
-        captions: false, 
-        isMarketplace: false, 
-        exclusiveRoleId: '', 
+    const [courseForm, setCourseForm] = useState({
+        title: '',
+        description: '',
+        thumbnail: '',
+        skillLevel: 'All Levels',
+        languages: 'English',
+        captions: false,
+        isMarketplace: false,
+        exclusiveRoleId: '',
         exclusiveTeamId: '',
         certificateEnabled: false,
         certificateTemplateId: ''
@@ -197,19 +197,19 @@ export default function ClientAdminDashboard() {
     const [selectedAnnouncement, setSelectedAnnouncement] = useState<any | null>(null);
     const [announcementPage, setAnnouncementPage] = useState(1);
     const ANNOUNCEMENTS_PER_PAGE = 5;
-    
+
     // Audit state
     const [auditLogs, setAuditLogs] = useState<any[]>([]);
     const [auditPagination, setAuditPagination] = useState({ total: 0, pages: 1, currentPage: 1 });
     const [auditLoading, setAuditLoading] = useState(false);
     const [auditSearch, setAuditSearch] = useState('');
-    
+
     // Audit Details State
     const [selectedLogMetadata, setSelectedLogMetadata] = useState<any | null>(null);
     const [insightsUserId, setInsightsUserId] = useState<string | null>(null);
     const [insightsUser, setInsightsUser] = useState<any | null>(null);
     const [isFetchingUserDetail, setIsFetchingUserDetail] = useState(false);
-    
+
     // Translation Management State
     const [showTranslationModal, setShowTranslationModal] = useState(false);
     const [translatingContent, setTranslatingContent] = useState<{ id: string, type: 'COURSE' | 'LESSON', title: string } | null>(null);
@@ -259,9 +259,9 @@ export default function ClientAdminDashboard() {
     const handleLogoUpload = async (file: File, type: 'logoLight' | 'logoDark' | 'favicon') => {
         const formData = new FormData();
         formData.append('file', file);
-        
+
         setUploadProgress(prev => ({ ...prev, [type]: 0 }));
-        
+
         try {
             // Simulate progress for smoother UI since fetch doesn't support ProgressEvent easily without XHR
             const progressInterval = setInterval(() => {
@@ -279,9 +279,9 @@ export default function ClientAdminDashboard() {
                 method: 'POST',
                 body: formData
             });
-            
+
             clearInterval(progressInterval);
-            
+
             if (res.ok) {
                 const data = await res.json();
                 setBranding(prev => ({ ...prev, [type]: data.url }));
@@ -307,7 +307,7 @@ export default function ClientAdminDashboard() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(branding)
             });
-            
+
             if (res.ok) {
                 addToast('Branding settings saved', 'success');
             } else {
@@ -489,7 +489,7 @@ export default function ClientAdminDashboard() {
                 <div className="p-6 border-b border-border flex items-center justify-between bg-primary/5">
                     <div>
                         <h3 className="font-black text-sm uppercase tracking-wider">Course Settings</h3>
-                        <p className="text-[10px] text-muted-foreground font-bold mt-0.5">ID: {course.id.slice(0,8)}</p>
+                        <p className="text-[10px] text-muted-foreground font-bold mt-0.5">ID: {course.id.slice(0, 8)}</p>
                     </div>
                     <button onClick={() => setSelectedCourse(null)} className="p-2 hover:bg-secondary rounded-full transition-colors"><XCircle size={18} /></button>
                 </div>
@@ -499,24 +499,23 @@ export default function ClientAdminDashboard() {
                     <div className="space-y-4">
                         <div className="flex items-center justify-between">
                             <label className="text-[10px] font-black uppercase tracking-widest text-indigo-500/80">Visibility & Status</label>
-                            <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-tighter border ${
-                                course.status === 'PUBLISHED' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 
-                                course.status === 'DRAFT' ? 'bg-orange-500/10 text-orange-400 border-orange-500/20' : 
-                                'bg-red-500/10 text-red-400 border-red-500/20'
-                            }`}>
+                            <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-tighter border ${course.status === 'PUBLISHED' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                                course.status === 'DRAFT' ? 'bg-orange-500/10 text-orange-400 border-orange-500/20' :
+                                    'bg-red-500/10 text-red-400 border-red-500/20'
+                                }`}>
                                 {course.status}
                             </span>
                         </div>
-                        
+
                         <div className="grid grid-cols-2 gap-2">
-                            <button 
+                            <button
                                 onClick={() => updateCourseStatus(course.id, { status: 'PUBLISHED' })}
                                 disabled={course.status === 'PUBLISHED'}
                                 className="py-2.5 rounded-xl border border-border/50 bg-background hover:bg-secondary/20 transition-all text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 disabled:opacity-30"
                             >
                                 <CheckCircle2 size={12} /> Publish
                             </button>
-                            <button 
+                            <button
                                 onClick={() => updateCourseStatus(course.id, { status: 'DRAFT' })}
                                 disabled={course.status === 'DRAFT'}
                                 className="py-2.5 rounded-xl border border-border/50 bg-background hover:bg-secondary/20 transition-all text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 disabled:opacity-30"
@@ -540,7 +539,7 @@ export default function ClientAdminDashboard() {
                             Manage multi-language metadata and approve AI-drafted content for this course.
                         </p>
 
-                        <button 
+                        <button
                             onClick={() => {
                                 setTranslatingContent({ id: course.id, type: 'COURSE', title: course.title });
                                 fetchTranslations(course.id, 'COURSE');
@@ -555,13 +554,13 @@ export default function ClientAdminDashboard() {
                     {/* Danger Zone */}
                     <div className="pt-4 border-t border-border/50">
                         <label className="text-[10px] font-black uppercase tracking-widest text-red-500/80 mb-3 block">Danger Zone</label>
-                        <button 
-                           onClick={() => {
-                               if (confirm('Are you sure you want to delete this course? This action is permanent.')) {
-                                   // handleDeleteCourse(course.id);
-                               }
-                           }}
-                           className="w-full py-2.5 rounded-xl bg-red-500/5 hover:bg-red-500/10 border border-red-500/20 text-red-500 text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2"
+                        <button
+                            onClick={() => {
+                                if (confirm('Are you sure you want to delete this course? This action is permanent.')) {
+                                    // handleDeleteCourse(course.id);
+                                }
+                            }}
+                            className="w-full py-2.5 rounded-xl bg-red-500/5 hover:bg-red-500/10 border border-red-500/20 text-red-500 text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2"
                         >
                             <Trash2 size={12} /> Delete Course
                         </button>
@@ -581,7 +580,7 @@ export default function ClientAdminDashboard() {
                 return;
             }
             const { user } = await sessionRes.json();
-            
+
             // Double check role
             if (user.role === 'LEARNER') {
                 router.push(`/t/${domain}/dashboard`);
@@ -616,7 +615,7 @@ export default function ClientAdminDashboard() {
             if (rolesRes.ok) setAvailableRoles(await rolesRes.json());
             if (teamsRes.ok) setAvailableTeams(await teamsRes.json());
             if (certsRes.ok) setAvailableTemplates(await certsRes.json());
-            
+
             fetchLocalesConfig();
 
         } catch (e) {
@@ -768,15 +767,15 @@ export default function ClientAdminDashboard() {
             });
             if (res.ok) {
                 setShowCourseModal(false);
-                setCourseForm({ 
-                    title: '', 
-                    description: '', 
-                    thumbnail: '', 
-                    skillLevel: 'All Levels', 
-                    languages: 'English', 
-                    captions: false, 
-                    isMarketplace: false, 
-                    exclusiveRoleId: '', 
+                setCourseForm({
+                    title: '',
+                    description: '',
+                    thumbnail: '',
+                    skillLevel: 'All Levels',
+                    languages: 'English',
+                    captions: false,
+                    isMarketplace: false,
+                    exclusiveRoleId: '',
                     exclusiveTeamId: '',
                     certificateEnabled: false,
                     certificateTemplateId: ''
@@ -1509,9 +1508,9 @@ export default function ClientAdminDashboard() {
                 <div className="flex items-center gap-3 px-2">
                     {(branding.logoDark || branding.logoLight) ? (
                         <div className="h-14 w-auto min-w-[3rem] flex items-center justify-center bg-transparent">
-                            <img 
-                                src={mounted ? (resolvedTheme === 'dark' ? (branding.logoDark || branding.logoLight) : (branding.logoLight || branding.logoDark)) : (branding.logoDark || branding.logoLight)} 
-                                alt={branding.name} 
+                            <img
+                                src={mounted ? (resolvedTheme === 'dark' ? (branding.logoDark || branding.logoLight) : (branding.logoLight || branding.logoDark)) : (branding.logoDark || branding.logoLight)}
+                                alt={branding.name}
                                 className="h-full w-auto object-contain"
                             />
                         </div>
@@ -1587,7 +1586,7 @@ export default function ClientAdminDashboard() {
                             </button>
                             <button
                                 onClick={async () => {
-                                    await fetch(`/api/logout`, { method: 'POST' }).catch(() => {});
+                                    await fetch(`/api/logout`, { method: 'POST' }).catch(() => { });
                                     localStorage.removeItem(`${domain}_userId`);
                                     router.push(`/t/${domain}/login`);
                                 }}
@@ -2226,2179 +2225,2178 @@ export default function ClientAdminDashboard() {
                                             </button>
                                         </div>
                                         {validationErrors.newModule && <p className="text-[10px] font-bold text-red-500 animate-in fade-in slide-in-from-right-1 ml-1">{validationErrors.newModule}</p>}
-                                    <div className="glassmorphism p-6 rounded-3xl border border-border/50 space-y-6">
-                                        <div className="space-y-4">
-                                            <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                                                <Globe size={12} className="text-primary" /> Visibility & Status
-                                            </h4>
-                                            
-                                            <div className="flex items-center justify-between p-3 rounded-2xl bg-secondary/20 border border-border/50">
-                                                <div className="space-y-0.5">
-                                                    <p className="text-[10px] font-black uppercase tracking-tighter">Published</p>
-                                                    <p className="text-[9px] text-muted-foreground">Visible to learners</p>
+                                        <div className="glassmorphism p-6 rounded-3xl border border-border/50 space-y-6">
+                                            <div className="space-y-4">
+                                                <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                                                    <Globe size={12} className="text-primary" /> Visibility & Status
+                                                </h4>
+
+                                                <div className="flex items-center justify-between p-3 rounded-2xl bg-secondary/20 border border-border/50">
+                                                    <div className="space-y-0.5">
+                                                        <p className="text-[10px] font-black uppercase tracking-tighter">Published</p>
+                                                        <p className="text-[9px] text-muted-foreground">Visible to learners</p>
+                                                    </div>
+                                                    <button
+                                                        onClick={() => updateCourseStatus(selectedCourse.id, !selectedCourse.isPublished)}
+                                                        className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${selectedCourse.isPublished ? 'bg-emerald-500' : 'bg-secondary-foreground/20'}`}
+                                                    >
+                                                        <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${selectedCourse.isPublished ? 'translate-x-5' : 'translate-x-0'}`} />
+                                                    </button>
                                                 </div>
+
+                                                <div className="flex items-center justify-between p-3 rounded-2xl bg-secondary/20 border border-border/50">
+                                                    <div className="space-y-0.5">
+                                                        <p className="text-[10px] font-black uppercase tracking-tighter">Marketplace</p>
+                                                        <p className="text-[9px] text-muted-foreground">List in internal store</p>
+                                                    </div>
+                                                    <button
+                                                        onClick={() => setCourseForm(prev => ({ ...prev, isMarketplace: !prev.isMarketplace }))}
+                                                        className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${courseForm.isMarketplace ? 'bg-amber-500' : 'bg-secondary-foreground/20'}`}
+                                                    >
+                                                        <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${courseForm.isMarketplace ? 'translate-x-5' : 'translate-x-0'}`} />
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-4 pt-4 border-t border-border/30">
+                                                <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                                                    <Settings2 size={12} className="text-blue-400" /> Advanced Control
+                                                </h4>
+
                                                 <button
-                                                    onClick={() => updateCourseStatus(selectedCourse.id, !selectedCourse.isPublished)}
-                                                    className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${selectedCourse.isPublished ? 'bg-emerald-500' : 'bg-secondary-foreground/20'}`}
+                                                    onClick={() => {
+                                                        setTranslatingContent({ id: selectedCourse.id, type: 'COURSE', title: selectedCourse.title });
+                                                        setShowTranslationModal(true);
+                                                    }}
+                                                    className="w-full py-4 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-indigo-500 hover:text-white transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/5 group"
                                                 >
-                                                    <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${selectedCourse.isPublished ? 'translate-x-5' : 'translate-x-0'}`} />
+                                                    <Globe size={14} className="group-hover:rotate-12 transition-transform" /> Manage Translations
+                                                </button>
+
+                                                <button
+                                                    onClick={() => deleteCourse(selectedCourse.id)}
+                                                    className="w-full py-4 bg-red-500/5 text-red-500 border border-red-500/20 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all flex items-center justify-center gap-2 shadow-lg shadow-red-500/5"
+                                                >
+                                                    <Trash2 size={14} /> Delete Course
                                                 </button>
                                             </div>
+                                        </div>
 
-                                            <div className="flex items-center justify-between p-3 rounded-2xl bg-secondary/20 border border-border/50">
-                                                <div className="space-y-0.5">
-                                                    <p className="text-[10px] font-black uppercase tracking-tighter">Marketplace</p>
-                                                    <p className="text-[9px] text-muted-foreground">List in internal store</p>
-                                                </div>
-                                                <button
-                                                    onClick={() => setCourseForm(prev => ({ ...prev, isMarketplace: !prev.isMarketplace }))}
-                                                    className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${courseForm.isMarketplace ? 'bg-amber-500' : 'bg-secondary-foreground/20'}`}
-                                                >
-                                                    <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${courseForm.isMarketplace ? 'translate-x-5' : 'translate-x-0'}`} />
-                                                </button>
+                                        {/* AI Insight Card */}
+                                        <div className="p-6 rounded-3xl bg-gradient-to-br from-indigo-600 to-purple-700 text-white space-y-4 shadow-xl">
+                                            <div className="flex items-center gap-2 opacity-80">
+                                                <Activity size={14} />
+                                                <span className="text-[10px] font-black uppercase tracking-widest">Growth Engine</span>
                                             </div>
-                                        </div>
-
-                                        <div className="space-y-4 pt-4 border-t border-border/30">
-                                            <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                                                <Settings2 size={12} className="text-blue-400" /> Advanced Control
-                                            </h4>
-                                            
-                                            <button 
-                                                onClick={() => {
-                                                    setTranslatingContent({ id: selectedCourse.id, type: 'COURSE', title: selectedCourse.title });
-                                                    setShowTranslationModal(true);
-                                                }}
-                                                className="w-full py-4 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-indigo-500 hover:text-white transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/5 group"
-                                            >
-                                                <Globe size={14} className="group-hover:rotate-12 transition-transform" /> Manage Translations
-                                            </button>
-
-                                            <button 
-                                                onClick={() => deleteCourse(selectedCourse.id)}
-                                                className="w-full py-4 bg-red-500/5 text-red-500 border border-red-500/20 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all flex items-center justify-center gap-2 shadow-lg shadow-red-500/5"
-                                            >
-                                                <Trash2 size={14} /> Delete Course
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    {/* AI Insight Card */}
-                                    <div className="p-6 rounded-3xl bg-gradient-to-br from-indigo-600 to-purple-700 text-white space-y-4 shadow-xl">
-                                        <div className="flex items-center gap-2 opacity-80">
-                                            <Activity size={14} />
-                                            <span className="text-[10px] font-black uppercase tracking-widest">Growth Engine</span>
-                                        </div>
-                                        <p className="text-sm font-bold leading-relaxed">
-                                            Drafting this course in multiple languages could increase your workspace engagement by up to <span className="text-amber-400">45%</span>.
-                                        </p>
-                                        <div className="pt-2">
-                                            <div className="h-1 w-full bg-white/20 rounded-full overflow-hidden">
-                                                <div className="h-full bg-amber-400" style={{ width: '65%' }} />
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div> {/* End Flex Row (Div 7) */}
-                        ) : (
-                            // ── Courses View ──
-                            <div className="space-y-6">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex p-1 bg-secondary/20 rounded-xl border border-border/50 w-fit">
-                                        {[
-                                            { id: 'all', label: 'All Courses', count: courses.length },
-                                            { id: 'published', label: 'Published', count: courses.filter(c => c.isPublished).length },
-                                            { id: 'draft', label: 'Drafts', count: courses.filter(c => !c.isPublished).length },
-                                        ].map((tab) => (
-                                            <button
-                                                key={tab.id}
-                                                onClick={() => setCourseFilter(tab.id as any)}
-                                                className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${courseFilter === tab.id ? 'bg-primary text-primary-foreground shadow-lg' : 'text-muted-foreground hover:text-foreground hover:bg-border/50'}`}
-                                            >
-                                                {tab.label}
-                                                <span className={`px-1.5 py-0.5 rounded-md text-[10px] ${courseFilter === tab.id ? 'bg-white/20 text-white' : 'bg-secondary text-muted-foreground'}`}>
-                                                    {tab.count}
-                                                </span>
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                                    {loading ? (
-                                        <div className="col-span-3 flex justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-muted-foreground" /></div>
-                                    ) : courses.filter(c => {
-                                        if (courseFilter === 'published') return c.isPublished;
-                                        if (courseFilter === 'draft') return !c.isPublished;
-                                        return true;
-                                    }).length === 0 ? (
-                                        <div className="col-span-3 text-center py-20 border-2 border-dashed border-border/50 rounded-3xl bg-secondary/5">
-                                            <BookOpen className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-20" />
-                                            <p className="font-bold text-lg">No {courseFilter === 'all' ? '' : courseFilter} courses</p>
-                                            <p className="text-muted-foreground text-sm">
-                                                {courseFilter === 'all' ? 'Create your first course to get started.' : `You don't have any ${courseFilter} courses yet.`}
+                                            <p className="text-sm font-bold leading-relaxed">
+                                                Drafting this course in multiple languages could increase your workspace engagement by up to <span className="text-amber-400">45%</span>.
                                             </p>
+                                            <div className="pt-2">
+                                                <div className="h-1 w-full bg-white/20 rounded-full overflow-hidden">
+                                                    <div className="h-full bg-amber-400" style={{ width: '65%' }} />
+                                                </div>
+                                            </div>
                                         </div>
-                                    ) : (
-                                        courses.filter(c => {
+                                    </div>
+                                </div> {/* End Flex Row (Div 7) */}
+                                ) : (
+                                // ── Courses View ──
+                                <div className="space-y-6">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex p-1 bg-secondary/20 rounded-xl border border-border/50 w-fit">
+                                            {[
+                                                { id: 'all', label: 'All Courses', count: courses.length },
+                                                { id: 'published', label: 'Published', count: courses.filter(c => c.isPublished).length },
+                                                { id: 'draft', label: 'Drafts', count: courses.filter(c => !c.isPublished).length },
+                                            ].map((tab) => (
+                                                <button
+                                                    key={tab.id}
+                                                    onClick={() => setCourseFilter(tab.id as any)}
+                                                    className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${courseFilter === tab.id ? 'bg-primary text-primary-foreground shadow-lg' : 'text-muted-foreground hover:text-foreground hover:bg-border/50'}`}
+                                                >
+                                                    {tab.label}
+                                                    <span className={`px-1.5 py-0.5 rounded-md text-[10px] ${courseFilter === tab.id ? 'bg-white/20 text-white' : 'bg-secondary text-muted-foreground'}`}>
+                                                        {tab.count}
+                                                    </span>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                                        {loading ? (
+                                            <div className="col-span-3 flex justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-muted-foreground" /></div>
+                                        ) : courses.filter(c => {
                                             if (courseFilter === 'published') return c.isPublished;
                                             if (courseFilter === 'draft') return !c.isPublished;
                                             return true;
-                                        }).map((course) => (
-                                            <div key={course.id} className="group rounded-3xl overflow-hidden border border-border/50 glassmorphism hover:border-primary/30 transition-all">
-                                                <div className="aspect-video bg-gradient-to-br from-blue-600/20 to-purple-600/20 border-b border-border/50 flex items-center justify-center relative overflow-hidden">
-                                                    {course.thumbnail ? (
-                                                        <img src={course.thumbnail} alt={course.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                                                    ) : (
-                                                        <BookOpen className="w-12 h-12 text-blue-400 opacity-40 group-hover:scale-110 transition-transform duration-500" />
-                                                    )}
-                                                    <div className="absolute top-3 left-3 flex flex-col gap-1.5 pointer-events-none">
-                                                        {course.exclusiveRole && (
-                                                            <span className="px-2 py-1 text-[10px] font-black uppercase rounded-lg bg-indigo-500/20 border border-indigo-500/30 text-indigo-400 backdrop-blur-md flex items-center gap-1 shadow-2xl">
-                                                                <Lock size={10} /> Exclusive: {course.exclusiveRole.name}
-                                                            </span>
-                                                        )}
-                                                        {course.exclusiveTeam && (
-                                                            <span className="px-2 py-1 text-[10px] font-black uppercase rounded-lg bg-cyan-500/20 border border-cyan-500/30 text-cyan-400 backdrop-blur-md flex items-center gap-1 shadow-2xl">
-                                                                <UsersRound size={10} /> Team: {course.exclusiveTeam.name}
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                    <div className="absolute top-3 right-3">
-                                                        <span className={`px-2 py-1 text-[10px] font-black uppercase rounded-full border ${course.isPublished ? 'bg-emerald-500/20 border-emerald-500/30 text-emerald-400' : 'bg-orange-500/20 border-orange-500/30 text-orange-400'}`}>
-                                                            {course.isPublished ? 'Published' : 'Draft'}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                                <div className="p-6">
-                                                    <h3 className="font-bold text-lg leading-tight mb-1">{course.title}</h3>
-                                                    <p className="text-sm text-muted-foreground mb-4 line-clamp-2">{course.description || 'No description yet.'}</p>
-                                                    <div className="flex justify-between items-center text-xs text-muted-foreground mb-4">
-                                                        <span>{course.modules?.length || 0} modules · {course.modules?.reduce((s: number, m: any) => s + (m.lessons?.length || 0), 0) || 0} lessons</span>
-                                                        <span>{course._count?.enrollments || 0} enrolled</span>
-                                                    </div>
-                                                    <div className="flex gap-2">
-                                                        <button onClick={() => fetchCourseDetails(course.id)} className="flex-1 py-2 bg-primary/10 border border-primary/20 text-primary font-bold rounded-lg text-sm hover:bg-primary/20 transition-colors flex items-center justify-center gap-1">
-                                                            <Edit3 size={14} /> Build Content
-                                                        </button>
-                                                        <button onClick={() => togglePublish(course)} className="p-2 rounded-lg border border-border hover:bg-secondary/50 transition-colors text-muted-foreground">
-                                                            {course.isPublished ? <EyeOff size={16} /> : <Eye size={16} />}
-                                                        </button>
-                                                    </div>
-                                                </div>
+                                        }).length === 0 ? (
+                                            <div className="col-span-3 text-center py-20 border-2 border-dashed border-border/50 rounded-3xl bg-secondary/5">
+                                                <BookOpen className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-20" />
+                                                <p className="font-bold text-lg">No {courseFilter === 'all' ? '' : courseFilter} courses</p>
+                                                <p className="text-muted-foreground text-sm">
+                                                    {courseFilter === 'all' ? 'Create your first course to get started.' : `You don't have any ${courseFilter} courses yet.`}
+                                                </p>
                                             </div>
-                                        ))
-                                    )}
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                )}
-
-                {/* ── LEARNERS ── */}
-                {activeTab === 'learners' && (
-                    <LearnersManager domain={domain} addToast={addToast} />
-                )}
-
-                {/* ── ANNOUNCEMENTS ── */}
-                {activeTab === 'announcements' && (
-                    <div className="space-y-6 animate-in fade-in duration-500">
-                        {announcements.length === 0 ? (
-                            <div className="text-center py-20">
-                                <Megaphone className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-20" />
-                                <p className="font-bold text-lg">No announcements posted</p>
-                                <p className="text-muted-foreground text-sm">Post a message and all learners will see it.</p>
-                            </div>
-                        ) : (() => {
-                            const totalPages = Math.ceil(announcements.length / ANNOUNCEMENTS_PER_PAGE);
-                            const paginatedAnnouncements = announcements.slice((announcementPage - 1) * ANNOUNCEMENTS_PER_PAGE, announcementPage * ANNOUNCEMENTS_PER_PAGE);
-                            return (
-                                <>
-                                    {paginatedAnnouncements.map(a => (
-                                        <div key={a.id} className="p-6 glassmorphism rounded-2xl border border-border/50 flex gap-6 hover:border-primary/20 transition-all cursor-pointer group relative" onClick={() => setSelectedAnnouncement(a)}>
-                                            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                                                <Megaphone size={20} className="text-primary" />
-                                            </div>
-                                            <div className="flex-1 space-y-2">
-                                                <div className="flex justify-between items-start">
-                                                    <h3 className="font-bold">{a.title}</h3>
-                                                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                                        <span>{new Date(a.createdAt).toLocaleDateString()}</span>
-                                                        <button onClick={(e) => { e.stopPropagation(); deleteAnnouncement(a.id); }} className="p-1.5 hover:bg-red-500/10 hover:text-red-500 rounded-lg transition-colors z-10">
-                                                            <Trash2 size={14} />
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                                <p className="text-sm text-muted-foreground line-clamp-2">{a.body}</p>
-                                                {(a.imageUrl || a.documentUrl) && (
-                                                    <div className="flex gap-2 mt-2">
-                                                        {a.imageUrl && <span className="text-[10px] font-bold bg-primary/10 text-primary px-2 py-0.5 rounded flex items-center gap-1"><Info size={10} /> Image Attached</span>}
-                                                        {a.documentUrl && <span className="text-[10px] font-bold bg-primary/10 text-primary px-2 py-0.5 rounded flex items-center gap-1"><FileText size={10} /> Doc Attached</span>}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    ))}
-                                    {totalPages > 1 && (
-                                        <div className="flex justify-center items-center gap-4 mt-6">
-                                            <button
-                                                disabled={announcementPage === 1}
-                                                onClick={() => setAnnouncementPage(p => Math.max(1, p - 1))}
-                                                className="p-2 rounded-xl bg-secondary hover:bg-secondary/80 disabled:opacity-50 transition-all border border-border/50"
-                                            >
-                                                <ChevronLeft size={20} />
-                                            </button>
-                                            <span className="text-sm font-bold text-muted-foreground tracking-widest uppercase">
-                                                Page {announcementPage} of {totalPages}
-                                            </span>
-                                            <button
-                                                disabled={announcementPage === totalPages}
-                                                onClick={() => setAnnouncementPage(p => Math.min(totalPages, p + 1))}
-                                                className="p-2 rounded-xl bg-secondary hover:bg-secondary/80 disabled:opacity-50 transition-all border border-border/50"
-                                            >
-                                                <ChevronRight size={20} />
-                                            </button>
-                                        </div>
-                                    )}
-                                </>
-                            );
-                        })()}
-                    </div>
-                )}
-
-                {activeTab === 'roles' && (
-                    <RolesManager domain={domain as string} addToast={addToast} />
-                )}
-
-                {activeTab === 'teams' && (
-                    <TeamsManager domain={domain as string} addToast={addToast} />
-                )}
-
-                {activeTab === 'reports' && (() => {
-                    const CHART_COLORS = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#ec4899'];
-                    return (
-                        <div className="space-y-6 animate-in fade-in duration-500 pb-10">
-
-                        {/* ── Filter Bar ── */}
-                        <div className="glassmorphism rounded-2xl border border-border/50 p-4 flex flex-col lg:flex-row items-start lg:items-center gap-4 flex-wrap">
-                            <div className="flex items-center gap-2 text-muted-foreground font-bold text-sm shrink-0">
-                                <Filter size={16} /> Filters
-                            </div>
-                            <div className="flex items-center gap-2 flex-wrap flex-1">
-                                <div className="flex items-center gap-2 bg-secondary/40 border border-border/50 rounded-xl px-3 py-2">
-                                    <Calendar size={14} className="text-muted-foreground" />
-                                    <input type="date" value={reportStartDate} onChange={e => setReportStartDate(e.target.value)}
-                                        className="bg-transparent text-sm focus:outline-none w-32" />
-                                    <span className="text-muted-foreground text-xs">to</span>
-                                    <input type="date" value={reportEndDate} onChange={e => setReportEndDate(e.target.value)}
-                                        className="bg-transparent text-sm focus:outline-none w-32" />
-                                </div>
-                                <select value={reportTeamId} onChange={e => { setReportTeamId(e.target.value); setReportRoleId(''); }}
-                                    className="bg-secondary/40 border border-border/50 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50">
-                                    <option value="">All Teams</option>
-                                    {availableTeams.map((t: any) => <option key={t.id} value={t.id}>{t.name}</option>)}
-                                </select>
-                                <select value={reportRoleId} onChange={e => { setReportRoleId(e.target.value); setReportTeamId(''); }}
-                                    className="bg-secondary/40 border border-border/50 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50">
-                                    <option value="">All Roles</option>
-                                    {availableRoles.map((r: any) => <option key={r.id} value={r.id}>{r.name}</option>)}
-                                </select>
-                                <button onClick={() => fetchReportStats(reportStartDate, reportEndDate, reportTeamId, reportRoleId)}
-                                    className="px-4 py-2 bg-primary text-primary-foreground font-bold rounded-xl text-sm hover:opacity-90 transition-all flex items-center gap-2">
-                                    {reportLoading ? <Loader2 size={14} className="animate-spin" /> : <Activity size={14} />}
-                                    Apply
-                                </button>
-                                {(reportStartDate || reportEndDate || reportTeamId || reportRoleId) && (
-                                    <button onClick={() => { setReportStartDate(''); setReportEndDate(''); setReportTeamId(''); setReportRoleId(''); fetchReportStats('', '', '', ''); }}
-                                        className="text-xs font-bold text-red-400 hover:text-red-300 px-2">
-                                        Clear
-                                    </button>
-                                )}
-                            </div>
-                            {reportLoading && <span className="text-xs text-muted-foreground animate-pulse">Updating…</span>}
-                        </div>
-
-                        {/* ── KPI Cards ── */}
-                        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
-                            {[
-                                { label: 'Learners', value: stats.learners, icon: Users2, color: 'blue' },
-                                { label: 'Courses', value: stats.courses, icon: BookOpen, color: 'purple' },
-                                { label: 'Enrollments', value: stats.enrollments, icon: Target, color: 'cyan' },
-                                { label: 'Completions', value: stats.completions ?? 0, icon: CheckCircle, color: 'emerald' },
-                                { label: 'Completion Rate', value: `${stats.completionRate}%`, icon: TrendingUp, color: 'green' },
-                                { label: 'Avg Progress', value: `${stats.avgProgress}%`, icon: BarChart3, color: 'orange' },
-                            ].map(({ label, value, icon: Icon, color }) => (
-                                <div key={label} className={`glassmorphism p-4 rounded-2xl border border-${color}-500/20 hover:border-${color}-500/40 transition-colors`}>
-                                    <div className={`w-8 h-8 rounded-xl bg-${color}-500/10 text-${color}-400 flex items-center justify-center mb-3`}>
-                                        <Icon size={16} />
-                                    </div>
-                                    <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{label}</p>
-                                    <p className="text-2xl font-black mt-0.5">{value}</p>
-                                </div>
-                            ))}
-                        </div>
-
-                        {/* ── Charts Row ── */}
-                        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-                            {/* Enrollment Trend */}
-                            <div className="xl:col-span-2 glassmorphism rounded-2xl border border-border/50 p-6">
-                                <div className="flex items-center justify-between mb-4">
-                                    <h3 className="font-bold flex items-center gap-2 text-sm uppercase tracking-widest text-muted-foreground">
-                                        <TrendingUp size={14} className="text-blue-400" /> Enrollment Trend (6 months)
-                                    </h3>
-                                </div>
-                                {enrollmentTrendData.length > 0 ? (
-                                    <ResponsiveContainer width="100%" height={200}>
-                                        <AreaChart data={enrollmentTrendData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
-                                            <defs>
-                                                <linearGradient id="enrollGrad" x1="0" y1="0" x2="0" y2="1">
-                                                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                                                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                                                </linearGradient>
-                                            </defs>
-                                            <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" />
-                                            <XAxis dataKey="date" stroke="#ffffff40" fontSize={11} tickLine={false} axisLine={false} />
-                                            <YAxis stroke="#ffffff40" fontSize={11} tickLine={false} axisLine={false} />
-                                            <Tooltip contentStyle={{ backgroundColor: '#09090b', borderRadius: '12px', borderColor: '#ffffff15', fontSize: 12 }} cursor={{ fill: '#ffffff05' }} />
-                                            <Area type="monotone" dataKey="enrollments" name="New Enrollments" stroke="#3b82f6" fill="url(#enrollGrad)" strokeWidth={2} dot={false} />
-                                        </AreaChart>
-                                    </ResponsiveContainer>
-                                ) : (
-                                    <div className="h-48 flex items-center justify-center text-muted-foreground text-sm italic">No enrollment data in the last 6 months</div>
-                                )}
-                            </div>
-
-                            {/* Role Distribution */}
-                            <div className="glassmorphism rounded-2xl border border-border/50 p-6">
-                                <h3 className="font-bold flex items-center gap-2 text-sm uppercase tracking-widest text-muted-foreground mb-4">
-                                    <Users2 size={14} className="text-purple-400" /> Role Distribution
-                                </h3>
-                                {roleDistribution.filter(r => r.value > 0).length > 0 ? (
-                                    <>
-                                        <ResponsiveContainer width="100%" height={140}>
-                                            <PieChart>
-                                                <Pie data={roleDistribution.filter(r => r.value > 0)} cx="50%" cy="50%" innerRadius={40} outerRadius={65} dataKey="value" paddingAngle={4}>
-                                                    {roleDistribution.filter(r => r.value > 0).map((_: any, i: number) => (
-                                                        <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
-                                                    ))}
-                                                </Pie>
-                                                <Tooltip contentStyle={{ backgroundColor: '#09090b', borderRadius: '12px', borderColor: '#ffffff15', fontSize: 11 }} />
-                                            </PieChart>
-                                        </ResponsiveContainer>
-                                        <div className="mt-2 space-y-1.5">
-                                            {roleDistribution.filter(r => r.value > 0).map((r: any, i: number) => (
-                                                <div key={r.name} className="flex items-center justify-between text-xs">
-                                                    <div className="flex items-center gap-2">
-                                                        <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }} />
-                                                        <span className="text-muted-foreground font-medium truncate max-w-[100px]">{r.name}</span>
-                                                    </div>
-                                                    <span className="font-bold">{r.value}</span>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </>
-                                ) : (
-                                    <div className="h-48 flex items-center justify-center text-muted-foreground text-sm italic">No roles assigned</div>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* ── Course Performance ── */}
-                        <div className="glassmorphism rounded-2xl border border-border/50 overflow-hidden">
-                            <div className="p-5 border-b border-border/50 flex justify-between items-center bg-secondary/10">
-                                <h3 className="font-bold flex items-center gap-2 text-sm uppercase tracking-widest text-muted-foreground">
-                                    <BarChart3 size={14} className="text-primary" /> Course Performance
-                                </h3>
-                                <button className="px-3 py-1.5 bg-secondary/60 hover:bg-secondary border border-border/50 rounded-xl text-[10px] font-bold flex items-center gap-1.5 transition-all text-muted-foreground">
-                                    <Download size={11} /> Export CSV
-                                </button>
-                            </div>
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-left">
-                                    <thead>
-                                        <tr className="bg-secondary/10 border-b border-border/50">
-                                            {['Course', 'Enrollments', 'Completions', 'Completion Rate', 'Avg Progress'].map(h => (
-                                                <th key={h} className="px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-muted-foreground whitespace-nowrap">{h}</th>
-                                            ))}
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-border/30">
-                                        {coursePerformance.length === 0 ? (
-                                            <tr><td colSpan={5} className="py-16 text-center text-muted-foreground italic text-sm">No course data yet</td></tr>
-                                        ) : coursePerformance.map((c: any) => {
-                                            const rate = c.enrollments > 0 ? Math.round((c.completions / c.enrollments) * 100) : 0;
-                                            return (
-                                                <tr key={c.id} className="hover:bg-secondary/10 transition-colors">
-                                                    <td className="px-5 py-3.5 font-bold text-sm">{c.title}</td>
-                                                    <td className="px-5 py-3.5 text-center font-mono text-sm text-muted-foreground">{c.enrollments}</td>
-                                                    <td className="px-5 py-3.5 text-center font-mono text-sm text-emerald-400">{c.completions}</td>
-                                                    <td className="px-5 py-3.5">
-                                                        <div className="flex items-center gap-2">
-                                                            <div className="flex-1 h-1.5 bg-secondary/50 rounded-full overflow-hidden min-w-[60px]">
-                                                                <div className="h-full bg-emerald-500 transition-all" style={{ width: `${rate}%` }} />
-                                                            </div>
-                                                            <span className="text-[11px] font-bold text-emerald-400 w-8">{rate}%</span>
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-5 py-3.5">
-                                                        <div className="flex items-center gap-2">
-                                                            <div className="flex-1 h-1.5 bg-secondary/50 rounded-full overflow-hidden min-w-[60px]">
-                                                                <div className="h-full bg-primary transition-all" style={{ width: `${c.avgProgress}%` }} />
-                                                            </div>
-                                                            <span className="text-[11px] font-bold text-primary w-8">{c.avgProgress}%</span>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            );
-                                        })}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-
-                        {/* ── Team Performance + Top Learners ── */}
-                        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                            {/* Team Performance */}
-                            <div className="glassmorphism rounded-2xl border border-border/50 overflow-hidden">
-                                <div className="p-5 border-b border-border/50 bg-secondary/10">
-                                    <h3 className="font-bold flex items-center gap-2 text-sm uppercase tracking-widest text-muted-foreground">
-                                        <UsersRound size={14} className="text-cyan-400" /> Team Performance
-                                    </h3>
-                                </div>
-                                <div className="divide-y divide-border/30">
-                                    {teamPerformance.length === 0 ? (
-                                        <div className="py-12 text-center text-muted-foreground italic text-sm">No teams configured</div>
-                                    ) : teamPerformance.map((t: any, idx: number) => (
-                                        <div key={t.id} className="flex items-center gap-4 px-5 py-3.5 hover:bg-secondary/10 transition-colors">
-                                            <span className="text-xs font-black text-muted-foreground w-5">#{idx + 1}</span>
-                                            <div className="flex-1 min-w-0">
-                                                <p className="font-bold text-sm truncate">{t.name}</p>
-                                                <p className="text-[10px] text-muted-foreground">{t.members} member{t.members !== 1 ? 's' : ''}</p>
-                                            </div>
-                                            <div className="text-right space-y-1 min-w-[120px]">
-                                                <div className="flex items-center gap-2 justify-end">
-                                                    <div className="w-20 h-1 bg-secondary/50 rounded-full overflow-hidden">
-                                                        <div className="h-full bg-cyan-500 transition-all" style={{ width: `${t.avgProgress}%` }} />
-                                                    </div>
-                                                    <span className="text-[11px] font-bold text-cyan-400 w-7">{t.avgProgress}%</span>
-                                                </div>
-                                                <p className="text-[10px] text-muted-foreground text-right">{t.completionRate}% complete</p>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Top Learners */}
-                            <div className="glassmorphism rounded-2xl border border-border/50 overflow-hidden">
-                                <div className="p-5 border-b border-border/50 bg-secondary/10">
-                                    <h3 className="font-bold flex items-center gap-2 text-sm uppercase tracking-widest text-muted-foreground">
-                                        <Medal size={14} className="text-amber-400" /> Top Learners
-                                    </h3>
-                                </div>
-                                <div className="divide-y divide-border/30">
-                                    {topLearners.length === 0 ? (
-                                        <div className="py-12 text-center text-muted-foreground italic text-sm">No learner data yet</div>
-                                    ) : topLearners.slice(0, 8).map((l: any, idx: number) => (
-                                        <div key={l.id} className="flex items-center gap-3 px-5 py-3 hover:bg-secondary/10 transition-colors">
-                                            <span className={`text-xs font-black w-5 ${idx === 0 ? 'text-amber-400' : idx === 1 ? 'text-slate-300' : idx === 2 ? 'text-amber-700' : 'text-muted-foreground'}`}>#{idx + 1}</span>
-                                            <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-black text-primary shrink-0">
-                                                {(l.name || l.email)[0].toUpperCase()}
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <p className="font-bold text-xs truncate">{l.name}</p>
-                                                <p className="text-[10px] text-muted-foreground">{l.completedCourses}/{l.totalCourses} courses</p>
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <div className="w-16 h-1 bg-secondary/50 rounded-full overflow-hidden">
-                                                    <div className="h-full bg-amber-400 transition-all" style={{ width: `${l.avgProgress}%` }} />
-                                                </div>
-                                                <span className="text-[11px] font-bold text-amber-400 w-7">{l.avgProgress}%</span>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-                    );
-                })()}
-                </div>
-            )}
-
-                {/* ── i18n & AI ── */}
-                {activeTab === 'i18n' && (
-                    <div className="space-y-8 animate-in fade-in duration-500">
-                        <div className="flex flex-col gap-1">
-                            <h3 className="text-xl font-black flex items-center gap-2">
-                                <Globe className="w-6 h-6 text-primary" /> Localization & AI Engine
-                            </h3>
-                            <p className="text-sm text-muted-foreground">Manage your workspace languages and configure private AI translation settings.</p>
-                        </div>
-
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                            {/* AI Configuration */}
-                            <div className="glassmorphism p-8 rounded-3xl border border-border/50 space-y-6">
-                                <div className="flex items-center justify-between">
-                                    <h4 className="font-bold flex items-center gap-2">
-                                        <Shield className="w-5 h-5 text-emerald-400" /> AI Translation Engine
-                                    </h4>
-                                    <div className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-bold uppercase tracking-widest">
-                                        Privacy Protected
-                                    </div>
-                                </div>
-
-                                <div className="space-y-4">
-                                    <div className="p-4 rounded-2xl bg-secondary/20 border border-border/50">
-                                        <p className="text-xs font-bold mb-2 uppercase tracking-tight text-muted-foreground">Your OpenAI API Key (Optional)</p>
-                                        <input
-                                            type="password"
-                                            placeholder="sk-..."
-                                            value={localesConfig.openaiKey}
-                                            onChange={(e) => setLocalesConfig(prev => ({ ...prev, openaiKey: e.target.value }))}
-                                            className="w-full bg-background border border-border/50 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-mono"
-                                        />
-                                        <p className="text-[10px] text-muted-foreground mt-2 italic leading-relaxed">
-                                            Providing your own key ensures your data remains isolated to your OpenAI account. 
-                                            If left empty, the platform will use the <span className="text-primary font-bold">TranslateGemma</span> system fallback.
-                                        </p>
-                                    </div>
-
-                                    <div className="flex items-start gap-3 p-4 rounded-2xl bg-blue-500/5 border border-blue-500/20">
-                                        <Info className="w-4 h-4 text-blue-400 mt-0.5 shrink-0" />
-                                        <div className="space-y-1">
-                                            <p className="text-xs font-bold text-blue-400">Hierarchical Dispatch</p>
-                                            <p className="text-[10px] text-muted-foreground leading-relaxed">
-                                                1. **Tenant Key**: Primary choice for privacy & cost control.<br/>
-                                                2. **TranslateGemma**: High-quality, self-hosted system fallback.<br/>
-                                                3. **Platform Key**: Global fallback (Usage limits may apply).
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Locale Management */}
-                            <div className="glassmorphism p-8 rounded-3xl border border-border/50 space-y-6">
-                                <h4 className="font-bold flex items-center gap-2">
-                                    <Globe className="w-5 h-5 text-blue-400" /> Platform Languages
-                                </h4>
-
-                                <div className="space-y-6">
-                                    <div className="space-y-3">
-                                        <p className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1">Available Locales</p>
-                                        <div className="grid grid-cols-2 gap-3">
-                                            {[
-                                                { code: 'en', name: 'English', flag: '🇺🇸' },
-                                                { code: 'ar', name: 'Arabic', flag: '🇸🇦', isRTL: true }
-                                            ].map(lang => (
-                                                <button
-                                                    key={lang.code}
-                                                    onClick={() => {
-                                                        const isEnabled = localesConfig.availableLocales.includes(lang.code);
-                                                        if (isEnabled && localesConfig.availableLocales.length > 1) {
-                                                            setLocalesConfig(prev => ({
-                                                                ...prev,
-                                                                availableLocales: prev.availableLocales.filter(l => l !== lang.code),
-                                                                defaultLocale: prev.defaultLocale === lang.code ? prev.availableLocales.find(l => l !== lang.code) || 'en' : prev.defaultLocale
-                                                            }));
-                                                        } else if (!isEnabled) {
-                                                            setLocalesConfig(prev => ({
-                                                                ...prev,
-                                                                availableLocales: [...prev.availableLocales, lang.code]
-                                                            }));
-                                                        }
-                                                    }}
-                                                    className={`p-4 rounded-2xl flex items-center gap-3 border transition-all text-left ${localesConfig.availableLocales.includes(lang.code)
-                                                        ? 'bg-primary/10 border-primary/30 text-primary'
-                                                        : 'bg-secondary/20 border-border/50 text-muted-foreground grayscale hover:grayscale-0'
-                                                        }`}
-                                                >
-                                                    <span className="text-xl">{lang.flag}</span>
-                                                    <div>
-                                                        <p className="text-sm font-bold">{lang.name}</p>
-                                                        <p className="text-[10px] opacity-70 font-mono uppercase">{lang.code}{lang.isRTL ? ' (RTL)' : ''}</p>
-                                                    </div>
-                                                    {localesConfig.availableLocales.includes(lang.code) && <CheckCircle2 className="ml-auto w-4 h-4" />}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-3">
-                                        <p className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1">Default Landing Language</p>
-                                        <select
-                                            value={localesConfig.defaultLocale}
-                                            onChange={(e) => setLocalesConfig(prev => ({ ...prev, defaultLocale: e.target.value }))}
-                                            className="w-full bg-secondary/20 border border-border/50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-bold"
-                                        >
-                                            {localesConfig.availableLocales.map(code => (
-                                                <option key={code} value={code}>
-                                                    {code === 'en' ? 'English (US)' : 'Arabic (SA)'}
-                                                </option>
-                                            ))}
-                                        </select>
-                                        <p className="text-[10px] text-muted-foreground italic ml-1">Users will see this language by default if no preference is set.</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="flex justify-end pt-4">
-                            <button
-                                onClick={handleSaveLocales}
-                                disabled={isSavingLocales}
-                                className="px-8 py-4 bg-primary text-primary-foreground rounded-2xl font-black flex items-center gap-3 hover:scale-105 transition-transform shadow-xl disabled:opacity-50"
-                            >
-                                {isSavingLocales ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
-                                Save i18n & AI Configuration
-                            </button>
-                        </div>
-                    </div>
-                )}
-
-                {activeTab === 'audit' && (
-                    <div className="space-y-6 animate-in fade-in duration-500 pb-20">
-                        {/* Header & Search */}
-                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                            <div>
-                                <h1 className="text-2xl font-black tracking-tight uppercase flex items-center gap-3">
-                                    <Shield className="w-7 h-7 text-primary" /> Audit Monitor
-                                </h1>
-                                <p className="text-muted-foreground text-sm font-medium mt-1">
-                                    Track all administrative and learner activity across the workspace.
-                                </p>
-                            </div>
-                            <div className="relative w-full md:w-96">
-                                <Filter className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                                <input 
-                                    type="text"
-                                    placeholder="Search by action, name or email..."
-                                    value={auditSearch}
-                                    onChange={(e) => setAuditSearch(e.target.value)}
-                                    className="w-full bg-secondary/50 border border-border/50 rounded-2xl pl-12 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all uppercase font-bold tracking-tight"
-                                />
-                            </div>
-                        </div>
-
-                        {/* Logs Table */}
-                        <div className="glassmorphism rounded-[2rem] border border-border/50 overflow-hidden shadow-2xl">
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-left border-collapse">
-                                    <thead>
-                                        <tr className="bg-secondary/20 border-b border-border/50">
-                                            <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Timestamp</th>
-                                            <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground">User</th>
-                                            <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Action</th>
-                                            <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Metadata</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-border/20">
-                                        {auditLoading && auditLogs.length === 0 ? (
-                                            <tr>
-                                                <td colSpan={4} className="py-20 text-center">
-                                                    <Loader2 className="w-8 h-8 animate-spin mx-auto text-primary opacity-50" />
-                                                    <p className="mt-4 text-xs font-bold uppercase tracking-widest text-muted-foreground animate-pulse">Retrieving Logs...</p>
-                                                </td>
-                                            </tr>
-                                        ) : auditLogs.length === 0 ? (
-                                            <tr>
-                                                <td colSpan={4} className="py-20 text-center">
-                                                    <Activity className="w-12 h-12 mx-auto text-muted-foreground opacity-20 mb-4" />
-                                                    <p className="text-sm font-bold uppercase tracking-widest text-muted-foreground">No matching activity logs found.</p>
-                                                </td>
-                                            </tr>
                                         ) : (
-                                            auditLogs.map((log) => (
-                                                <tr key={log.id} 
-                                                    onClick={() => fetchUserDetail(log.user.id)}
-                                                    className="hover:bg-primary/5 cursor-pointer transition-colors group">
-                                                    <td className="px-6 py-4">
-                                                        <div className="flex flex-col">
-                                                            <span className="text-xs font-bold whitespace-nowrap">{new Date(log.createdAt).toLocaleDateString()}</span>
-                                                            <span className="text-[10px] font-medium text-muted-foreground">{new Date(log.createdAt).toLocaleTimeString()}</span>
+                                            courses.filter(c => {
+                                                if (courseFilter === 'published') return c.isPublished;
+                                                if (courseFilter === 'draft') return !c.isPublished;
+                                                return true;
+                                            }).map((course) => (
+                                                <div key={course.id} className="group rounded-3xl overflow-hidden border border-border/50 glassmorphism hover:border-primary/30 transition-all">
+                                                    <div className="aspect-video bg-gradient-to-br from-blue-600/20 to-purple-600/20 border-b border-border/50 flex items-center justify-center relative overflow-hidden">
+                                                        {course.thumbnail ? (
+                                                            <img src={course.thumbnail} alt={course.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                                                        ) : (
+                                                            <BookOpen className="w-12 h-12 text-blue-400 opacity-40 group-hover:scale-110 transition-transform duration-500" />
+                                                        )}
+                                                        <div className="absolute top-3 left-3 flex flex-col gap-1.5 pointer-events-none">
+                                                            {course.exclusiveRole && (
+                                                                <span className="px-2 py-1 text-[10px] font-black uppercase rounded-lg bg-indigo-500/20 border border-indigo-500/30 text-indigo-400 backdrop-blur-md flex items-center gap-1 shadow-2xl">
+                                                                    <Lock size={10} /> Exclusive: {course.exclusiveRole.name}
+                                                                </span>
+                                                            )}
+                                                            {course.exclusiveTeam && (
+                                                                <span className="px-2 py-1 text-[10px] font-black uppercase rounded-lg bg-cyan-500/20 border border-cyan-500/30 text-cyan-400 backdrop-blur-md flex items-center gap-1 shadow-2xl">
+                                                                    <UsersRound size={10} /> Team: {course.exclusiveTeam.name}
+                                                                </span>
+                                                            )}
                                                         </div>
-                                                    </td>
-                                                    <td className="px-6 py-4">
-                                                        <div className="flex items-center gap-3">
-                                                            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-black text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-all">
-                                                                {log.user.name?.[0].toUpperCase() || 'U'}
-                                                            </div>
-                                                            <div className="flex flex-col min-w-0">
-                                                                <div className="flex items-center gap-1.5 min-w-0">
-                                                                    <span className="text-sm font-bold truncate max-w-[120px]">{log.user.name}</span>
-                                                                    <UserCircle size={10} className="text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                                                                </div>
-                                                                <span className="text-[10px] text-muted-foreground truncate">{log.user.email}</span>
-                                                            </div>
+                                                        <div className="absolute top-3 right-3">
+                                                            <span className={`px-2 py-1 text-[10px] font-black uppercase rounded-full border ${course.isPublished ? 'bg-emerald-500/20 border-emerald-500/30 text-emerald-400' : 'bg-orange-500/20 border-orange-500/30 text-orange-400'}`}>
+                                                                {course.isPublished ? 'Published' : 'Draft'}
+                                                            </span>
                                                         </div>
-                                                    </td>
-                                                    <td className="px-6 py-4">
-                                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black tracking-tight ${
-                                                            log.action.includes('CREATED') ? 'bg-emerald-500/10 text-emerald-500' :
-                                                            log.action.includes('DELETED') ? 'bg-red-500/10 text-red-500' :
-                                                            log.action.includes('UPDATED') ? 'bg-blue-500/10 text-blue-500' :
-                                                            'bg-secondary text-muted-foreground'
-                                                        }`}>
-                                                            {log.action}
-                                                        </span>
-                                                    </td>
-                                                    <td className="px-6 py-4 text-right">
-                                                        <button 
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                setSelectedLogMetadata(log);
-                                                            }}
-                                                            className="p-2 rounded-xl bg-secondary/50 text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all"
-                                                            title="View Detailed Insight"
-                                                        >
-                                                            <ScanSearch size={16} />
-                                                        </button>
-                                                    </td>
-                                                </tr>
+                                                    </div>
+                                                    <div className="p-6">
+                                                        <h3 className="font-bold text-lg leading-tight mb-1">{course.title}</h3>
+                                                        <p className="text-sm text-muted-foreground mb-4 line-clamp-2">{course.description || 'No description yet.'}</p>
+                                                        <div className="flex justify-between items-center text-xs text-muted-foreground mb-4">
+                                                            <span>{course.modules?.length || 0} modules · {course.modules?.reduce((s: number, m: any) => s + (m.lessons?.length || 0), 0) || 0} lessons</span>
+                                                            <span>{course._count?.enrollments || 0} enrolled</span>
+                                                        </div>
+                                                        <div className="flex gap-2">
+                                                            <button onClick={() => fetchCourseDetails(course.id)} className="flex-1 py-2 bg-primary/10 border border-primary/20 text-primary font-bold rounded-lg text-sm hover:bg-primary/20 transition-colors flex items-center justify-center gap-1">
+                                                                <Edit3 size={14} /> Build Content
+                                                            </button>
+                                                            <button onClick={() => togglePublish(course)} className="p-2 rounded-lg border border-border hover:bg-secondary/50 transition-colors text-muted-foreground">
+                                                                {course.isPublished ? <EyeOff size={16} /> : <Eye size={16} />}
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             ))
                                         )}
-                                    </tbody>
-                                </table>
+                                    </div>
+                                </div>
+                        )}
                             </div>
+                        )}
 
-                            {/* Pagination */}
-                            {auditPagination.pages > 1 && (
-                                <div className="p-6 bg-secondary/10 border-t border-border/50 flex items-center justify-between">
-                                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
-                                        Showing {(auditPagination.currentPage - 1) * auditPagination.limit + 1} - {Math.min(auditPagination.currentPage * auditPagination.limit, auditPagination.total)} of {auditPagination.total} logs
-                                    </p>
-                                    <div className="flex items-center gap-2">
-                                        <button 
-                                            disabled={auditPagination.currentPage === 1 || auditLoading}
-                                            onClick={() => fetchAuditLogs(auditPagination.currentPage - 1, auditSearch)}
-                                            className="p-2 rounded-xl bg-background border border-border/50 hover:bg-secondary disabled:opacity-50 transition-all"
-                                        >
-                                            <ChevronLeft size={20} />
-                                        </button>
-                                        <span className="text-sm font-black px-4">
-                                            {auditPagination.currentPage} / {auditPagination.pages}
-                                        </span>
-                                        <button 
-                                            disabled={auditPagination.currentPage === auditPagination.pages || auditLoading}
-                                            onClick={() => fetchAuditLogs(auditPagination.currentPage + 1, auditSearch)}
-                                            className="p-2 rounded-xl bg-background border border-border/50 hover:bg-secondary disabled:opacity-50 transition-all"
-                                        >
-                                            <ChevronRight size={20} />
-                                        </button>
+                        {/* ── LEARNERS ── */}
+                        {activeTab === 'learners' && (
+                            <LearnersManager domain={domain} addToast={addToast} />
+                        )}
+
+                        {/* ── ANNOUNCEMENTS ── */}
+                        {activeTab === 'announcements' && (
+                            <div className="space-y-6 animate-in fade-in duration-500">
+                                {announcements.length === 0 ? (
+                                    <div className="text-center py-20">
+                                        <Megaphone className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-20" />
+                                        <p className="font-bold text-lg">No announcements posted</p>
+                                        <p className="text-muted-foreground text-sm">Post a message and all learners will see it.</p>
                                     </div>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                )}
-
-
-
-                {/* ── BRANDING ── */}
-                {activeTab === 'branding' && (
-                    <div className="max-w-4xl space-y-8 animate-in fade-in duration-500 pb-20">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <div className="glassmorphism p-8 rounded-3xl border border-border/50 space-y-8">
-                                <div className="space-y-4">
-                                    <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2">
-                                        <Globe size={14} /> Organization Identity
-                                    </h3>
-                                    <div className="space-y-1">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Platform Display Name</label>
-                                        <input type="text" value={branding.name} onChange={e => setBranding({ ...branding, name: e.target.value })}
-                                            className="w-full bg-secondary/50 border border-border/50 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 font-bold" 
-                                            placeholder="e.g. Acme Academy" />
-                                    </div>
-                                </div>
-
-                                <div className="space-y-4">
-                                    <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2">
-                                        <Palette size={14} /> Platform Theme Color
-                                    </h3>
-                                    <div className="flex items-center gap-6 p-4 rounded-2xl bg-secondary/20 border border-border/30">
-                                        <div className="relative group">
-                                            <input type="color" value={branding.primaryColor} onChange={e => setBranding({ ...branding, primaryColor: e.target.value })}
-                                                className="w-16 h-16 rounded-2xl cursor-pointer border-4 border-background bg-transparent shadow-xl transition-transform active:scale-95" />
-                                            <div className="absolute inset-0 rounded-2xl ring-2 ring-primary/20 pointer-events-none" />
-                                        </div>
-                                        <div>
-                                            <p className="text-[9px] text-muted-foreground uppercase tracking-widest font-black mb-1">Color Token</p>
-                                            <p className="font-mono font-black text-xl text-foreground tracking-tighter">{branding.primaryColor.toUpperCase()}</p>
-                                        </div>
-                                    </div>
-                                    <div className="flex gap-2.5 flex-wrap">
-                                        {['#3b82f6', '#8b5cf6', '#ef4444', '#10b981', '#f59e0b', '#ec4899', '#14b8a6', '#000000'].map(c => (
-                                            <button key={c} 
-                                                className={`w-9 h-9 rounded-xl border-2 transition-all hover:scale-110 shadow-sm ${branding.primaryColor === c ? 'scale-110 shadow-lg shadow-black/20' : 'opacity-80 hover:opacity-100'}`}
-                                                style={{ backgroundColor: c, borderColor: branding.primaryColor === c ? 'white' : 'transparent' }}
-                                                onClick={() => setBranding({ ...branding, primaryColor: c })} />
-                                        ))}
-                                    </div>
-                                </div>
-
-                                <div className="pt-4 flex gap-4">
-                                    <button 
-                                        onClick={handleSaveBranding}
-                                        className="flex-1 flex items-center justify-center gap-3 px-6 py-4 bg-primary text-primary-foreground rounded-[1.25rem] font-black uppercase tracking-widest text-xs hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-primary/20">
-                                        <Save size={16} /> Save Platform Changes
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div className="space-y-8">
-                                <section className="glassmorphism p-8 rounded-3xl border border-border/50 space-y-6">
-                                    <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2">
-                                        <Upload size={14} /> Brand Assets
-                                    </h3>
-                                    
-                                    {/* Asset Grid */}
-                                    <div className="space-y-6">
-                                        {[
-                                            { id: 'logoLight', label: 'Primary Logo (Light Theme)', sub: 'Transparent PNG/SVG suggested', icon: Globe },
-                                            { id: 'logoDark', label: 'Secondary Logo (Dark Theme)', sub: 'Logo for dark navigation bars', icon: Globe },
-                                            { id: 'favicon', label: 'Site Favicon', sub: 'Square icon (32x32px suggested)', icon: Globe },
-                                        ].map((asset) => (
-                                            <div key={asset.id} className="space-y-3">
-                                                <div className="flex justify-between items-end px-1">
-                                                    <div>
-                                                        <p className="text-[10px] font-black uppercase tracking-widest text-foreground">{asset.label}</p>
-                                                        <p className="text-[9px] text-muted-foreground font-medium">{asset.sub}</p>
+                                ) : (() => {
+                                    const totalPages = Math.ceil(announcements.length / ANNOUNCEMENTS_PER_PAGE);
+                                    const paginatedAnnouncements = announcements.slice((announcementPage - 1) * ANNOUNCEMENTS_PER_PAGE, announcementPage * ANNOUNCEMENTS_PER_PAGE);
+                                    return (
+                                        <>
+                                            {paginatedAnnouncements.map(a => (
+                                                <div key={a.id} className="p-6 glassmorphism rounded-2xl border border-border/50 flex gap-6 hover:border-primary/20 transition-all cursor-pointer group relative" onClick={() => setSelectedAnnouncement(a)}>
+                                                    <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                                                        <Megaphone size={20} className="text-primary" />
                                                     </div>
-                                                </div>
-                                                
-                                                <div className="relative group">
-                                                    <label className={`block w-full cursor-pointer rounded-[1.25rem] border-2 border-dashed transition-all overflow-hidden ${
-                                                        branding[asset.id as keyof typeof branding] 
-                                                            ? 'border-primary/20 bg-primary/5 h-24' 
-                                                            : 'border-border/60 hover:border-primary/40 bg-secondary/10 hover:bg-secondary/20 h-20'
-                                                    }`}>
-                                                        <input type="file" className="hidden" accept="image/*" onChange={(e) => {
-                                                            const file = e.target.files?.[0];
-                                                            if (file) handleLogoUpload(file, asset.id as any);
-                                                        }} />
-                                                        
-                                                        {branding[asset.id as keyof typeof branding] ? (
-                                                            <div className="w-full h-full flex items-center justify-center p-4">
-                                                                <img src={branding[asset.id as keyof typeof branding]!} alt={asset.label} className="max-w-full max-h-full object-contain" />
-                                                                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity rounded-[1.25rem]">
-                                                                    <Upload size={20} className="text-white" />
-                                                                </div>
+                                                    <div className="flex-1 space-y-2">
+                                                        <div className="flex justify-between items-start">
+                                                            <h3 className="font-bold">{a.title}</h3>
+                                                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                                                <span>{new Date(a.createdAt).toLocaleDateString()}</span>
+                                                                <button onClick={(e) => { e.stopPropagation(); deleteAnnouncement(a.id); }} className="p-1.5 hover:bg-red-500/10 hover:text-red-500 rounded-lg transition-colors z-10">
+                                                                    <Trash2 size={14} />
+                                                                </button>
                                                             </div>
-                                                        ) : (
-                                                            <div className="w-full h-full flex flex-col items-center justify-center gap-1 opacity-60">
-                                                                <Plus size={16} />
-                                                                <span className="text-[9px] font-black uppercase tracking-widest">Select Asset</span>
+                                                        </div>
+                                                        <p className="text-sm text-muted-foreground line-clamp-2">{a.body}</p>
+                                                        {(a.imageUrl || a.documentUrl) && (
+                                                            <div className="flex gap-2 mt-2">
+                                                                {a.imageUrl && <span className="text-[10px] font-bold bg-primary/10 text-primary px-2 py-0.5 rounded flex items-center gap-1"><Info size={10} /> Image Attached</span>}
+                                                                {a.documentUrl && <span className="text-[10px] font-bold bg-primary/10 text-primary px-2 py-0.5 rounded flex items-center gap-1"><FileText size={10} /> Doc Attached</span>}
                                                             </div>
                                                         )}
-                                                    </label>
-                                                    {uploadProgress[asset.id] !== undefined && (
-                                                        <div className="absolute bottom-0 left-0 right-0 h-1 bg-primary/20 rounded-b-[1.25rem] overflow-hidden">
-                                                            <div className="h-full bg-primary transition-all duration-300" style={{ width: `${uploadProgress[asset.id]}%` }} />
-                                                        </div>
-                                                    )}
+                                                    </div>
                                                 </div>
+                                            ))}
+                                            {totalPages > 1 && (
+                                                <div className="flex justify-center items-center gap-4 mt-6">
+                                                    <button
+                                                        disabled={announcementPage === 1}
+                                                        onClick={() => setAnnouncementPage(p => Math.max(1, p - 1))}
+                                                        className="p-2 rounded-xl bg-secondary hover:bg-secondary/80 disabled:opacity-50 transition-all border border-border/50"
+                                                    >
+                                                        <ChevronLeft size={20} />
+                                                    </button>
+                                                    <span className="text-sm font-bold text-muted-foreground tracking-widest uppercase">
+                                                        Page {announcementPage} of {totalPages}
+                                                    </span>
+                                                    <button
+                                                        disabled={announcementPage === totalPages}
+                                                        onClick={() => setAnnouncementPage(p => Math.min(totalPages, p + 1))}
+                                                        className="p-2 rounded-xl bg-secondary hover:bg-secondary/80 disabled:opacity-50 transition-all border border-border/50"
+                                                    >
+                                                        <ChevronRight size={20} />
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </>
+                                    );
+                                })()}
+                            </div>
+                        )}
+
+                        {activeTab === 'roles' && (
+                            <RolesManager domain={domain as string} addToast={addToast} />
+                        )}
+
+                        {activeTab === 'teams' && (
+                            <TeamsManager domain={domain as string} addToast={addToast} />
+                        )}
+
+                        {activeTab === 'reports' && (() => {
+                            const CHART_COLORS = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#ec4899'];
+                            return (
+                                <div className="space-y-6 animate-in fade-in duration-500 pb-10">
+
+                                    {/* ── Filter Bar ── */}
+                                    <div className="glassmorphism rounded-2xl border border-border/50 p-4 flex flex-col lg:flex-row items-start lg:items-center gap-4 flex-wrap">
+                                        <div className="flex items-center gap-2 text-muted-foreground font-bold text-sm shrink-0">
+                                            <Filter size={16} /> Filters
+                                        </div>
+                                        <div className="flex items-center gap-2 flex-wrap flex-1">
+                                            <div className="flex items-center gap-2 bg-secondary/40 border border-border/50 rounded-xl px-3 py-2">
+                                                <Calendar size={14} className="text-muted-foreground" />
+                                                <input type="date" value={reportStartDate} onChange={e => setReportStartDate(e.target.value)}
+                                                    className="bg-transparent text-sm focus:outline-none w-32" />
+                                                <span className="text-muted-foreground text-xs">to</span>
+                                                <input type="date" value={reportEndDate} onChange={e => setReportEndDate(e.target.value)}
+                                                    className="bg-transparent text-sm focus:outline-none w-32" />
+                                            </div>
+                                            <select value={reportTeamId} onChange={e => { setReportTeamId(e.target.value); setReportRoleId(''); }}
+                                                className="bg-secondary/40 border border-border/50 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50">
+                                                <option value="">All Teams</option>
+                                                {availableTeams.map((t: any) => <option key={t.id} value={t.id}>{t.name}</option>)}
+                                            </select>
+                                            <select value={reportRoleId} onChange={e => { setReportRoleId(e.target.value); setReportTeamId(''); }}
+                                                className="bg-secondary/40 border border-border/50 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50">
+                                                <option value="">All Roles</option>
+                                                {availableRoles.map((r: any) => <option key={r.id} value={r.id}>{r.name}</option>)}
+                                            </select>
+                                            <button onClick={() => fetchReportStats(reportStartDate, reportEndDate, reportTeamId, reportRoleId)}
+                                                className="px-4 py-2 bg-primary text-primary-foreground font-bold rounded-xl text-sm hover:opacity-90 transition-all flex items-center gap-2">
+                                                {reportLoading ? <Loader2 size={14} className="animate-spin" /> : <Activity size={14} />}
+                                                Apply
+                                            </button>
+                                            {(reportStartDate || reportEndDate || reportTeamId || reportRoleId) && (
+                                                <button onClick={() => { setReportStartDate(''); setReportEndDate(''); setReportTeamId(''); setReportRoleId(''); fetchReportStats('', '', '', ''); }}
+                                                    className="text-xs font-bold text-red-400 hover:text-red-300 px-2">
+                                                    Clear
+                                                </button>
+                                            )}
+                                        </div>
+                                        {reportLoading && <span className="text-xs text-muted-foreground animate-pulse">Updating…</span>}
+                                    </div>
+
+                                    {/* ── KPI Cards ── */}
+                                    <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
+                                        {[
+                                            { label: 'Learners', value: stats.learners, icon: Users2, color: 'blue' },
+                                            { label: 'Courses', value: stats.courses, icon: BookOpen, color: 'purple' },
+                                            { label: 'Enrollments', value: stats.enrollments, icon: Target, color: 'cyan' },
+                                            { label: 'Completions', value: stats.completions ?? 0, icon: CheckCircle, color: 'emerald' },
+                                            { label: 'Completion Rate', value: `${stats.completionRate}%`, icon: TrendingUp, color: 'green' },
+                                            { label: 'Avg Progress', value: `${stats.avgProgress}%`, icon: BarChart3, color: 'orange' },
+                                        ].map(({ label, value, icon: Icon, color }) => (
+                                            <div key={label} className={`glassmorphism p-4 rounded-2xl border border-${color}-500/20 hover:border-${color}-500/40 transition-colors`}>
+                                                <div className={`w-8 h-8 rounded-xl bg-${color}-500/10 text-${color}-400 flex items-center justify-center mb-3`}>
+                                                    <Icon size={16} />
+                                                </div>
+                                                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{label}</p>
+                                                <p className="text-2xl font-black mt-0.5">{value}</p>
                                             </div>
                                         ))}
                                     </div>
-                                </section>
 
-                                {/* Real-time Preview */}
-                                <div className="p-8 rounded-[2rem] border-2 border-dashed bg-secondary/5 relative overflow-hidden" 
-                                    style={{ borderColor: branding.primaryColor + '30' }}>
-                                    <div className="absolute -top-12 -right-12 w-32 h-32 rounded-full blur-3xl opacity-20" style={{ backgroundColor: branding.primaryColor }} />
-                                    
-                                    <div className="flex items-center gap-3 mb-6">
-                                        <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-lg" style={{ backgroundColor: branding.primaryColor }}>
-                                            <Globe size={14} className="text-white" />
-                                        </div>
-                                        <h4 className="font-black text-sm" style={{ color: branding.primaryColor }}>Live Platform Preview</h4>
-                                    </div>
-
-                                    <div className="glassmorphism p-6 rounded-2xl border border-border/50 space-y-4">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-full bg-secondary overflow-hidden border border-border/40">
-                                                {branding.logoLight || branding.logoDark ? (
-                                                    <img src={branding.logoLight || branding.logoDark || ''} className="w-full h-full object-contain p-1" />
-                                                ) : <div className="w-full h-full flex items-center justify-center text-[10px] font-black text-muted-foreground">{branding.name[0]}</div>}
+                                    {/* ── Charts Row ── */}
+                                    <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                                        {/* Enrollment Trend */}
+                                        <div className="xl:col-span-2 glassmorphism rounded-2xl border border-border/50 p-6">
+                                            <div className="flex items-center justify-between mb-4">
+                                                <h3 className="font-bold flex items-center gap-2 text-sm uppercase tracking-widest text-muted-foreground">
+                                                    <TrendingUp size={14} className="text-blue-400" /> Enrollment Trend (6 months)
+                                                </h3>
                                             </div>
-                                            <span className="text-sm font-black tracking-tight">{branding.name} LMS</span>
+                                            {enrollmentTrendData.length > 0 ? (
+                                                <ResponsiveContainer width="100%" height={200}>
+                                                    <AreaChart data={enrollmentTrendData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+                                                        <defs>
+                                                            <linearGradient id="enrollGrad" x1="0" y1="0" x2="0" y2="1">
+                                                                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
+                                                                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                                                            </linearGradient>
+                                                        </defs>
+                                                        <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" />
+                                                        <XAxis dataKey="date" stroke="#ffffff40" fontSize={11} tickLine={false} axisLine={false} />
+                                                        <YAxis stroke="#ffffff40" fontSize={11} tickLine={false} axisLine={false} />
+                                                        <Tooltip contentStyle={{ backgroundColor: '#09090b', borderRadius: '12px', borderColor: '#ffffff15', fontSize: 12 }} cursor={{ fill: '#ffffff05' }} />
+                                                        <Area type="monotone" dataKey="enrollments" name="New Enrollments" stroke="#3b82f6" fill="url(#enrollGrad)" strokeWidth={2} dot={false} />
+                                                    </AreaChart>
+                                                </ResponsiveContainer>
+                                            ) : (
+                                                <div className="h-48 flex items-center justify-center text-muted-foreground text-sm italic">No enrollment data in the last 6 months</div>
+                                            )}
                                         </div>
-                                        <div className="h-2 w-3/4 bg-secondary/50 rounded-full" />
-                                        <div className="h-2 w-1/2 bg-secondary/30 rounded-full" />
-                                        <button className="w-full py-2.5 rounded-xl text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-black/5" 
-                                            style={{ backgroundColor: branding.primaryColor }}>
-                    </div>
-                    </div>
-                    </div>
-                )}
 
-                {/* ── DOMAINS ── */}
-                {activeTab === 'domains' && (
-                    <div className="max-w-2xl space-y-6 animate-in fade-in duration-500">
-                        <div className="glassmorphism p-8 rounded-3xl border border-border/50 space-y-6">
-                            <div>
-                                <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">Current Platform Subdomain</p>
-                                <p className="font-mono font-bold text-blue-400">{domain}.lvh.me:3000</p>
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Custom Domain</label>
-                                <div className="flex gap-3">
-                                    <input type="text" placeholder="academy.yourcompany.com"
-                                        className="flex-1 bg-secondary/50 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
-                                    <button className="px-6 py-3 bg-primary text-primary-foreground rounded-xl font-bold text-sm hover:opacity-90">Save</button>
-                                </div>
-                            </div>
-                            <div className="p-6 bg-blue-500/5 border border-blue-500/20 rounded-2xl space-y-4">
-                                <p className="font-bold text-blue-400 text-sm">DNS Setup Instructions</p>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="bg-background/80 p-4 rounded-xl border border-blue-500/20">
-                                        <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Record Type</p>
-                                        <p className="font-mono font-bold text-sm text-blue-400">CNAME</p>
-                                    </div>
-                                    <div className="bg-background/80 p-4 rounded-xl border border-blue-500/20">
-                                        <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Target Value</p>
-                                        <p className="font-mono font-bold text-sm text-blue-400">cname.infinitelms.com</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {/* ── SETTINGS ── */}
-                {activeTab === 'settings' && (
-                    <div className="max-w-2xl space-y-6 animate-in fade-in duration-500">
-                        <div className="glassmorphism p-8 rounded-3xl border border-border/50 space-y-6">
-                            <h3 className="font-bold text-lg">Workspace Configuration</h3>
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Support Email</label>
-                                <input type="email" placeholder="support@yourcompany.com"
-                                    className="w-full bg-secondary/50 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
-                            </div>
-                            <div className="flex items-center justify-between p-4 rounded-xl border border-border/50">
-                                <div>
-                                    <p className="font-bold text-sm">Allow Learner Self-Registration</p>
-                                    <p className="text-xs text-muted-foreground">Learners can sign up without an invite.</p>
-                                </div>
-                                <div className="w-12 h-6 rounded-full bg-secondary border border-border relative">
-                                    <div className="w-4 h-4 rounded-full bg-muted-foreground absolute top-1 left-1" />
-                                </div>
-                            </div>
-                            <button className="flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-xl font-bold text-sm hover:scale-105 transition-transform">
-                                <Save size={16} /> Save Settings
-                            </button>
-                        </div>
-                        <div className="glassmorphism p-8 rounded-3xl border border-red-500/20 bg-red-500/5">
-                            <h3 className="font-bold text-red-400 mb-2">Danger Zone</h3>
-                            <p className="text-sm text-red-400/70 mb-4">Irreversible workspace actions.</p>
-                            <button className="px-4 py-2 bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white font-bold rounded-lg text-sm transition-all">
-                                Delete Workspace
-                            </button>
-                        </div>
-                    </div>
-                )}
-
-                {activeTab === 'certificates' && (
-                    <div className="space-y-6 animate-in fade-in duration-500 pb-20">
-                        {editingTemplate ? (
-                            <CertificateDesigner 
-                                template={editingTemplate} 
-                                onBack={() => { setEditingTemplate(null); fetchAvailableTemplates(); }}
-                                onSave={async (id, designFields) => {
-                                    try {
-                                        const res = await fetch(`/api/t/${domain}/certificates/${id}`, {
-                                            method: 'PATCH',
-                                            headers: { 'Content-Type': 'application/json' },
-                                            body: JSON.stringify({ designFields })
-                                        });
-                                        if (res.ok) {
-                                            addToast({ title: 'Success', message: 'Design saved successfully.', type: 'success' });
-                                        }
-                                    } catch (e) {
-                                        console.error(e);
-                                    }
-                                }}
-                            />
-                        ) : (
-                            <CertificateManager 
-                                domain={domain as string} 
-                                addToast={addToast} 
-                                onEditTemplate={(t) => setEditingTemplate(t)}
-                            />
-                        )}
-                    </div>
-                )}
-
-            {/* Modals */}
-            {showCourseModal && (
-                <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/70 backdrop-blur-sm">
-                    <div className="bg-background border border-border w-full max-w-md rounded-3xl p-8 space-y-6 shadow-2xl">
-                        <div className="flex justify-between items-center">
-                            <h3 className="text-xl font-black">{selectedCourse && showCourseModal ? 'Edit Course' : 'Create New Course'}</h3>
-                            <button onClick={() => { setShowCourseModal(false); if (selectedCourse) setCourseForm({ title: '', description: '', thumbnail: '', skillLevel: 'All Levels', languages: 'English', captions: false, isMarketplace: false, exclusiveRoleId: '', exclusiveTeamId: '', certificateEnabled: false, certificateTemplateId: '' }); }} className="text-muted-foreground hover:text-foreground"><XCircle size={24} /></button>
-                        </div>
-                        <form onSubmit={selectedCourse ? updateCourse : createCourse} className="space-y-4">
-                            <div className="space-y-1.5">
-                                <div className="flex justify-between items-center">
-                                    <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Course Title</label>
-                                    {validationErrors.course?.title && <span className="text-[10px] font-bold text-red-500 animate-in fade-in slide-in-from-right-1">{validationErrors.course.title}</span>}
-                                </div>
-                                <input placeholder="e.g. Introduction to Python" value={courseForm.title}
-                                    onChange={e => {
-                                        setCourseForm({ ...courseForm, title: e.target.value });
-                                        if (validationErrors.course?.title) {
-                                            setValidationErrors(prev => ({ ...prev, course: null }));
-                                        }
-                                    }}
-                                    className={`w-full bg-secondary/50 border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 transition-all ${validationErrors.course?.title ? 'border-red-500/50 focus:ring-red-500/50' : 'border-border focus:ring-primary/50'}`} />
-                            </div>
-                            <div className="space-y-1.5">
-                                <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Description</label>
-                                <textarea placeholder="Brief description of what learners will learn..." value={courseForm.description} onChange={e => setCourseForm({ ...courseForm, description: e.target.value })}
-                                    rows={3} className="w-full bg-secondary/50 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none" />
-                            </div>
-                            <div className="space-y-1.5">
-                                <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Course Thumbnail</label>
-                                <div className="flex items-center gap-4">
-                                    <div className="w-24 h-16 rounded-xl bg-secondary/50 border border-dashed border-border flex items-center justify-center overflow-hidden">
-                                        {thumbnailPreview ? (
-                                            <img src={thumbnailPreview} alt="Thumbnail preview" className="w-full h-full object-cover" />
-                                        ) : (
-                                            <Upload className="w-6 h-6 text-muted-foreground opacity-30" />
-                                        )}
-                                    </div>
-                                    <div className="flex-1">
-                                        <input
-                                            type="file"
-                                            accept="image/*"
-                                            onChange={uploadThumbnail}
-                                            className="hidden"
-                                            id="thumbnail-upload"
-                                            disabled={isUploadingThumbnail}
-                                        />
-                                        <label
-                                            htmlFor="thumbnail-upload"
-                                            className="px-4 py-2 bg-secondary hover:bg-secondary/80 text-xs font-bold uppercase tracking-widest rounded-lg cursor-pointer transition-all border border-border flex items-center justify-center gap-2"
-                                        >
-                                            {isUploadingThumbnail ? <Loader2 className="w-3 h-3 animate-spin" /> : <Upload size={14} />}
-                                            {isUploadingThumbnail ? 'Uploading...' : 'Choose Image'}
-                                        </label>
-                                        <p className="text-[10px] text-muted-foreground mt-2 italic">Recommended: 1280x720px (16:9)</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-1.5">
-                                    <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Skill Level</label>
-                                    <select value={courseForm.skillLevel} onChange={e => setCourseForm({ ...courseForm, skillLevel: e.target.value })}
-                                        className="w-full bg-secondary/50 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50">
-                                        <option value="All Levels">All Levels</option>
-                                        <option value="Beginner">Beginner</option>
-                                        <option value="Intermediate">Intermediate</option>
-                                        <option value="Advanced">Advanced</option>
-                                    </select>
-                                </div>
-                                <div className="space-y-1.5">
-                                    <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Languages</label>
-                                    <input placeholder="e.g. English, Spanish" value={courseForm.languages} onChange={e => setCourseForm({ ...courseForm, languages: e.target.value })}
-                                        className="w-full bg-secondary/50 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
-                                </div>
-                            </div>
-                            {/* Certificate Section - Moved Higher & Highlighted */}
-                            <div className={`p-4 rounded-2xl border-2 transition-all duration-300 ${courseForm.certificateEnabled ? 'bg-indigo-500/5 border-indigo-500/20 shadow-lg shadow-indigo-500/5' : 'bg-secondary/20 border-border/50 opacity-80'}`}>
-                                <div className="flex items-center justify-between mb-2">
-                                    <label className="text-xs font-black uppercase tracking-widest text-indigo-500 flex items-center gap-2">
-                                        <Award size={16} /> Certificate of Achievement
-                                    </label>
-                                    <button 
-                                        type="button"
-                                        onClick={() => setCourseForm({ ...courseForm, certificateEnabled: !courseForm.certificateEnabled })}
-                                        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none bg-secondary ${courseForm.certificateEnabled ? 'bg-indigo-600' : ''}`}
-                                    >
-                                        <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${courseForm.certificateEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
-                                    </button>
-                                </div>
-                                <p className="text-[10px] text-muted-foreground mb-3 font-medium">Issue a professional certificate to learners upon course completion.</p>
-                                
-                                {courseForm.certificateEnabled && (
-                                    <div className="space-y-1.5 animate-in slide-in-from-top-2 duration-300 pt-2 border-t border-indigo-500/10">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-indigo-400/70">Design Template</label>
-                                        <select 
-                                            value={courseForm.certificateTemplateId} 
-                                            onChange={e => setCourseForm({ ...courseForm, certificateTemplateId: e.target.value })}
-                                            className="w-full bg-background border border-indigo-500/20 rounded-xl px-4 py-2.5 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all appearance-none cursor-pointer"
-                                        >
-                                            <option value="">-- Use Default Template --</option>
-                                            {availableTemplates.map((t: any) => (
-                                                <option key={t.id} value={t.id}>{t.name} {t.isGlobal ? '🌍' : '🏠'}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                )}
-                            </div>
-
-                            <div className="flex flex-col gap-3 py-2">
-                                <div className="flex items-center gap-2 px-1">
-                                    <input type="checkbox" id="course-captions" checked={courseForm.captions} onChange={e => setCourseForm({ ...courseForm, captions: e.target.checked })}
-                                        className="rounded border-border/50 bg-secondary/30 text-primary focus:ring-primary/20" />
-                                    <label htmlFor="course-captions" className="text-xs font-bold uppercase tracking-widest text-muted-foreground cursor-pointer">Has Closed Captions</label>
-                                </div>
-                                <div className="flex items-center gap-2 px-1">
-                                    <input type="checkbox" id="course-marketplace" checked={courseForm.isMarketplace} onChange={e => setCourseForm({ ...courseForm, isMarketplace: e.target.checked })}
-                                        className="rounded border-border/50 bg-secondary/30 text-amber-500 focus:ring-amber-500/20" />
-                                    <label htmlFor="course-marketplace" className="text-xs font-bold uppercase tracking-widest text-amber-600/80 cursor-pointer">Publish to Internal Marketplace</label>
-                                </div>
-                            </div>
-                            {/* Exclusive Role/Team Gating */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-1.5">
-                                    <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Exclusive to Role (Optional)</label>
-                                    <select value={courseForm.exclusiveRoleId} onChange={e => setCourseForm({ ...courseForm, exclusiveRoleId: e.target.value, isMarketplace: (e.target.value || courseForm.exclusiveTeamId) ? false : courseForm.isMarketplace })}
-                                        className="w-full bg-secondary/30 border border-border/50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all">
-                                        <option value="">No Restriction — All Learners</option>
-                                        {availableRoles.map((r: any) => <option key={r.id} value={r.id}>{r.name} Only</option>)}
-                                    </select>
-                                </div>
-                                <div className="space-y-1.5">
-                                    <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Exclusive to Team (Optional)</label>
-                                    <select value={courseForm.exclusiveTeamId} onChange={e => setCourseForm({ ...courseForm, exclusiveTeamId: e.target.value, isMarketplace: (e.target.value || courseForm.exclusiveRoleId) ? false : courseForm.isMarketplace })}
-                                        className="w-full bg-secondary/30 border border-border/50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all">
-                                        <option value="">No Restriction — All Learners</option>
-                                        {availableTeams.map((t: any) => <option key={t.id} value={t.id}>{t.name} Only</option>)}
-                                    </select>
-                                </div>
-                            </div>
-                            {(courseForm.exclusiveRoleId || courseForm.exclusiveTeamId) && (
-                                <p className="text-[10px] text-amber-600/80 font-bold">⚠ Exclusive courses are hidden from the Marketplace and invisible to learners without this {courseForm.exclusiveRoleId && courseForm.exclusiveTeamId ? 'role and team' : courseForm.exclusiveRoleId ? 'role' : 'team'}.</p>
-                            )}
-                            <button type="submit" className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-bold hover:opacity-90">
-                                {selectedCourse ? 'Save Changes' : 'Create Course'}
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            )}
-
-
-            {activeQuizLesson && (
-                <div className="fixed inset-0 z-[300] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md">
-                    <div className="bg-background border border-border w-full max-w-4xl max-h-[90vh] rounded-3xl p-8 flex flex-col shadow-2xl animate-in zoom-in duration-300">
-                        <div className="flex justify-between items-center mb-6">
-                            <div>
-                                <h3 className="text-2xl font-black">Quiz Builder</h3>
-                                <p className="text-sm text-muted-foreground">Creating quiz for: <span className="text-foreground font-bold">{selectedCourse?.modules?.find((m: any) => m.id === activeQuizLesson.moduleId)?.lessons?.find((l: any) => l.id === activeQuizLesson.lessonId)?.title || quizForm.title}</span></p>
-                            </div>
-                            <button onClick={() => setActiveQuizLesson(null)} className="p-2 hover:bg-secondary rounded-full transition-colors"><XCircle size={28} className="text-muted-foreground" /></button>
-                        </div>
-
-                        <div className="flex-1 overflow-y-auto pr-4 space-y-8 custom-scrollbar">
-                            <div className="space-y-1.5">
-                                <div className="flex justify-between items-center">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-1">Quiz Title</label>
-                                    {validationErrors.quiz?.title && <span className="text-[10px] font-bold text-red-500 animate-in fade-in slide-in-from-right-1 uppercase tracking-tight">{validationErrors.quiz.title}</span>}
-                                </div>
-                                <input
-                                    placeholder="e.g. React Fundamentals Mastery"
-                                    value={quizForm.title || ''}
-                                    onChange={(e) => {
-                                        setQuizForm({ ...quizForm, title: e.target.value });
-                                        if (validationErrors.quiz?.title) {
-                                            setValidationErrors(prev => ({ ...prev, quiz: { ...prev.quiz, title: null } }));
-                                        }
-                                    }}
-                                    className={`w-full bg-secondary/30 border rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 transition-all ${validationErrors.quiz?.title ? 'border-red-500/50 focus:ring-red-500/50' : 'border-border/50 focus:ring-primary/50'}`}
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-6">
-                                <div className="space-y-1.5">
-                                    <div className="flex justify-between items-center">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-1">Quiz Description</label>
-                                    </div>
-                                    <textarea
-                                        placeholder="Briefly explain what this quiz covers..."
-                                        rows={2}
-                                        value={quizForm.description || ''}
-                                        onChange={(e) => setQuizForm({ ...quizForm, description: e.target.value })}
-                                        className="w-full bg-secondary/30 border border-border/50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
-                                    />
-                                </div>
-                                <div className="space-y-1.5">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-1">Passing Score (%)</label>
-                                    <input
-                                        type="number"
-                                        min="0" max="100"
-                                        value={quizForm.passingScore}
-                                        onChange={(e) => setQuizForm({ ...quizForm, passingScore: parseInt(e.target.value) || 0 })}
-                                        className="w-full bg-secondary/30 border border-border/50 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/50"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-6 bg-secondary/5 rounded-2xl p-6 border border-border/30">
-                                <div className="space-y-4">
-                                    <div className="flex items-center gap-2">
-                                        <input
-                                            type="checkbox" id="retake-allowed"
-                                            checked={quizForm.retakeAllowed}
-                                            onChange={(e) => setQuizForm({ ...quizForm, retakeAllowed: e.target.checked })}
-                                            className="rounded border-border text-primary focus:ring-primary/20"
-                                        />
-                                        <label htmlFor="retake-allowed" className="text-xs font-bold uppercase tracking-widest text-muted-foreground cursor-pointer">Allow Retakes</label>
-                                    </div>
-                                    {quizForm.retakeAllowed && (
-                                        <div className="space-y-1.5 ml-6">
-                                            <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Max Attempts (0 = unlimited)</label>
-                                            <input
-                                                type="number" min="0"
-                                                value={quizForm.maxAttempts}
-                                                onChange={(e) => setQuizForm({ ...quizForm, maxAttempts: parseInt(e.target.value) || 0 })}
-                                                className="w-full bg-secondary/30 border border-border/50 rounded-xl px-4 py-2 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/50"
-                                            />
+                                        {/* Role Distribution */}
+                                        <div className="glassmorphism rounded-2xl border border-border/50 p-6">
+                                            <h3 className="font-bold flex items-center gap-2 text-sm uppercase tracking-widest text-muted-foreground mb-4">
+                                                <Users2 size={14} className="text-purple-400" /> Role Distribution
+                                            </h3>
+                                            {roleDistribution.filter(r => r.value > 0).length > 0 ? (
+                                                <>
+                                                    <ResponsiveContainer width="100%" height={140}>
+                                                        <PieChart>
+                                                            <Pie data={roleDistribution.filter(r => r.value > 0)} cx="50%" cy="50%" innerRadius={40} outerRadius={65} dataKey="value" paddingAngle={4}>
+                                                                {roleDistribution.filter(r => r.value > 0).map((_: any, i: number) => (
+                                                                    <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
+                                                                ))}
+                                                            </Pie>
+                                                            <Tooltip contentStyle={{ backgroundColor: '#09090b', borderRadius: '12px', borderColor: '#ffffff15', fontSize: 11 }} />
+                                                        </PieChart>
+                                                    </ResponsiveContainer>
+                                                    <div className="mt-2 space-y-1.5">
+                                                        {roleDistribution.filter(r => r.value > 0).map((r: any, i: number) => (
+                                                            <div key={r.name} className="flex items-center justify-between text-xs">
+                                                                <div className="flex items-center gap-2">
+                                                                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }} />
+                                                                    <span className="text-muted-foreground font-medium truncate max-w-[100px]">{r.name}</span>
+                                                                </div>
+                                                                <span className="font-bold">{r.value}</span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </>
+                                            ) : (
+                                                <div className="h-48 flex items-center justify-center text-muted-foreground text-sm italic">No roles assigned</div>
+                                            )}
                                         </div>
-                                    )}
-                                </div>
-                                <div className="space-y-4 border-l border-border/30 pl-6">
-                                    <div className="flex items-center gap-2">
-                                        <input
-                                            type="checkbox" id="is-randomized"
-                                            checked={quizForm.isRandomized}
-                                            onChange={(e) => {
-                                                const checked = e.target.checked;
-                                                setQuizForm(prev => ({
-                                                    ...prev,
-                                                    isRandomized: checked,
-                                                    randomCount: (checked && (prev.randomCount === 0 || prev.randomCount > prev.questions.length)) ? prev.questions.length : prev.randomCount
-                                                }));
-                                            }}
-                                            className="rounded border-border text-primary focus:ring-primary/20"
-                                        />
-                                        <label htmlFor="is-randomized" className="text-xs font-bold uppercase tracking-widest text-muted-foreground cursor-pointer">Randomize Questions</label>
                                     </div>
-                                    {quizForm.isRandomized && (
-                                        <div className="space-y-4 ml-6 animate-in fade-in slide-in-from-left-2 transition-all duration-300">
-                                            <div className="flex flex-col gap-1">
-                                                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-1 flex justify-between">
-                                                    <span>Exam Subset Size</span>
-                                                    <span className="text-primary font-black">{quizForm.randomCount} OF {quizForm.questions.length || 0}</span>
-                                                </label>
-                                                <p className="text-[9px] text-muted-foreground/60 px-1 italic">
-                                                    {quizForm.questions.length > 0
-                                                        ? `Each learner will see ${quizForm.randomCount} random questions from your pool.`
-                                                        : "Add questions below to build your pool first."}
+
+                                    {/* ── Course Performance ── */}
+                                    <div className="glassmorphism rounded-2xl border border-border/50 overflow-hidden">
+                                        <div className="p-5 border-b border-border/50 flex justify-between items-center bg-secondary/10">
+                                            <h3 className="font-bold flex items-center gap-2 text-sm uppercase tracking-widest text-muted-foreground">
+                                                <BarChart3 size={14} className="text-primary" /> Course Performance
+                                            </h3>
+                                            <button className="px-3 py-1.5 bg-secondary/60 hover:bg-secondary border border-border/50 rounded-xl text-[10px] font-bold flex items-center gap-1.5 transition-all text-muted-foreground">
+                                                <Download size={11} /> Export CSV
+                                            </button>
+                                        </div>
+                                        <div className="overflow-x-auto">
+                                            <table className="w-full text-left">
+                                                <thead>
+                                                    <tr className="bg-secondary/10 border-b border-border/50">
+                                                        {['Course', 'Enrollments', 'Completions', 'Completion Rate', 'Avg Progress'].map(h => (
+                                                            <th key={h} className="px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-muted-foreground whitespace-nowrap">{h}</th>
+                                                        ))}
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-border/30">
+                                                    {coursePerformance.length === 0 ? (
+                                                        <tr><td colSpan={5} className="py-16 text-center text-muted-foreground italic text-sm">No course data yet</td></tr>
+                                                    ) : coursePerformance.map((c: any) => {
+                                                        const rate = c.enrollments > 0 ? Math.round((c.completions / c.enrollments) * 100) : 0;
+                                                        return (
+                                                            <tr key={c.id} className="hover:bg-secondary/10 transition-colors">
+                                                                <td className="px-5 py-3.5 font-bold text-sm">{c.title}</td>
+                                                                <td className="px-5 py-3.5 text-center font-mono text-sm text-muted-foreground">{c.enrollments}</td>
+                                                                <td className="px-5 py-3.5 text-center font-mono text-sm text-emerald-400">{c.completions}</td>
+                                                                <td className="px-5 py-3.5">
+                                                                    <div className="flex items-center gap-2">
+                                                                        <div className="flex-1 h-1.5 bg-secondary/50 rounded-full overflow-hidden min-w-[60px]">
+                                                                            <div className="h-full bg-emerald-500 transition-all" style={{ width: `${rate}%` }} />
+                                                                        </div>
+                                                                        <span className="text-[11px] font-bold text-emerald-400 w-8">{rate}%</span>
+                                                                    </div>
+                                                                </td>
+                                                                <td className="px-5 py-3.5">
+                                                                    <div className="flex items-center gap-2">
+                                                                        <div className="flex-1 h-1.5 bg-secondary/50 rounded-full overflow-hidden min-w-[60px]">
+                                                                            <div className="h-full bg-primary transition-all" style={{ width: `${c.avgProgress}%` }} />
+                                                                        </div>
+                                                                        <span className="text-[11px] font-bold text-primary w-8">{c.avgProgress}%</span>
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        );
+                                                    })}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+
+                                    {/* ── Team Performance + Top Learners ── */}
+                                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                                        {/* Team Performance */}
+                                        <div className="glassmorphism rounded-2xl border border-border/50 overflow-hidden">
+                                            <div className="p-5 border-b border-border/50 bg-secondary/10">
+                                                <h3 className="font-bold flex items-center gap-2 text-sm uppercase tracking-widest text-muted-foreground">
+                                                    <UsersRound size={14} className="text-cyan-400" /> Team Performance
+                                                </h3>
+                                            </div>
+                                            <div className="divide-y divide-border/30">
+                                                {teamPerformance.length === 0 ? (
+                                                    <div className="py-12 text-center text-muted-foreground italic text-sm">No teams configured</div>
+                                                ) : teamPerformance.map((t: any, idx: number) => (
+                                                    <div key={t.id} className="flex items-center gap-4 px-5 py-3.5 hover:bg-secondary/10 transition-colors">
+                                                        <span className="text-xs font-black text-muted-foreground w-5">#{idx + 1}</span>
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="font-bold text-sm truncate">{t.name}</p>
+                                                            <p className="text-[10px] text-muted-foreground">{t.members} member{t.members !== 1 ? 's' : ''}</p>
+                                                        </div>
+                                                        <div className="text-right space-y-1 min-w-[120px]">
+                                                            <div className="flex items-center gap-2 justify-end">
+                                                                <div className="w-20 h-1 bg-secondary/50 rounded-full overflow-hidden">
+                                                                    <div className="h-full bg-cyan-500 transition-all" style={{ width: `${t.avgProgress}%` }} />
+                                                                </div>
+                                                                <span className="text-[11px] font-bold text-cyan-400 w-7">{t.avgProgress}%</span>
+                                                            </div>
+                                                            <p className="text-[10px] text-muted-foreground text-right">{t.completionRate}% complete</p>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        {/* Top Learners */}
+                                        <div className="glassmorphism rounded-2xl border border-border/50 overflow-hidden">
+                                            <div className="p-5 border-b border-border/50 bg-secondary/10">
+                                                <h3 className="font-bold flex items-center gap-2 text-sm uppercase tracking-widest text-muted-foreground">
+                                                    <Medal size={14} className="text-amber-400" /> Top Learners
+                                                </h3>
+                                            </div>
+                                            <div className="divide-y divide-border/30">
+                                                {topLearners.length === 0 ? (
+                                                    <div className="py-12 text-center text-muted-foreground italic text-sm">No learner data yet</div>
+                                                ) : topLearners.slice(0, 8).map((l: any, idx: number) => (
+                                                    <div key={l.id} className="flex items-center gap-3 px-5 py-3 hover:bg-secondary/10 transition-colors">
+                                                        <span className={`text-xs font-black w-5 ${idx === 0 ? 'text-amber-400' : idx === 1 ? 'text-slate-300' : idx === 2 ? 'text-amber-700' : 'text-muted-foreground'}`}>#{idx + 1}</span>
+                                                        <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-black text-primary shrink-0">
+                                                            {(l.name || l.email)[0].toUpperCase()}
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="font-bold text-xs truncate">{l.name}</p>
+                                                            <p className="text-[10px] text-muted-foreground">{l.completedCourses}/{l.totalCourses} courses</p>
+                                                        </div>
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="w-16 h-1 bg-secondary/50 rounded-full overflow-hidden">
+                                                                <div className="h-full bg-amber-400 transition-all" style={{ width: `${l.avgProgress}%` }} />
+                                                            </div>
+                                                            <span className="text-[11px] font-bold text-amber-400 w-7">{l.avgProgress}%</span>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    );
+                })()}
+                                </div>
+                            )
+                        }
+
+                {/* ── i18n & AI ── */}
+                        {activeTab === 'i18n' && (
+                            <div className="space-y-8 animate-in fade-in duration-500">
+                                <div className="flex flex-col gap-1">
+                                    <h3 className="text-xl font-black flex items-center gap-2">
+                                        <Globe className="w-6 h-6 text-primary" /> Localization & AI Engine
+                                    </h3>
+                                    <p className="text-sm text-muted-foreground">Manage your workspace languages and configure private AI translation settings.</p>
+                                </div>
+
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                    {/* AI Configuration */}
+                                    <div className="glassmorphism p-8 rounded-3xl border border-border/50 space-y-6">
+                                        <div className="flex items-center justify-between">
+                                            <h4 className="font-bold flex items-center gap-2">
+                                                <Shield className="w-5 h-5 text-emerald-400" /> AI Translation Engine
+                                            </h4>
+                                            <div className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-bold uppercase tracking-widest">
+                                                Privacy Protected
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-4">
+                                            <div className="p-4 rounded-2xl bg-secondary/20 border border-border/50">
+                                                <p className="text-xs font-bold mb-2 uppercase tracking-tight text-muted-foreground">Your OpenAI API Key (Optional)</p>
+                                                <input
+                                                    type="password"
+                                                    placeholder="sk-..."
+                                                    value={localesConfig.openaiKey}
+                                                    onChange={(e) => setLocalesConfig(prev => ({ ...prev, openaiKey: e.target.value }))}
+                                                    className="w-full bg-background border border-border/50 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-mono"
+                                                />
+                                                <p className="text-[10px] text-muted-foreground mt-2 italic leading-relaxed">
+                                                    Providing your own key ensures your data remains isolated to your OpenAI account.
+                                                    If left empty, the platform will use the <span className="text-primary font-bold">TranslateGemma</span> system fallback.
                                                 </p>
                                             </div>
 
-                                            {quizForm.questions.length > 0 ? (
-                                                <div className="flex items-center gap-4 bg-secondary/20 rounded-xl px-4 py-2 border border-border/50">
-                                                    <input
-                                                        type="range"
-                                                        min="1"
-                                                        max={quizForm.questions.length}
-                                                        value={quizForm.randomCount}
-                                                        onChange={(e) => setQuizForm({ ...quizForm, randomCount: parseInt(e.target.value) })}
-                                                        className="flex-1 accent-primary cursor-pointer h-1.5 bg-secondary rounded-lg appearance-none"
-                                                    />
-                                                    <input
-                                                        type="number"
-                                                        min="1"
-                                                        max={quizForm.questions.length}
-                                                        value={quizForm.randomCount}
-                                                        onChange={(e) => {
-                                                            const val = Math.max(1, Math.min(parseInt(e.target.value) || 1, quizForm.questions.length));
-                                                            setQuizForm({ ...quizForm, randomCount: val });
-                                                        }}
-                                                        className="w-16 bg-secondary/50 text-center rounded-lg py-1 text-xs font-black border border-border/50 focus:outline-none focus:ring-1 focus:ring-primary/50"
-                                                    />
+                                            <div className="flex items-start gap-3 p-4 rounded-2xl bg-blue-500/5 border border-blue-500/20">
+                                                <Info className="w-4 h-4 text-blue-400 mt-0.5 shrink-0" />
+                                                <div className="space-y-1">
+                                                    <p className="text-xs font-bold text-blue-400">Hierarchical Dispatch</p>
+                                                    <p className="text-[10px] text-muted-foreground leading-relaxed">
+                                                        1. **Tenant Key**: Primary choice for privacy & cost control.<br />
+                                                        2. **TranslateGemma**: High-quality, self-hosted system fallback.<br />
+                                                        3. **Platform Key**: Global fallback (Usage limits may apply).
+                                                    </p>
                                                 </div>
-                                            ) : (
-                                                <div className="text-[10px] font-bold text-amber-500/80 bg-amber-500/5 border border-amber-500/20 rounded-lg p-3 flex items-center gap-2">
-                                                    <AlertCircle size={14} /> <span>Your question pool is currently empty.</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Locale Management */}
+                                    <div className="glassmorphism p-8 rounded-3xl border border-border/50 space-y-6">
+                                        <h4 className="font-bold flex items-center gap-2">
+                                            <Globe className="w-5 h-5 text-blue-400" /> Platform Languages
+                                        </h4>
+
+                                        <div className="space-y-6">
+                                            <div className="space-y-3">
+                                                <p className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1">Available Locales</p>
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    {[
+                                                        { code: 'en', name: 'English', flag: '🇺🇸' },
+                                                        { code: 'ar', name: 'Arabic', flag: '🇸🇦', isRTL: true }
+                                                    ].map(lang => (
+                                                        <button
+                                                            key={lang.code}
+                                                            onClick={() => {
+                                                                const isEnabled = localesConfig.availableLocales.includes(lang.code);
+                                                                if (isEnabled && localesConfig.availableLocales.length > 1) {
+                                                                    setLocalesConfig(prev => ({
+                                                                        ...prev,
+                                                                        availableLocales: prev.availableLocales.filter(l => l !== lang.code),
+                                                                        defaultLocale: prev.defaultLocale === lang.code ? prev.availableLocales.find(l => l !== lang.code) || 'en' : prev.defaultLocale
+                                                                    }));
+                                                                } else if (!isEnabled) {
+                                                                    setLocalesConfig(prev => ({
+                                                                        ...prev,
+                                                                        availableLocales: [...prev.availableLocales, lang.code]
+                                                                    }));
+                                                                }
+                                                            }}
+                                                            className={`p-4 rounded-2xl flex items-center gap-3 border transition-all text-left ${localesConfig.availableLocales.includes(lang.code)
+                                                                ? 'bg-primary/10 border-primary/30 text-primary'
+                                                                : 'bg-secondary/20 border-border/50 text-muted-foreground grayscale hover:grayscale-0'
+                                                                }`}
+                                                        >
+                                                            <span className="text-xl">{lang.flag}</span>
+                                                            <div>
+                                                                <p className="text-sm font-bold">{lang.name}</p>
+                                                                <p className="text-[10px] opacity-70 font-mono uppercase">{lang.code}{lang.isRTL ? ' (RTL)' : ''}</p>
+                                                            </div>
+                                                            {localesConfig.availableLocales.includes(lang.code) && <CheckCircle2 className="ml-auto w-4 h-4" />}
+                                                        </button>
+                                                    ))}
                                                 </div>
-                                            )}
+                                            </div>
+
+                                            <div className="space-y-3">
+                                                <p className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1">Default Landing Language</p>
+                                                <select
+                                                    value={localesConfig.defaultLocale}
+                                                    onChange={(e) => setLocalesConfig(prev => ({ ...prev, defaultLocale: e.target.value }))}
+                                                    className="w-full bg-secondary/20 border border-border/50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-bold"
+                                                >
+                                                    {localesConfig.availableLocales.map(code => (
+                                                        <option key={code} value={code}>
+                                                            {code === 'en' ? 'English (US)' : 'Arabic (SA)'}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                                <p className="text-[10px] text-muted-foreground italic ml-1">Users will see this language by default if no preference is set.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="flex justify-end pt-4">
+                                    <button
+                                        onClick={handleSaveLocales}
+                                        disabled={isSavingLocales}
+                                        className="px-8 py-4 bg-primary text-primary-foreground rounded-2xl font-black flex items-center gap-3 hover:scale-105 transition-transform shadow-xl disabled:opacity-50"
+                                    >
+                                        {isSavingLocales ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+                                        Save i18n & AI Configuration
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === 'audit' && (
+                            <div className="space-y-6 animate-in fade-in duration-500 pb-20">
+                                {/* Header & Search */}
+                                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                                    <div>
+                                        <h1 className="text-2xl font-black tracking-tight uppercase flex items-center gap-3">
+                                            <Shield className="w-7 h-7 text-primary" /> Audit Monitor
+                                        </h1>
+                                        <p className="text-muted-foreground text-sm font-medium mt-1">
+                                            Track all administrative and learner activity across the workspace.
+                                        </p>
+                                    </div>
+                                    <div className="relative w-full md:w-96">
+                                        <Filter className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                                        <input
+                                            type="text"
+                                            placeholder="Search by action, name or email..."
+                                            value={auditSearch}
+                                            onChange={(e) => setAuditSearch(e.target.value)}
+                                            className="w-full bg-secondary/50 border border-border/50 rounded-2xl pl-12 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all uppercase font-bold tracking-tight"
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Logs Table */}
+                                <div className="glassmorphism rounded-[2rem] border border-border/50 overflow-hidden shadow-2xl">
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full text-left border-collapse">
+                                            <thead>
+                                                <tr className="bg-secondary/20 border-b border-border/50">
+                                                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Timestamp</th>
+                                                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground">User</th>
+                                                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Action</th>
+                                                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Metadata</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-border/20">
+                                                {auditLoading && auditLogs.length === 0 ? (
+                                                    <tr>
+                                                        <td colSpan={4} className="py-20 text-center">
+                                                            <Loader2 className="w-8 h-8 animate-spin mx-auto text-primary opacity-50" />
+                                                            <p className="mt-4 text-xs font-bold uppercase tracking-widest text-muted-foreground animate-pulse">Retrieving Logs...</p>
+                                                        </td>
+                                                    </tr>
+                                                ) : auditLogs.length === 0 ? (
+                                                    <tr>
+                                                        <td colSpan={4} className="py-20 text-center">
+                                                            <Activity className="w-12 h-12 mx-auto text-muted-foreground opacity-20 mb-4" />
+                                                            <p className="text-sm font-bold uppercase tracking-widest text-muted-foreground">No matching activity logs found.</p>
+                                                        </td>
+                                                    </tr>
+                                                ) : (
+                                                    auditLogs.map((log) => (
+                                                        <tr key={log.id}
+                                                            onClick={() => fetchUserDetail(log.user.id)}
+                                                            className="hover:bg-primary/5 cursor-pointer transition-colors group">
+                                                            <td className="px-6 py-4">
+                                                                <div className="flex flex-col">
+                                                                    <span className="text-xs font-bold whitespace-nowrap">{new Date(log.createdAt).toLocaleDateString()}</span>
+                                                                    <span className="text-[10px] font-medium text-muted-foreground">{new Date(log.createdAt).toLocaleTimeString()}</span>
+                                                                </div>
+                                                            </td>
+                                                            <td className="px-6 py-4">
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-black text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-all">
+                                                                        {log.user.name?.[0].toUpperCase() || 'U'}
+                                                                    </div>
+                                                                    <div className="flex flex-col min-w-0">
+                                                                        <div className="flex items-center gap-1.5 min-w-0">
+                                                                            <span className="text-sm font-bold truncate max-w-[120px]">{log.user.name}</span>
+                                                                            <UserCircle size={10} className="text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                                        </div>
+                                                                        <span className="text-[10px] text-muted-foreground truncate">{log.user.email}</span>
+                                                                    </div>
+                                                                </div>
+                                                            </td>
+                                                            <td className="px-6 py-4">
+                                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black tracking-tight ${log.action.includes('CREATED') ? 'bg-emerald-500/10 text-emerald-500' :
+                                                                    log.action.includes('DELETED') ? 'bg-red-500/10 text-red-500' :
+                                                                        log.action.includes('UPDATED') ? 'bg-blue-500/10 text-blue-500' :
+                                                                            'bg-secondary text-muted-foreground'
+                                                                    }`}>
+                                                                    {log.action}
+                                                                </span>
+                                                            </td>
+                                                            <td className="px-6 py-4 text-right">
+                                                                <button
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        setSelectedLogMetadata(log);
+                                                                    }}
+                                                                    className="p-2 rounded-xl bg-secondary/50 text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all"
+                                                                    title="View Detailed Insight"
+                                                                >
+                                                                    <ScanSearch size={16} />
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                    ))
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    {/* Pagination */}
+                                    {auditPagination.pages > 1 && (
+                                        <div className="p-6 bg-secondary/10 border-t border-border/50 flex items-center justify-between">
+                                            <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
+                                                Showing {(auditPagination.currentPage - 1) * auditPagination.limit + 1} - {Math.min(auditPagination.currentPage * auditPagination.limit, auditPagination.total)} of {auditPagination.total} logs
+                                            </p>
+                                            <div className="flex items-center gap-2">
+                                                <button
+                                                    disabled={auditPagination.currentPage === 1 || auditLoading}
+                                                    onClick={() => fetchAuditLogs(auditPagination.currentPage - 1, auditSearch)}
+                                                    className="p-2 rounded-xl bg-background border border-border/50 hover:bg-secondary disabled:opacity-50 transition-all"
+                                                >
+                                                    <ChevronLeft size={20} />
+                                                </button>
+                                                <span className="text-sm font-black px-4">
+                                                    {auditPagination.currentPage} / {auditPagination.pages}
+                                                </span>
+                                                <button
+                                                    disabled={auditPagination.currentPage === auditPagination.pages || auditLoading}
+                                                    onClick={() => fetchAuditLogs(auditPagination.currentPage + 1, auditSearch)}
+                                                    className="p-2 rounded-xl bg-background border border-border/50 hover:bg-secondary disabled:opacity-50 transition-all"
+                                                >
+                                                    <ChevronRight size={20} />
+                                                </button>
+                                            </div>
                                         </div>
                                     )}
                                 </div>
                             </div>
+                        )}
 
-                            <div className="space-y-6">
-                                <div className="flex items-center justify-between border-b border-border/50 pb-4">
-                                    <h4 className="font-black text-lg flex items-center gap-2"><Plus size={20} className="text-primary" /> Questions</h4>
-                                    <div className="flex gap-2">
-                                        <button
-                                            disabled={isGeneratingQuiz}
-                                            onClick={generateAIQuiz}
-                                            className="px-4 py-2 bg-indigo-600 text-white rounded-xl font-bold text-xs hover:bg-indigo-500 transition-colors flex items-center gap-2 disabled:opacity-50 group/whisper"
-                                        >
-                                            {isGeneratingQuiz ? <Loader2 size={14} className="animate-spin" /> : <Mic size={14} className="group-hover/whisper:scale-125 transition-transform" />}
-                                            {isGeneratingQuiz ? 'Whisper generating...' : 'Whisper AI Generate'}
-                                        </button>
-                                        <button
-                                            onClick={() => setQuizForm({ ...quizForm, questions: [...quizForm.questions, { text: '', type: 'MULTIPLE_CHOICE', options: [{ text: '', isCorrect: true }, { text: '', isCorrect: false }, { text: '', isCorrect: false }, { text: '', isCorrect: false }] }] })}
-                                            className="px-4 py-2 bg-primary text-primary-foreground rounded-xl font-bold text-xs hover:scale-105 transition-transform"
-                                        >
-                                            Add Question
-                                        </button>
-                                    </div>
-                                </div>
 
-                                {quizForm.questions.map((q, qIdx) => (
-                                    <div key={qIdx} className="p-6 rounded-2xl bg-secondary/10 border border-border/50 space-y-4 group">
-                                        <div className="space-y-1">
-                                            <div className="flex justify-between items-center px-1">
-                                                <span className="w-8 h-8 rounded-full bg-primary/20 text-primary flex items-center justify-center font-black text-xs">0{qIdx + 1}</span>
-                                                {validationErrors.quiz?.questions?.[qIdx]?.text && <span className="text-[10px] font-bold text-red-500 animate-in fade-in slide-in-from-right-1">{validationErrors.quiz.questions[qIdx].text}</span>}
-                                                <button
-                                                    onClick={() => {
-                                                        const newQs = [...quizForm.questions];
-                                                        newQs.splice(qIdx, 1);
-                                                        setQuizForm({ ...quizForm, questions: newQs });
-                                                    }}
-                                                    className="p-1.5 text-red-400 hover:bg-red-500/10 rounded-lg opacity-0 group-hover:opacity-100 transition-all"
-                                                >
-                                                    <Trash2 size={16} />
-                                                </button>
+
+                        {/* ── BRANDING ── */}
+                        {activeTab === 'branding' && (
+                            <div className="max-w-4xl space-y-8 animate-in fade-in duration-500 pb-20">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    <div className="glassmorphism p-8 rounded-3xl border border-border/50 space-y-8">
+                                        <div className="space-y-4">
+                                            <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2">
+                                                <Globe size={14} /> Organization Identity
+                                            </h3>
+                                            <div className="space-y-1">
+                                                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Platform Display Name</label>
+                                                <input type="text" value={branding.name} onChange={e => setBranding({ ...branding, name: e.target.value })}
+                                                    className="w-full bg-secondary/50 border border-border/50 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 font-bold"
+                                                    placeholder="e.g. Acme Academy" />
                                             </div>
-
-                                            {/* Question Type Selector */}
-                                            <div className="flex gap-2 pt-1">
-                                                {[
-                                                    { value: 'MULTIPLE_CHOICE', label: '⦿ Single Answer' },
-                                                    { value: 'MULTIPLE_SELECT', label: '☑ Multi-Select' },
-                                                    { value: 'FILL_BLANK', label: '✏ Fill in Blank' },
-                                                ].map(t => (
-                                                    <button
-                                                        key={t.value}
-                                                        onClick={() => {
-                                                            const newQs = [...quizForm.questions];
-                                                            const prev = newQs[qIdx].type;
-                                                            // Clone the question object to avoid direct mutation
-                                                            newQs[qIdx] = {
-                                                                ...newQs[qIdx],
-                                                                type: t.value as any,
-                                                                // Reset options when switching types
-                                                                options: t.value === 'FILL_BLANK'
-                                                                    ? [{ text: '', isCorrect: true }]
-                                                                    : (prev === 'FILL_BLANK' ? [{ text: '', isCorrect: true }, { text: '', isCorrect: false }, { text: '', isCorrect: false }, { text: '', isCorrect: false }] : newQs[qIdx].options)
-                                                            };
-                                                            setQuizForm({ ...quizForm, questions: newQs });
-                                                        }}
-                                                        className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${(q.type || 'MULTIPLE_CHOICE') === t.value
-                                                                ? 'bg-primary/20 border-primary/40 text-primary'
-                                                                : 'border-border/50 text-muted-foreground hover:border-primary/30'
-                                                            }`}
-                                                    >
-                                                        {t.label}
-                                                    </button>
-                                                ))}
-                                            </div>
-
-                                            <input
-                                                placeholder="Enter question text..."
-                                                className={`w-full bg-transparent border-b px-2 py-3 text-lg font-bold focus:outline-none transition-all ${validationErrors.quiz?.questions?.[qIdx]?.text ? 'border-red-500' : 'border-border/50 focus:border-primary'}`}
-                                                value={q.text}
-                                                onChange={(e) => {
-                                                    const newQs = [...quizForm.questions];
-                                                    newQs[qIdx].text = e.target.value;
-                                                    setQuizForm({ ...quizForm, questions: newQs });
-                                                    if (validationErrors.quiz?.questions?.[qIdx]?.text) {
-                                                        const newErrors = { ...validationErrors.quiz };
-                                                        delete newErrors.questions[qIdx].text;
-                                                        setValidationErrors(prev => ({ ...prev, quiz: newErrors }));
-                                                    }
-                                                }}
-                                            />
                                         </div>
 
-                                        {/* FILL IN BLANK */}
-                                        {(q.type || 'MULTIPLE_CHOICE') === 'FILL_BLANK' ? (
-                                            <div className="space-y-2">
-                                                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Correct Answer (case-insensitive match)</label>
-                                                <input
-                                                    placeholder="Type the expected answer..."
-                                                    className="w-full bg-background/50 border border-primary/30 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/50"
-                                                    value={q.options[0]?.text || ''}
-                                                    onChange={(e) => {
-                                                        const newQs = [...quizForm.questions];
-                                                        newQs[qIdx].options = [{ text: e.target.value, isCorrect: true }];
-                                                        setQuizForm({ ...quizForm, questions: newQs });
+                                        <div className="space-y-4">
+                                            <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2">
+                                                <Palette size={14} /> Platform Theme Color
+                                            </h3>
+                                            <div className="flex items-center gap-6 p-4 rounded-2xl bg-secondary/20 border border-border/30">
+                                                <div className="relative group">
+                                                    <input type="color" value={branding.primaryColor} onChange={e => setBranding({ ...branding, primaryColor: e.target.value })}
+                                                        className="w-16 h-16 rounded-2xl cursor-pointer border-4 border-background bg-transparent shadow-xl transition-transform active:scale-95" />
+                                                    <div className="absolute inset-0 rounded-2xl ring-2 ring-primary/20 pointer-events-none" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-[9px] text-muted-foreground uppercase tracking-widest font-black mb-1">Color Token</p>
+                                                    <p className="font-mono font-black text-xl text-foreground tracking-tighter">{branding.primaryColor.toUpperCase()}</p>
+                                                </div>
+                                            </div>
+                                            <div className="flex gap-2.5 flex-wrap">
+                                                {['#3b82f6', '#8b5cf6', '#ef4444', '#10b981', '#f59e0b', '#ec4899', '#14b8a6', '#000000'].map(c => (
+                                                    <button key={c}
+                                                        className={`w-9 h-9 rounded-xl border-2 transition-all hover:scale-110 shadow-sm ${branding.primaryColor === c ? 'scale-110 shadow-lg shadow-black/20' : 'opacity-80 hover:opacity-100'}`}
+                                                        style={{ backgroundColor: c, borderColor: branding.primaryColor === c ? 'white' : 'transparent' }}
+                                                        onClick={() => setBranding({ ...branding, primaryColor: c })} />
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        <div className="pt-4 flex gap-4">
+                                            <button
+                                                onClick={handleSaveBranding}
+                                                className="flex-1 flex items-center justify-center gap-3 px-6 py-4 bg-primary text-primary-foreground rounded-[1.25rem] font-black uppercase tracking-widest text-xs hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-primary/20">
+                                                <Save size={16} /> Save Platform Changes
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-8">
+                                        <section className="glassmorphism p-8 rounded-3xl border border-border/50 space-y-6">
+                                            <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2">
+                                                <Upload size={14} /> Brand Assets
+                                            </h3>
+
+                                            {/* Asset Grid */}
+                                            <div className="space-y-6">
+                                                {[
+                                                    { id: 'logoLight', label: 'Primary Logo (Light Theme)', sub: 'Transparent PNG/SVG suggested', icon: Globe },
+                                                    { id: 'logoDark', label: 'Secondary Logo (Dark Theme)', sub: 'Logo for dark navigation bars', icon: Globe },
+                                                    { id: 'favicon', label: 'Site Favicon', sub: 'Square icon (32x32px suggested)', icon: Globe },
+                                                ].map((asset) => (
+                                                    <div key={asset.id} className="space-y-3">
+                                                        <div className="flex justify-between items-end px-1">
+                                                            <div>
+                                                                <p className="text-[10px] font-black uppercase tracking-widest text-foreground">{asset.label}</p>
+                                                                <p className="text-[9px] text-muted-foreground font-medium">{asset.sub}</p>
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="relative group">
+                                                            <label className={`block w-full cursor-pointer rounded-[1.25rem] border-2 border-dashed transition-all overflow-hidden ${branding[asset.id as keyof typeof branding]
+                                                                ? 'border-primary/20 bg-primary/5 h-24'
+                                                                : 'border-border/60 hover:border-primary/40 bg-secondary/10 hover:bg-secondary/20 h-20'
+                                                                }`}>
+                                                                <input type="file" className="hidden" accept="image/*" onChange={(e) => {
+                                                                    const file = e.target.files?.[0];
+                                                                    if (file) handleLogoUpload(file, asset.id as any);
+                                                                }} />
+
+                                                                {branding[asset.id as keyof typeof branding] ? (
+                                                                    <div className="w-full h-full flex items-center justify-center p-4">
+                                                                        <img src={branding[asset.id as keyof typeof branding]!} alt={asset.label} className="max-w-full max-h-full object-contain" />
+                                                                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity rounded-[1.25rem]">
+                                                                            <Upload size={20} className="text-white" />
+                                                                        </div>
+                                                                    </div>
+                                                                ) : (
+                                                                    <div className="w-full h-full flex flex-col items-center justify-center gap-1 opacity-60">
+                                                                        <Plus size={16} />
+                                                                        <span className="text-[9px] font-black uppercase tracking-widest">Select Asset</span>
+                                                                    </div>
+                                                                )}
+                                                            </label>
+                                                            {uploadProgress[asset.id] !== undefined && (
+                                                                <div className="absolute bottom-0 left-0 right-0 h-1 bg-primary/20 rounded-b-[1.25rem] overflow-hidden">
+                                                                    <div className="h-full bg-primary transition-all duration-300" style={{ width: `${uploadProgress[asset.id]}%` }} />
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </section>
+
+                                        {/* Real-time Preview */}
+                                        <div className="p-8 rounded-[2rem] border-2 border-dashed bg-secondary/5 relative overflow-hidden"
+                                            style={{ borderColor: branding.primaryColor + '30' }}>
+                                            <div className="absolute -top-12 -right-12 w-32 h-32 rounded-full blur-3xl opacity-20" style={{ backgroundColor: branding.primaryColor }} />
+
+                                            <div className="flex items-center gap-3 mb-6">
+                                                <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-lg" style={{ backgroundColor: branding.primaryColor }}>
+                                                    <Globe size={14} className="text-white" />
+                                                </div>
+                                                <h4 className="font-black text-sm" style={{ color: branding.primaryColor }}>Live Platform Preview</h4>
+                                            </div>
+
+                                            <div className="glassmorphism p-6 rounded-2xl border border-border/50 space-y-4">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-8 h-8 rounded-full bg-secondary overflow-hidden border border-border/40">
+                                                        {branding.logoLight || branding.logoDark ? (
+                                                            <img src={branding.logoLight || branding.logoDark || ''} className="w-full h-full object-contain p-1" />
+                                                        ) : <div className="w-full h-full flex items-center justify-center text-[10px] font-black text-muted-foreground">{branding.name[0]}</div>}
+                                                    </div>
+                                                    <span className="text-sm font-black tracking-tight">{branding.name} LMS</span>
+                                                </div>
+                                                <div className="h-2 w-3/4 bg-secondary/50 rounded-full" />
+                                                <div className="h-2 w-1/2 bg-secondary/30 rounded-full" />
+                                                <button className="w-full py-2.5 rounded-xl text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-black/5"
+                                                    style={{ backgroundColor: branding.primaryColor }}>
+                                            </div>
+                                        </div>
+                                    </div>
+                )}
+
+                                    {/* ── DOMAINS ── */}
+                                    {activeTab === 'domains' && (
+                                        <div className="max-w-2xl space-y-6 animate-in fade-in duration-500">
+                                            <div className="glassmorphism p-8 rounded-3xl border border-border/50 space-y-6">
+                                                <div>
+                                                    <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">Current Platform Subdomain</p>
+                                                    <p className="font-mono font-bold text-blue-400">{domain}.lvh.me:3000</p>
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Custom Domain</label>
+                                                    <div className="flex gap-3">
+                                                        <input type="text" placeholder="academy.yourcompany.com"
+                                                            className="flex-1 bg-secondary/50 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
+                                                        <button className="px-6 py-3 bg-primary text-primary-foreground rounded-xl font-bold text-sm hover:opacity-90">Save</button>
+                                                    </div>
+                                                </div>
+                                                <div className="p-6 bg-blue-500/5 border border-blue-500/20 rounded-2xl space-y-4">
+                                                    <p className="font-bold text-blue-400 text-sm">DNS Setup Instructions</p>
+                                                    <div className="grid grid-cols-2 gap-4">
+                                                        <div className="bg-background/80 p-4 rounded-xl border border-blue-500/20">
+                                                            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Record Type</p>
+                                                            <p className="font-mono font-bold text-sm text-blue-400">CNAME</p>
+                                                        </div>
+                                                        <div className="bg-background/80 p-4 rounded-xl border border-blue-500/20">
+                                                            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Target Value</p>
+                                                            <p className="font-mono font-bold text-sm text-blue-400">cname.infinitelms.com</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* ── SETTINGS ── */}
+                                    {activeTab === 'settings' && (
+                                        <div className="max-w-2xl space-y-6 animate-in fade-in duration-500">
+                                            <div className="glassmorphism p-8 rounded-3xl border border-border/50 space-y-6">
+                                                <h3 className="font-bold text-lg">Workspace Configuration</h3>
+                                                <div className="space-y-2">
+                                                    <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Support Email</label>
+                                                    <input type="email" placeholder="support@yourcompany.com"
+                                                        className="w-full bg-secondary/50 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
+                                                </div>
+                                                <div className="flex items-center justify-between p-4 rounded-xl border border-border/50">
+                                                    <div>
+                                                        <p className="font-bold text-sm">Allow Learner Self-Registration</p>
+                                                        <p className="text-xs text-muted-foreground">Learners can sign up without an invite.</p>
+                                                    </div>
+                                                    <div className="w-12 h-6 rounded-full bg-secondary border border-border relative">
+                                                        <div className="w-4 h-4 rounded-full bg-muted-foreground absolute top-1 left-1" />
+                                                    </div>
+                                                </div>
+                                                <button className="flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-xl font-bold text-sm hover:scale-105 transition-transform">
+                                                    <Save size={16} /> Save Settings
+                                                </button>
+                                            </div>
+                                            <div className="glassmorphism p-8 rounded-3xl border border-red-500/20 bg-red-500/5">
+                                                <h3 className="font-bold text-red-400 mb-2">Danger Zone</h3>
+                                                <p className="text-sm text-red-400/70 mb-4">Irreversible workspace actions.</p>
+                                                <button className="px-4 py-2 bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white font-bold rounded-lg text-sm transition-all">
+                                                    Delete Workspace
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {activeTab === 'certificates' && (
+                                        <div className="space-y-6 animate-in fade-in duration-500 pb-20">
+                                            {editingTemplate ? (
+                                                <CertificateDesigner
+                                                    template={editingTemplate}
+                                                    onBack={() => { setEditingTemplate(null); fetchAvailableTemplates(); }}
+                                                    onSave={async (id, designFields) => {
+                                                        try {
+                                                            const res = await fetch(`/api/t/${domain}/certificates/${id}`, {
+                                                                method: 'PATCH',
+                                                                headers: { 'Content-Type': 'application/json' },
+                                                                body: JSON.stringify({ designFields })
+                                                            });
+                                                            if (res.ok) {
+                                                                addToast({ title: 'Success', message: 'Design saved successfully.', type: 'success' });
+                                                            }
+                                                        } catch (e) {
+                                                            console.error(e);
+                                                        }
                                                     }}
                                                 />
-                                                <p className="text-[10px] text-muted-foreground italic">Learners will type their answer. It will be matched against this text.</p>
+                                            ) : (
+                                                <CertificateManager
+                                                    domain={domain as string}
+                                                    addToast={addToast}
+                                                    onEditTemplate={(t) => setEditingTemplate(t)}
+                                                />
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {/* Modals */}
+                                    {showCourseModal && (
+                                        <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/70 backdrop-blur-sm">
+                                            <div className="bg-background border border-border w-full max-w-md rounded-3xl p-8 space-y-6 shadow-2xl">
+                                                <div className="flex justify-between items-center">
+                                                    <h3 className="text-xl font-black">{selectedCourse && showCourseModal ? 'Edit Course' : 'Create New Course'}</h3>
+                                                    <button onClick={() => { setShowCourseModal(false); if (selectedCourse) setCourseForm({ title: '', description: '', thumbnail: '', skillLevel: 'All Levels', languages: 'English', captions: false, isMarketplace: false, exclusiveRoleId: '', exclusiveTeamId: '', certificateEnabled: false, certificateTemplateId: '' }); }} className="text-muted-foreground hover:text-foreground"><XCircle size={24} /></button>
+                                                </div>
+                                                <form onSubmit={selectedCourse ? updateCourse : createCourse} className="space-y-4">
+                                                    <div className="space-y-1.5">
+                                                        <div className="flex justify-between items-center">
+                                                            <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Course Title</label>
+                                                            {validationErrors.course?.title && <span className="text-[10px] font-bold text-red-500 animate-in fade-in slide-in-from-right-1">{validationErrors.course.title}</span>}
+                                                        </div>
+                                                        <input placeholder="e.g. Introduction to Python" value={courseForm.title}
+                                                            onChange={e => {
+                                                                setCourseForm({ ...courseForm, title: e.target.value });
+                                                                if (validationErrors.course?.title) {
+                                                                    setValidationErrors(prev => ({ ...prev, course: null }));
+                                                                }
+                                                            }}
+                                                            className={`w-full bg-secondary/50 border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 transition-all ${validationErrors.course?.title ? 'border-red-500/50 focus:ring-red-500/50' : 'border-border focus:ring-primary/50'}`} />
+                                                    </div>
+                                                    <div className="space-y-1.5">
+                                                        <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Description</label>
+                                                        <textarea placeholder="Brief description of what learners will learn..." value={courseForm.description} onChange={e => setCourseForm({ ...courseForm, description: e.target.value })}
+                                                            rows={3} className="w-full bg-secondary/50 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none" />
+                                                    </div>
+                                                    <div className="space-y-1.5">
+                                                        <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Course Thumbnail</label>
+                                                        <div className="flex items-center gap-4">
+                                                            <div className="w-24 h-16 rounded-xl bg-secondary/50 border border-dashed border-border flex items-center justify-center overflow-hidden">
+                                                                {thumbnailPreview ? (
+                                                                    <img src={thumbnailPreview} alt="Thumbnail preview" className="w-full h-full object-cover" />
+                                                                ) : (
+                                                                    <Upload className="w-6 h-6 text-muted-foreground opacity-30" />
+                                                                )}
+                                                            </div>
+                                                            <div className="flex-1">
+                                                                <input
+                                                                    type="file"
+                                                                    accept="image/*"
+                                                                    onChange={uploadThumbnail}
+                                                                    className="hidden"
+                                                                    id="thumbnail-upload"
+                                                                    disabled={isUploadingThumbnail}
+                                                                />
+                                                                <label
+                                                                    htmlFor="thumbnail-upload"
+                                                                    className="px-4 py-2 bg-secondary hover:bg-secondary/80 text-xs font-bold uppercase tracking-widest rounded-lg cursor-pointer transition-all border border-border flex items-center justify-center gap-2"
+                                                                >
+                                                                    {isUploadingThumbnail ? <Loader2 className="w-3 h-3 animate-spin" /> : <Upload size={14} />}
+                                                                    {isUploadingThumbnail ? 'Uploading...' : 'Choose Image'}
+                                                                </label>
+                                                                <p className="text-[10px] text-muted-foreground mt-2 italic">Recommended: 1280x720px (16:9)</p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div className="grid grid-cols-2 gap-4">
+                                                        <div className="space-y-1.5">
+                                                            <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Skill Level</label>
+                                                            <select value={courseForm.skillLevel} onChange={e => setCourseForm({ ...courseForm, skillLevel: e.target.value })}
+                                                                className="w-full bg-secondary/50 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50">
+                                                                <option value="All Levels">All Levels</option>
+                                                                <option value="Beginner">Beginner</option>
+                                                                <option value="Intermediate">Intermediate</option>
+                                                                <option value="Advanced">Advanced</option>
+                                                            </select>
+                                                        </div>
+                                                        <div className="space-y-1.5">
+                                                            <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Languages</label>
+                                                            <input placeholder="e.g. English, Spanish" value={courseForm.languages} onChange={e => setCourseForm({ ...courseForm, languages: e.target.value })}
+                                                                className="w-full bg-secondary/50 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
+                                                        </div>
+                                                    </div>
+                                                    {/* Certificate Section - Moved Higher & Highlighted */}
+                                                    <div className={`p-4 rounded-2xl border-2 transition-all duration-300 ${courseForm.certificateEnabled ? 'bg-indigo-500/5 border-indigo-500/20 shadow-lg shadow-indigo-500/5' : 'bg-secondary/20 border-border/50 opacity-80'}`}>
+                                                        <div className="flex items-center justify-between mb-2">
+                                                            <label className="text-xs font-black uppercase tracking-widest text-indigo-500 flex items-center gap-2">
+                                                                <Award size={16} /> Certificate of Achievement
+                                                            </label>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setCourseForm({ ...courseForm, certificateEnabled: !courseForm.certificateEnabled })}
+                                                                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none bg-secondary ${courseForm.certificateEnabled ? 'bg-indigo-600' : ''}`}
+                                                            >
+                                                                <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${courseForm.certificateEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
+                                                            </button>
+                                                        </div>
+                                                        <p className="text-[10px] text-muted-foreground mb-3 font-medium">Issue a professional certificate to learners upon course completion.</p>
+
+                                                        {courseForm.certificateEnabled && (
+                                                            <div className="space-y-1.5 animate-in slide-in-from-top-2 duration-300 pt-2 border-t border-indigo-500/10">
+                                                                <label className="text-[10px] font-black uppercase tracking-widest text-indigo-400/70">Design Template</label>
+                                                                <select
+                                                                    value={courseForm.certificateTemplateId}
+                                                                    onChange={e => setCourseForm({ ...courseForm, certificateTemplateId: e.target.value })}
+                                                                    className="w-full bg-background border border-indigo-500/20 rounded-xl px-4 py-2.5 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all appearance-none cursor-pointer"
+                                                                >
+                                                                    <option value="">-- Use Default Template --</option>
+                                                                    {availableTemplates.map((t: any) => (
+                                                                        <option key={t.id} value={t.id}>{t.name} {t.isGlobal ? '🌍' : '🏠'}</option>
+                                                                    ))}
+                                                                </select>
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    <div className="flex flex-col gap-3 py-2">
+                                                        <div className="flex items-center gap-2 px-1">
+                                                            <input type="checkbox" id="course-captions" checked={courseForm.captions} onChange={e => setCourseForm({ ...courseForm, captions: e.target.checked })}
+                                                                className="rounded border-border/50 bg-secondary/30 text-primary focus:ring-primary/20" />
+                                                            <label htmlFor="course-captions" className="text-xs font-bold uppercase tracking-widest text-muted-foreground cursor-pointer">Has Closed Captions</label>
+                                                        </div>
+                                                        <div className="flex items-center gap-2 px-1">
+                                                            <input type="checkbox" id="course-marketplace" checked={courseForm.isMarketplace} onChange={e => setCourseForm({ ...courseForm, isMarketplace: e.target.checked })}
+                                                                className="rounded border-border/50 bg-secondary/30 text-amber-500 focus:ring-amber-500/20" />
+                                                            <label htmlFor="course-marketplace" className="text-xs font-bold uppercase tracking-widest text-amber-600/80 cursor-pointer">Publish to Internal Marketplace</label>
+                                                        </div>
+                                                    </div>
+                                                    {/* Exclusive Role/Team Gating */}
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                        <div className="space-y-1.5">
+                                                            <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Exclusive to Role (Optional)</label>
+                                                            <select value={courseForm.exclusiveRoleId} onChange={e => setCourseForm({ ...courseForm, exclusiveRoleId: e.target.value, isMarketplace: (e.target.value || courseForm.exclusiveTeamId) ? false : courseForm.isMarketplace })}
+                                                                className="w-full bg-secondary/30 border border-border/50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all">
+                                                                <option value="">No Restriction — All Learners</option>
+                                                                {availableRoles.map((r: any) => <option key={r.id} value={r.id}>{r.name} Only</option>)}
+                                                            </select>
+                                                        </div>
+                                                        <div className="space-y-1.5">
+                                                            <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Exclusive to Team (Optional)</label>
+                                                            <select value={courseForm.exclusiveTeamId} onChange={e => setCourseForm({ ...courseForm, exclusiveTeamId: e.target.value, isMarketplace: (e.target.value || courseForm.exclusiveRoleId) ? false : courseForm.isMarketplace })}
+                                                                className="w-full bg-secondary/30 border border-border/50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all">
+                                                                <option value="">No Restriction — All Learners</option>
+                                                                {availableTeams.map((t: any) => <option key={t.id} value={t.id}>{t.name} Only</option>)}
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                    {(courseForm.exclusiveRoleId || courseForm.exclusiveTeamId) && (
+                                                        <p className="text-[10px] text-amber-600/80 font-bold">⚠ Exclusive courses are hidden from the Marketplace and invisible to learners without this {courseForm.exclusiveRoleId && courseForm.exclusiveTeamId ? 'role and team' : courseForm.exclusiveRoleId ? 'role' : 'team'}.</p>
+                                                    )}
+                                                    <button type="submit" className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-bold hover:opacity-90">
+                                                        {selectedCourse ? 'Save Changes' : 'Create Course'}
+                                                    </button>
+                                                </form>
                                             </div>
-                                        ) : (
-                                            /* MULTIPLE CHOICE / MULTIPLE SELECT */
-                                            <div className="grid grid-cols-2 gap-4 pt-2">
-                                                {(() => {
-                                                    const isMultiSelect = (q.type || 'MULTIPLE_CHOICE') === 'MULTIPLE_SELECT';
-                                                    return (<>
-                                                        {q.options.map((o: any, oIdx: number) => {
-                                                            return (
-                                                                <div key={oIdx} className="space-y-1">
-                                                                    <div className={`flex items-center gap-3 p-3 rounded-xl bg-background/50 border transition-all focus-within:ring-1 ${validationErrors.quiz?.questions?.[qIdx]?.options?.[oIdx] ? 'border-red-500 focus-within:ring-red-500/50' : 'border-border/50 focus-within:ring-primary/50'}`}>
+                                        </div>
+                                    )}
+
+
+                                    {activeQuizLesson && (
+                                        <div className="fixed inset-0 z-[300] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md">
+                                            <div className="bg-background border border-border w-full max-w-4xl max-h-[90vh] rounded-3xl p-8 flex flex-col shadow-2xl animate-in zoom-in duration-300">
+                                                <div className="flex justify-between items-center mb-6">
+                                                    <div>
+                                                        <h3 className="text-2xl font-black">Quiz Builder</h3>
+                                                        <p className="text-sm text-muted-foreground">Creating quiz for: <span className="text-foreground font-bold">{selectedCourse?.modules?.find((m: any) => m.id === activeQuizLesson.moduleId)?.lessons?.find((l: any) => l.id === activeQuizLesson.lessonId)?.title || quizForm.title}</span></p>
+                                                    </div>
+                                                    <button onClick={() => setActiveQuizLesson(null)} className="p-2 hover:bg-secondary rounded-full transition-colors"><XCircle size={28} className="text-muted-foreground" /></button>
+                                                </div>
+
+                                                <div className="flex-1 overflow-y-auto pr-4 space-y-8 custom-scrollbar">
+                                                    <div className="space-y-1.5">
+                                                        <div className="flex justify-between items-center">
+                                                            <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-1">Quiz Title</label>
+                                                            {validationErrors.quiz?.title && <span className="text-[10px] font-bold text-red-500 animate-in fade-in slide-in-from-right-1 uppercase tracking-tight">{validationErrors.quiz.title}</span>}
+                                                        </div>
+                                                        <input
+                                                            placeholder="e.g. React Fundamentals Mastery"
+                                                            value={quizForm.title || ''}
+                                                            onChange={(e) => {
+                                                                setQuizForm({ ...quizForm, title: e.target.value });
+                                                                if (validationErrors.quiz?.title) {
+                                                                    setValidationErrors(prev => ({ ...prev, quiz: { ...prev.quiz, title: null } }));
+                                                                }
+                                                            }}
+                                                            className={`w-full bg-secondary/30 border rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 transition-all ${validationErrors.quiz?.title ? 'border-red-500/50 focus:ring-red-500/50' : 'border-border/50 focus:ring-primary/50'}`}
+                                                        />
+                                                    </div>
+
+                                                    <div className="grid grid-cols-2 gap-6">
+                                                        <div className="space-y-1.5">
+                                                            <div className="flex justify-between items-center">
+                                                                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-1">Quiz Description</label>
+                                                            </div>
+                                                            <textarea
+                                                                placeholder="Briefly explain what this quiz covers..."
+                                                                rows={2}
+                                                                value={quizForm.description || ''}
+                                                                onChange={(e) => setQuizForm({ ...quizForm, description: e.target.value })}
+                                                                className="w-full bg-secondary/30 border border-border/50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
+                                                            />
+                                                        </div>
+                                                        <div className="space-y-1.5">
+                                                            <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-1">Passing Score (%)</label>
+                                                            <input
+                                                                type="number"
+                                                                min="0" max="100"
+                                                                value={quizForm.passingScore}
+                                                                onChange={(e) => setQuizForm({ ...quizForm, passingScore: parseInt(e.target.value) || 0 })}
+                                                                className="w-full bg-secondary/30 border border-border/50 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/50"
+                                                            />
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="grid grid-cols-2 gap-6 bg-secondary/5 rounded-2xl p-6 border border-border/30">
+                                                        <div className="space-y-4">
+                                                            <div className="flex items-center gap-2">
+                                                                <input
+                                                                    type="checkbox" id="retake-allowed"
+                                                                    checked={quizForm.retakeAllowed}
+                                                                    onChange={(e) => setQuizForm({ ...quizForm, retakeAllowed: e.target.checked })}
+                                                                    className="rounded border-border text-primary focus:ring-primary/20"
+                                                                />
+                                                                <label htmlFor="retake-allowed" className="text-xs font-bold uppercase tracking-widest text-muted-foreground cursor-pointer">Allow Retakes</label>
+                                                            </div>
+                                                            {quizForm.retakeAllowed && (
+                                                                <div className="space-y-1.5 ml-6">
+                                                                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Max Attempts (0 = unlimited)</label>
+                                                                    <input
+                                                                        type="number" min="0"
+                                                                        value={quizForm.maxAttempts}
+                                                                        onChange={(e) => setQuizForm({ ...quizForm, maxAttempts: parseInt(e.target.value) || 0 })}
+                                                                        className="w-full bg-secondary/30 border border-border/50 rounded-xl px-4 py-2 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/50"
+                                                                    />
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        <div className="space-y-4 border-l border-border/30 pl-6">
+                                                            <div className="flex items-center gap-2">
+                                                                <input
+                                                                    type="checkbox" id="is-randomized"
+                                                                    checked={quizForm.isRandomized}
+                                                                    onChange={(e) => {
+                                                                        const checked = e.target.checked;
+                                                                        setQuizForm(prev => ({
+                                                                            ...prev,
+                                                                            isRandomized: checked,
+                                                                            randomCount: (checked && (prev.randomCount === 0 || prev.randomCount > prev.questions.length)) ? prev.questions.length : prev.randomCount
+                                                                        }));
+                                                                    }}
+                                                                    className="rounded border-border text-primary focus:ring-primary/20"
+                                                                />
+                                                                <label htmlFor="is-randomized" className="text-xs font-bold uppercase tracking-widest text-muted-foreground cursor-pointer">Randomize Questions</label>
+                                                            </div>
+                                                            {quizForm.isRandomized && (
+                                                                <div className="space-y-4 ml-6 animate-in fade-in slide-in-from-left-2 transition-all duration-300">
+                                                                    <div className="flex flex-col gap-1">
+                                                                        <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-1 flex justify-between">
+                                                                            <span>Exam Subset Size</span>
+                                                                            <span className="text-primary font-black">{quizForm.randomCount} OF {quizForm.questions.length || 0}</span>
+                                                                        </label>
+                                                                        <p className="text-[9px] text-muted-foreground/60 px-1 italic">
+                                                                            {quizForm.questions.length > 0
+                                                                                ? `Each learner will see ${quizForm.randomCount} random questions from your pool.`
+                                                                                : "Add questions below to build your pool first."}
+                                                                        </p>
+                                                                    </div>
+
+                                                                    {quizForm.questions.length > 0 ? (
+                                                                        <div className="flex items-center gap-4 bg-secondary/20 rounded-xl px-4 py-2 border border-border/50">
+                                                                            <input
+                                                                                type="range"
+                                                                                min="1"
+                                                                                max={quizForm.questions.length}
+                                                                                value={quizForm.randomCount}
+                                                                                onChange={(e) => setQuizForm({ ...quizForm, randomCount: parseInt(e.target.value) })}
+                                                                                className="flex-1 accent-primary cursor-pointer h-1.5 bg-secondary rounded-lg appearance-none"
+                                                                            />
+                                                                            <input
+                                                                                type="number"
+                                                                                min="1"
+                                                                                max={quizForm.questions.length}
+                                                                                value={quizForm.randomCount}
+                                                                                onChange={(e) => {
+                                                                                    const val = Math.max(1, Math.min(parseInt(e.target.value) || 1, quizForm.questions.length));
+                                                                                    setQuizForm({ ...quizForm, randomCount: val });
+                                                                                }}
+                                                                                className="w-16 bg-secondary/50 text-center rounded-lg py-1 text-xs font-black border border-border/50 focus:outline-none focus:ring-1 focus:ring-primary/50"
+                                                                            />
+                                                                        </div>
+                                                                    ) : (
+                                                                        <div className="text-[10px] font-bold text-amber-500/80 bg-amber-500/5 border border-amber-500/20 rounded-lg p-3 flex items-center gap-2">
+                                                                            <AlertCircle size={14} /> <span>Your question pool is currently empty.</span>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="space-y-6">
+                                                        <div className="flex items-center justify-between border-b border-border/50 pb-4">
+                                                            <h4 className="font-black text-lg flex items-center gap-2"><Plus size={20} className="text-primary" /> Questions</h4>
+                                                            <div className="flex gap-2">
+                                                                <button
+                                                                    disabled={isGeneratingQuiz}
+                                                                    onClick={generateAIQuiz}
+                                                                    className="px-4 py-2 bg-indigo-600 text-white rounded-xl font-bold text-xs hover:bg-indigo-500 transition-colors flex items-center gap-2 disabled:opacity-50 group/whisper"
+                                                                >
+                                                                    {isGeneratingQuiz ? <Loader2 size={14} className="animate-spin" /> : <Mic size={14} className="group-hover/whisper:scale-125 transition-transform" />}
+                                                                    {isGeneratingQuiz ? 'Whisper generating...' : 'Whisper AI Generate'}
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => setQuizForm({ ...quizForm, questions: [...quizForm.questions, { text: '', type: 'MULTIPLE_CHOICE', options: [{ text: '', isCorrect: true }, { text: '', isCorrect: false }, { text: '', isCorrect: false }, { text: '', isCorrect: false }] }] })}
+                                                                    className="px-4 py-2 bg-primary text-primary-foreground rounded-xl font-bold text-xs hover:scale-105 transition-transform"
+                                                                >
+                                                                    Add Question
+                                                                </button>
+                                                            </div>
+                                                        </div>
+
+                                                        {quizForm.questions.map((q, qIdx) => (
+                                                            <div key={qIdx} className="p-6 rounded-2xl bg-secondary/10 border border-border/50 space-y-4 group">
+                                                                <div className="space-y-1">
+                                                                    <div className="flex justify-between items-center px-1">
+                                                                        <span className="w-8 h-8 rounded-full bg-primary/20 text-primary flex items-center justify-center font-black text-xs">0{qIdx + 1}</span>
+                                                                        {validationErrors.quiz?.questions?.[qIdx]?.text && <span className="text-[10px] font-bold text-red-500 animate-in fade-in slide-in-from-right-1">{validationErrors.quiz.questions[qIdx].text}</span>}
                                                                         <button
                                                                             onClick={() => {
                                                                                 const newQs = [...quizForm.questions];
-                                                                                if (isMultiSelect) {
-                                                                                    // Toggle for multi-select
-                                                                                    newQs[qIdx].options[oIdx].isCorrect = !newQs[qIdx].options[oIdx].isCorrect;
-                                                                                } else {
-                                                                                    // Single select — only one correct
-                                                                                    newQs[qIdx].options = newQs[qIdx].options.map((opt: any, idx: number) => ({ ...opt, isCorrect: idx === oIdx }));
-                                                                                }
+                                                                                newQs.splice(qIdx, 1);
                                                                                 setQuizForm({ ...quizForm, questions: newQs });
                                                                             }}
-                                                                            className={`w-5 h-5 flex-shrink-0 border-2 flex items-center justify-center transition-all ${isMultiSelect ? 'rounded-md' : 'rounded-full'
-                                                                                } ${o.isCorrect ? 'bg-primary border-primary' : 'border-border'}`}
+                                                                            className="p-1.5 text-red-400 hover:bg-red-500/10 rounded-lg opacity-0 group-hover:opacity-100 transition-all"
                                                                         >
-                                                                            {o.isCorrect && <CheckCircle2 size={12} className="text-white" />}
+                                                                            <Trash2 size={16} />
                                                                         </button>
-                                                                        <input
-                                                                            placeholder={`Option ${oIdx + 1}`}
-                                                                            className="flex-1 bg-transparent text-sm focus:outline-none font-medium"
-                                                                            value={o.text}
-                                                                            onChange={(e) => {
-                                                                                const newQs = [...quizForm.questions];
-                                                                                newQs[qIdx].options[oIdx].text = e.target.value;
-                                                                                setQuizForm({ ...quizForm, questions: newQs });
-                                                                                if (validationErrors.quiz?.questions?.[qIdx]?.options?.[oIdx]) {
-                                                                                    const newErrors = { ...validationErrors.quiz };
-                                                                                    delete newErrors.questions[qIdx].options[oIdx];
-                                                                                    setValidationErrors(prev => ({ ...prev, quiz: newErrors }));
-                                                                                }
-                                                                            }}
-                                                                        />
-                                                                        {q.options.length > 2 && (
+                                                                    </div>
+
+                                                                    {/* Question Type Selector */}
+                                                                    <div className="flex gap-2 pt-1">
+                                                                        {[
+                                                                            { value: 'MULTIPLE_CHOICE', label: '⦿ Single Answer' },
+                                                                            { value: 'MULTIPLE_SELECT', label: '☑ Multi-Select' },
+                                                                            { value: 'FILL_BLANK', label: '✏ Fill in Blank' },
+                                                                        ].map(t => (
                                                                             <button
+                                                                                key={t.value}
                                                                                 onClick={() => {
                                                                                     const newQs = [...quizForm.questions];
-                                                                                    newQs[qIdx].options.splice(oIdx, 1);
+                                                                                    const prev = newQs[qIdx].type;
+                                                                                    // Clone the question object to avoid direct mutation
+                                                                                    newQs[qIdx] = {
+                                                                                        ...newQs[qIdx],
+                                                                                        type: t.value as any,
+                                                                                        // Reset options when switching types
+                                                                                        options: t.value === 'FILL_BLANK'
+                                                                                            ? [{ text: '', isCorrect: true }]
+                                                                                            : (prev === 'FILL_BLANK' ? [{ text: '', isCorrect: true }, { text: '', isCorrect: false }, { text: '', isCorrect: false }, { text: '', isCorrect: false }] : newQs[qIdx].options)
+                                                                                    };
                                                                                     setQuizForm({ ...quizForm, questions: newQs });
                                                                                 }}
-                                                                                className="text-muted-foreground hover:text-red-400"
+                                                                                className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${(q.type || 'MULTIPLE_CHOICE') === t.value
+                                                                                    ? 'bg-primary/20 border-primary/40 text-primary'
+                                                                                    : 'border-border/50 text-muted-foreground hover:border-primary/30'
+                                                                                    }`}
                                                                             >
-                                                                                <Trash2 size={14} />
+                                                                                {t.label}
                                                                             </button>
-                                                                        )}
+                                                                        ))}
                                                                     </div>
-                                                                    {validationErrors.quiz?.questions?.[qIdx]?.options?.[oIdx] && <span className="text-[9px] font-bold text-red-500 animate-in fade-in slide-in-from-top-1 ml-1">{validationErrors.quiz.questions[qIdx].options[oIdx]}</span>}
-                                                                </div>
-                                                            );
-                                                        })}
-                                                        {q.options.length < 6 && (
-                                                            <button
-                                                                onClick={() => {
-                                                                    const newQs = [...quizForm.questions];
-                                                                    newQs[qIdx].options.push({ text: '', isCorrect: false });
-                                                                    setQuizForm({ ...quizForm, questions: newQs });
-                                                                }}
-                                                                className="col-span-2 py-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors border border-dashed border-border/50 rounded-xl"
-                                                            >
-                                                                + Add Option
-                                                            </button>
-                                                        )}
-                                                        <p className="col-span-2 text-[10px] text-muted-foreground italic px-1">
-                                                            {isMultiSelect
-                                                                ? 'Check all correct answers — learners must select all of them.'
-                                                                : 'Click the circle to mark the single correct answer.'}
-                                                        </p>
-                                                    </>);
-                                                })()}
-                                            </div>
-                                        )}
-                                    </div>
-                                ))}
 
-                            </div>
-                        </div>
-
-                        <div className="flex gap-4 mt-8 pt-6 border-t border-border/50">
-                            <button onClick={() => setActiveQuizLesson(null)} className="flex-1 py-4 bg-secondary hover:bg-secondary/80 rounded-2xl font-black uppercase tracking-[0.2em] text-xs transition-all">Discard Changes</button>
-                            <button onClick={saveQuiz} className="flex-1 py-4 bg-primary text-primary-foreground rounded-2xl font-black uppercase tracking-[0.2em] text-xs shadow-xl shadow-primary/20 hover:scale-[1.02] transition-all">Save Quiz Configuration</button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {showAnnouncementModal && (
-                <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/70 backdrop-blur-sm">
-                    <div className="bg-background border border-border w-full max-w-md rounded-3xl p-8 space-y-6 shadow-2xl">
-                        <div className="flex justify-between items-center">
-                            <h3 className="text-xl font-black">Post Announcement</h3>
-                            <button onClick={() => setShowAnnouncementModal(false)} className="text-muted-foreground hover:text-foreground"><XCircle size={24} /></button>
-                        </div>
-                        <form onSubmit={createAnnouncement} className="space-y-4">
-                            <div className="space-y-1.5">
-                                <div className="flex justify-between items-center">
-                                    <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Title</label>
-                                    {validationErrors.announcement?.title && <span className="text-[10px] font-bold text-red-500 animate-in fade-in slide-in-from-right-1">{validationErrors.announcement.title}</span>}
-                                </div>
-                                <input
-                                    placeholder="Important update"
-                                    value={announcementForm.title}
-                                    onChange={e => {
-                                        setAnnouncementForm({ ...announcementForm, title: e.target.value });
-                                        if (validationErrors.announcement?.title) {
-                                            setValidationErrors(prev => ({ ...prev, announcement: { ...prev.announcement, title: null } }));
-                                        }
-                                    }}
-                                    className={`w-full bg-secondary/50 border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 transition-all ${validationErrors.announcement?.title ? 'border-red-500/50 focus:ring-red-500/50' : 'border-border focus:ring-primary/50'}`} />
-                            </div>
-                            <div className="space-y-1.5">
-                                <div className="flex justify-between items-center">
-                                    <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Message</label>
-                                    {validationErrors.announcement?.body && <span className="text-[10px] font-bold text-red-500 animate-in fade-in slide-in-from-right-1">{validationErrors.announcement.body}</span>}
-                                </div>
-                                <textarea
-                                    placeholder="Write your announcement here..."
-                                    rows={4}
-                                    value={announcementForm.body}
-                                    onChange={e => {
-                                        setAnnouncementForm({ ...announcementForm, body: e.target.value });
-                                        if (validationErrors.announcement?.body) {
-                                            setValidationErrors(prev => ({ ...prev, announcement: { ...prev.announcement, body: null } }));
-                                        }
-                                    }}
-                                    className={`w-full bg-secondary/50 border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 transition-all resize-none ${validationErrors.announcement?.body ? 'border-red-500/50 focus:ring-red-500/50' : 'border-border focus:ring-primary/50'}`} />
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-1.5 flex flex-col">
-                                    <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest flex justify-between">Image Attachment</label>
-                                    <label className="flex items-center justify-center border-2 border-dashed border-border/50 rounded-xl p-4 hover:border-primary/50 cursor-pointer hover:bg-primary/5 transition-all group text-sm font-bold h-20">
-                                        <input type="file" className="hidden" accept="image/*" onChange={async (e) => {
-                                            const file = e.target.files?.[0];
-                                            if (!file) return;
-                                            const formData = new FormData();
-                                            formData.append('file', file);
-                                            setUploadProgress(prev => ({ ...prev, 'announcement-img': 10 }));
-                                            try {
-                                                const res = await fetch('/api/upload', { method: 'POST', body: formData });
-                                                if (res.ok) {
-                                                    const data = await res.json();
-                                                    setAnnouncementForm({ ...announcementForm, imageUrl: data.url });
-                                                }
-                                            } finally {
-                                                setUploadProgress(prev => { const next = { ...prev }; delete next['announcement-img']; return next; });
-                                            }
-                                        }} />
-                                        {uploadProgress['announcement-img'] ? <Loader2 className="animate-spin text-primary" /> : announcementForm.imageUrl ? <span className="text-emerald-500">✅ Image Added</span> : <><Upload size={16} className="mr-2 text-muted-foreground group-hover:text-primary transition-colors" /> Add Image</>}
-                                    </label>
-                                </div>
-                                <div className="space-y-1.5 flex flex-col">
-                                    <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest flex justify-between">Doc Attachment</label>
-                                    <label className="flex items-center justify-center border-2 border-dashed border-border/50 rounded-xl p-4 hover:border-primary/50 cursor-pointer hover:bg-primary/5 transition-all group text-sm font-bold h-20">
-                                        <input type="file" className="hidden" accept=".pdf,.doc,.docx" onChange={async (e) => {
-                                            const file = e.target.files?.[0];
-                                            if (!file) return;
-                                            const formData = new FormData();
-                                            formData.append('file', file);
-                                            setUploadProgress(prev => ({ ...prev, 'announcement-doc': 10 }));
-                                            try {
-                                                const res = await fetch('/api/upload', { method: 'POST', body: formData });
-                                                if (res.ok) {
-                                                    const data = await res.json();
-                                                    setAnnouncementForm({ ...announcementForm, documentUrl: data.url });
-                                                }
-                                            } finally {
-                                                setUploadProgress(prev => { const next = { ...prev }; delete next['announcement-doc']; return next; });
-                                            }
-                                        }} />
-                                        {uploadProgress['announcement-doc'] ? <Loader2 className="animate-spin text-primary" /> : announcementForm.documentUrl ? <span className="text-emerald-500">✅ Document Added</span> : <><FileText size={16} className="mr-2 text-muted-foreground group-hover:text-primary transition-colors" /> Add Document</>}
-                                    </label>
-                                </div>
-                            </div>
-                            <button type="submit" className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-bold hover:opacity-90">
-                                <Megaphone size={16} className="inline mr-2" />Publish Announcement
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            )}
-
-            {selectedAnnouncement && (
-                <div className="fixed inset-0 z-[300] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md animate-in fade-in duration-300">
-                    <div className="bg-background border border-border/50 w-full max-w-2xl rounded-[2rem] p-8 space-y-6 shadow-2xl relative overflow-hidden flex flex-col max-h-[90vh]">
-                        <button onClick={() => setSelectedAnnouncement(null)} className="absolute top-6 right-6 p-2 bg-secondary/80 hover:bg-secondary rounded-full transition-all">
-                            <XCircle size={24} className="text-muted-foreground" />
-                        </button>
-                        <div className="flex items-center gap-4 border-b border-border/50 pb-6">
-                            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                                <Megaphone size={20} className="text-primary" />
-                            </div>
-                            <div>
-                                <h3 className="text-xl font-black">{selectedAnnouncement.title}</h3>
-                                <div className="text-xs text-muted-foreground tracking-widest uppercase font-bold mt-1">
-                                    {new Date(selectedAnnouncement.createdAt).toLocaleDateString()}
-                                </div>
-                            </div>
-                        </div>
-                        <div className="flex-1 overflow-y-auto pr-2 space-y-6">
-                            <p className="text-sm whitespace-pre-wrap leading-relaxed">{selectedAnnouncement.body}</p>
-
-                            {selectedAnnouncement.imageUrl && (
-                                <div className="space-y-2">
-                                    <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Attached Image</h4>
-                                    <div className="rounded-xl overflow-hidden border border-border/50 bg-secondary/10">
-                                        <img src={selectedAnnouncement.imageUrl} alt="Announcement Attachment" className="w-full h-auto max-h-[400px] object-contain" />
-                                    </div>
-                                </div>
-                            )}
-
-                            {selectedAnnouncement.documentUrl && (
-                                <div className="space-y-2">
-                                    <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Attached Document</h4>
-                                    <a href={selectedAnnouncement.documentUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 p-4 rounded-xl border border-border/50 bg-secondary/20 hover:bg-secondary/40 hover:border-primary/30 transition-all group">
-                                        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                                            <FileText size={20} className="text-primary" />
-                                        </div>
-                                        <div className="flex-1">
-                                            <p className="font-bold text-sm group-hover:text-primary transition-colors">Download Attachment</p>
-                                            <p className="text-xs text-muted-foreground">Click to view or download file</p>
-                                        </div>
-                                        <Upload size={16} className="text-muted-foreground group-hover:text-primary transition-colors transform rotate-90" />
-                                    </a>
-                                </div>
-                            )}
-                    </div>
-                </div>
-            )}
-            {/* Target Resource Management Dialog */}
-            {managingResources && (
-                <div className="fixed inset-0 z-[250] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md animate-in fade-in duration-300">
-                    <div className="bg-background border border-border w-full max-w-xl rounded-[2.5rem] p-10 space-y-8 shadow-2xl relative overflow-hidden flex flex-col max-h-[90vh]">
-                        <button onClick={() => setManagingResources(null)} className="absolute top-8 right-8 p-2 bg-secondary/50 hover:bg-secondary rounded-full transition-all group">
-                            <XCircle size={28} className="text-muted-foreground group-hover:text-foreground transition-colors" />
-                        </button>
-
-                        <div className="space-y-2">
-                            <div className="flex items-center gap-3">
-                                <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center">
-                                    <Archive size={24} className="text-primary" />
-                                </div>
-                                <div>
-                                    <h3 className="text-2xl font-black tracking-tight">{managingResources.type === 'COURSE' ? 'Course' : 'Section'} Resources</h3>
-                                    <p className="text-sm text-muted-foreground font-medium uppercase tracking-widest">{managingResources.name}</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="space-y-4">
-                            <label className="flex flex-col items-center justify-center border-2 border-dashed border-border rounded-3xl p-10 hover:border-primary/30 cursor-pointer hover:bg-primary/5 transition-all group relative overflow-hidden">
-                                <input
-                                    type="file"
-                                    className="hidden"
-                                    onChange={(e) => {
-                                        const file = e.target.files?.[0];
-                                        if (file) uploadTargetResource(file);
-                                    }}
-                                    disabled={isUploadingTargetResource}
-                                />
-                                {isUploadingTargetResource ? (
-                                    <div className="flex flex-col items-center gap-3">
-                                        <Loader2 className="w-10 h-10 animate-spin text-primary" />
-                                        <p className="text-sm font-bold uppercase tracking-widest text-primary animate-pulse">Uploading Document...</p>
-                                    </div>
-                                ) : (
-                                    <div className="flex flex-col items-center gap-3">
-                                        <div className="w-16 h-16 rounded-full bg-secondary/50 flex items-center justify-center group-hover:scale-110 transition-transform">
-                                            <Upload className="w-8 h-8 text-muted-foreground group-hover:text-primary transition-colors" />
-                                        </div>
-                                        <div className="text-center">
-                                            <p className="font-bold text-lg">Click or drag to upload</p>
-                                            <p className="text-sm text-muted-foreground">PDF, DOCX, ZIP or other resources</p>
-                                        </div>
-                                    </div>
-                                )}
-                            </label>
-                        </div>
-
-                        <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
-                            <div className="space-y-3">
-                                {managingResources.resources.length === 0 ? (
-                                    <div className="text-center py-10 opacity-40">
-                                        <FileText size={48} className="mx-auto mb-3" />
-                                        <p className="text-sm font-bold uppercase tracking-widest">No resources added yet</p>
-                                    </div>
-                                ) : (
-                                    managingResources.resources.map((res: any) => (
-                                        <div key={res.id} className="flex items-center justify-between p-4 rounded-2xl bg-secondary/30 border border-border/50 group hover:bg-secondary/50 transition-all">
-                                            <div className="flex items-center gap-4">
-                                                <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
-                                                    <FileText size={18} className="text-primary" />
-                                                </div>
-                                                <div className="min-w-0">
-                                                    <p className="font-bold text-sm truncate">{res.name}</p>
-                                                    <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-black">{res.type} &middot; {res.size ? `${(res.size / 1024).toFixed(0)} KB` : 'N/A'}</p>
-                                                </div>
-                                            </div>
-                                            <div className="flex gap-2">
-                                                <a href={res.url} target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg bg-background border border-border/50 hover:bg-primary/10 hover:text-primary transition-all">
-                                                    <Eye size={16} />
-                                                </a>
-                                                <button onClick={() => deleteTargetResource(res.id)} className="p-2 rounded-lg bg-background border border-border/50 hover:bg-red-500/10 hover:text-red-400 transition-all">
-                                                    <Trash2 size={16} />
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ))
-                                )}
-                            </div>
-                        </div>
-
-                        <div className="pt-6 border-t border-border/50">
-                            <button onClick={() => setManagingResources(null)} className="w-full py-4 bg-secondary hover:bg-secondary/80 rounded-2xl font-black uppercase tracking-[0.2em] text-xs transition-all shadow-lg hover:shadow-xl active:scale-[0.98]">
-                                Done
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* ── AUDIT LOG METADATA PANEL ── */}
-            {selectedLogMetadata && (
-                <div className="fixed inset-0 z-[500] flex justify-end bg-black/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setSelectedLogMetadata(null)}>
-                    <div className="w-full max-w-lg bg-background border-l border-border/50 h-full flex flex-col shadow-2xl animate-in slide-in-from-right duration-300" onClick={e => e.stopPropagation()}>
-                        <div className="px-8 py-6 border-b border-border/50 flex justify-between items-center bg-secondary/10">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                                    <ScanSearch className="w-6 h-6 text-primary" />
-                                </div>
-                                <div>
-                                    <h3 className="text-xl font-black uppercase tracking-tight">Log Insight</h3>
-                                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{selectedLogMetadata.id}</p>
-                                </div>
-                            </div>
-                            <button onClick={() => setSelectedLogMetadata(null)} className="p-2 hover:bg-secondary rounded-xl transition-all">
-                                <XCircle size={20} className="text-muted-foreground" />
-                            </button>
-                        </div>
-                        <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
-                           <div className="space-y-8">
-                               {/* Human Narrative */}
-                               <div className="p-6 rounded-3xl bg-primary/5 border border-primary/10 relative overflow-hidden group">
-                                   <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
-                                       <Activity size={48} />
-                                   </div>
-                                   <h4 className="text-[10px] font-black uppercase tracking-widest text-primary mb-2">Narrative Context</h4>
-                                   <p className="text-sm font-bold leading-relaxed">
-                                       User <span className="text-primary">{selectedLogMetadata.user.name}</span> performed a <span className="text-primary">{selectedLogMetadata.action.replace(/_/g, ' ')}</span> operation on the workspace entity.
-                                   </p>
-                               </div>
-
-                               <div className="space-y-4">
-                                   <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                                       <Shield size={12} className="text-primary" /> Authority Context
-                                   </h4>
-                                   <div className="p-5 rounded-2xl bg-secondary/20 border border-border/50 divide-y divide-border/30">
-                                       <div className="flex justify-between items-center py-3">
-                                           <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Action Type</span>
-                                           <span className="text-xs font-black text-primary">{selectedLogMetadata.action}</span>
-                                       </div>
-                                       <div className="flex justify-between items-center py-3">
-                                           <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Timestamp</span>
-                                           <span className="text-[11px] font-bold">{new Date(selectedLogMetadata.createdAt).toLocaleString()}</span>
-                                       </div>
-                                   </div>
-                               </div>
-
-                               <div className="space-y-4">
-                                   <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                                       <LayoutList size={12} className="text-primary" /> Resource Properties
-                                   </h4>
-                                   <div className="grid grid-cols-1 gap-3">
-                                       {Object.entries(selectedLogMetadata.metadata || {}).map(([key, value]) => (
-                                           <div key={key} className="p-4 rounded-2xl bg-secondary/10 border border-border/40 hover:border-primary/20 transition-all">
-                                               <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 mb-1">{getMetadataLabel(key)}</p>
-                                               <p className="text-xs font-bold break-all">{typeof value === 'object' ? JSON.stringify(value) : String(value)}</p>
-                                           </div>
-                                       ))}
-                                   </div>
-                               </div>
-                           </div>
-                        </div>
-
-                        <div className="p-8 border-t border-border/50">
-                            <button 
-                                onClick={() => exportAuditLog(selectedLogMetadata)}
-                                className="w-full py-4 bg-primary text-primary-foreground rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] transition-all shadow-lg hover:shadow-primary/20 active:scale-[0.98] flex items-center justify-center gap-2"
-                            >
-                                <Download size={14} /> Export Insight Data
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* ── USER INSIGHTS PANEL ── */}
-            {insightsUserId && (
-                <div className="fixed inset-0 z-[500] flex justify-end bg-black/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => { setInsightsUserId(null); setInsightsUser(null); }}>
-                    <div className="w-full max-w-xl bg-background border-l border-border/50 h-full flex flex-col shadow-2xl animate-in slide-in-from-right duration-300" onClick={e => e.stopPropagation()}>
-                        
-                        {/* Header */}
-                        <div className="flex items-start justify-between px-8 py-6 border-b border-border/50 bg-gradient-to-r from-primary/5 to-transparent">
-                            <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-black text-xl shadow-lg shadow-primary/5">
-                                    {isFetchingUserDetail ? <Loader2 size={24} className="animate-spin" /> : insightsUser?.name?.[0]?.toUpperCase() || '?'}
-                                </div>
-                                <div>
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-primary mb-0.5">Learner Analytics</p>
-                                    <h2 className="text-2xl font-black truncate max-w-[320px]">{isFetchingUserDetail ? 'Hydrating Detail...' : insightsUser?.name || 'Anonymous User'}</h2>
-                                </div>
-                            </div>
-                            <button onClick={() => { setInsightsUserId(null); setInsightsUser(null); }} className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary transition-all">
-                                <XCircle size={20} />
-                            </button>
-                        </div>
-                        
-                        <div className="flex-1 overflow-y-auto custom-scrollbar">
-                            {!isFetchingUserDetail && insightsUser ? (
-                                <div className="p-8 space-y-10">
-                                    {/* Calculated Metrics */}
-                                    {(() => {
-                                        const totalEnrollments = insightsUser.enrollments?.length || 0;
-                                        const totalLessons = insightsUser.enrollments?.reduce((acc: number, en: any) => acc + (en.totalLessons || 0), 0) || 0;
-                                        const completedLessons = insightsUser.enrollments?.reduce((acc: number, en: any) => acc + (en.completedLessons || 0), 0) || 0;
-                                        const avgProgress = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
-                                        const quizAccuracy = insightsUser.quizAttempts?.length > 0
-                                            ? Math.round(insightsUser.quizAttempts.reduce((acc: any, curr: any) => acc + (curr.score || 0), 0) / insightsUser.quizAttempts.length)
-                                            : 0;
-
-                                        return (
-                                            <>
-                                                {/* KPI Grid */}
-                                                <div className="grid grid-cols-3 gap-4">
-                                                    <div className="p-4 rounded-2xl bg-secondary/20 border border-border/50 space-y-1">
-                                                        <p className="text-[9px] font-black uppercase text-muted-foreground tracking-widest">Enrollments</p>
-                                                        <p className="text-2xl font-black text-foreground">{totalEnrollments}</p>
-                                                    </div>
-                                                    <div className="p-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/10 space-y-1">
-                                                        <p className="text-[9px] font-black uppercase text-emerald-500/70 tracking-widest">Avg Progress</p>
-                                                        <p className="text-2xl font-black text-emerald-400">{avgProgress}%</p>
-                                                    </div>
-                                                    <div className="p-4 rounded-2xl bg-blue-500/5 border border-blue-500/10 space-y-1">
-                                                        <p className="text-[9px] font-black uppercase text-blue-500/70 tracking-widest">Assessment</p>
-                                                        <p className="text-2xl font-black text-blue-400">{quizAccuracy}%</p>
-                                                    </div>
-                                                </div>
-
-                                                {/* Course Breakdown */}
-                                                <section className="space-y-4">
-                                                    <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                                                        <BookOpen size={11} className="text-primary" /> Enrollment Velocity
-                                                    </h3>
-                                                    <div className="grid grid-cols-1 gap-3">
-                                                        {insightsUser.enrollments?.length > 0 ? insightsUser.enrollments.map((en: any) => (
-                                                            <div key={en.id} className="p-4 rounded-2xl bg-secondary/10 border border-border/40 hover:border-primary/30 transition-all group">
-                                                                <div className="flex justify-between items-start mb-3">
-                                                                    <div className="min-w-0">
-                                                                        <p className="text-xs font-bold truncate group-hover:text-primary transition-colors">{en.course?.title}</p>
-                                                                        <p className="text-[9px] text-muted-foreground uppercase font-black tracking-tight mt-0.5">
-                                                                            {en.completedLessons} / {en.totalLessons} Lessons Completed
-                                                                        </p>
-                                                                    </div>
-                                                                    <span className="text-[10px] font-black text-primary">{en.progressPercentage}%</span>
-                                                                </div>
-                                                                <div className="h-1.5 w-full bg-secondary rounded-full overflow-hidden">
-                                                                    <div 
-                                                                        className="h-full bg-primary transition-all duration-1000" 
-                                                                        style={{ width: `${en.progressPercentage}%` }} 
+                                                                    <input
+                                                                        placeholder="Enter question text..."
+                                                                        className={`w-full bg-transparent border-b px-2 py-3 text-lg font-bold focus:outline-none transition-all ${validationErrors.quiz?.questions?.[qIdx]?.text ? 'border-red-500' : 'border-border/50 focus:border-primary'}`}
+                                                                        value={q.text}
+                                                                        onChange={(e) => {
+                                                                            const newQs = [...quizForm.questions];
+                                                                            newQs[qIdx].text = e.target.value;
+                                                                            setQuizForm({ ...quizForm, questions: newQs });
+                                                                            if (validationErrors.quiz?.questions?.[qIdx]?.text) {
+                                                                                const newErrors = { ...validationErrors.quiz };
+                                                                                delete newErrors.questions[qIdx].text;
+                                                                                setValidationErrors(prev => ({ ...prev, quiz: newErrors }));
+                                                                            }
+                                                                        }}
                                                                     />
                                                                 </div>
+
+                                                                {/* FILL IN BLANK */}
+                                                                {(q.type || 'MULTIPLE_CHOICE') === 'FILL_BLANK' ? (
+                                                                    <div className="space-y-2">
+                                                                        <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Correct Answer (case-insensitive match)</label>
+                                                                        <input
+                                                                            placeholder="Type the expected answer..."
+                                                                            className="w-full bg-background/50 border border-primary/30 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/50"
+                                                                            value={q.options[0]?.text || ''}
+                                                                            onChange={(e) => {
+                                                                                const newQs = [...quizForm.questions];
+                                                                                newQs[qIdx].options = [{ text: e.target.value, isCorrect: true }];
+                                                                                setQuizForm({ ...quizForm, questions: newQs });
+                                                                            }}
+                                                                        />
+                                                                        <p className="text-[10px] text-muted-foreground italic">Learners will type their answer. It will be matched against this text.</p>
+                                                                    </div>
+                                                                ) : (
+                                                                    /* MULTIPLE CHOICE / MULTIPLE SELECT */
+                                                                    <div className="grid grid-cols-2 gap-4 pt-2">
+                                                                        {(() => {
+                                                                            const isMultiSelect = (q.type || 'MULTIPLE_CHOICE') === 'MULTIPLE_SELECT';
+                                                                            return (<>
+                                                                                {q.options.map((o: any, oIdx: number) => {
+                                                                                    return (
+                                                                                        <div key={oIdx} className="space-y-1">
+                                                                                            <div className={`flex items-center gap-3 p-3 rounded-xl bg-background/50 border transition-all focus-within:ring-1 ${validationErrors.quiz?.questions?.[qIdx]?.options?.[oIdx] ? 'border-red-500 focus-within:ring-red-500/50' : 'border-border/50 focus-within:ring-primary/50'}`}>
+                                                                                                <button
+                                                                                                    onClick={() => {
+                                                                                                        const newQs = [...quizForm.questions];
+                                                                                                        if (isMultiSelect) {
+                                                                                                            // Toggle for multi-select
+                                                                                                            newQs[qIdx].options[oIdx].isCorrect = !newQs[qIdx].options[oIdx].isCorrect;
+                                                                                                        } else {
+                                                                                                            // Single select — only one correct
+                                                                                                            newQs[qIdx].options = newQs[qIdx].options.map((opt: any, idx: number) => ({ ...opt, isCorrect: idx === oIdx }));
+                                                                                                        }
+                                                                                                        setQuizForm({ ...quizForm, questions: newQs });
+                                                                                                    }}
+                                                                                                    className={`w-5 h-5 flex-shrink-0 border-2 flex items-center justify-center transition-all ${isMultiSelect ? 'rounded-md' : 'rounded-full'
+                                                                                                        } ${o.isCorrect ? 'bg-primary border-primary' : 'border-border'}`}
+                                                                                                >
+                                                                                                    {o.isCorrect && <CheckCircle2 size={12} className="text-white" />}
+                                                                                                </button>
+                                                                                                <input
+                                                                                                    placeholder={`Option ${oIdx + 1}`}
+                                                                                                    className="flex-1 bg-transparent text-sm focus:outline-none font-medium"
+                                                                                                    value={o.text}
+                                                                                                    onChange={(e) => {
+                                                                                                        const newQs = [...quizForm.questions];
+                                                                                                        newQs[qIdx].options[oIdx].text = e.target.value;
+                                                                                                        setQuizForm({ ...quizForm, questions: newQs });
+                                                                                                        if (validationErrors.quiz?.questions?.[qIdx]?.options?.[oIdx]) {
+                                                                                                            const newErrors = { ...validationErrors.quiz };
+                                                                                                            delete newErrors.questions[qIdx].options[oIdx];
+                                                                                                            setValidationErrors(prev => ({ ...prev, quiz: newErrors }));
+                                                                                                        }
+                                                                                                    }}
+                                                                                                />
+                                                                                                {q.options.length > 2 && (
+                                                                                                    <button
+                                                                                                        onClick={() => {
+                                                                                                            const newQs = [...quizForm.questions];
+                                                                                                            newQs[qIdx].options.splice(oIdx, 1);
+                                                                                                            setQuizForm({ ...quizForm, questions: newQs });
+                                                                                                        }}
+                                                                                                        className="text-muted-foreground hover:text-red-400"
+                                                                                                    >
+                                                                                                        <Trash2 size={14} />
+                                                                                                    </button>
+                                                                                                )}
+                                                                                            </div>
+                                                                                            {validationErrors.quiz?.questions?.[qIdx]?.options?.[oIdx] && <span className="text-[9px] font-bold text-red-500 animate-in fade-in slide-in-from-top-1 ml-1">{validationErrors.quiz.questions[qIdx].options[oIdx]}</span>}
+                                                                                        </div>
+                                                                                    );
+                                                                                })}
+                                                                                {q.options.length < 6 && (
+                                                                                    <button
+                                                                                        onClick={() => {
+                                                                                            const newQs = [...quizForm.questions];
+                                                                                            newQs[qIdx].options.push({ text: '', isCorrect: false });
+                                                                                            setQuizForm({ ...quizForm, questions: newQs });
+                                                                                        }}
+                                                                                        className="col-span-2 py-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors border border-dashed border-border/50 rounded-xl"
+                                                                                    >
+                                                                                        + Add Option
+                                                                                    </button>
+                                                                                )}
+                                                                                <p className="col-span-2 text-[10px] text-muted-foreground italic px-1">
+                                                                                    {isMultiSelect
+                                                                                        ? 'Check all correct answers — learners must select all of them.'
+                                                                                        : 'Click the circle to mark the single correct answer.'}
+                                                                                </p>
+                                                                            </>);
+                                                                        })()}
+                                                                    </div>
+                                                                )}
                                                             </div>
-                                                        )) : (
-                                                            <div className="text-center py-6 text-muted-foreground text-xs italic">No active enrollments found.</div>
-                                                        )}
-                                                    </div>
-                                                </section>
-                                            </>
-                                        );
-                                    })()}
+                                                        ))}
 
-                                    {/* Activity Timeline */}
-                                    <section className="space-y-4">
-                                        <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                                            <Clock size={11} className="text-primary" /> Activity Stream
-                                        </h3>
-                                        <div className="relative pl-4 space-y-6 before:absolute before:left-[19px] before:top-2 before:bottom-2 before:w-[1px] before:bg-border/60">
-                                            {insightsUser.activityLogs?.slice(0, 10).map((log: any, idx: number) => (
-                                                <div key={idx} className="relative pl-6">
-                                                    <div className="absolute left-[-1px] top-1.5 w-2 h-2 rounded-full bg-primary border-2 border-background z-10 shadow-sm shadow-primary/20" />
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex gap-4 mt-8 pt-6 border-t border-border/50">
+                                                    <button onClick={() => setActiveQuizLesson(null)} className="flex-1 py-4 bg-secondary hover:bg-secondary/80 rounded-2xl font-black uppercase tracking-[0.2em] text-xs transition-all">Discard Changes</button>
+                                                    <button onClick={saveQuiz} className="flex-1 py-4 bg-primary text-primary-foreground rounded-2xl font-black uppercase tracking-[0.2em] text-xs shadow-xl shadow-primary/20 hover:scale-[1.02] transition-all">Save Quiz Configuration</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {showAnnouncementModal && (
+                                        <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/70 backdrop-blur-sm">
+                                            <div className="bg-background border border-border w-full max-w-md rounded-3xl p-8 space-y-6 shadow-2xl">
+                                                <div className="flex justify-between items-center">
+                                                    <h3 className="text-xl font-black">Post Announcement</h3>
+                                                    <button onClick={() => setShowAnnouncementModal(false)} className="text-muted-foreground hover:text-foreground"><XCircle size={24} /></button>
+                                                </div>
+                                                <form onSubmit={createAnnouncement} className="space-y-4">
+                                                    <div className="space-y-1.5">
+                                                        <div className="flex justify-between items-center">
+                                                            <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Title</label>
+                                                            {validationErrors.announcement?.title && <span className="text-[10px] font-bold text-red-500 animate-in fade-in slide-in-from-right-1">{validationErrors.announcement.title}</span>}
+                                                        </div>
+                                                        <input
+                                                            placeholder="Important update"
+                                                            value={announcementForm.title}
+                                                            onChange={e => {
+                                                                setAnnouncementForm({ ...announcementForm, title: e.target.value });
+                                                                if (validationErrors.announcement?.title) {
+                                                                    setValidationErrors(prev => ({ ...prev, announcement: { ...prev.announcement, title: null } }));
+                                                                }
+                                                            }}
+                                                            className={`w-full bg-secondary/50 border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 transition-all ${validationErrors.announcement?.title ? 'border-red-500/50 focus:ring-red-500/50' : 'border-border focus:ring-primary/50'}`} />
+                                                    </div>
+                                                    <div className="space-y-1.5">
+                                                        <div className="flex justify-between items-center">
+                                                            <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Message</label>
+                                                            {validationErrors.announcement?.body && <span className="text-[10px] font-bold text-red-500 animate-in fade-in slide-in-from-right-1">{validationErrors.announcement.body}</span>}
+                                                        </div>
+                                                        <textarea
+                                                            placeholder="Write your announcement here..."
+                                                            rows={4}
+                                                            value={announcementForm.body}
+                                                            onChange={e => {
+                                                                setAnnouncementForm({ ...announcementForm, body: e.target.value });
+                                                                if (validationErrors.announcement?.body) {
+                                                                    setValidationErrors(prev => ({ ...prev, announcement: { ...prev.announcement, body: null } }));
+                                                                }
+                                                            }}
+                                                            className={`w-full bg-secondary/50 border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 transition-all resize-none ${validationErrors.announcement?.body ? 'border-red-500/50 focus:ring-red-500/50' : 'border-border focus:ring-primary/50'}`} />
+                                                    </div>
+                                                    <div className="grid grid-cols-2 gap-4">
+                                                        <div className="space-y-1.5 flex flex-col">
+                                                            <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest flex justify-between">Image Attachment</label>
+                                                            <label className="flex items-center justify-center border-2 border-dashed border-border/50 rounded-xl p-4 hover:border-primary/50 cursor-pointer hover:bg-primary/5 transition-all group text-sm font-bold h-20">
+                                                                <input type="file" className="hidden" accept="image/*" onChange={async (e) => {
+                                                                    const file = e.target.files?.[0];
+                                                                    if (!file) return;
+                                                                    const formData = new FormData();
+                                                                    formData.append('file', file);
+                                                                    setUploadProgress(prev => ({ ...prev, 'announcement-img': 10 }));
+                                                                    try {
+                                                                        const res = await fetch('/api/upload', { method: 'POST', body: formData });
+                                                                        if (res.ok) {
+                                                                            const data = await res.json();
+                                                                            setAnnouncementForm({ ...announcementForm, imageUrl: data.url });
+                                                                        }
+                                                                    } finally {
+                                                                        setUploadProgress(prev => { const next = { ...prev }; delete next['announcement-img']; return next; });
+                                                                    }
+                                                                }} />
+                                                                {uploadProgress['announcement-img'] ? <Loader2 className="animate-spin text-primary" /> : announcementForm.imageUrl ? <span className="text-emerald-500">✅ Image Added</span> : <><Upload size={16} className="mr-2 text-muted-foreground group-hover:text-primary transition-colors" /> Add Image</>}
+                                                            </label>
+                                                        </div>
+                                                        <div className="space-y-1.5 flex flex-col">
+                                                            <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest flex justify-between">Doc Attachment</label>
+                                                            <label className="flex items-center justify-center border-2 border-dashed border-border/50 rounded-xl p-4 hover:border-primary/50 cursor-pointer hover:bg-primary/5 transition-all group text-sm font-bold h-20">
+                                                                <input type="file" className="hidden" accept=".pdf,.doc,.docx" onChange={async (e) => {
+                                                                    const file = e.target.files?.[0];
+                                                                    if (!file) return;
+                                                                    const formData = new FormData();
+                                                                    formData.append('file', file);
+                                                                    setUploadProgress(prev => ({ ...prev, 'announcement-doc': 10 }));
+                                                                    try {
+                                                                        const res = await fetch('/api/upload', { method: 'POST', body: formData });
+                                                                        if (res.ok) {
+                                                                            const data = await res.json();
+                                                                            setAnnouncementForm({ ...announcementForm, documentUrl: data.url });
+                                                                        }
+                                                                    } finally {
+                                                                        setUploadProgress(prev => { const next = { ...prev }; delete next['announcement-doc']; return next; });
+                                                                    }
+                                                                }} />
+                                                                {uploadProgress['announcement-doc'] ? <Loader2 className="animate-spin text-primary" /> : announcementForm.documentUrl ? <span className="text-emerald-500">✅ Document Added</span> : <><FileText size={16} className="mr-2 text-muted-foreground group-hover:text-primary transition-colors" /> Add Document</>}
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                    <button type="submit" className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-bold hover:opacity-90">
+                                                        <Megaphone size={16} className="inline mr-2" />Publish Announcement
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {selectedAnnouncement && (
+                                        <div className="fixed inset-0 z-[300] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md animate-in fade-in duration-300">
+                                            <div className="bg-background border border-border/50 w-full max-w-2xl rounded-[2rem] p-8 space-y-6 shadow-2xl relative overflow-hidden flex flex-col max-h-[90vh]">
+                                                <button onClick={() => setSelectedAnnouncement(null)} className="absolute top-6 right-6 p-2 bg-secondary/80 hover:bg-secondary rounded-full transition-all">
+                                                    <XCircle size={24} className="text-muted-foreground" />
+                                                </button>
+                                                <div className="flex items-center gap-4 border-b border-border/50 pb-6">
+                                                    <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                                                        <Megaphone size={20} className="text-primary" />
+                                                    </div>
                                                     <div>
-                                                        <p className="text-xs font-bold leading-none">{log.action.replace(/_/g, ' ')}</p>
-                                                        <p className="text-[10px] text-muted-foreground mt-1.5 font-medium uppercase">
-                                                            {new Date(log.createdAt).toLocaleDateString()} &middot; {new Date(log.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                        </p>
+                                                        <h3 className="text-xl font-black">{selectedAnnouncement.title}</h3>
+                                                        <div className="text-xs text-muted-foreground tracking-widest uppercase font-bold mt-1">
+                                                            {new Date(selectedAnnouncement.createdAt).toLocaleDateString()}
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            ))}
-                                            {(!insightsUser.activityLogs || insightsUser.activityLogs.length === 0) && (
-                                                <div className="text-muted-foreground text-xs italic pl-2">No recent activity recorded.</div>
+                                                <div className="flex-1 overflow-y-auto pr-2 space-y-6">
+                                                    <p className="text-sm whitespace-pre-wrap leading-relaxed">{selectedAnnouncement.body}</p>
+
+                                                    {selectedAnnouncement.imageUrl && (
+                                                        <div className="space-y-2">
+                                                            <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Attached Image</h4>
+                                                            <div className="rounded-xl overflow-hidden border border-border/50 bg-secondary/10">
+                                                                <img src={selectedAnnouncement.imageUrl} alt="Announcement Attachment" className="w-full h-auto max-h-[400px] object-contain" />
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+                                                    {selectedAnnouncement.documentUrl && (
+                                                        <div className="space-y-2">
+                                                            <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Attached Document</h4>
+                                                            <a href={selectedAnnouncement.documentUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 p-4 rounded-xl border border-border/50 bg-secondary/20 hover:bg-secondary/40 hover:border-primary/30 transition-all group">
+                                                                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                                                                    <FileText size={20} className="text-primary" />
+                                                                </div>
+                                                                <div className="flex-1">
+                                                                    <p className="font-bold text-sm group-hover:text-primary transition-colors">Download Attachment</p>
+                                                                    <p className="text-xs text-muted-foreground">Click to view or download file</p>
+                                                                </div>
+                                                                <Upload size={16} className="text-muted-foreground group-hover:text-primary transition-colors transform rotate-90" />
+                                                            </a>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+            )}
+                                            {/* Target Resource Management Dialog */}
+                                            {managingResources && (
+                                                <div className="fixed inset-0 z-[250] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md animate-in fade-in duration-300">
+                                                    <div className="bg-background border border-border w-full max-w-xl rounded-[2.5rem] p-10 space-y-8 shadow-2xl relative overflow-hidden flex flex-col max-h-[90vh]">
+                                                        <button onClick={() => setManagingResources(null)} className="absolute top-8 right-8 p-2 bg-secondary/50 hover:bg-secondary rounded-full transition-all group">
+                                                            <XCircle size={28} className="text-muted-foreground group-hover:text-foreground transition-colors" />
+                                                        </button>
+
+                                                        <div className="space-y-2">
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center">
+                                                                    <Archive size={24} className="text-primary" />
+                                                                </div>
+                                                                <div>
+                                                                    <h3 className="text-2xl font-black tracking-tight">{managingResources.type === 'COURSE' ? 'Course' : 'Section'} Resources</h3>
+                                                                    <p className="text-sm text-muted-foreground font-medium uppercase tracking-widest">{managingResources.name}</p>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="space-y-4">
+                                                            <label className="flex flex-col items-center justify-center border-2 border-dashed border-border rounded-3xl p-10 hover:border-primary/30 cursor-pointer hover:bg-primary/5 transition-all group relative overflow-hidden">
+                                                                <input
+                                                                    type="file"
+                                                                    className="hidden"
+                                                                    onChange={(e) => {
+                                                                        const file = e.target.files?.[0];
+                                                                        if (file) uploadTargetResource(file);
+                                                                    }}
+                                                                    disabled={isUploadingTargetResource}
+                                                                />
+                                                                {isUploadingTargetResource ? (
+                                                                    <div className="flex flex-col items-center gap-3">
+                                                                        <Loader2 className="w-10 h-10 animate-spin text-primary" />
+                                                                        <p className="text-sm font-bold uppercase tracking-widest text-primary animate-pulse">Uploading Document...</p>
+                                                                    </div>
+                                                                ) : (
+                                                                    <div className="flex flex-col items-center gap-3">
+                                                                        <div className="w-16 h-16 rounded-full bg-secondary/50 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                                                            <Upload className="w-8 h-8 text-muted-foreground group-hover:text-primary transition-colors" />
+                                                                        </div>
+                                                                        <div className="text-center">
+                                                                            <p className="font-bold text-lg">Click or drag to upload</p>
+                                                                            <p className="text-sm text-muted-foreground">PDF, DOCX, ZIP or other resources</p>
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+                                                            </label>
+                                                        </div>
+
+                                                        <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
+                                                            <div className="space-y-3">
+                                                                {managingResources.resources.length === 0 ? (
+                                                                    <div className="text-center py-10 opacity-40">
+                                                                        <FileText size={48} className="mx-auto mb-3" />
+                                                                        <p className="text-sm font-bold uppercase tracking-widest">No resources added yet</p>
+                                                                    </div>
+                                                                ) : (
+                                                                    managingResources.resources.map((res: any) => (
+                                                                        <div key={res.id} className="flex items-center justify-between p-4 rounded-2xl bg-secondary/30 border border-border/50 group hover:bg-secondary/50 transition-all">
+                                                                            <div className="flex items-center gap-4">
+                                                                                <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
+                                                                                    <FileText size={18} className="text-primary" />
+                                                                                </div>
+                                                                                <div className="min-w-0">
+                                                                                    <p className="font-bold text-sm truncate">{res.name}</p>
+                                                                                    <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-black">{res.type} &middot; {res.size ? `${(res.size / 1024).toFixed(0)} KB` : 'N/A'}</p>
+                                                                                </div>
+                                                                            </div>
+                                                                            <div className="flex gap-2">
+                                                                                <a href={res.url} target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg bg-background border border-border/50 hover:bg-primary/10 hover:text-primary transition-all">
+                                                                                    <Eye size={16} />
+                                                                                </a>
+                                                                                <button onClick={() => deleteTargetResource(res.id)} className="p-2 rounded-lg bg-background border border-border/50 hover:bg-red-500/10 hover:text-red-400 transition-all">
+                                                                                    <Trash2 size={16} />
+                                                                                </button>
+                                                                            </div>
+                                                                        </div>
+                                                                    ))
+                                                                )}
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="pt-6 border-t border-border/50">
+                                                            <button onClick={() => setManagingResources(null)} className="w-full py-4 bg-secondary hover:bg-secondary/80 rounded-2xl font-black uppercase tracking-[0.2em] text-xs transition-all shadow-lg hover:shadow-xl active:scale-[0.98]">
+                                                                Done
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             )}
-                                        </div>
-                                    </section>
-                                </div>
-                            ) : (
-                                <div className="h-full flex flex-col items-center justify-center p-8 opacity-40 animate-pulse">
-                                    <Loader2 size={48} className="animate-spin mb-4 text-primary" />
-                                    <p className="text-sm font-bold uppercase tracking-widest">Hydrating User Insight...</p>
-                                </div>
-                            )}
-                        </div>
 
-                        {/* Footer */}
-                        <div className="p-6 border-t border-border/50 bg-background/80 backdrop-blur-sm mt-auto">
-                            <button 
-                                onClick={() => { setInsightsUserId(null); setInsightsUser(null); }}
-                                className="w-full py-4 bg-secondary text-foreground rounded-2xl font-black uppercase tracking-widest text-sm hover:bg-secondary/80 transition-all shadow-lg active:scale-[0.98]"
-                            >
-                                Close Insights
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-            {showProfileModal && (
-                <div className="fixed inset-0 z-[400] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md animate-in fade-in duration-300">
-                    <div className="bg-background border border-border/50 w-full max-w-md rounded-[2rem] p-8 space-y-6 shadow-2xl relative overflow-hidden">
-                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-blue-500" />
+                                            {/* ── AUDIT LOG METADATA PANEL ── */}
+                                            {selectedLogMetadata && (
+                                                <div className="fixed inset-0 z-[500] flex justify-end bg-black/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setSelectedLogMetadata(null)}>
+                                                    <div className="w-full max-w-2xl bg-background border-l border-border/50 h-full flex flex-col shadow-2xl animate-in slide-in-from-right duration-300" onClick={e => e.stopPropagation()}>
+                                                        <div className="px-8 py-6 border-b border-border/50 flex justify-between items-center bg-secondary/10">
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                                                                    <ScanSearch className="w-6 h-6 text-primary" />
+                                                                </div>
+                                                                <div>
+                                                                    <h3 className="text-xl font-black uppercase tracking-tight">Log Insight</h3>
+                                                                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{selectedLogMetadata.id}</p>
+                                                                </div>
+                                                            </div>
+                                                            <button onClick={() => setSelectedLogMetadata(null)} className="p-2 hover:bg-secondary rounded-xl transition-all">
+                                                                <XCircle size={20} className="text-muted-foreground" />
+                                                            </button>
+                                                        </div>
+                                                        <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+                                                            <div className="space-y-8">
+                                                                {/* Human Narrative */}
+                                                                <div className="p-6 rounded-3xl bg-primary/5 border border-primary/10 relative overflow-hidden group">
+                                                                    <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
+                                                                        <Activity size={48} />
+                                                                    </div>
+                                                                    <h4 className="text-[10px] font-black uppercase tracking-widest text-primary mb-2">Narrative Context</h4>
+                                                                    <p className="text-sm font-bold leading-relaxed">
+                                                                        User <span className="text-primary">{selectedLogMetadata.user.name}</span> performed a <span className="text-primary">{selectedLogMetadata.action.replace(/_/g, ' ')}</span> operation on the workspace entity.
+                                                                    </p>
+                                                                </div>
 
-                        <div className="flex justify-between items-center">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                                    <Settings className="w-6 h-6 text-primary" />
-                                </div>
-                                <h3 className="text-xl font-black">Admin Profile</h3>
-                            </div>
-                            <button onClick={() => setShowProfileModal(false)} className="p-2 hover:bg-secondary rounded-full transition-all">
-                                <XCircle size={20} className="text-muted-foreground" />
-                            </button>
-                        </div>
+                                                                <div className="space-y-4">
+                                                                    <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                                                                        <Shield size={12} className="text-primary" /> Authority Context
+                                                                    </h4>
+                                                                    <div className="p-5 rounded-2xl bg-secondary/20 border border-border/50 divide-y divide-border/30">
+                                                                        <div className="flex justify-between items-center py-3">
+                                                                            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Action Type</span>
+                                                                            <span className="text-xs font-black text-primary">{selectedLogMetadata.action}</span>
+                                                                        </div>
+                                                                        <div className="flex justify-between items-center py-3">
+                                                                            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Timestamp</span>
+                                                                            <span className="text-[11px] font-bold">{new Date(selectedLogMetadata.createdAt).toLocaleString()}</span>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
 
-                        <form onSubmit={handleUpdateProfile} className="space-y-4">
-                            <div className="p-4 rounded-2xl bg-secondary/20 border border-border/50 space-y-3">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center font-black text-primary border border-primary/20">
-                                        {userName.charAt(0).toUpperCase()}
-                                    </div>
-                                    <div className="flex flex-col">
-                                        <span className="text-sm font-black text-foreground">{userName}</span>
-                                        <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{userEmail}</span>
-                                    </div>
-                                </div>
-                                <div className="h-px bg-border/50 w-full" />
-                                <p className="text-[10px] text-muted-foreground italic leading-relaxed">
-                                    [Note: Name and Email are managed by the system administrator.]
-                                </p>
-                            </div>
+                                                                <div className="space-y-4">
+                                                                    <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                                                                        <LayoutList size={12} className="text-primary" /> Resource Properties
+                                                                    </h4>
+                                                                    <div className="grid grid-cols-1 gap-3">
+                                                                        {Object.entries(selectedLogMetadata.metadata || {}).map(([key, value]) => (
+                                                                            <div key={key} className="p-4 rounded-2xl bg-secondary/10 border border-border/40 hover:border-primary/20 transition-all">
+                                                                                <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 mb-1">{getMetadataLabel(key)}</p>
+                                                                                <p className="text-xs font-bold break-all">{typeof value === 'object' ? JSON.stringify(value) : String(value)}</p>
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
 
-                            <div className="pt-2 space-y-4">
-                                <h4 className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
-                                    <Award size={12} /> Security
-                                </h4>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Current Password</label>
-                                    <input
-                                        type="password"
-                                        value={profileForm.currentPassword}
-                                        onChange={e => setProfileForm({ ...profileForm, currentPassword: e.target.value })}
-                                        placeholder="••••••••"
-                                        className="w-full bg-secondary/30 border border-border/50 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all text-foreground placeholder:text-muted-foreground/30"
-                                    />
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">New Password</label>
-                                        <input
-                                            type="password"
-                                            value={profileForm.newPassword}
-                                            onChange={e => setProfileForm({ ...profileForm, newPassword: e.target.value })}
-                                            placeholder="••••••••"
-                                            className="w-full bg-secondary/30 border border-border/50 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all text-foreground placeholder:text-muted-foreground/30"
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Confirm New</label>
-                                        <input
-                                            type="password"
-                                            value={profileForm.confirmPassword}
-                                            onChange={e => setProfileForm({ ...profileForm, confirmPassword: e.target.value })}
-                                            placeholder="••••••••"
-                                            className="w-full bg-secondary/30 border border-border/50 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all text-foreground placeholder:text-muted-foreground/30"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-
-                            <button
-                                type="submit"
-                                disabled={isUpdatingProfile}
-                                className="w-full py-4 mt-4 bg-primary text-primary-foreground rounded-2xl font-black uppercase tracking-[0.2em] text-xs transition-all shadow-lg hover:shadow-primary/20 active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
-                            >
-                                {isUpdatingProfile ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Update Security Settings'}
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            )}
-            {confirmModal && (
-                <div className="fixed inset-0 z-[300] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md animate-in fade-in duration-300">
-                    <div className="bg-background border border-border/50 w-full max-w-sm rounded-[2rem] p-8 space-y-6 shadow-2xl relative overflow-hidden">
-                        <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${confirmModal.variant === 'info' ? 'from-indigo-500/50 via-indigo-500 to-indigo-500/50' : 'from-red-500/50 via-red-500 to-red-500/50'}`} />
-
-                        <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 ${confirmModal.variant === 'info' ? 'bg-indigo-500/10' : 'bg-red-500/10'}`}>
-                            {confirmModal.variant === 'info' ? <Info className="w-10 h-10 text-indigo-500" /> : <Trash2 className="w-10 h-10 text-red-500" />}
-                        </div>
-
-                        <div className="text-center space-y-2">
-                            <h3 className="text-2xl font-black">{confirmModal.title}</h3>
-                            <p className="text-muted-foreground text-sm">
-                                {confirmModal.message}
-                            </p>
-                        </div>
-
-                        <div className="flex gap-4 pt-4">
-                            <button
-                                onClick={() => {
-                                    confirmModal.resolve(false);
-                                    setConfirmModal(null);
-                                }}
-                                className="flex-1 py-4 bg-secondary hover:bg-secondary/80 rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={() => {
-                                    confirmModal.resolve(true);
-                                    setConfirmModal(null);
-                                }}
-                                className={`flex-1 py-4 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-lg hover:scale-[1.02] transition-all ${confirmModal.variant === 'info' ? 'bg-indigo-600 shadow-indigo-500/20' : 'bg-red-500 shadow-red-500/20'}`}
-                            >
-                                {confirmModal.variant === 'info' ? 'Confirm' : 'Confirm Delete'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-            {/* ── TRANSLATION MODAL ── */}
-            {showTranslationModal && translatingContent && (
-                <div className="fixed inset-0 z-[400] flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowTranslationModal(false)} />
-                    <div className="relative w-full max-w-4xl glassmorphism rounded-[2.5rem] border border-white/10 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-                        <div className="p-8 border-b border-white/5 flex items-center justify-between bg-gradient-to-r from-indigo-500/10 to-purple-500/10">
-                            <div>
-                                <div className="flex items-center gap-3 mb-1">
-                                    <div className="w-10 h-10 rounded-2xl bg-indigo-500/20 flex items-center justify-center text-indigo-400">
-                                        <Globe size={20} />
-                                    </div>
-                                    <h3 className="text-2xl font-black tracking-tight">Content Translation</h3>
-                                </div>
-                                <p className="text-sm text-muted-foreground font-medium">Managing localization for: <span className="text-foreground font-bold">{translatingContent.title}</span></p>
-                            </div>
-                            <button onClick={() => setShowTranslationModal(false)} className="p-3 rounded-2xl hover:bg-white/5 transition-all text-muted-foreground hover:text-foreground">
-                                <XCircle size={24} />
-                            </button>
-                        </div>
-
-                        <div className="flex-1 overflow-auto p-8 space-y-8 text-foreground">
-                            {/* Translation Request Area */}
-                            <div className="space-y-4">
-                                <h4 className="text-xs font-black uppercase tracking-[0.2em] text-indigo-400">Request New Translation</h4>
-                                <div className="flex flex-wrap gap-3">
-                                    {localesConfig.availableLocales.filter(l => l !== 'en').map(locale => {
-                                        const existing = translations.find(t => t.locale === locale);
-                                        return (
-                                            <button
-                                                key={locale}
-                                                disabled={isTranslating || (existing && existing.status === 'APPROVED')}
-                                                onClick={() => requestTranslation(translatingContent.id, translatingContent.type, locale)}
-                                                className="px-6 py-3 rounded-2xl bg-indigo-600 text-white font-black text-xs flex items-center gap-2 hover:scale-105 active:scale-95 transition-all shadow-lg shadow-indigo-500/20 disabled:opacity-50 disabled:grayscale"
-                                            >
-                                                {isTranslating ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
-                                                Draft AI Translation ({locale.toUpperCase()})
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-
-                            {/* Existing Translations List */}
-                            <div className="space-y-6">
-                                <h4 className="text-xs font-black uppercase tracking-[0.2em] text-indigo-400">Verified & Drafted Content</h4>
-                                <div className="space-y-4">
-                                    {translations.length === 0 ? (
-                                        <div className="p-12 rounded-[2rem] border border-dashed border-white/10 text-center flex flex-col items-center gap-4 bg-white/5">
-                                            <Globe className="w-12 h-12 text-muted-foreground opacity-20" />
-                                            <p className="text-muted-foreground italic text-sm">No translations found. Start by drafting one with AI above.</p>
-                                        </div>
-                                    ) : translations.map(t => (
-                                        <div key={t.id} className="p-6 rounded-3xl bg-secondary/20 border border-white/5 space-y-4">
-                                            <div className="flex items-center justify-between">
-                                                <div className="flex items-center gap-3">
-                                                    <span className="text-lg">{t.locale === 'ar' ? '🇸🇦' : '🇺🇸'}</span>
-                                                    <span className="font-bold uppercase tracking-widest text-xs">{t.locale === 'ar' ? 'Arabic' : 'English'}</span>
-                                                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-tighter border ${t.status === 'APPROVED' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-orange-500/10 text-orange-400 border-orange-500/20'}`}>
-                                                        {t.status}
-                                                    </span>
+                                                        <div className="p-8 border-t border-border/50">
+                                                            <button
+                                                                onClick={() => exportAuditLog(selectedLogMetadata)}
+                                                                className="w-full py-4 bg-primary text-primary-foreground rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] transition-all shadow-lg hover:shadow-primary/20 active:scale-[0.98] flex items-center justify-center gap-2"
+                                                            >
+                                                                <Download size={14} /> Export Insight Data
+                                                            </button>
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                                <div className="flex gap-2">
-                                                    {t.status === 'PENDING' && (
-                                                        <button 
-                                                            onClick={() => handleUpdateTranslation(t.id, 'APPROVED')}
-                                                            className="px-4 py-1.5 rounded-xl bg-emerald-500 text-white font-bold text-[10px] hover:scale-105 transition-all shadow-lg shadow-emerald-500/20"
-                                                        >
-                                                            Approve Draft
-                                                        </button>
-                                                    )}
-                                                    {t.status === 'APPROVED' && (
-                                                        <button 
-                                                            onClick={() => handleUpdateTranslation(t.id, 'PENDING')}
-                                                            className="px-4 py-1.5 rounded-xl bg-orange-500/10 text-orange-400 border border-orange-500/20 font-bold text-[10px] hover:bg-orange-500/20 transition-all font-mono"
-                                                        >
-                                                            Revoke Approval
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            </div>
+                                            )}
 
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-2">
-                                                <div className="space-y-1">
-                                                    <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground ml-1">Translated Title</label>
-                                                    <input 
-                                                        type="text" 
-                                                        value={t.title || ''} 
-                                                        dir={t.locale === 'ar' ? 'rtl' : 'ltr'}
-                                                        onChange={(e) => {
-                                                            const newTitle = e.target.value;
-                                                            setTranslations(prev => prev.map(item => item.id === t.id ? { ...item, title: newTitle } : item));
-                                                        }}
-                                                        onBlur={() => handleUpdateTranslation(t.id, t.status, t.title)}
-                                                        className="w-full bg-background border border-border/50 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500/50 outline-none font-bold placeholder:text-muted-foreground/30"
-                                                    />
+                                            {/* ── USER INSIGHTS PANEL ── */}
+                                            {insightsUserId && (
+                                                <div className="fixed inset-0 z-[500] flex justify-end bg-black/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => { setInsightsUserId(null); setInsightsUser(null); }}>
+                                                    <div className="w-full max-w-xl bg-background border-l border-border/50 h-full flex flex-col shadow-2xl animate-in slide-in-from-right duration-300" onClick={e => e.stopPropagation()}>
+
+                                                        {/* Header */}
+                                                        <div className="flex items-start justify-between px-8 py-6 border-b border-border/50 bg-gradient-to-r from-primary/5 to-transparent">
+                                                            <div className="flex items-center gap-4">
+                                                                <div className="w-12 h-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-black text-xl shadow-lg shadow-primary/5">
+                                                                    {isFetchingUserDetail ? <Loader2 size={24} className="animate-spin" /> : insightsUser?.name?.[0]?.toUpperCase() || '?'}
+                                                                </div>
+                                                                <div>
+                                                                    <p className="text-[10px] font-black uppercase tracking-widest text-primary mb-0.5">Learner Analytics</p>
+                                                                    <h2 className="text-2xl font-black truncate max-w-[320px]">{isFetchingUserDetail ? 'Hydrating Detail...' : insightsUser?.name || 'Anonymous User'}</h2>
+                                                                </div>
+                                                            </div>
+                                                            <button onClick={() => { setInsightsUserId(null); setInsightsUser(null); }} className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary transition-all">
+                                                                <XCircle size={20} />
+                                                            </button>
+                                                        </div>
+
+                                                        <div className="flex-1 overflow-y-auto custom-scrollbar">
+                                                            {!isFetchingUserDetail && insightsUser ? (
+                                                                <div className="p-8 space-y-10">
+                                                                    {/* Calculated Metrics */}
+                                                                    {(() => {
+                                                                        const totalEnrollments = insightsUser.enrollments?.length || 0;
+                                                                        const totalLessons = insightsUser.enrollments?.reduce((acc: number, en: any) => acc + (en.totalLessons || 0), 0) || 0;
+                                                                        const completedLessons = insightsUser.enrollments?.reduce((acc: number, en: any) => acc + (en.completedLessons || 0), 0) || 0;
+                                                                        const avgProgress = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
+                                                                        const quizAccuracy = insightsUser.quizAttempts?.length > 0
+                                                                            ? Math.round(insightsUser.quizAttempts.reduce((acc: any, curr: any) => acc + (curr.score || 0), 0) / insightsUser.quizAttempts.length)
+                                                                            : 0;
+
+                                                                        return (
+                                                                            <>
+                                                                                {/* KPI Grid */}
+                                                                                <div className="grid grid-cols-3 gap-4">
+                                                                                    <div className="p-4 rounded-2xl bg-secondary/20 border border-border/50 space-y-1">
+                                                                                        <p className="text-[9px] font-black uppercase text-muted-foreground tracking-widest">Enrollments</p>
+                                                                                        <p className="text-2xl font-black text-foreground">{totalEnrollments}</p>
+                                                                                    </div>
+                                                                                    <div className="p-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/10 space-y-1">
+                                                                                        <p className="text-[9px] font-black uppercase text-emerald-500/70 tracking-widest">Avg Progress</p>
+                                                                                        <p className="text-2xl font-black text-emerald-400">{avgProgress}%</p>
+                                                                                    </div>
+                                                                                    <div className="p-4 rounded-2xl bg-blue-500/5 border border-blue-500/10 space-y-1">
+                                                                                        <p className="text-[9px] font-black uppercase text-blue-500/70 tracking-widest">Assessment</p>
+                                                                                        <p className="text-2xl font-black text-blue-400">{quizAccuracy}%</p>
+                                                                                    </div>
+                                                                                </div>
+
+                                                                                {/* Course Breakdown */}
+                                                                                <section className="space-y-4">
+                                                                                    <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                                                                                        <BookOpen size={11} className="text-primary" /> Enrollment Velocity
+                                                                                    </h3>
+                                                                                    <div className="grid grid-cols-1 gap-3">
+                                                                                        {insightsUser.enrollments?.length > 0 ? insightsUser.enrollments.map((en: any) => (
+                                                                                            <div key={en.id} className="p-4 rounded-2xl bg-secondary/10 border border-border/40 hover:border-primary/30 transition-all group">
+                                                                                                <div className="flex justify-between items-start mb-3">
+                                                                                                    <div className="min-w-0">
+                                                                                                        <p className="text-xs font-bold truncate group-hover:text-primary transition-colors">{en.course?.title}</p>
+                                                                                                        <p className="text-[9px] text-muted-foreground uppercase font-black tracking-tight mt-0.5">
+                                                                                                            {en.completedLessons} / {en.totalLessons} Lessons Completed
+                                                                                                        </p>
+                                                                                                    </div>
+                                                                                                    <span className="text-[10px] font-black text-primary">{en.progressPercentage}%</span>
+                                                                                                </div>
+                                                                                                <div className="h-1.5 w-full bg-secondary rounded-full overflow-hidden">
+                                                                                                    <div
+                                                                                                        className="h-full bg-primary transition-all duration-1000"
+                                                                                                        style={{ width: `${en.progressPercentage}%` }}
+                                                                                                    />
+                                                                                                </div>
+                                                                                            </div>
+                                                                                        )) : (
+                                                                                            <div className="text-center py-6 text-muted-foreground text-xs italic">No active enrollments found.</div>
+                                                                                        )}
+                                                                                    </div>
+                                                                                </section>
+                                                                            </>
+                                                                        );
+                                                                    })()}
+
+                                                                    {/* Activity Timeline */}
+                                                                    <section className="space-y-4">
+                                                                        <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                                                                            <Clock size={11} className="text-primary" /> Activity Stream
+                                                                        </h3>
+                                                                        <div className="relative pl-4 space-y-6 before:absolute before:left-[19px] before:top-2 before:bottom-2 before:w-[1px] before:bg-border/60">
+                                                                            {insightsUser.activityLogs?.slice(0, 10).map((log: any, idx: number) => (
+                                                                                <div key={idx} className="relative pl-6">
+                                                                                    <div className="absolute left-[-1px] top-1.5 w-2 h-2 rounded-full bg-primary border-2 border-background z-10 shadow-sm shadow-primary/20" />
+                                                                                    <div>
+                                                                                        <p className="text-xs font-bold leading-none">{log.action.replace(/_/g, ' ')}</p>
+                                                                                        <p className="text-[10px] text-muted-foreground mt-1.5 font-medium uppercase">
+                                                                                            {new Date(log.createdAt).toLocaleDateString()} &middot; {new Date(log.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                                                        </p>
+                                                                                    </div>
+                                                                                </div>
+                                                                            ))}
+                                                                            {(!insightsUser.activityLogs || insightsUser.activityLogs.length === 0) && (
+                                                                                <div className="text-muted-foreground text-xs italic pl-2">No recent activity recorded.</div>
+                                                                            )}
+                                                                        </div>
+                                                                    </section>
+                                                                </div>
+                                                            ) : (
+                                                                <div className="h-full flex flex-col items-center justify-center p-8 opacity-40 animate-pulse">
+                                                                    <Loader2 size={48} className="animate-spin mb-4 text-primary" />
+                                                                    <p className="text-sm font-bold uppercase tracking-widest">Hydrating User Insight...</p>
+                                                                </div>
+                                                            )}
+                                                        </div>
+
+                                                        {/* Footer */}
+                                                        <div className="p-6 border-t border-border/50 bg-background/80 backdrop-blur-sm mt-auto">
+                                                            <button
+                                                                onClick={() => { setInsightsUserId(null); setInsightsUser(null); }}
+                                                                className="w-full py-4 bg-secondary text-foreground rounded-2xl font-black uppercase tracking-widest text-sm hover:bg-secondary/80 transition-all shadow-lg active:scale-[0.98]"
+                                                            >
+                                                                Close Insights
+                                                            </button>
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                                <div className="space-y-1">
-                                                    <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground ml-1">Translated Description / Metadata</label>
-                                                    <textarea 
-                                                        value={t.description || ''} 
-                                                        dir={t.locale === 'ar' ? 'rtl' : 'ltr'}
-                                                        onChange={(e) => {
-                                                            const newDesc = e.target.value;
-                                                            setTranslations(prev => prev.map(item => item.id === t.id ? { ...item, description: newDesc } : item));
-                                                        }}
-                                                        onBlur={() => handleUpdateTranslation(t.id, t.status, t.title, t.description)}
-                                                        className="w-full bg-background border border-border/50 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500/50 outline-none min-h-[80px]"
-                                                    />
+                                            )}
+                                            {showProfileModal && (
+                                                <div className="fixed inset-0 z-[400] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md animate-in fade-in duration-300">
+                                                    <div className="bg-background border border-border/50 w-full max-w-md rounded-[2rem] p-8 space-y-6 shadow-2xl relative overflow-hidden">
+                                                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-blue-500" />
+
+                                                        <div className="flex justify-between items-center">
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                                                                    <Settings className="w-6 h-6 text-primary" />
+                                                                </div>
+                                                                <h3 className="text-xl font-black">Admin Profile</h3>
+                                                            </div>
+                                                            <button onClick={() => setShowProfileModal(false)} className="p-2 hover:bg-secondary rounded-full transition-all">
+                                                                <XCircle size={20} className="text-muted-foreground" />
+                                                            </button>
+                                                        </div>
+
+                                                        <form onSubmit={handleUpdateProfile} className="space-y-4">
+                                                            <div className="p-4 rounded-2xl bg-secondary/20 border border-border/50 space-y-3">
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center font-black text-primary border border-primary/20">
+                                                                        {userName.charAt(0).toUpperCase()}
+                                                                    </div>
+                                                                    <div className="flex flex-col">
+                                                                        <span className="text-sm font-black text-foreground">{userName}</span>
+                                                                        <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{userEmail}</span>
+                                                                    </div>
+                                                                </div>
+                                                                <div className="h-px bg-border/50 w-full" />
+                                                                <p className="text-[10px] text-muted-foreground italic leading-relaxed">
+                                                                    [Note: Name and Email are managed by the system administrator.]
+                                                                </p>
+                                                            </div>
+
+                                                            <div className="pt-2 space-y-4">
+                                                                <h4 className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
+                                                                    <Award size={12} /> Security
+                                                                </h4>
+                                                                <div className="space-y-2">
+                                                                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Current Password</label>
+                                                                    <input
+                                                                        type="password"
+                                                                        value={profileForm.currentPassword}
+                                                                        onChange={e => setProfileForm({ ...profileForm, currentPassword: e.target.value })}
+                                                                        placeholder="••••••••"
+                                                                        className="w-full bg-secondary/30 border border-border/50 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all text-foreground placeholder:text-muted-foreground/30"
+                                                                    />
+                                                                </div>
+                                                                <div className="grid grid-cols-2 gap-4">
+                                                                    <div className="space-y-2">
+                                                                        <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">New Password</label>
+                                                                        <input
+                                                                            type="password"
+                                                                            value={profileForm.newPassword}
+                                                                            onChange={e => setProfileForm({ ...profileForm, newPassword: e.target.value })}
+                                                                            placeholder="••••••••"
+                                                                            className="w-full bg-secondary/30 border border-border/50 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all text-foreground placeholder:text-muted-foreground/30"
+                                                                        />
+                                                                    </div>
+                                                                    <div className="space-y-2">
+                                                                        <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Confirm New</label>
+                                                                        <input
+                                                                            type="password"
+                                                                            value={profileForm.confirmPassword}
+                                                                            onChange={e => setProfileForm({ ...profileForm, confirmPassword: e.target.value })}
+                                                                            placeholder="••••••••"
+                                                                            className="w-full bg-secondary/30 border border-border/50 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all text-foreground placeholder:text-muted-foreground/30"
+                                                                        />
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+
+                                                            <button
+                                                                type="submit"
+                                                                disabled={isUpdatingProfile}
+                                                                className="w-full py-4 mt-4 bg-primary text-primary-foreground rounded-2xl font-black uppercase tracking-[0.2em] text-xs transition-all shadow-lg hover:shadow-primary/20 active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
+                                                            >
+                                                                {isUpdatingProfile ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Update Security Settings'}
+                                                            </button>
+                                                        </form>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
-            </main>
+                                            )}
+                                            {confirmModal && (
+                                                <div className="fixed inset-0 z-[300] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md animate-in fade-in duration-300">
+                                                    <div className="bg-background border border-border/50 w-full max-w-sm rounded-[2rem] p-8 space-y-6 shadow-2xl relative overflow-hidden">
+                                                        <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${confirmModal.variant === 'info' ? 'from-indigo-500/50 via-indigo-500 to-indigo-500/50' : 'from-red-500/50 via-red-500 to-red-500/50'}`} />
+
+                                                        <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 ${confirmModal.variant === 'info' ? 'bg-indigo-500/10' : 'bg-red-500/10'}`}>
+                                                            {confirmModal.variant === 'info' ? <Info className="w-10 h-10 text-indigo-500" /> : <Trash2 className="w-10 h-10 text-red-500" />}
+                                                        </div>
+
+                                                        <div className="text-center space-y-2">
+                                                            <h3 className="text-2xl font-black">{confirmModal.title}</h3>
+                                                            <p className="text-muted-foreground text-sm">
+                                                                {confirmModal.message}
+                                                            </p>
+                                                        </div>
+
+                                                        <div className="flex gap-4 pt-4">
+                                                            <button
+                                                                onClick={() => {
+                                                                    confirmModal.resolve(false);
+                                                                    setConfirmModal(null);
+                                                                }}
+                                                                className="flex-1 py-4 bg-secondary hover:bg-secondary/80 rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all"
+                                                            >
+                                                                Cancel
+                                                            </button>
+                                                            <button
+                                                                onClick={() => {
+                                                                    confirmModal.resolve(true);
+                                                                    setConfirmModal(null);
+                                                                }}
+                                                                className={`flex-1 py-4 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-lg hover:scale-[1.02] transition-all ${confirmModal.variant === 'info' ? 'bg-indigo-600 shadow-indigo-500/20' : 'bg-red-500 shadow-red-500/20'}`}
+                                                            >
+                                                                {confirmModal.variant === 'info' ? 'Confirm' : 'Confirm Delete'}
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+                                            {/* ── TRANSLATION MODAL ── */}
+                                            {showTranslationModal && translatingContent && (
+                                                <div className="fixed inset-0 z-[400] flex items-center justify-center p-4">
+                                                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowTranslationModal(false)} />
+                                                    <div className="relative w-full max-w-4xl glassmorphism rounded-[2.5rem] border border-white/10 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+                                                        <div className="p-8 border-b border-white/5 flex items-center justify-between bg-gradient-to-r from-indigo-500/10 to-purple-500/10">
+                                                            <div>
+                                                                <div className="flex items-center gap-3 mb-1">
+                                                                    <div className="w-10 h-10 rounded-2xl bg-indigo-500/20 flex items-center justify-center text-indigo-400">
+                                                                        <Globe size={20} />
+                                                                    </div>
+                                                                    <h3 className="text-2xl font-black tracking-tight">Content Translation</h3>
+                                                                </div>
+                                                                <p className="text-sm text-muted-foreground font-medium">Managing localization for: <span className="text-foreground font-bold">{translatingContent.title}</span></p>
+                                                            </div>
+                                                            <button onClick={() => setShowTranslationModal(false)} className="p-3 rounded-2xl hover:bg-white/5 transition-all text-muted-foreground hover:text-foreground">
+                                                                <XCircle size={24} />
+                                                            </button>
+                                                        </div>
+
+                                                        <div className="flex-1 overflow-auto p-8 space-y-8 text-foreground">
+                                                            {/* Translation Request Area */}
+                                                            <div className="space-y-4">
+                                                                <h4 className="text-xs font-black uppercase tracking-[0.2em] text-indigo-400">Request New Translation</h4>
+                                                                <div className="flex flex-wrap gap-3">
+                                                                    {localesConfig.availableLocales.filter(l => l !== 'en').map(locale => {
+                                                                        const existing = translations.find(t => t.locale === locale);
+                                                                        return (
+                                                                            <button
+                                                                                key={locale}
+                                                                                disabled={isTranslating || (existing && existing.status === 'APPROVED')}
+                                                                                onClick={() => requestTranslation(translatingContent.id, translatingContent.type, locale)}
+                                                                                className="px-6 py-3 rounded-2xl bg-indigo-600 text-white font-black text-xs flex items-center gap-2 hover:scale-105 active:scale-95 transition-all shadow-lg shadow-indigo-500/20 disabled:opacity-50 disabled:grayscale"
+                                                                            >
+                                                                                {isTranslating ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
+                                                                                Draft AI Translation ({locale.toUpperCase()})
+                                                                            </button>
+                                                                        );
+                                                                    })}
+                                                                </div>
+                                                            </div>
+
+                                                            {/* Existing Translations List */}
+                                                            <div className="space-y-6">
+                                                                <h4 className="text-xs font-black uppercase tracking-[0.2em] text-indigo-400">Verified & Drafted Content</h4>
+                                                                <div className="space-y-4">
+                                                                    {translations.length === 0 ? (
+                                                                        <div className="p-12 rounded-[2rem] border border-dashed border-white/10 text-center flex flex-col items-center gap-4 bg-white/5">
+                                                                            <Globe className="w-12 h-12 text-muted-foreground opacity-20" />
+                                                                            <p className="text-muted-foreground italic text-sm">No translations found. Start by drafting one with AI above.</p>
+                                                                        </div>
+                                                                    ) : translations.map(t => (
+                                                                        <div key={t.id} className="p-6 rounded-3xl bg-secondary/20 border border-white/5 space-y-4">
+                                                                            <div className="flex items-center justify-between">
+                                                                                <div className="flex items-center gap-3">
+                                                                                    <span className="text-lg">{t.locale === 'ar' ? '🇸🇦' : '🇺🇸'}</span>
+                                                                                    <span className="font-bold uppercase tracking-widest text-xs">{t.locale === 'ar' ? 'Arabic' : 'English'}</span>
+                                                                                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-tighter border ${t.status === 'APPROVED' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-orange-500/10 text-orange-400 border-orange-500/20'}`}>
+                                                                                        {t.status}
+                                                                                    </span>
+                                                                                </div>
+                                                                                <div className="flex gap-2">
+                                                                                    {t.status === 'PENDING' && (
+                                                                                        <button
+                                                                                            onClick={() => handleUpdateTranslation(t.id, 'APPROVED')}
+                                                                                            className="px-4 py-1.5 rounded-xl bg-emerald-500 text-white font-bold text-[10px] hover:scale-105 transition-all shadow-lg shadow-emerald-500/20"
+                                                                                        >
+                                                                                            Approve Draft
+                                                                                        </button>
+                                                                                    )}
+                                                                                    {t.status === 'APPROVED' && (
+                                                                                        <button
+                                                                                            onClick={() => handleUpdateTranslation(t.id, 'PENDING')}
+                                                                                            className="px-4 py-1.5 rounded-xl bg-orange-500/10 text-orange-400 border border-orange-500/20 font-bold text-[10px] hover:bg-orange-500/20 transition-all font-mono"
+                                                                                        >
+                                                                                            Revoke Approval
+                                                                                        </button>
+                                                                                    )}
+                                                                                </div>
+                                                                            </div>
+
+                                                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-2">
+                                                                                <div className="space-y-1">
+                                                                                    <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground ml-1">Translated Title</label>
+                                                                                    <input
+                                                                                        type="text"
+                                                                                        value={t.title || ''}
+                                                                                        dir={t.locale === 'ar' ? 'rtl' : 'ltr'}
+                                                                                        onChange={(e) => {
+                                                                                            const newTitle = e.target.value;
+                                                                                            setTranslations(prev => prev.map(item => item.id === t.id ? { ...item, title: newTitle } : item));
+                                                                                        }}
+                                                                                        onBlur={() => handleUpdateTranslation(t.id, t.status, t.title)}
+                                                                                        className="w-full bg-background border border-border/50 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500/50 outline-none font-bold placeholder:text-muted-foreground/30"
+                                                                                    />
+                                                                                </div>
+                                                                                <div className="space-y-1">
+                                                                                    <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground ml-1">Translated Description / Metadata</label>
+                                                                                    <textarea
+                                                                                        value={t.description || ''}
+                                                                                        dir={t.locale === 'ar' ? 'rtl' : 'ltr'}
+                                                                                        onChange={(e) => {
+                                                                                            const newDesc = e.target.value;
+                                                                                            setTranslations(prev => prev.map(item => item.id === t.id ? { ...item, description: newDesc } : item));
+                                                                                        }}
+                                                                                        onBlur={() => handleUpdateTranslation(t.id, t.status, t.title, t.description)}
+                                                                                        className="w-full bg-background border border-border/50 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500/50 outline-none min-h-[80px]"
+                                                                                    />
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </main>
         </div>
-    );
+                                );
 }
 

@@ -440,7 +440,7 @@ export function PricingSection() {
 export function FaqSection() {
   return (
     <section className="bg-secondary/30 py-24">
-      <div className="mx-auto max-w-3xl px-4 sm:px-6">
+      <div className="mx-auto max-w-2xl px-4 sm:px-6">
         <SectionHeading badge="FAQ" title="Questions," highlight="answered." />
         <div className="space-y-3">
           {faqs.map((item) => (
@@ -466,7 +466,7 @@ export function CtaSection() {
           <div className="glow-orb -top-40 left-1/4 h-[500px] w-[500px] bg-primary/30" />
           <div className="glow-orb -bottom-32 right-0 h-[400px] w-[400px] bg-primary-glow/30" />
           <div className="relative">
-            <h2 className="mx-auto max-w-3xl text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl">
+            <h2 className="mx-auto max-w-2xl text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl">
               Ready to ship your <span className="text-gradient-primary">academy this week?</span>
             </h2>
             <p className="mx-auto mt-6 max-w-xl text-lg text-white/70">

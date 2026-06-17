@@ -1,15 +1,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { 
-    X, 
-    BarChart3, 
-    Users, 
-    CheckCircle2, 
-    TrendingUp, 
-    Clock, 
-    Mail, 
-    Search, 
+import {
+    X,
+    BarChart3,
+    Users,
+    CheckCircle2,
+    TrendingUp,
+    Clock,
+    Mail,
+    Search,
     ArrowRight,
     Loader2
 } from 'lucide-react';
@@ -72,7 +72,7 @@ export function GroupInsightsSlideOver({
         }
     };
 
-    const filteredMembers = stats?.memberStats.filter(m => 
+    const filteredMembers = stats?.memberStats.filter(m =>
         m.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         m.email.toLowerCase().includes(searchQuery.toLowerCase())
     ) || [];
@@ -82,10 +82,10 @@ export function GroupInsightsSlideOver({
     return (
         <div className="fixed inset-0 z-[100] overflow-hidden">
             <div className="absolute inset-0 bg-background/40 backdrop-blur-sm transition-opacity" onClick={onClose} />
-            
+
             <div className="fixed inset-y-0 right-0 max-w-2xl w-full flex">
                 <div className="h-full w-full glassmorphism border-l border-white/10 shadow-2xl flex flex-col animate-in slide-in-from-right duration-500">
-                    
+
                     {/* Header */}
                     <div className="p-8 border-b border-white/5 flex items-center justify-between">
                         <div className="flex items-center gap-4">
@@ -101,7 +101,7 @@ export function GroupInsightsSlideOver({
                                 </p>
                             </div>
                         </div>
-                        <button 
+                        <button
                             onClick={onClose}
                             className="p-2 hover:bg-white/5 rounded-xl transition-all text-muted-foreground hover:text-white"
                         >
@@ -148,7 +148,7 @@ export function GroupInsightsSlideOver({
                                         <h3 className="text-sm font-black uppercase tracking-widest text-primary">Member Performance</h3>
                                         <div className="relative">
                                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                                            <input 
+                                            <input
                                                 type="text"
                                                 placeholder="Filter members..."
                                                 value={searchQuery}
@@ -197,7 +197,7 @@ export function GroupInsightsSlideOver({
                                                                     </span>
                                                                 </div>
                                                                 <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden border border-white/5">
-                                                                    <div 
+                                                                    <div
                                                                         className={`h-full transition-all duration-1000 ${member.avgProgress === 100 ? 'bg-emerald-400' : 'bg-primary'}`}
                                                                         style={{ width: `${member.avgProgress}%` }}
                                                                     />
@@ -222,7 +222,7 @@ export function GroupInsightsSlideOver({
                             <div className="h-64 flex flex-col items-center justify-center gap-4">
                                 <XCircle className="w-8 h-8 text-red-400/50" />
                                 <p className="text-xs text-muted-foreground uppercase tracking-widest font-black text-center">
-                                    Strategic Analysis Failed.<br/>
+                                    Strategic Analysis Failed.<br />
                                     <span className="opacity-50 text-[10px]">No members identified in this group.</span>
                                 </p>
                             </div>
@@ -233,7 +233,7 @@ export function GroupInsightsSlideOver({
                         <p className="text-[9px] text-muted-foreground font-black uppercase tracking-[0.2em] max-w-[200px]">
                             * Data aggregated from real-time learner participation across all assigned course paths.
                         </p>
-                        <button 
+                        <button
                             onClick={onClose}
                             className="px-8 py-3 bg-white/5 hover:bg-white/10 rounded-2xl text-xs font-black uppercase tracking-widest border border-white/10 transition-all flex items-center gap-2 group"
                         >
@@ -248,19 +248,19 @@ export function GroupInsightsSlideOver({
 
 function XCircle({ className, size = 24 }: { className?: string; size?: number }) {
     return (
-        <svg 
-            xmlns="http://www.w3.org/2000/svg" 
-            width={size} 
-            height={size} 
-            viewBox="0 0 24 24" 
-            fill="none" 
-            stroke="currentColor" 
-            strokeWidth="2" 
-            strokeLinecap="round" 
-            strokeLinejoin="round" 
+        <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width={size}
+            height={size}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
             className={className}
         >
-            <circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/>
+            <circle cx="12" cy="12" r="10" /><path d="m15 9-6 6" /><path d="m9 9 6 6" />
         </svg>
     );
 }

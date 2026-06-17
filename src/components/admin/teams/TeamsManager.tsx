@@ -46,166 +46,166 @@ function TeamSlideOver({ editingTeam, learners, setEditingTeam, onSave, onDelete
             <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 pointer-events-none">
                 <div className="pointer-events-auto w-full max-w-2xl max-h-[90vh] flex flex-col bg-background border border-border/60 rounded-3xl shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden">
 
-                {/* ── Header ── */}
-                <div className="flex items-start justify-between px-8 py-6 border-b border-border/50 flex-shrink-0 bg-gradient-to-r from-primary/5 to-transparent">
-                    <div>
-                        <div className="flex items-center gap-2 mb-1">
-                            <Building size={16} className="text-primary" />
-                        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{editingTeam.isEditing ? 'Editing Team' : 'New Department'}</p>
+                    {/* ── Header ── */}
+                    <div className="flex items-start justify-between px-8 py-6 border-b border-border/50 flex-shrink-0 bg-gradient-to-r from-primary/5 to-transparent">
+                        <div>
+                            <div className="flex items-center gap-2 mb-1">
+                                <Building size={16} className="text-primary" />
+                                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{editingTeam.isEditing ? 'Editing Team' : 'New Department'}</p>
+                            </div>
+                            <h2 className="text-2xl font-black truncate max-w-sm">{editingTeam.name || (editingTeam.isEditing ? 'Untitled Team' : 'Organize New Team')}</h2>
+                            {editingTeam.isEditing && (
+                                <div className="flex items-center gap-4 mt-2">
+                                    <span className="flex items-center gap-1.5 text-[11px] font-bold text-muted-foreground">
+                                        <Shield size={11} className="text-primary" /> {managerCount} Manager{managerCount !== 1 ? 's' : ''}
+                                    </span>
+                                    <span className="flex items-center gap-1.5 text-[11px] font-bold text-muted-foreground">
+                                        <Users size={11} className="text-primary" /> {memberCount} Member{memberCount !== 1 ? 's' : ''}
+                                    </span>
+                                </div>
+                            )}
+                        </div>
+                        <button onClick={() => setEditingTeam(null)}
+                            className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary transition-all">
+                            <X size={20} />
+                        </button>
                     </div>
-                    <h2 className="text-2xl font-black truncate max-w-sm">{editingTeam.name || (editingTeam.isEditing ? 'Untitled Team' : 'Organize New Team')}</h2>
-                    {editingTeam.isEditing && (
-                        <div className="flex items-center gap-4 mt-2">
-                            <span className="flex items-center gap-1.5 text-[11px] font-bold text-muted-foreground">
-                                <Shield size={11} className="text-primary" /> {managerCount} Manager{managerCount !== 1 ? 's' : ''}
-                            </span>
-                            <span className="flex items-center gap-1.5 text-[11px] font-bold text-muted-foreground">
-                                <Users size={11} className="text-primary" /> {memberCount} Member{memberCount !== 1 ? 's' : ''}
-                            </span>
-                        </div>
-                    )}
-                    </div>
-                    <button onClick={() => setEditingTeam(null)}
-                        className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary transition-all">
-                        <X size={20} />
-                    </button>
-                </div>
 
-                {/* ── Scrollable body ── */}
-                <div className="flex-1 overflow-y-auto px-8 py-7 space-y-8">
+                    {/* ── Scrollable body ── */}
+                    <div className="flex-1 overflow-y-auto px-8 py-7 space-y-8">
 
-                    {/* Basic Info */}
-                    <section className="space-y-4">
-                        <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                            <FileText size={11} /> Basic Details
-                        </h3>
-                        <div className="space-y-3">
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold text-muted-foreground">Team Name</label>
-                                <input
-                                    value={editingTeam.name}
-                                    onChange={e => setEditingTeam({ ...editingTeam, name: e.target.value })}
-                                    className="w-full bg-secondary/30 border border-border/50 rounded-xl px-4 py-3 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold text-muted-foreground">Description</label>
-                                <textarea
-                                    value={editingTeam.description || ''}
-                                    onChange={e => setEditingTeam({ ...editingTeam, description: e.target.value })}
-                                    rows={3}
-                                    placeholder="Describe this team's purpose..."
-                                    className="w-full bg-secondary/30 border border-border/50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all resize-none text-foreground placeholder:text-muted-foreground/40"
-                                />
-                            </div>
-                        </div>
-                    </section>
-
-                    {/* Status Toggle */}
-                    <section className="space-y-4">
-                        <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                            <ShieldCheck size={11} /> Team Availability
-                        </h3>
-                        <div 
-                            onClick={() => setEditingTeam({ ...editingTeam, isActive: !editingTeam.isActive })}
-                            className="p-4 rounded-2xl bg-secondary/20 border border-border/50 flex items-center justify-between cursor-pointer hover:bg-secondary/30 transition-all"
-                        >
-                            <div className="space-y-1">
-                                <p className="text-sm font-bold">{editingTeam.isActive ? 'Team is Active' : 'Team is Inactive'}</p>
-                                <p className="text-xs text-muted-foreground">
-                                    {editingTeam.isActive 
-                                        ? 'Learners in this team can access all department-exclusive courses.' 
-                                        : 'Course access for this team will be temporarily suspended.'}
-                                </p>
-                            </div>
-                            <div className={`w-10 h-5 rounded-full p-1 transition-all relative ${editingTeam.isActive ? 'bg-primary' : 'bg-muted-foreground/30'}`}>
-                                <div className={`w-3 h-3 rounded-full bg-white shadow-sm transition-all ${editingTeam.isActive ? 'translate-x-5' : 'translate-x-0'}`} />
-                            </div>
-                        </div>
-                    </section>
-
-                    {/* Managers */}
-                    <section className="space-y-4">
-                        <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                            <Shield size={11} className="text-primary" /> Management
-                        </h3>
-                        <PeopleMultiSelect
-                            label="Team Managers"
-                            icon={ShieldCheck}
-                            people={learners}
-                            selectedIds={editingTeam.managerIds || []}
-                            onToggle={toggleManager}
-                            placeholder="Search managers by name or email..."
-                        />
-                    </section>
-
-                    {/* Members */}
-                    <section className="space-y-4">
-                        <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                            <Users size={11} className="text-primary" /> Roster
-                        </h3>
-                        <PeopleMultiSelect
-                            label="Team Members"
-                            icon={UsersRound}
-                            people={learners}
-                            selectedIds={editingTeam.memberIds || []}
-                            onToggle={toggleMember}
-                            placeholder="Search learners by name or email..."
-                        />
-                    </section>
-
-                    {/* Danger zone */}
-                    <section className="pt-4 border-t border-border/30 space-y-3">
-                        <h3 className="text-[10px] font-black uppercase tracking-widest text-red-500/70 flex items-center gap-2">
-                            <Trash2 size={11} /> Danger Zone
-                        </h3>
-                        {!confirmDelete ? (
-                            <button
-                                type="button"
-                                onClick={() => setConfirmDelete(true)}
-                                className="w-full py-3 border border-red-500/30 text-red-400 rounded-xl text-xs font-bold hover:bg-red-500/10 transition-all flex items-center justify-center gap-2"
-                            >
-                                <Trash2 size={13} /> Delete this team
-                            </button>
-                        ) : (
-                            <div className="p-4 rounded-xl border border-red-500/40 bg-red-500/5 space-y-3">
-                                <p className="text-xs font-bold text-red-400">Are you sure? This cannot be undone. All member assignments will be removed.</p>
-                                <div className="flex gap-2">
-                                    <button type="button" onClick={() => setConfirmDelete(false)}
-                                        className="flex-1 py-2.5 bg-secondary text-foreground rounded-xl text-xs font-bold hover:opacity-90">
-                                        Cancel
-                                    </button>
-                                    <button type="button" onClick={onDelete}
-                                        className="flex-1 py-2.5 bg-red-500 text-white rounded-xl text-xs font-bold hover:bg-red-600 transition-colors flex items-center justify-center gap-1.5">
-                                        <Trash2 size={12} /> Yes, Delete
-                                    </button>
+                        {/* Basic Info */}
+                        <section className="space-y-4">
+                            <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                                <FileText size={11} /> Basic Details
+                            </h3>
+                            <div className="space-y-3">
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-muted-foreground">Team Name</label>
+                                    <input
+                                        value={editingTeam.name}
+                                        onChange={e => setEditingTeam({ ...editingTeam, name: e.target.value })}
+                                        className="w-full bg-secondary/30 border border-border/50 rounded-xl px-4 py-3 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-muted-foreground">Description</label>
+                                    <textarea
+                                        value={editingTeam.description || ''}
+                                        onChange={e => setEditingTeam({ ...editingTeam, description: e.target.value })}
+                                        rows={3}
+                                        placeholder="Describe this team's purpose..."
+                                        className="w-full bg-secondary/30 border border-border/50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all resize-none text-foreground placeholder:text-muted-foreground/40"
+                                    />
                                 </div>
                             </div>
-                        )}
-                    </section>
-                </div>
+                        </section>
 
-                {/* ── Sticky Footer ── */}
-                <div className="flex-shrink-0 flex items-center gap-3 px-8 py-5 border-t border-border/50 bg-background/80 backdrop-blur-sm">
-                    <button onClick={() => setEditingTeam(null)}
-                        className="flex-1 py-3 bg-secondary text-foreground rounded-xl font-bold text-sm hover:opacity-90 transition-opacity">
-                        Cancel
-                    </button>
-                    <button onClick={onSave}
-                        className="flex-1 py-3 bg-primary text-primary-foreground rounded-2xl font-bold text-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2 shadow-lg shadow-primary/20">
-                        <Check size={16} /> Save Changes
-                    </button>
+                        {/* Status Toggle */}
+                        <section className="space-y-4">
+                            <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                                <ShieldCheck size={11} /> Team Availability
+                            </h3>
+                            <div
+                                onClick={() => setEditingTeam({ ...editingTeam, isActive: !editingTeam.isActive })}
+                                className="p-4 rounded-2xl bg-secondary/20 border border-border/50 flex items-center justify-between cursor-pointer hover:bg-secondary/30 transition-all"
+                            >
+                                <div className="space-y-1">
+                                    <p className="text-sm font-bold">{editingTeam.isActive ? 'Team is Active' : 'Team is Inactive'}</p>
+                                    <p className="text-xs text-muted-foreground">
+                                        {editingTeam.isActive
+                                            ? 'Learners in this team can access all department-exclusive courses.'
+                                            : 'Course access for this team will be temporarily suspended.'}
+                                    </p>
+                                </div>
+                                <div className={`w-10 h-5 rounded-full p-1 transition-all relative ${editingTeam.isActive ? 'bg-primary' : 'bg-muted-foreground/30'}`}>
+                                    <div className={`w-3 h-3 rounded-full bg-white shadow-sm transition-all ${editingTeam.isActive ? 'translate-x-5' : 'translate-x-0'}`} />
+                                </div>
+                            </div>
+                        </section>
+
+                        {/* Managers */}
+                        <section className="space-y-4">
+                            <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                                <Shield size={11} className="text-primary" /> Management
+                            </h3>
+                            <PeopleMultiSelect
+                                label="Team Managers"
+                                icon={ShieldCheck}
+                                people={learners}
+                                selectedIds={editingTeam.managerIds || []}
+                                onToggle={toggleManager}
+                                placeholder="Search managers by name or email..."
+                            />
+                        </section>
+
+                        {/* Members */}
+                        <section className="space-y-4">
+                            <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                                <Users size={11} className="text-primary" /> Roster
+                            </h3>
+                            <PeopleMultiSelect
+                                label="Team Members"
+                                icon={UsersRound}
+                                people={learners}
+                                selectedIds={editingTeam.memberIds || []}
+                                onToggle={toggleMember}
+                                placeholder="Search learners by name or email..."
+                            />
+                        </section>
+
+                        {/* Danger zone */}
+                        <section className="pt-4 border-t border-border/30 space-y-3">
+                            <h3 className="text-[10px] font-black uppercase tracking-widest text-red-500/70 flex items-center gap-2">
+                                <Trash2 size={11} /> Danger Zone
+                            </h3>
+                            {!confirmDelete ? (
+                                <button
+                                    type="button"
+                                    onClick={() => setConfirmDelete(true)}
+                                    className="w-full py-3 border border-red-500/30 text-red-400 rounded-xl text-xs font-bold hover:bg-red-500/10 transition-all flex items-center justify-center gap-2"
+                                >
+                                    <Trash2 size={13} /> Delete this team
+                                </button>
+                            ) : (
+                                <div className="p-4 rounded-xl border border-red-500/40 bg-red-500/5 space-y-3">
+                                    <p className="text-xs font-bold text-red-400">Are you sure? This cannot be undone. All member assignments will be removed.</p>
+                                    <div className="flex gap-2">
+                                        <button type="button" onClick={() => setConfirmDelete(false)}
+                                            className="flex-1 py-2.5 bg-secondary text-foreground rounded-xl text-xs font-bold hover:opacity-90">
+                                            Cancel
+                                        </button>
+                                        <button type="button" onClick={onDelete}
+                                            className="flex-1 py-2.5 bg-red-500 text-white rounded-xl text-xs font-bold hover:bg-red-600 transition-colors flex items-center justify-center gap-1.5">
+                                            <Trash2 size={12} /> Yes, Delete
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </section>
+                    </div>
+
+                    {/* ── Sticky Footer ── */}
+                    <div className="flex-shrink-0 flex items-center gap-3 px-8 py-5 border-t border-border/50 bg-background/80 backdrop-blur-sm">
+                        <button onClick={() => setEditingTeam(null)}
+                            className="flex-1 py-3 bg-secondary text-foreground rounded-xl font-bold text-sm hover:opacity-90 transition-opacity">
+                            Cancel
+                        </button>
+                        <button onClick={onSave}
+                            className="flex-1 py-3 bg-primary text-primary-foreground rounded-2xl font-bold text-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2 shadow-lg shadow-primary/20">
+                            <Check size={16} /> Save Changes
+                        </button>
+                    </div>
                 </div>
             </div>
-        </div>
-    </>
+        </>
     );
 }
 
 // ─────────────────────────────────────────────
 // Main TeamsManager
 // ─────────────────────────────────────────────
-export function TeamsManager({ domain, addToast }: { domain: string, addToast: (msg: string, type?: 'success'|'error') => void }) {
+export function TeamsManager({ domain, addToast }: { domain: string, addToast: (msg: string, type?: 'success' | 'error') => void }) {
     const [teams, setTeams] = useState<any[]>([]);
     const [learners, setLearners] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -257,12 +257,12 @@ export function TeamsManager({ domain, addToast }: { domain: string, addToast: (
             const res = await fetch(`/api/t/${domain}/teams`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    name: editingTeam.name, 
-                    description: editingTeam.description, 
+                body: JSON.stringify({
+                    name: editingTeam.name,
+                    description: editingTeam.description,
                     isActive: editingTeam.isActive ?? true,
-                    managerIds: editingTeam.managerIds || [], 
-                    memberIds: editingTeam.memberIds || [] 
+                    managerIds: editingTeam.managerIds || [],
+                    memberIds: editingTeam.memberIds || []
                 })
             });
             if (res.ok) {
@@ -387,7 +387,7 @@ export function TeamsManager({ domain, addToast }: { domain: string, addToast: (
                             <p className="text-sm text-muted-foreground">Organize your talent by departments and assign leadership.</p>
                         </div>
                     </div>
-                    <button 
+                    <button
                         onClick={openCreate}
                         className="px-6 py-3 bg-primary text-primary-foreground rounded-2xl font-black text-sm uppercase tracking-widest hover:opacity-90 flex items-center gap-2 shadow-xl shadow-primary/20"
                     >
@@ -399,7 +399,7 @@ export function TeamsManager({ domain, addToast }: { domain: string, addToast: (
                 <div className="mb-6">
                     <div className="relative max-w-md">
                         <Building className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                        <input 
+                        <input
                             type="text"
                             placeholder="Search teams..."
                             value={searchQuery}
@@ -457,7 +457,7 @@ export function TeamsManager({ domain, addToast }: { domain: string, addToast: (
                                         </div>
                                     </td>
                                     <td className="px-6 py-5">
-                                        <div 
+                                        <div
                                             onClick={() => handleStatusToggle(team)}
                                             className="flex items-center gap-2 cursor-pointer group/toggle"
                                         >
@@ -470,14 +470,14 @@ export function TeamsManager({ domain, addToast }: { domain: string, addToast: (
                                         </div>
                                     </td>
                                     <td className="px-6 py-5 text-right flex items-center justify-end gap-2">
-                                        <button 
+                                        <button
                                             onClick={() => handleInsights(team)}
                                             className="p-2 rounded-xl bg-secondary/50 text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all"
                                             title="View Team Insights"
                                         >
                                             <BarChart3 size={14} />
                                         </button>
-                                        <button 
+                                        <button
                                             onClick={() => openEdit(team)}
                                             className="p-2 rounded-xl bg-secondary/50 text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all"
                                             title="Edit Team"
@@ -493,7 +493,7 @@ export function TeamsManager({ domain, addToast }: { domain: string, addToast: (
             </div>
 
             {/* Insights Slide-over */}
-            <GroupInsightsSlideOver 
+            <GroupInsightsSlideOver
                 isOpen={isInsightsOpen}
                 onClose={() => setIsInsightsOpen(false)}
                 groupId={insightsTeamId}
