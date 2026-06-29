@@ -30,7 +30,21 @@ export async function GET(
 
         // Build learner scope (team or role filter)
         let learnerIds: string[] | null = null;
-        if (teamIdParam) {
+        if (teamIdParam && roleIdParam) {
+            const [team, role] = await Promise.all([
+                prisma.team.findUnique({
+                    where: { id: teamIdParam },
+                    select: { members: { select: { id: true } } }
+                }),
+                prisma.jobRole.findUnique({
+                    where: { id: roleIdParam },
+                    select: { users: { select: { id: true } } }
+                })
+            ]);
+            const teamMemberIds = team?.members.map(m => m.id) || [];
+            const roleUserIds = role?.users.map(u => u.id) || [];
+            learnerIds = teamMemberIds.filter(id => roleUserIds.includes(id));
+        } else if (teamIdParam) {
             const team = await prisma.team.findUnique({
                 where: { id: teamIdParam },
                 select: { members: { select: { id: true } } }

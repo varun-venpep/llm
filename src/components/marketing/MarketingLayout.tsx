@@ -1,3 +1,6 @@
+'use client';
+
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import type { LucideIcon } from 'lucide-react';
@@ -422,12 +425,28 @@ export function PricingCard({ plan }: { plan: (typeof pricingPlans)[number] }) {
 }
 
 export function PricingSection() {
+  const [plans, setPlans] = useState<any[]>(pricingPlans);
+
+  useEffect(() => {
+    fetch('/api/admin/billing/plans')
+      .then((res) => {
+        if (res.ok) return res.json();
+        throw new Error('API failed');
+      })
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setPlans(data);
+        }
+      })
+      .catch((err) => console.log('Using fallback pricing plans:', err));
+  }, []);
+
   return (
     <section className="bg-secondary/30 py-24">
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
         <SectionHeading badge="Pricing" title="Simple," highlight="transparent pricing." text="Start focused, then expand into more tenants, learners, certificates, reports, and support as your academy grows." />
         <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-3">
-          {pricingPlans.map((plan) => <PricingCard key={plan.name} plan={plan} />)}
+          {plans.map((plan) => <PricingCard key={plan.name} plan={plan} />)}
         </div>
         <p className="mt-10 text-center text-sm text-muted-foreground">
           All plans include secure access, platform updates, branded learning workflows, and a growth path for multi-tenant operations.

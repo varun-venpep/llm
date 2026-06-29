@@ -3,6 +3,20 @@
 import { useState, useEffect } from 'react';
 import { Search, MoreVertical, Building2, CheckCircle2, ShieldCheck, Edit2, Trash2, AlertTriangle, Loader2, ExternalLink, Copy, Check, Eye, EyeOff, Plus } from 'lucide-react';
 
+interface Plan {
+    id: string;
+    name: string;
+    description: string;
+    currency: string;
+    price: string;
+    note: string;
+    features: string[];
+    userLimit: number;
+    courseCreateLimit: number;
+    aiQuizGeneration: boolean;
+    featured: boolean;
+}
+
 interface Tenant {
     id: string;
     name: string;
@@ -20,6 +34,7 @@ interface Tenant {
     customRevenueCurrency?: string;
     globalMarketplaceEnabled?: boolean;
     courseCredits?: number;
+    courseCreateCount?: number;
 }
 
 const getCurrencySymbol = (currencyCode?: string) => {
@@ -83,12 +98,26 @@ type EditForm = {
     customRevenueCurrency: string;
     globalMarketplaceEnabled: boolean;
     courseCredits: number;
+    courseCreateCount: number;
 };
 
 export default function TenantsPage() {
     const [tenants, setTenants] = useState<Tenant[]>([]);
+    const [plans, setPlans] = useState<Plan[]>([]);
     const [loading, setLoading] = useState(true);
     const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+    const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+    const [searchQuery, setSearchQuery] = useState('');
+
+    const filteredTenants = tenants.filter(tenant => 
+        tenant.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+        tenant.subdomain.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (tenant.adminEmail && tenant.adminEmail.toLowerCase().includes(searchQuery.toLowerCase()))
+    );
+
+    const getValidationError = (key: string): string | null => {
+        return validationErrors[key] || null;
+    };
 
     // Edit Modal State
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -104,6 +133,7 @@ export default function TenantsPage() {
         customRevenueCurrency: 'USD',
         globalMarketplaceEnabled: false,
         courseCredits: 0,
+        courseCreateCount: 0,
     });
     const [isUpdating, setIsUpdating] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
@@ -122,25 +152,49 @@ export default function TenantsPage() {
         subdomain: '',
         adminEmail: '',
         adminPassword: '',
-        globalMarketplaceEnabled: false,
+                globalMarketplaceEnabled: false,
         courseCredits: 0,
+        courseCreateCount: 0,
+        selectedPlanId: '',
     });
     const [showCreatePassword, setShowCreatePassword] = useState(false);
 
     const handleCreate = async (e: React.FormEvent) => {
         e.preventDefault();
+        setValidationErrors({});
+        const errors: Record<string, string> = {};
+
+        if (!createForm.name.trim()) {
+            errors.name = 'Organization name is required';
+        }
+        if (!createForm.subdomain.trim()) {
+            errors.subdomain = 'Subdomain is required';
+        }
+        if (!createForm.adminEmail.trim()) {
+            errors.adminEmail = 'Admin email address is required';
+        }
+        if (!createForm.adminPassword.trim()) {
+            errors.adminPassword = 'Admin password is required';
+        }
 
         // Check for duplicate name
-        const nameExists = tenants.some(t => t.name.trim().toLowerCase() === createForm.name.trim().toLowerCase());
-        if (nameExists) {
-            showSwal('Duplicate Name', 'Organization name already exists', 'error');
-            return;
+        if (createForm.name.trim()) {
+            const nameExists = tenants.some(t => t.name.trim().toLowerCase() === createForm.name.trim().toLowerCase());
+            if (nameExists) {
+                errors.name = 'Organization name already exists';
+            }
         }
 
         // Check for duplicate subdomain
-        const subdomainExists = tenants.some(t => t.subdomain.trim().toLowerCase() === createForm.subdomain.trim().toLowerCase());
-        if (subdomainExists) {
-            showSwal('Duplicate Subdomain', 'Subdomain already exists', 'error');
+        if (createForm.subdomain.trim()) {
+            const subdomainExists = tenants.some(t => t.subdomain.trim().toLowerCase() === createForm.subdomain.trim().toLowerCase());
+            if (subdomainExists) {
+                errors.subdomain = 'Subdomain already exists';
+            }
+        }
+
+        if (Object.keys(errors).length > 0) {
+            setValidationErrors(errors);
             return;
         }
 
@@ -161,7 +215,10 @@ export default function TenantsPage() {
                     adminPassword: '',
                     globalMarketplaceEnabled: false,
                     courseCredits: 0,
+                    courseCreateCount: 0,
+                    selectedPlanId: '',
                 });
+                setValidationErrors({});
                 showSwal('Success', 'Workspace created successfully!', 'success');
             } else {
                 const data = await res.json();
@@ -187,8 +244,21 @@ export default function TenantsPage() {
         }
     };
 
+    const fetchPlans = async () => {
+        try {
+            const res = await fetch('/api/admin/billing/plans');
+            if (res.ok) {
+                const data = await res.json();
+                setPlans(data);
+            }
+        } catch (err) {
+            console.error('Failed to fetch plans:', err);
+        }
+    };
+
     useEffect(() => {
         void Promise.resolve().then(fetchTenants);
+        void Promise.resolve().then(fetchPlans);
 
         // Close dropdown when clicking outside
         const handleClickOutside = () => setActiveDropdown(null);
@@ -209,7 +279,9 @@ export default function TenantsPage() {
             customRevenueCurrency: tenant.customRevenueCurrency || 'USD',
             globalMarketplaceEnabled: tenant.globalMarketplaceEnabled || false,
             courseCredits: tenant.courseCredits || 0,
+            courseCreateCount: tenant.courseCreateCount || 0,
         });
+        setValidationErrors({});
         setIsEditModalOpen(true);
         setActiveDropdown(null);
     };
@@ -224,17 +296,37 @@ export default function TenantsPage() {
         e.preventDefault();
         if (!editingTenant) return;
 
+        setValidationErrors({});
+        const errors: Record<string, string> = {};
+
+        if (!editForm.name.trim()) {
+            errors.name = 'Organization name is required';
+        }
+        if (!editForm.subdomain.trim()) {
+            errors.subdomain = 'Subdomain is required';
+        }
+        if (!editForm.adminEmail.trim()) {
+            errors.adminEmail = 'Admin email address is required';
+        }
+
         // Check for duplicate name
-        const nameExists = tenants.some(t => t.name.trim().toLowerCase() === editForm.name.trim().toLowerCase() && t.id !== editingTenant.id);
-        if (nameExists) {
-            showSwal('Duplicate Name', 'Organization name already exists', 'error');
-            return;
+        if (editForm.name.trim()) {
+            const nameExists = tenants.some(t => t.name.trim().toLowerCase() === editForm.name.trim().toLowerCase() && t.id !== editingTenant.id);
+            if (nameExists) {
+                errors.name = 'Organization name already exists';
+            }
         }
 
         // Check for duplicate subdomain
-        const subdomainExists = tenants.some(t => t.subdomain.trim().toLowerCase() === editForm.subdomain.trim().toLowerCase() && t.id !== editingTenant.id);
-        if (subdomainExists) {
-            showSwal('Duplicate Subdomain', 'Subdomain already exists', 'error');
+        if (editForm.subdomain.trim()) {
+            const subdomainExists = tenants.some(t => t.subdomain.trim().toLowerCase() === editForm.subdomain.trim().toLowerCase() && t.id !== editingTenant.id);
+            if (subdomainExists) {
+                errors.subdomain = 'Subdomain already exists';
+            }
+        }
+
+        if (Object.keys(errors).length > 0) {
+            setValidationErrors(errors);
             return;
         }
 
@@ -249,6 +341,7 @@ export default function TenantsPage() {
                 await fetchTenants();
                 setIsEditModalOpen(false);
                 setEditForm(prev => ({ ...prev, newPassword: '' }));
+                setValidationErrors({});
                 showSwal('Success', 'Workspace updated successfully!', 'success');
             } else {
                 const data = await res.json();
@@ -293,7 +386,20 @@ export default function TenantsPage() {
                     <p className="text-muted-foreground text-sm font-medium">Manage all active and inactive client workspaces across the platform.</p>
                 </div>
                 <button
-                    onClick={() => setIsCreateModalOpen(true)}
+                    onClick={() => {
+                        setCreateForm({
+                            name: '',
+                            subdomain: '',
+                            adminEmail: '',
+                            adminPassword: '',
+                            globalMarketplaceEnabled: false,
+                            courseCredits: 0,
+                            courseCreateCount: 0,
+                            selectedPlanId: '',
+                        });
+                        setValidationErrors({});
+                        setIsCreateModalOpen(true);
+                    }}
                     className="flex items-center gap-2 px-5 py-3 bg-blue-600 hover:bg-blue-500 text-white font-black uppercase tracking-widest text-xs rounded-xl transition-all shadow-xl shadow-blue-500/20 group"
                 >
                     <Plus className="w-4 h-4 group-hover:scale-110 transition-transform" /> Create Tenant
@@ -308,6 +414,8 @@ export default function TenantsPage() {
                         <input
                             type="text"
                             placeholder="Search organizations..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
                             className="bg-background/50 border border-border rounded-lg pl-9 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 w-64"
                         />
                     </div>
@@ -330,7 +438,9 @@ export default function TenantsPage() {
                                 <tr><td colSpan={7} className="text-center py-20 font-medium text-muted-foreground italic">Syncing with cloud...</td></tr>
                             ) : tenants.length === 0 ? (
                                 <tr><td colSpan={7} className="text-center py-20 font-medium text-muted-foreground italic">No active deployments found.</td></tr>
-                            ) : tenants.map((tenant) => (
+                            ) : filteredTenants.length === 0 ? (
+                                <tr><td colSpan={7} className="text-center py-20 font-medium text-muted-foreground italic">No matching workspaces found.</td></tr>
+                            ) : filteredTenants.map((tenant) => (
                                 <tr key={tenant.id} className="hover:bg-secondary/20 transition-colors group">
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-3">
@@ -416,20 +526,32 @@ export default function TenantsPage() {
                     <div className="bg-background border border-border w-full max-w-2xl max-h-[calc(100vh-2rem)] sm:max-h-[calc(100vh-3rem)] rounded-3xl shadow-2xl p-6 sm:p-8 my-auto space-y-6 overflow-y-auto">
                         <div className="flex justify-between items-center">
                             <h3 className="text-xl font-black uppercase tracking-tight flex items-center gap-2"><Edit2 className="w-5 h-5 text-blue-400" /> Edit Workspace</h3>
-                            <button onClick={() => setIsEditModalOpen(false)} className="text-muted-foreground hover:text-foreground text-2xl">&times;</button>
+                            <button onClick={() => { setIsEditModalOpen(false); setValidationErrors({}); }} className="text-muted-foreground hover:text-foreground text-2xl">&times;</button>
                         </div>
 
-                        <form onSubmit={handleUpdate} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <form onSubmit={handleUpdate} className="grid grid-cols-1 md:grid-cols-2 gap-6" noValidate>
                             <div className="space-y-6 md:col-span-2">
                                 <div className="space-y-1.5">
                                     <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Organization Name</label>
                                     <input
                                         type="text"
-                                        className="w-full bg-secondary/50 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                                        className={`w-full bg-secondary/50 border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 transition-all ${
+                                            getValidationError('name') ? 'border-red-500/50 focus:ring-red-500/30' : 'border-border focus:ring-blue-500/30'
+                                        }`}
                                         value={editForm.name}
-                                        onChange={e => setEditForm({ ...editForm, name: e.target.value })}
+                                        onChange={e => {
+                                            setEditForm({ ...editForm, name: e.target.value });
+                                            if (getValidationError('name')) {
+                                                setValidationErrors(prev => ({ ...prev, name: '' }));
+                                            }
+                                        }}
                                         required
                                     />
+                                    {getValidationError('name') && (
+                                        <p className="text-[11px] font-bold text-red-500 animate-in fade-in slide-in-from-top-1 ml-1 uppercase tracking-wider">
+                                            {getValidationError('name')}
+                                        </p>
+                                    )}
                                 </div>
                             </div>
 
@@ -438,14 +560,26 @@ export default function TenantsPage() {
                                 <div className="relative group">
                                     <input
                                         type="text"
-                                        className="w-full bg-secondary/50 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 font-mono disabled:opacity-50"
+                                        className={`w-full bg-secondary/50 border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 font-mono disabled:opacity-50 transition-all ${
+                                            getValidationError('subdomain') ? 'border-red-500/50 focus:ring-red-500/30' : 'border-border focus:ring-blue-500/30'
+                                        }`}
                                         value={editForm.subdomain}
-                                        onChange={e => setEditForm({ ...editForm, subdomain: e.target.value })}
+                                        onChange={e => {
+                                            setEditForm({ ...editForm, subdomain: e.target.value });
+                                            if (getValidationError('subdomain')) {
+                                                setValidationErrors(prev => ({ ...prev, subdomain: '' }));
+                                            }
+                                        }}
                                         disabled={editingTenant?.subdomain === 'admin-system'}
                                         required
                                     />
                                 </div>
-                                {editForm.subdomain && (
+                                {getValidationError('subdomain') && (
+                                    <p className="text-[11px] font-bold text-red-500 animate-in fade-in slide-in-from-top-1 ml-1 uppercase tracking-wider">
+                                        {getValidationError('subdomain')}
+                                    </p>
+                                )}
+                                {editForm.subdomain && !getValidationError('subdomain') && (
                                     <div className="flex items-center justify-between px-1">
                                         <div className="text-[10px] text-blue-400 font-mono flex items-center gap-1.5 overflow-hidden">
                                             <span className="truncate">http://{editForm.subdomain}.{process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'lvh.me:3000'}/login</span>
@@ -484,12 +618,24 @@ export default function TenantsPage() {
                                 <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Admin Email Address</label>
                                 <input
                                     type="email"
-                                    className="w-full bg-secondary/50 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                                    className={`w-full bg-secondary/50 border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 transition-all ${
+                                        getValidationError('adminEmail') ? 'border-red-500/50 focus:ring-red-500/30' : 'border-border focus:ring-blue-500/30'
+                                    }`}
                                     value={editForm.adminEmail}
-                                    onChange={e => setEditForm({ ...editForm, adminEmail: e.target.value })}
+                                    onChange={e => {
+                                        setEditForm({ ...editForm, adminEmail: e.target.value });
+                                        if (getValidationError('adminEmail')) {
+                                            setValidationErrors(prev => ({ ...prev, adminEmail: '' }));
+                                        }
+                                    }}
                                     required
                                     placeholder="admin@workspace.com"
                                 />
+                                {getValidationError('adminEmail') && (
+                                    <p className="text-[11px] font-bold text-red-500 animate-in fade-in slide-in-from-top-1 ml-1 uppercase tracking-wider">
+                                        {getValidationError('adminEmail')}
+                                    </p>
+                                )}
                             </div>
 
                             <div className="space-y-1.5 md:col-span-1">
@@ -529,14 +675,14 @@ export default function TenantsPage() {
                                 <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Monthly Costing</label>
                                 <div className="flex bg-secondary/50 border border-border rounded-xl">
                                     <select
-                                        className="bg-transparent pl-4 pr-2 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 rounded-l-xl font-medium border-r border-border"
+                                        className="bg-secondary pl-4 pr-2 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 rounded-l-xl font-medium border-r border-border text-foreground"
                                         value={editForm.customRevenueCurrency}
                                         onChange={e => setEditForm({ ...editForm, customRevenueCurrency: e.target.value })}
                                     >
-                                        <option value="USD">USD ($)</option>
-                                        <option value="EUR">EUR (€)</option>
-                                        <option value="GBP">GBP (£)</option>
-                                        <option value="INR">INR (₹)</option>
+                                        <option value="USD" className="bg-[#0A0A0A] text-foreground">USD ($)</option>
+                                        <option value="EUR" className="bg-[#0A0A0A] text-foreground">EUR (€)</option>
+                                        <option value="GBP" className="bg-[#0A0A0A] text-foreground">GBP (£)</option>
+                                        <option value="INR" className="bg-[#0A0A0A] text-foreground">INR (₹)</option>
                                     </select>
                                     <input
                                         type="number"
@@ -547,6 +693,49 @@ export default function TenantsPage() {
                                     />
                                 </div>
                                 <p className="text-[9px] text-muted-foreground italic px-1 pt-1">Offline costing/value tracked against this workspace.</p>
+                            </div>
+
+                            <div className="space-y-1.5 md:col-span-2">
+                                <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Apply Subscription Plan Template</label>
+                                <select
+                                    className="w-full bg-secondary/50 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 text-foreground font-bold"
+                                    onChange={e => {
+                                        const planId = e.target.value;
+                                        const plan = plans.find(p => p.id === planId);
+                                        if (plan) {
+                                            setEditForm({
+                                                ...editForm,
+                                                courseCreateCount: plan.courseCreateLimit,
+                                                aiCredits: plan.id === 'starter' ? 100 : plan.id === 'professional' ? 1000 : 9999,
+                                                customRevenue: plan.price.toLowerCase() === 'custom' ? 0 : parseInt(plan.price.replace(/,/g, '')) || 0,
+                                                customRevenueCurrency: plan.currency || 'USD',
+                                                globalMarketplaceEnabled: plan.id !== 'starter',
+                                                courseCredits: plan.id === 'professional' ? 50 : plan.id === 'enterprise' ? 9999 : 0
+                                            });
+                                        }
+                                    }}
+                                >
+                                    <option value="" className="bg-[#0A0A0A] text-foreground">Apply a plan template overrides...</option>
+                                    {plans.map(p => (
+                                        <option key={p.id} value={p.id} className="bg-[#0A0A0A] text-foreground">
+                                            {p.name} ({p.price === 'Custom' ? 'Custom Pricing' : `${p.currency} ${p.price}/mo`})
+                                        </option>
+                                    ))}
+                                </select>
+                                <p className="text-[9px] text-muted-foreground italic px-1">Selecting a template overrides limits, monthly costing, and credits automatically.</p>
+                            </div>
+
+                            <div className="space-y-1.5 md:col-span-1">
+                                <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Course Create Limit</label>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    className="w-full bg-secondary/50 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                                    value={editForm.courseCreateCount || ''}
+                                    onChange={e => setEditForm({ ...editForm, courseCreateCount: parseInt(e.target.value) || 0 })}
+                                    placeholder="0 (Unlimited)"
+                                />
+                                <p className="text-[9px] text-muted-foreground italic px-1 pt-1">Max courses allowed to be created. Set to 0 for unlimited.</p>
                             </div>
 
                             <div className="flex flex-col gap-3 justify-end pb-1.5">
@@ -630,21 +819,33 @@ export default function TenantsPage() {
                             <h3 className="text-xl font-black uppercase tracking-tight flex items-center gap-2">
                                 <Plus className="w-5 h-5 text-emerald-400" /> Create Workspace
                             </h3>
-                            <button onClick={() => setIsCreateModalOpen(false)} className="text-muted-foreground hover:text-foreground text-2xl">&times;</button>
+                            <button onClick={() => { setIsCreateModalOpen(false); setValidationErrors({}); }} className="text-muted-foreground hover:text-foreground text-2xl">&times;</button>
                         </div>
 
-                        <form onSubmit={handleCreate} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <form onSubmit={handleCreate} className="grid grid-cols-1 md:grid-cols-2 gap-6" noValidate>
                             <div className="space-y-6 md:col-span-2">
                                 <div className="space-y-1.5">
                                     <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Organization Name</label>
                                     <input
                                         type="text"
-                                        className="w-full bg-secondary/50 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                                        className={`w-full bg-secondary/50 border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 transition-all ${
+                                            getValidationError('name') ? 'border-red-500/50 focus:ring-red-500/30' : 'border-border focus:ring-blue-500/30'
+                                        }`}
                                         value={createForm.name}
-                                        onChange={e => setCreateForm({ ...createForm, name: e.target.value })}
+                                        onChange={e => {
+                                            setCreateForm({ ...createForm, name: e.target.value });
+                                            if (getValidationError('name')) {
+                                                setValidationErrors(prev => ({ ...prev, name: '' }));
+                                            }
+                                        }}
                                         required
                                         placeholder="e.g. Acme Corporation"
                                     />
+                                    {getValidationError('name') && (
+                                        <p className="text-[11px] font-bold text-red-500 animate-in fade-in slide-in-from-top-1 ml-1 uppercase tracking-wider">
+                                            {getValidationError('name')}
+                                        </p>
+                                    )}
                                 </div>
                             </div>
 
@@ -652,13 +853,25 @@ export default function TenantsPage() {
                                 <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Subdomain</label>
                                 <input
                                     type="text"
-                                    className="w-full bg-secondary/50 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 font-mono"
+                                    className={`w-full bg-secondary/50 border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 font-mono transition-all ${
+                                        getValidationError('subdomain') ? 'border-red-500/50 focus:ring-red-500/30' : 'border-border focus:ring-blue-500/30'
+                                    }`}
                                     value={createForm.subdomain}
-                                    onChange={e => setCreateForm({ ...createForm, subdomain: e.target.value })}
+                                    onChange={e => {
+                                        setCreateForm({ ...createForm, subdomain: e.target.value });
+                                        if (getValidationError('subdomain')) {
+                                            setValidationErrors(prev => ({ ...prev, subdomain: '' }));
+                                        }
+                                    }}
                                     required
                                     placeholder="acme"
                                 />
-                                {createForm.subdomain && (
+                                {getValidationError('subdomain') && (
+                                    <p className="text-[11px] font-bold text-red-500 animate-in fade-in slide-in-from-top-1 ml-1 uppercase tracking-wider">
+                                        {getValidationError('subdomain')}
+                                    </p>
+                                )}
+                                {createForm.subdomain && !getValidationError('subdomain') && (
                                     <span className="text-[9px] text-blue-400 font-mono block px-1">
                                         http://{createForm.subdomain.toLowerCase().trim()}.{process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'lvh.me:3000'}/login
                                     </span>
@@ -669,12 +882,24 @@ export default function TenantsPage() {
                                 <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Admin Email Address</label>
                                 <input
                                     type="email"
-                                    className="w-full bg-secondary/50 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                                    className={`w-full bg-secondary/50 border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 transition-all ${
+                                        getValidationError('adminEmail') ? 'border-red-500/50 focus:ring-red-500/30' : 'border-border focus:ring-blue-500/30'
+                                    }`}
                                     value={createForm.adminEmail}
-                                    onChange={e => setCreateForm({ ...createForm, adminEmail: e.target.value })}
+                                    onChange={e => {
+                                        setCreateForm({ ...createForm, adminEmail: e.target.value });
+                                        if (getValidationError('adminEmail')) {
+                                            setValidationErrors(prev => ({ ...prev, adminEmail: '' }));
+                                        }
+                                    }}
                                     required
                                     placeholder="admin@acme.com"
                                 />
+                                {getValidationError('adminEmail') && (
+                                    <p className="text-[11px] font-bold text-red-500 animate-in fade-in slide-in-from-top-1 ml-1 uppercase tracking-wider">
+                                        {getValidationError('adminEmail')}
+                                    </p>
+                                )}
                             </div>
 
                             <div className="space-y-1.5 md:col-span-2">
@@ -682,9 +907,16 @@ export default function TenantsPage() {
                                 <div className="relative">
                                     <input
                                         type={showCreatePassword ? "text" : "password"}
-                                        className="w-full bg-secondary/50 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                                        className={`w-full bg-secondary/50 border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 transition-all ${
+                                            getValidationError('adminPassword') ? 'border-red-500/50 focus:ring-red-500/30' : 'border-border focus:ring-blue-500/30'
+                                        }`}
                                         value={createForm.adminPassword}
-                                        onChange={e => setCreateForm({ ...createForm, adminPassword: e.target.value })}
+                                        onChange={e => {
+                                            setCreateForm({ ...createForm, adminPassword: e.target.value });
+                                            if (getValidationError('adminPassword')) {
+                                                setValidationErrors(prev => ({ ...prev, adminPassword: '' }));
+                                            }
+                                        }}
                                         required
                                         placeholder="Set admin password..."
                                     />
@@ -696,6 +928,55 @@ export default function TenantsPage() {
                                         {showCreatePassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                                     </button>
                                 </div>
+                                {getValidationError('adminPassword') && (
+                                    <p className="text-[11px] font-bold text-red-500 animate-in fade-in slide-in-from-top-1 ml-1 uppercase tracking-wider mt-1.5">
+                                        {getValidationError('adminPassword')}
+                                    </p>
+                                )}
+                            </div>
+
+                            <div className="space-y-1.5 md:col-span-2">
+                                <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Subscription Plan Template</label>
+                                <select
+                                    className="w-full bg-secondary/50 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 text-foreground font-bold"
+                                    value={createForm.selectedPlanId || ''}
+                                    onChange={e => {
+                                        const planId = e.target.value;
+                                        const plan = plans.find(p => p.id === planId);
+                                        if (plan) {
+                                            setCreateForm({
+                                                ...createForm,
+                                                selectedPlanId: planId,
+                                                courseCreateCount: plan.courseCreateLimit,
+                                                globalMarketplaceEnabled: plan.id !== 'starter',
+                                                courseCredits: plan.id === 'professional' ? 50 : plan.id === 'enterprise' ? 9999 : 0
+                                            });
+                                        } else {
+                                            setCreateForm({ ...createForm, selectedPlanId: planId });
+                                        }
+                                    }}
+                                >
+                                    <option value="" className="bg-[#0A0A0A] text-muted-foreground">Select a plan template...</option>
+                                    {plans.map(p => (
+                                        <option key={p.id} value={p.id} className="bg-[#0A0A0A] text-foreground">
+                                            {p.name} ({p.price === 'Custom' ? 'Custom Pricing' : `${p.currency} ${p.price}/mo`})
+                                        </option>
+                                    ))}
+                                </select>
+                                <p className="text-[9px] text-muted-foreground italic px-1">Selecting a template auto-populates default workspace limits below.</p>
+                            </div>
+
+                            <div className="space-y-1.5 md:col-span-2">
+                                <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Course Create Limit</label>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    className="w-full bg-secondary/50 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                                    value={createForm.courseCreateCount || ''}
+                                    onChange={e => setCreateForm({ ...createForm, courseCreateCount: parseInt(e.target.value) || 0 })}
+                                    placeholder="0 (Unlimited)"
+                                />
+                                <p className="text-[9px] text-muted-foreground italic px-1 pt-1">Maximum number of courses allowed to be created in this workspace. Set to 0 for unlimited.</p>
                             </div>
 
                             <div className="md:col-span-2 space-y-4 pt-2">
@@ -713,20 +994,7 @@ export default function TenantsPage() {
                                             <div className={`w-4 h-4 rounded-full bg-white shadow transition-all ${createForm.globalMarketplaceEnabled ? 'translate-x-4' : 'translate-x-0'}`} />
                                         </div>
                                     </div>
-                                    {createForm.globalMarketplaceEnabled && (
-                                        <div className="space-y-1.5">
-                                            <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Course Credits</label>
-                                            <input
-                                                type="number"
-                                                min="0"
-                                                className="w-full bg-secondary/50 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
-                                                value={createForm.courseCredits || ''}
-                                                onChange={e => setCreateForm({ ...createForm, courseCredits: parseInt(e.target.value) || 0 })}
-                                                placeholder="0"
-                                            />
-                                            <p className="text-[9px] text-muted-foreground italic px-1">Each claim costs 1 credit. Set to 0 to restrict access temporarily.</p>
-                                        </div>
-                                    )}
+
                                 </div>
 
                                 <button

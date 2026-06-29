@@ -11,8 +11,8 @@ export async function GET(
         const tenant = await prisma.tenant.findUnique({ where: { subdomain: domain } });
         if (!tenant) return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
 
-        const session = await checkSession(req, domain, 'TENANT_ADMIN');
-        if (!requireTenantPermission(session, 'people.manage')) {
+        const session = await checkSession(req, domain, ['TENANT_ADMIN', 'SUPER_ADMIN']);
+        if (!requireTenantPermission(session, 'people.manage') && !requireTenantPermission(session, 'reports.view')) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
@@ -41,9 +41,14 @@ export async function POST(
         const tenant = await prisma.tenant.findUnique({ where: { subdomain: domain } });
         if (!tenant) return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
 
-        const session = await checkSession(req, domain, 'TENANT_ADMIN');
+        const session = await checkSession(req, domain, ['TENANT_ADMIN', 'SUPER_ADMIN']);
+        if (!session) {
+            return NextResponse.json({ error: 'Session not found or invalid role' }, { status: 401 });
+        }
         if (!requireTenantPermission(session, 'people.manage')) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+            return NextResponse.json({
+                error: `Missing permission 'people.manage'. User permissions: ${JSON.stringify(session.tenantAdminPermissions)}`
+            }, { status: 401 });
         }
 
         const { name, description, isActive = true } = await req.json();
@@ -71,8 +76,9 @@ export async function POST(
         }
 
         return NextResponse.json(role);
-    } catch (error) {
-        return NextResponse.json({ error: 'Failed to create role' }, { status: 500 });
+    } catch (error: any) {
+        console.error('[ROLES_POST_ERROR]', error);
+        return NextResponse.json({ error: error.message || 'Failed to create role', stack: error.stack }, { status: 500 });
     }
 }
 
@@ -85,7 +91,7 @@ export async function PUT(
         const tenant = await prisma.tenant.findUnique({ where: { subdomain: domain } });
         if (!tenant) return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
 
-        const session = await checkSession(req, domain, 'TENANT_ADMIN');
+        const session = await checkSession(req, domain, ['TENANT_ADMIN', 'SUPER_ADMIN']);
         if (!requireTenantPermission(session, 'people.manage')) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
         const { id, name, description, isActive, userIds } = await req.json();
@@ -140,7 +146,7 @@ export async function DELETE(
         const tenant = await prisma.tenant.findUnique({ where: { subdomain: domain } });
         if (!tenant) return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
 
-        const session = await checkSession(req, domain, 'TENANT_ADMIN');
+        const session = await checkSession(req, domain, ['TENANT_ADMIN', 'SUPER_ADMIN']);
         if (!requireTenantPermission(session, 'people.manage')) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }

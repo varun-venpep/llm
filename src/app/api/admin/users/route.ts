@@ -3,14 +3,14 @@ import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 
 async function isSuperAdmin(req: NextRequest) {
-    const sessionId = req.cookies.get('session-token')?.value;
+    const sessionId = req.cookies.get('admin_token')?.value || req.cookies.get('session-token')?.value;
     if (!sessionId) return false;
     try {
         const user = await prisma.user.findUnique({
             where: { id: sessionId },
             select: { role: true }
         });
-        return user?.role === 'SUPER_ADMIN';
+        return user?.role === 'SUPER_ADMIN' || user?.role === 'PLATFORM_MANAGER';
     } catch {
         return false;
     }
@@ -21,15 +21,20 @@ export async function GET(req: NextRequest) {
     const mode = searchParams.get('mode') || 'stats';
     const query = searchParams.get('q') || '';
 
-    const sessionId = req.cookies.get('session-token')?.value;
+    const sessionId = req.cookies.get('admin_token')?.value || req.cookies.get('session-token')?.value;
     if (!sessionId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const currentUser = await prisma.user.findUnique({
         where: { id: sessionId },
-        select: { role: true }
+        select: { role: true, id: true, email: true }
     });
 
-    if (!currentUser || (currentUser.role !== 'SUPER_ADMIN' && currentUser.role !== 'PLATFORM_MANAGER')) {
+    try {
+        const fs = require('fs');
+        fs.writeFileSync('scratch/debug_user.json', JSON.stringify(currentUser, null, 2));
+    } catch (e) {}
+
+    if (!currentUser || (currentUser.role !== 'SUPER_ADMIN' && currentUser.role !== 'PLATFORM_MANAGER' && currentUser.role !== 'TENANT_ADMIN')) {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -71,12 +76,31 @@ export async function GET(req: NextRequest) {
         }
 
         if (mode === 'search') {
+            const cleanQuery = query.trim().replace(/^(uid|UID):\s*/, '');
+
+            if (currentUser.role === 'TENANT_ADMIN') {
+                const isUidQuery = query.trim().toLowerCase().startsWith('uid:') || cleanQuery.length === 25;
+                if (!isUidQuery || !cleanQuery) {
+                    return NextResponse.json({ error: 'please Enter UID' }, { status: 400 });
+                }
+                const users = await prisma.user.findMany({
+                    where: { id: cleanQuery },
+                    include: {
+                        tenant: {
+                            select: { id: true, name: true, subdomain: true }
+                        }
+                    },
+                    take: 1
+                });
+                return NextResponse.json(users);
+            }
+
             const users = await prisma.user.findMany({
                 where: query.trim() ? {
                     OR: [
                         { email: { contains: query, mode: 'insensitive' } },
                         { name: { contains: query, mode: 'insensitive' } },
-                        { id: { equals: query } }
+                        { id: { equals: cleanQuery } }
                     ]
                 } : {},
                 include: {

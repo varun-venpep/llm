@@ -3,7 +3,27 @@ import { prisma } from '@/lib/prisma';
 
 export async function GET(req: NextRequest) {
     try {
-        const sessionId = req.cookies.get('session-token')?.value;
+        let portal = req.nextUrl.searchParams.get('portal');
+
+        if (!portal) {
+            const referer = req.headers.get('referer');
+            if (referer) {
+                try {
+                    const path = new URL(referer).pathname;
+                    if (path.includes('/admin')) {
+                        portal = 'admin';
+                    } else if (path.includes('/dashboard') || path.includes('/course') || path.includes('/achievements')) {
+                        portal = 'learner';
+                    }
+                } catch (e) {}
+            }
+        }
+
+        const sessionId = portal === 'admin'
+            ? (req.cookies.get('admin_token')?.value || req.cookies.get('session-token')?.value)
+            : portal === 'learner'
+            ? (req.cookies.get('learner_token')?.value || req.cookies.get('admin_token')?.value || req.cookies.get('session-token')?.value)
+            : (req.cookies.get('admin_token')?.value || req.cookies.get('learner_token')?.value || req.cookies.get('session-token')?.value);
 
         if (!sessionId) {
             return NextResponse.json({ authenticated: false }, { status: 401 });

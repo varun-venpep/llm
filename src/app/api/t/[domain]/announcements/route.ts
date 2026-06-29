@@ -9,24 +9,41 @@ export async function GET(
 ) {
     const { domain } = await params;
     try {
+        console.log('[GET announcements] Domain:', domain);
         const tenant = await prisma.tenant.findUnique({ where: { subdomain: domain } });
-        if (!tenant) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+        if (!tenant) {
+            console.log('[GET announcements] Tenant not found for subdomain:', domain);
+            return NextResponse.json({ error: 'Not found' }, { status: 404 });
+        }
+        console.log('[GET announcements] Tenant found:', tenant.id);
 
         const session = await checkSession(req, domain);
+        console.log('[GET announcements] Session:', session ? session.id : 'null');
         let readAnnouncementIds = new Set<string>();
 
         if (session) {
-            const reads = await prisma.announcementRead.findMany({
-                where: { userId: session.id },
-                select: { announcementId: true }
-            });
-            readAnnouncementIds = new Set(reads.map((r: { announcementId: string }) => r.announcementId));
+            try {
+                const reads = await prisma.announcementRead.findMany({
+                    where: { userId: session.id },
+                    select: { announcementId: true }
+                });
+                readAnnouncementIds = new Set(reads.map((r: { announcementId: string }) => r.announcementId));
+                console.log('[GET announcements] Read announcements count:', readAnnouncementIds.size);
+            } catch (readError) {
+                console.error('[GET announcements] Failed to query announcementRead table:', readError);
+            }
         }
 
-        const announcements = await prisma.announcement.findMany({
-            where: { tenantId: tenant.id },
-            orderBy: { createdAt: 'desc' }
-        });
+        let announcements = [];
+        try {
+            announcements = await prisma.announcement.findMany({
+                where: { tenantId: tenant.id },
+                orderBy: { createdAt: 'desc' }
+            });
+            console.log('[GET announcements] Total announcements found:', announcements.length);
+        } catch (annError) {
+            console.error('[GET announcements] Failed to query announcement table:', annError);
+        }
 
         const formatted = announcements.map(announcement => ({
             ...announcement,
@@ -35,7 +52,8 @@ export async function GET(
 
         return NextResponse.json(formatted);
     } catch (e) {
-        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+        console.error('[GET announcements] General error in announcements route:', e);
+        return NextResponse.json({ error: 'Internal server error', details: e instanceof Error ? e.message : String(e) }, { status: 500 });
     }
 }
 

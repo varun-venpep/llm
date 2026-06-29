@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useTheme } from 'next-themes';
-import { BookOpen, Lock, Mail, ChevronRight, Loader2, Eye, EyeOff, CheckCircle2, ArrowLeft } from 'lucide-react';
+import { BookOpen, Lock, Mail, ChevronRight, Loader2, Eye, EyeOff, CheckCircle2, XCircle, ArrowLeft } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 
 type TenantBranding = {
@@ -25,6 +25,7 @@ export default function TenantLoginPage() {
     const [showPassword, setShowPassword] = useState(false);
     const [rememberMe, setRememberMe] = useState(false);
     const [error, setError] = useState('');
+    const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
     // Forgot Password Flow State
     const [isResetting, setIsResetting] = useState(false);
@@ -66,19 +67,30 @@ export default function TenantLoginPage() {
 
             const data = await res.json();
             if (res.ok) {
-                if (data.user?.id) localStorage.setItem(`${domain}_userId`, data.user.id);
-                if (data.user.role === 'TENANT_ADMIN' || data.user.role === 'SUPER_ADMIN') {
-                    router.push(`/t/${domain}/admin`);
-                } else {
-                    router.push(`/t/${domain}/dashboard`);
+                if (data.user?.id) {
+                    const isLearner = data.user.role === 'LEARNER';
+                    const storageKey = isLearner ? `${domain}_learner_userId` : `${domain}_admin_userId`;
+                    localStorage.setItem(storageKey, data.user.id);
                 }
+                setToast({ message: 'Welcome back! Logging you in...', type: 'success' });
+                setTimeout(() => {
+                    if (data.user.role === 'TENANT_ADMIN' || data.user.role === 'SUPER_ADMIN') {
+                        router.push(`/t/${domain}/admin`);
+                    } else {
+                        router.push(`/t/${domain}/dashboard`);
+                    }
+                }, 1500);
             } else {
                 setError(data.error || 'Login failed');
+                setToast({ message: data.error || 'Login failed', type: 'error' });
+                setLoading(false);
+                setTimeout(() => setToast(null), 4000);
             }
         } catch {
             setError('Network error');
-        } finally {
+            setToast({ message: 'Network error', type: 'error' });
             setLoading(false);
+            setTimeout(() => setToast(null), 4000);
         }
     };
 
@@ -263,6 +275,22 @@ export default function TenantLoginPage() {
                     Trusted by <span className="text-foreground">{tenant?.name}</span> employees worldwide
                 </p>
             </div>
+
+            {toast && (
+                <div className="fixed bottom-5 right-5 z-50 flex items-center gap-3 bg-card border border-border/80 px-5 py-4 rounded-2xl shadow-2xl animate-fade-up max-w-sm backdrop-blur-xl transition-all duration-300">
+                    <div className={`p-2 rounded-xl ${toast.type === 'success' ? 'bg-emerald-500/10 text-emerald-500 dark:text-emerald-400' : 'bg-red-500/10 text-red-500 dark:text-red-400'}`}>
+                        {toast.type === 'success' ? <CheckCircle2 className="w-5 h-5" /> : <XCircle className="w-5 h-5" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        <h4 className="text-xs font-black uppercase tracking-wider text-foreground">
+                            {toast.type === 'success' ? 'Authenticated' : 'Access Denied'}
+                        </h4>
+                        <p className="text-xs text-muted-foreground mt-0.5 font-medium">
+                            {toast.message}
+                        </p>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

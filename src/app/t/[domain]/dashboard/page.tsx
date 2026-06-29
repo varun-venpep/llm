@@ -129,7 +129,7 @@ export default function LearnerDashboard() {
     const fetchData = async () => {
         try {
             // VERIFY SESSION FIRST
-            const sessionRes = await fetch('/api/auth/session');
+            const sessionRes = await fetch('/api/auth/session?portal=learner');
             if (!sessionRes.ok) {
                 router.push(`/t/${domain}/login`);
                 return;
@@ -272,7 +272,6 @@ export default function LearnerDashboard() {
                                         </span>
                                     )}
                                 </button>
-                                <ThemeToggle />
 
                                 {/* Notifications Popover */}
                                 {showNotifications && (
@@ -319,6 +318,7 @@ export default function LearnerDashboard() {
                                 )}
                             </div>
                         )}
+                        <ThemeToggle />
                         <div className="flex items-center gap-3">
                             <button
                                 onClick={() => setShowProfileModal(true)}
@@ -330,6 +330,7 @@ export default function LearnerDashboard() {
                             <button
                                 onClick={async () => {
                                     await fetch(`/api/logout`, { method: 'POST' }).catch(() => { });
+                                    localStorage.removeItem(`${domain}_learner_userId`);
                                     localStorage.removeItem(`${domain}_userId`);
                                     router.push(`/t/${domain}/login`);
                                 }}

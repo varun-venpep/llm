@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Settings, Save, UploadCloud, Link as LinkIcon, AlertCircle, Bot, Palette, Globe, Upload, Plus, Trash2, LayoutDashboard } from 'lucide-react';
+import { Settings, Save, UploadCloud, Link as LinkIcon, AlertCircle, Bot, Palette, Globe, Upload, Plus, Trash2, LayoutDashboard, X } from 'lucide-react';
 import Image from 'next/image';
 import { uploadFile } from '@/lib/upload';
 
@@ -331,6 +331,19 @@ export default function GlobalSettingsPage() {
                                                         }} />
                                                         <Upload size={20} className="text-white" />
                                                     </label>
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => {
+                                                            e.preventDefault();
+                                                            e.stopPropagation();
+                                                            handleSave(asset.id, '');
+                                                            setSettings(prev => ({ ...prev, [asset.id]: '' }));
+                                                        }}
+                                                        className="absolute top-2 right-2 z-20 p-1.5 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white transition-all shadow-sm flex items-center justify-center hover:scale-105 active:scale-95"
+                                                        title="Remove Image"
+                                                    >
+                                                        <X size={10} className="stroke-[3]" />
+                                                    </button>
                                                 </>
                                             ) : (
                                                 <label className="inset-0 absolute flex flex-col items-center justify-center gap-1 cursor-pointer hover:bg-indigo-500/5 transition-all text-muted-foreground hover:text-indigo-400">

@@ -3,17 +3,21 @@ import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 
 async function isSuperAdmin(req: NextRequest) {
-    const sessionId = req.cookies.get('session-token')?.value;
+    const sessionId = req.cookies.get('admin_token')?.value || req.cookies.get('session-token')?.value;
     if (!sessionId) return false;
-    const user = await prisma.user.findUnique({
-        where: { id: sessionId },
-        select: { role: true }
-    });
-    return user?.role === 'SUPER_ADMIN';
+    try {
+        const user = await prisma.user.findUnique({
+            where: { id: sessionId },
+            select: { role: true }
+        });
+        return user?.role === 'SUPER_ADMIN' || user?.role === 'PLATFORM_MANAGER';
+    } catch {
+        return false;
+    }
 }
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-    const sessionId = req.cookies.get('session-token')?.value;
+    const sessionId = req.cookies.get('admin_token')?.value || req.cookies.get('session-token')?.value;
     if (!sessionId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const currentUser = await prisma.user.findUnique({
@@ -83,7 +87,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     if (!(await isSuperAdmin(req))) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    const sessionId = req.cookies.get('session-token')?.value;
+    const sessionId = req.cookies.get('admin_token')?.value || req.cookies.get('session-token')?.value;
     const { id } = await params;
 
     if (id === sessionId) return NextResponse.json({ error: 'Cannot delete own account' }, { status: 400 });

@@ -41,7 +41,7 @@ export default function CoursePlayer({ params: paramsPromise }: { params: Promis
 
     const [submittingQuiz, setSubmittingQuiz] = useState(false);
     const [quizError, setQuizError] = useState(false);
-    const userId = typeof window !== 'undefined' ? localStorage.getItem(`${domain}_userId`) : null;
+    const userId = typeof window !== 'undefined' ? (localStorage.getItem(`${domain}_learner_userId`) || localStorage.getItem(`${domain}_userId`)) : null;
     const [activeTab, setActiveTab] = useState('overview');
     const [expandedModules, setExpandedModules] = useState<Record<string, boolean>>({});
     const [notes, setNotes] = useState<any[]>([]);
@@ -187,7 +187,7 @@ export default function CoursePlayer({ params: paramsPromise }: { params: Promis
 
         // Pre-fetch attempt count when switching to a quiz lesson
         if (activeLesson.type === 'QUIZ' && activeLesson.quiz?.maxAttempts > 0) {
-            const uid = localStorage.getItem(`${domain}_userId`);
+            const uid = localStorage.getItem(`${domain}_learner_userId`) || localStorage.getItem(`${domain}_userId`);
             if (uid) {
                 fetch(`/api/t/${domain}/quiz-attempts/count?quizId=${activeLesson.quiz.id}&userId=${uid}`)
                     .then(r => r.json())
@@ -248,7 +248,7 @@ export default function CoursePlayer({ params: paramsPromise }: { params: Promis
     }, [activeLesson, completedLessonIds]);
 
     const logActivity = async (action: string, metadata: any = {}) => {
-        const uid = typeof window !== 'undefined' ? localStorage.getItem(`${domain}_userId`) : null;
+        const uid = typeof window !== 'undefined' ? (localStorage.getItem(`${domain}_learner_userId`) || localStorage.getItem(`${domain}_userId`)) : null;
         if (!uid) return;
         try {
             await fetch(`/api/t/${domain}/activity`, {
@@ -284,7 +284,7 @@ export default function CoursePlayer({ params: paramsPromise }: { params: Promis
                 setActiveLesson(firstActiveLesson);
             }
             // Fetch progress if userId in localStorage
-            const uid = typeof window !== 'undefined' ? localStorage.getItem(`${domain}_userId`) : null;
+            const uid = typeof window !== 'undefined' ? (localStorage.getItem(`${domain}_learner_userId`) || localStorage.getItem(`${domain}_userId`)) : null;
             if (uid) {
                 const pRes = await fetch(`/api/t/${domain}/progress?userId=${uid}&courseId=${courseId}`);
                 const pData = await pRes.json();
@@ -312,7 +312,7 @@ export default function CoursePlayer({ params: paramsPromise }: { params: Promis
         if (activeLesson.quiz.maxAttempts > 0) {
             setFetchingAttempts(true);
             try {
-                const uid = localStorage.getItem(`${domain}_userId`);
+                const uid = localStorage.getItem(`${domain}_learner_userId`) || localStorage.getItem(`${domain}_userId`);
                 const res = await fetch(`/api/t/${domain}/quiz-attempts/count?quizId=${activeLesson.quiz.id}&userId=${uid}`);
                 const { count } = await res.json();
                 setCurrentAttempts(count);
@@ -352,7 +352,7 @@ export default function CoursePlayer({ params: paramsPromise }: { params: Promis
     const handleRetakeCourse = async () => {
         if (!confirm('Are you sure you want to reset your progress and retake this course? All quiz attempts and completed lessons will be cleared for this course.')) return;
         try {
-            const uid = localStorage.getItem(`${domain}_userId`);
+            const uid = localStorage.getItem(`${domain}_learner_userId`) || localStorage.getItem(`${domain}_userId`);
             await fetch(`/api/t/${domain}/progress/reset`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -806,7 +806,7 @@ export default function CoursePlayer({ params: paramsPromise }: { params: Promis
                                                                             }
                                                                         });
 
-                                                                        const uid = localStorage.getItem(`${domain}_userId`);
+                                                                        const uid = localStorage.getItem(`${domain}_learner_userId`) || localStorage.getItem(`${domain}_userId`);
                                                                         const res = await fetch(`/api/t/${domain}/quiz-attempts`, {
                                                                             method: 'POST',
                                                                             headers: { 'Content-Type': 'application/json' },
@@ -1259,7 +1259,7 @@ export default function CoursePlayer({ params: paramsPromise }: { params: Promis
                                                     key={lesson.id}
                                                     onClick={() => {
                                                         if (isLessonLocked(lesson.id)) return;
-                                                        const uid = localStorage.getItem(`${domain}_userId`);
+                                                        const uid = localStorage.getItem(`${domain}_learner_userId`) || localStorage.getItem(`${domain}_userId`);
                                                         if (uid && lesson.id) trackLessonStart(uid, lesson.id);
                                                         setActiveLesson(lesson);
                                                         if (window.innerWidth < 1024) setSidebarOpen(false);

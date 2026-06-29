@@ -1,24 +1,29 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, Building, UsersRound, Loader2, Pencil, Check, X, ShieldCheck, Trash2, Users, FileText, Shield, BarChart3, AlertCircle } from 'lucide-react';
+import { Plus, Building, UsersRound, Loader2, Pencil, Check, X, ShieldCheck, Trash2, Users, FileText, Shield, BarChart3, AlertCircle, AlertTriangle } from 'lucide-react';
 import { PeopleMultiSelect } from '../shared/PeopleMultiSelect';
 import { GroupInsightsSlideOver } from '../shared/GroupInsightsSlideOver';
 
 // ─────────────────────────────────────────────
 // Slide-over drawer for editing a team
 // ─────────────────────────────────────────────
-function TeamSlideOver({ editingTeam, learners, setEditingTeam, onSave, onDelete }: {
+function TeamSlideOver({ editingTeam, learners, setEditingTeam, onSave, onDelete, validationErrors, setValidationErrors }: {
     editingTeam: any;
     learners: any[];
     setEditingTeam: (t: any) => void;
     onSave: () => void;
     onDelete: () => void;
+    validationErrors: Record<string, string | null>;
+    setValidationErrors: React.Dispatch<React.SetStateAction<Record<string, string | null>>>;
 }) {
     const [confirmDelete, setConfirmDelete] = useState(false);
 
     // Reset confirm on team change
-    useEffect(() => setConfirmDelete(false), [editingTeam?.id]);
+    useEffect(() => {
+        setConfirmDelete(false);
+        setValidationErrors({});
+    }, [editingTeam?.id, setValidationErrors]);
 
     const toggleManager = (id: string) => {
         const curr = editingTeam.managerIds || [];
@@ -84,19 +89,39 @@ function TeamSlideOver({ editingTeam, learners, setEditingTeam, onSave, onDelete
                                     <label className="text-xs font-bold text-muted-foreground">Team Name</label>
                                     <input
                                         value={editingTeam.name}
-                                        onChange={e => setEditingTeam({ ...editingTeam, name: e.target.value })}
-                                        className="w-full bg-secondary/30 border border-border/50 rounded-xl px-4 py-3 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all"
+                                        onChange={e => {
+                                            setEditingTeam({ ...editingTeam, name: e.target.value });
+                                            if (validationErrors.name) {
+                                                setValidationErrors(prev => ({ ...prev, name: null }));
+                                            }
+                                        }}
+                                        className={`w-full bg-secondary/30 border rounded-xl px-4 py-3 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all ${validationErrors.name ? 'border-red-500/50' : 'border-border/50'}`}
                                     />
+                                    {validationErrors.name && (
+                                        <span className="text-[10px] font-bold text-red-500 animate-in fade-in slide-in-from-top-1 ml-1 block">
+                                            {validationErrors.name}
+                                        </span>
+                                    )}
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-xs font-bold text-muted-foreground">Description</label>
                                     <textarea
                                         value={editingTeam.description || ''}
-                                        onChange={e => setEditingTeam({ ...editingTeam, description: e.target.value })}
+                                        onChange={e => {
+                                            setEditingTeam({ ...editingTeam, description: e.target.value });
+                                            if (validationErrors.description) {
+                                                setValidationErrors(prev => ({ ...prev, description: null }));
+                                            }
+                                        }}
                                         rows={3}
                                         placeholder="Describe this team's purpose..."
-                                        className="w-full bg-secondary/30 border border-border/50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all resize-none text-foreground placeholder:text-muted-foreground/40"
+                                        className={`w-full bg-secondary/30 border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all resize-none text-foreground placeholder:text-muted-foreground/40 ${validationErrors.description ? 'border-red-500/50' : 'border-border/50'}`}
                                     />
+                                    {validationErrors.description && (
+                                        <span className="text-[10px] font-bold text-red-500 animate-in fade-in slide-in-from-top-1 ml-1 block">
+                                            {validationErrors.description}
+                                        </span>
+                                    )}
                                 </div>
                             </div>
                         </section>
@@ -118,8 +143,8 @@ function TeamSlideOver({ editingTeam, learners, setEditingTeam, onSave, onDelete
                                             : 'Course access for this team will be temporarily suspended.'}
                                     </p>
                                 </div>
-                                <div className={`w-10 h-5 rounded-full p-1 transition-all relative ${editingTeam.isActive ? 'bg-primary' : 'bg-muted-foreground/30'}`}>
-                                    <div className={`w-3 h-3 rounded-full bg-white shadow-sm transition-all ${editingTeam.isActive ? 'translate-x-5' : 'translate-x-0'}`} />
+                                <div className={`w-10 h-5 rounded-full p-0.5 transition-all relative flex items-center ${editingTeam.isActive ? 'bg-emerald-500' : 'bg-secondary border border-border/40'}`}>
+                                    <div className={`w-4 h-4 rounded-full bg-white shadow-sm transition-all ${editingTeam.isActive ? 'translate-x-5' : 'translate-x-0'}`} />
                                 </div>
                             </div>
                         </section>
@@ -155,11 +180,11 @@ function TeamSlideOver({ editingTeam, learners, setEditingTeam, onSave, onDelete
                         </section>
 
                         {/* Danger zone */}
-                        <section className="pt-4 border-t border-border/30 space-y-3">
-                            <h3 className="text-[10px] font-black uppercase tracking-widest text-red-500/70 flex items-center gap-2">
-                                <Trash2 size={11} /> Danger Zone
-                            </h3>
-                            {!confirmDelete ? (
+                        {editingTeam.isEditing && (
+                            <section className="pt-4 border-t border-border/30 space-y-3">
+                                <h3 className="text-[10px] font-black uppercase tracking-widest text-red-500/70 flex items-center gap-2">
+                                    <Trash2 size={11} /> Danger Zone
+                                </h3>
                                 <button
                                     type="button"
                                     onClick={() => setConfirmDelete(true)}
@@ -167,22 +192,8 @@ function TeamSlideOver({ editingTeam, learners, setEditingTeam, onSave, onDelete
                                 >
                                     <Trash2 size={13} /> Delete this team
                                 </button>
-                            ) : (
-                                <div className="p-4 rounded-xl border border-red-500/40 bg-red-500/5 space-y-3">
-                                    <p className="text-xs font-bold text-red-400">Are you sure? This cannot be undone. All member assignments will be removed.</p>
-                                    <div className="flex gap-2">
-                                        <button type="button" onClick={() => setConfirmDelete(false)}
-                                            className="flex-1 py-2.5 bg-secondary text-foreground rounded-xl text-xs font-bold hover:opacity-90">
-                                            Cancel
-                                        </button>
-                                        <button type="button" onClick={onDelete}
-                                            className="flex-1 py-2.5 bg-red-500 text-white rounded-xl text-xs font-bold hover:bg-red-600 transition-colors flex items-center justify-center gap-1.5">
-                                            <Trash2 size={12} /> Yes, Delete
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
-                        </section>
+                            </section>
+                        )}
                     </div>
 
                     {/* ── Sticky Footer ── */}
@@ -198,6 +209,60 @@ function TeamSlideOver({ editingTeam, learners, setEditingTeam, onSave, onDelete
                     </div>
                 </div>
             </div>
+
+            {/* Delete Confirmation Modal */}
+            {confirmDelete && (
+                <>
+                    {/* Modal Backdrop */}
+                    <div
+                        className="fixed inset-0 z-[390] bg-black/85 backdrop-blur-md animate-in fade-in duration-200"
+                        onClick={() => setConfirmDelete(false)}
+                    />
+                    
+                    {/* Modal Content Container */}
+                    <div className="fixed inset-0 z-[400] flex items-center justify-center p-4 pointer-events-none">
+                        <div className="pointer-events-auto w-full max-w-md bg-[#0d0d10] border border-white/5 rounded-[32px] p-10 shadow-2xl flex flex-col items-center text-center animate-in zoom-in-95 duration-200">
+                            
+                            {/* Alert Icon */}
+                            <div className="mb-6">
+                                <svg className="w-20 h-20 text-[#f3bf8e]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2">
+                                    <circle cx="12" cy="12" r="10" />
+                                    <line x1="12" y1="8" x2="12" y2="13" strokeLinecap="round" />
+                                    <circle cx="12" cy="16.5" r="0.6" fill="currentColor" stroke="currentColor" strokeWidth="0.5" />
+                                </svg>
+                            </div>
+
+                            {/* Title */}
+                            <h3 className="text-white text-2xl font-bold tracking-tight mb-3">
+                                Delete {editingTeam.name || 'Team'}?
+                            </h3>
+
+                            {/* Description */}
+                            <p className="text-sm text-zinc-400 leading-relaxed max-w-[280px] mb-8">
+                                Are you sure you want to delete this team? All member assignments will be affected.
+                            </p>
+
+                            {/* Actions Buttons */}
+                            <div className="flex items-center gap-3 w-full justify-center">
+                                <button
+                                    type="button"
+                                    onClick={onDelete}
+                                    className="flex-1 py-3.5 bg-[#e50000] hover:bg-[#ff1a1a] text-white rounded-xl text-xs font-black tracking-wider uppercase transition-colors"
+                                >
+                                    YES, DELETE TEAM
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setConfirmDelete(false)}
+                                    className="flex-1 py-3.5 bg-[#242429] hover:bg-[#2f2f36] text-zinc-300 rounded-xl text-xs font-black tracking-wider uppercase transition-colors"
+                                >
+                                    CANCEL
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </>
+            )}
         </>
     );
 }
@@ -212,6 +277,7 @@ export function TeamsManager({ domain, addToast }: { domain: string, addToast: (
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [editingTeam, setEditingTeam] = useState<any>(null);
     const [searchQuery, setSearchQuery] = useState('');
+    const [validationErrors, setValidationErrors] = useState<Record<string, string | null>>({});
 
     // Insights State
     const [isInsightsOpen, setIsInsightsOpen] = useState(false);
@@ -235,22 +301,28 @@ export function TeamsManager({ domain, addToast }: { domain: string, addToast: (
     };
 
     const handleCreateTeam = async () => {
+        const errors: Record<string, string | null> = {};
         if (!editingTeam?.name?.trim()) {
-            addToast('Team name is required', 'error');
-            return;
+            errors.name = 'Team name is required';
         }
         if (!editingTeam?.description?.trim()) {
-            addToast('Description is required', 'error');
-            return;
+            errors.description = 'Description is required';
         }
 
         // Check for duplicate team name
-        const targetName = editingTeam.name.trim().toLowerCase();
-        const nameExists = teams.some(t => t.name.trim().toLowerCase() === targetName);
-        if (nameExists) {
-            addToast('Team name already exists in this workspace', 'error');
+        if (editingTeam?.name?.trim()) {
+            const targetName = editingTeam.name.trim().toLowerCase();
+            const nameExists = teams.some(t => t.name.trim().toLowerCase() === targetName);
+            if (nameExists) {
+                errors.name = 'Team name already exists in this workspace';
+            }
+        }
+
+        if (Object.keys(errors).length > 0) {
+            setValidationErrors(errors);
             return;
         }
+        setValidationErrors({});
 
         setIsSubmitting(true);
         try {
@@ -281,22 +353,28 @@ export function TeamsManager({ domain, addToast }: { domain: string, addToast: (
 
     const handleUpdateTeam = async () => {
         if (!editingTeam) return;
+        const errors: Record<string, string | null> = {};
         if (!editingTeam?.name?.trim()) {
-            addToast('Team name is required', 'error');
-            return;
+            errors.name = 'Team name is required';
         }
         if (!editingTeam?.description?.trim()) {
-            addToast('Description is required', 'error');
-            return;
+            errors.description = 'Description is required';
         }
 
         // Check for duplicate team name
-        const targetName = editingTeam.name.trim().toLowerCase();
-        const nameExists = teams.some(t => t.name.trim().toLowerCase() === targetName && t.id !== editingTeam.id);
-        if (nameExists) {
-            addToast('Team name already exists in this workspace', 'error');
+        if (editingTeam?.name?.trim()) {
+            const targetName = editingTeam.name.trim().toLowerCase();
+            const nameExists = teams.some(t => t.name.trim().toLowerCase() === targetName && t.id !== editingTeam.id);
+            if (nameExists) {
+                errors.name = 'Team name already exists in this workspace';
+            }
+        }
+
+        if (Object.keys(errors).length > 0) {
+            setValidationErrors(errors);
             return;
         }
+        setValidationErrors({});
 
         setIsSubmitting(true);
         try {
@@ -334,7 +412,6 @@ export function TeamsManager({ domain, addToast }: { domain: string, addToast: (
                 body: JSON.stringify({ id: team.id, isActive: !team.isActive })
             });
             if (res.ok) {
-                addToast(`Team ${!team.isActive ? 'activated' : 'deactivated'}`, 'success');
                 fetchData();
             }
         } catch (e) {
@@ -461,11 +538,11 @@ export function TeamsManager({ domain, addToast }: { domain: string, addToast: (
                                             onClick={() => handleStatusToggle(team)}
                                             className="flex items-center gap-2 cursor-pointer group/toggle"
                                         >
-                                            <div className={`w-8 h-4 rounded-full p-0.5 transition-all relative ${team.isActive ? 'bg-primary/20 border border-primary/20' : 'bg-secondary border border-border/40'}`}>
-                                                <div className={`w-3 h-3 rounded-full shadow-sm transition-all ${team.isActive ? 'translate-x-4 bg-primary' : 'translate-x-0 bg-muted-foreground'}`} />
+                                            <div className={`w-8 h-4 rounded-full p-0.5 transition-all relative ${team.isActive ? 'bg-emerald-500' : 'bg-secondary border border-border/40'}`}>
+                                                <div className={`w-3 h-3 rounded-full shadow-sm transition-all bg-white ${team.isActive ? 'translate-x-4' : 'translate-x-0'}`} />
                                             </div>
-                                            <span className={`text-[10px] font-black uppercase tracking-widest ${team.isActive ? 'text-primary' : 'text-muted-foreground'}`}>
-                                                {team.isActive ? 'Enabled' : 'Disabled'}
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                                                {team.isActive ? 'Active' : 'Inactive'}
                                             </span>
                                         </div>
                                     </td>
@@ -508,6 +585,8 @@ export function TeamsManager({ domain, addToast }: { domain: string, addToast: (
                 setEditingTeam={setEditingTeam}
                 onSave={editingTeam?.isEditing ? handleUpdateTeam : handleCreateTeam}
                 onDelete={handleDeleteTeam}
+                validationErrors={validationErrors}
+                setValidationErrors={setValidationErrors}
             />
         </div>
     );

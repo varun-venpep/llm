@@ -80,11 +80,10 @@ export function GroupInsightsSlideOver({
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-[100] overflow-hidden">
-            <div className="absolute inset-0 bg-background/40 backdrop-blur-sm transition-opacity" onClick={onClose} />
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+            <div className="absolute inset-0 bg-background/60 backdrop-blur-sm transition-opacity" onClick={onClose} />
 
-            <div className="fixed inset-y-0 right-0 max-w-2xl w-full flex">
-                <div className="h-full w-full glassmorphism border-l border-white/10 shadow-2xl flex flex-col animate-in slide-in-from-right duration-500">
+            <div className="relative w-full max-w-2xl max-h-[90vh] flex flex-col glassmorphism border border-white/10 rounded-3xl shadow-2xl animate-in zoom-in-95 duration-300 overflow-hidden">
 
                     {/* Header */}
                     <div className="p-8 border-b border-white/5 flex items-center justify-between">
@@ -229,18 +228,18 @@ export function GroupInsightsSlideOver({
                         )}
                     </div>
 
-                    <div className="p-8 border-t border-white/5 bg-white/5 flex items-center justify-between">
-                        <p className="text-[9px] text-muted-foreground font-black uppercase tracking-[0.2em] max-w-[200px]">
+                    {/* Footer */}
+                    <div className='p-8 border-t border-white/5 bg-white/5 flex items-center justify-between flex-shrink-0'>
+                        <p className='text-[9px] text-muted-foreground font-black uppercase tracking-[0.2em] max-w-[200px]'>
                             * Data aggregated from real-time learner participation across all assigned course paths.
                         </p>
                         <button
                             onClick={onClose}
-                            className="px-8 py-3 bg-white/5 hover:bg-white/10 rounded-2xl text-xs font-black uppercase tracking-widest border border-white/10 transition-all flex items-center gap-2 group"
+                            className='px-8 py-3 bg-white/5 hover:bg-white/10 rounded-2xl text-xs font-black uppercase tracking-widest border border-white/10 transition-all flex items-center gap-2'
                         >
                             Dismiss Analysis
                         </button>
                     </div>
-                </div>
             </div>
         </div>
     );

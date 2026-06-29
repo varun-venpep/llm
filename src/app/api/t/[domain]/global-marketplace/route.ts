@@ -34,9 +34,16 @@ export async function GET(
         ]);
 
         const claimedSourceIds = new Set(claims.map(c => c.sourceCourseId));
-        const coursesWithClaimStatus = courses.map(c => ({
-            ...c,
-            isClaimed: claimedSourceIds.has(c.id)
+        const coursesWithClaimStatus = await Promise.all(courses.map(async (c) => {
+            const courseData = await prisma.$queryRawUnsafe<{ courseCreateCount: number }[]>(
+                'SELECT "courseCreateCount" FROM "Course" WHERE "id" = $1 LIMIT 1',
+                c.id
+            );
+            return {
+                ...c,
+                isClaimed: claimedSourceIds.has(c.id),
+                courseCreateCount: courseData[0]?.courseCreateCount || 0
+            };
         }));
 
         return NextResponse.json({

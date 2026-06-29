@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { Save, ChevronLeft, Type, Move, Palette, Maximize, AlertCircle, Loader2, RefreshCw, Plus, Trash2, Image as ImageIcon } from 'lucide-react';
+import { Save, ChevronLeft, Type, Move, Palette, Maximize, AlertCircle, Loader2, RefreshCw, Plus, Trash2, Upload, Image as ImageIcon } from 'lucide-react';
+import { uploadFile } from '@/lib/upload';
 
 interface DesignField {
     id: string;
@@ -12,6 +13,10 @@ interface DesignField {
     color: string;
     fontWeight: string;
     alignment: 'left' | 'center' | 'right';
+    type?: 'text' | 'image';
+    imageUrl?: string;
+    width?: number;
+    height?: number;
 }
 
 interface Template {
@@ -28,19 +33,27 @@ interface CertificateDesignerProps {
 }
 
 const DEFAULT_FIELDS: DesignField[] = [
-    { id: 'name', text: '{{Learner Name}}', x: 50, y: 45, fontSize: 36, color: '#111827', fontWeight: 'bold', alignment: 'center' },
-    { id: 'course', text: '{{Course Title}}', x: 50, y: 58, fontSize: 24, color: '#374151', fontWeight: 'semibold', alignment: 'center' },
-    { id: 'date', text: '{{Completion Date}}', x: 50, y: 75, fontSize: 14, color: '#6B7280', fontWeight: 'normal', alignment: 'center' },
-    { id: 'serial', text: 'ID: {{Certificate ID}}', x: 50, y: 82, fontSize: 10, color: '#9CA3AF', fontWeight: 'normal', alignment: 'center' },
+    { id: 'name', text: '{{Learner Name}}', x: 50, y: 45, fontSize: 36, color: '#111827', fontWeight: 'bold', alignment: 'center', type: 'text' },
+    { id: 'course', text: '{{Course Title}}', x: 50, y: 58, fontSize: 24, color: '#374151', fontWeight: 'semibold', alignment: 'center', type: 'text' },
+    { id: 'date', text: '{{Completion Date}}', x: 50, y: 75, fontSize: 14, color: '#6B7280', fontWeight: 'normal', alignment: 'center', type: 'text' },
+    { id: 'serial', text: 'ID: {{Certificate ID}}', x: 50, y: 82, fontSize: 10, color: '#9CA3AF', fontWeight: 'normal', alignment: 'center', type: 'text' },
 ];
 
 const FALLBACK_BACKGROUND = 'https://images.unsplash.com/photo-1544391682-17fe04257eb0?w=1200&auto=format&fit=crop&q=80';
 
 const PLACEHOLDER_FIELDS = [
-    { label: 'Learner Name', text: '{{Learner Name}}' },
-    { label: 'Course Title', text: '{{Course Title}}' },
-    { label: 'Completion Date', text: '{{Completion Date}}' },
-    { label: 'Certificate ID', text: 'ID: {{Certificate ID}}' },
+    { id: 'name', label: 'Learner Name', text: '{{Learner Name}}' },
+    { id: 'course', label: 'Course Title', text: '{{Course Title}}' },
+    { id: 'date', label: 'Completion Date', text: '{{Completion Date}}' },
+    { id: 'serial', label: 'Certificate ID', text: 'ID: {{Certificate ID}}' },
+    { id: 'title', label: 'Certificate Title', text: 'Certificate of Achievement' },
+    { id: 'description', label: 'Description Statement', text: 'for successfully completing the training program' },
+    { id: 'designation', label: 'Signatory Designation', text: 'Managing Director' },
+];
+
+const PRESET_IMAGE_FIELDS = [
+    { id: 'logo', label: 'Company Logo', text: 'Company Logo', width: 80, height: 40 },
+    { id: 'signature', label: 'Authorized Signature', text: 'Authorized Signature', width: 120, height: 50 },
 ];
 
 function resolveImageUrl(url: string) {
@@ -95,6 +108,23 @@ export default function CertificateDesigner({ template, onBack, onSave }: Certif
     const [saving, setSaving] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
     const nextFieldIdRef = useRef(0);
+    const [uploadingField, setUploadingField] = useState<string | null>(null);
+
+    const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>, fieldKey: string, onUrlReady: (url: string) => void) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setUploadingField(fieldKey);
+        try {
+            const data = await uploadFile(file, { tenantId: 'system', courseId: 'certificates' });
+            onUrlReady(data.url);
+        } catch (err: any) {
+            console.error(err);
+            alert(err?.message || 'Upload failed');
+        } finally {
+            setUploadingField(null);
+        }
+    };
 
     const selectedField = fields.find(f => f.id === selectedFieldId);
     const existingSystemTexts = new Set(fields.map(field => field.text));
@@ -113,18 +143,22 @@ export default function CertificateDesigner({ template, onBack, onSave }: Certif
         return id;
     };
 
-    const addField = (text = 'Custom Text') => {
+    const addField = (text = 'Custom Text', type: 'text' | 'image' = 'text', imageUrl?: string, width?: number, height?: number, fieldId?: string) => {
         const customCount = fields.filter(field => !PLACEHOLDER_FIELDS.some(item => item.text === field.text)).length;
         const nextY = Math.min(88, 40 + customCount * 8);
         const newField: DesignField = {
-            id: createFieldId(),
+            id: fieldId || createFieldId(),
             text,
             x: 50,
             y: text.includes('{{') ? 50 : nextY,
             fontSize: text.includes('{{') ? 24 : 18,
             color: '#111827',
             fontWeight: text.includes('{{') ? 'semibold' : 'normal',
-            alignment: 'center'
+            alignment: 'center',
+            type,
+            imageUrl,
+            width,
+            height
         };
         setFields(prev => [...prev, newField]);
         setSelectedFieldId(newField.id);
@@ -251,10 +285,10 @@ export default function CertificateDesigner({ template, onBack, onSave }: Certif
                                     top: `${field.y}%`,
                                     transform: `translate(${field.alignment === 'center' ? '-50%' : field.alignment === 'right' ? '-100%' : '0'}, -50%)`,
                                     cursor: 'move',
-                                    fontSize: `${field.fontSize}px`,
-                                    color: field.color,
-                                    fontWeight: field.fontWeight === 'bold' ? '900' : field.fontWeight === 'semibold' ? '700' : '400',
-                                    textAlign: field.alignment,
+                                    fontSize: field.type === 'image' ? undefined : `${field.fontSize}px`,
+                                    color: field.type === 'image' ? undefined : field.color,
+                                    fontWeight: field.type === 'image' ? undefined : (field.fontWeight === 'bold' ? '900' : field.fontWeight === 'semibold' ? '700' : '400'),
+                                    textAlign: field.type === 'image' ? undefined : field.alignment,
                                     whiteSpace: 'nowrap',
                                     userSelect: 'none',
                                     padding: '4px 8px',
@@ -264,7 +298,27 @@ export default function CertificateDesigner({ template, onBack, onSave }: Certif
                                 }}
                                 className="transition-[border,background-color] duration-200"
                             >
-                                {field.text}
+                                {field.type === 'image' ? (
+                                    field.imageUrl ? (
+                                        <img 
+                                            src={resolveImageUrl(field.imageUrl)} 
+                                            alt={field.text} 
+                                            style={{ 
+                                                width: field.width ? `${field.width}px` : 'auto', 
+                                                height: field.height ? `${field.height}px` : 'auto',
+                                                pointerEvents: 'none',
+                                                objectFit: 'contain',
+                                                display: 'block'
+                                            }} 
+                                        />
+                                    ) : (
+                                        <span className="text-xs text-muted-foreground/60 italic font-bold">
+                                            [{field.text} - Upload Image]
+                                        </span>
+                                    )
+                                ) : (
+                                    field.text
+                                )}
                                 {selectedFieldId === field.id && (
                                     <div className="absolute -top-6 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-blue-600 text-white text-[8px] font-black uppercase rounded shadow-lg">
                                         Active
@@ -303,19 +357,39 @@ export default function CertificateDesigner({ template, onBack, onSave }: Certif
 
                 <div className="space-y-3">
                     <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                        <ImageIcon size={10} /> Background Image URL
+                        <ImageIcon size={10} /> Background Image
                     </label>
-                    <input
-                        type="url"
-                        value={backgroundImage}
-                        onChange={(e) => {
-                            setBackgroundImage(e.target.value);
-                            setBackgroundError(false);
-                            setBackgroundErrorDetail('');
-                        }}
-                        placeholder="https://..."
-                        className="w-full bg-secondary/30 border border-border/50 rounded-xl px-3 py-2.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary/20"
-                    />
+                    <div className="flex gap-2">
+                        <input
+                            type="text"
+                            value={backgroundImage}
+                            onChange={(e) => {
+                                setBackgroundImage(e.target.value);
+                                setBackgroundError(false);
+                                setBackgroundErrorDetail('');
+                            }}
+                            placeholder="https://..."
+                            className="flex-1 bg-secondary/30 border border-border/50 rounded-xl px-3 py-2.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 min-w-0"
+                        />
+                        <label className="px-4 py-2.5 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 rounded-xl text-xs font-black uppercase cursor-pointer flex items-center gap-1.5 transition-all select-none shrink-0">
+                            {uploadingField === 'background' ? (
+                                <Loader2 size={12} className="animate-spin" />
+                            ) : (
+                                <Upload size={12} />
+                            )}
+                            {uploadingField === 'background' ? '...' : 'Upload'}
+                            <input 
+                                type="file" 
+                                accept="image/*" 
+                                className="hidden" 
+                                onChange={(e) => handleUpload(e, 'background', (url) => {
+                                    setBackgroundImage(url);
+                                    setBackgroundError(false);
+                                    setBackgroundErrorDetail('');
+                                })} 
+                            />
+                        </label>
+                    </div>
                     <button
                         onClick={() => checkBackground(backgroundImage)}
                         className="w-full px-3 py-2 rounded-xl bg-secondary/30 border border-border/50 text-[10px] font-black uppercase tracking-widest hover:bg-secondary transition-all"
@@ -325,41 +399,69 @@ export default function CertificateDesigner({ template, onBack, onSave }: Certif
                 </div>
 
                 <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                            <Plus size={10} /> Add Field
-                        </label>
-                    </div>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                        <Plus size={10} /> Add Text Field
+                    </label>
                     <div className="grid grid-cols-2 gap-2">
                         {PLACEHOLDER_FIELDS.map(field => {
-                            const isExisting = existingSystemTexts.has(field.text);
+                            const isExisting = fields.some(f => f.id === field.id);
                             return (
                             <button
                                 key={field.text}
                                 disabled={isExisting}
-                                onClick={() => addField(field.text)}
+                                onClick={() => addField(field.text, 'text', undefined, undefined, undefined, field.id)}
                                 className={`px-3 py-2 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all ${isExisting ? 'bg-secondary/10 border-border/30 text-muted-foreground/40 cursor-not-allowed' : 'bg-secondary/30 border-border/50 hover:bg-secondary'}`}
                             >
                                 {field.label}
                             </button>
                             );
                         })}
-                        <button
-                            onClick={() => addField()}
-                            className="col-span-2 px-3 py-2 rounded-xl bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-widest hover:scale-[1.02] transition-all"
-                        >
-                            Custom Text
-                        </button>
-                        <button
-                            onClick={() => {
-                                setFields(DEFAULT_FIELDS);
-                                setSelectedFieldId(null);
-                            }}
-                            className="col-span-2 px-3 py-2 rounded-xl bg-secondary/30 border border-border/50 text-[10px] font-black uppercase tracking-widest hover:bg-secondary transition-all"
-                        >
-                            Reset Default Fields
-                        </button>
                     </div>
+                </div>
+
+                <div className="space-y-3">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                        <Plus size={10} /> Add Image Field
+                    </label>
+                    <div className="grid grid-cols-2 gap-2">
+                        {PRESET_IMAGE_FIELDS.map(field => {
+                            const isExisting = fields.some(f => f.id === field.id);
+                            return (
+                            <button
+                                key={field.text}
+                                disabled={isExisting}
+                                onClick={() => addField(field.text, 'image', undefined, field.width, field.height, field.id)}
+                                className={`px-3 py-2 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all ${isExisting ? 'bg-secondary/10 border-border/30 text-muted-foreground/40 cursor-not-allowed' : 'bg-secondary/30 border-border/50 hover:bg-secondary'}`}
+                            >
+                                {field.label}
+                            </button>
+                            );
+                        })}
+                    </div>
+                </div>
+
+                <div className="space-y-2">
+                    <button
+                        onClick={() => addField('Custom Text', 'text')}
+                        className="w-full px-3 py-2 rounded-xl bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-widest hover:scale-[1.02] transition-all"
+                    >
+                        Custom Text
+                    </button>
+                    <button
+                        onClick={() => addField('Custom Image', 'image', undefined, 100, 100)}
+                        className="w-full px-3 py-2 rounded-xl bg-secondary/50 border border-border/50 text-[10px] font-black uppercase tracking-widest hover:bg-secondary transition-all"
+                    >
+                        Custom Image
+                    </button>
+                    <button
+                        onClick={() => {
+                            setFields(DEFAULT_FIELDS);
+                            setSelectedFieldId(null);
+                        }}
+                        className="w-full px-3 py-2 rounded-xl bg-secondary/30 border border-border/50 text-[10px] font-black uppercase tracking-widest hover:bg-secondary transition-all"
+                    >
+                        Reset Default Fields
+                    </button>
                 </div> 
 
                 {!selectedField ? (
@@ -371,46 +473,117 @@ export default function CertificateDesigner({ template, onBack, onSave }: Certif
                     </div>
                 ) : (
                     <div className="space-y-6">
-                        <div className="p-4 bg-primary/5 border border-primary/20 rounded-2xl">
-                            <p className="text-[10px] font-black uppercase tracking-widest text-primary mb-1">Target Field</p>
-                            <p className="font-bold text-sm tracking-tight">{selectedField.text}</p>
+                        <div className="p-4 bg-primary/5 border border-primary/20 rounded-2xl flex justify-between items-center">
+                            <div>
+                                <p className="text-[10px] font-black uppercase tracking-widest text-primary mb-1">Target Field</p>
+                                <p className="font-bold text-sm tracking-tight">{selectedField.text}</p>
+                            </div>
+                            <button
+                                onClick={() => deleteField(selectedField.id)}
+                                className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-red-500 hover:text-red-400"
+                            >
+                                <Trash2 size={11} /> Delete
+                            </button>
                         </div>
 
-                        {/* Text Content */}
-                        <div className="space-y-3">
-                            <div className="flex justify-between items-center">
+                        {/* Text Fields: Content */}
+                        {selectedField.type !== 'image' && (
+                            <div className="space-y-3">
                                 <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2"><Type size={10} /> Text</label>
-                                <button
-                                    onClick={() => deleteField(selectedField.id)}
-                                    className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-red-500 hover:text-red-400"
-                                >
-                                    <Trash2 size={11} /> Delete
-                                </button>
+                                <textarea
+                                    value={selectedField.text}
+                                    onChange={(e) => updateField(selectedField.id, { text: e.target.value })}
+                                    rows={3}
+                                    className="w-full bg-secondary/30 border border-border/50 rounded-xl px-3 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none"
+                                />
+                                <p className="text-[10px] text-muted-foreground font-bold leading-relaxed">
+                                    Dynamic values use placeholders like {'{{Learner Name}}'} and {'{{Course Title}}'}.
+                                </p>
                             </div>
-                            <textarea
-                                value={selectedField.text}
-                                onChange={(e) => updateField(selectedField.id, { text: e.target.value })}
-                                rows={3}
-                                className="w-full bg-secondary/30 border border-border/50 rounded-xl px-3 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none"
-                            />
-                            <p className="text-[10px] text-muted-foreground font-bold leading-relaxed">
-                                Dynamic values use placeholders like {'{{Learner Name}}'} and {'{{Course Title}}'}.
-                            </p>
-                        </div>
+                        )}
 
-                        {/* Font Size */}
-                        <div className="space-y-3">
-                            <div className="flex justify-between items-center">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2"><Maximize size={10} /> Font Size</label>
-                                <span className="font-mono text-xs font-bold">{selectedField.fontSize}px</span>
+                        {/* Image Fields: Custom Image properties */}
+                        {selectedField.type === 'image' && (
+                            <>
+                                <div className="space-y-3">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                                        <Type size={10} /> Field Label
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={selectedField.text}
+                                        onChange={(e) => updateField(selectedField.id, { text: e.target.value })}
+                                        className="w-full bg-secondary/30 border border-border/50 rounded-xl px-3 py-2.5 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                    />
+                                </div>
+                                <div className="space-y-3">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 flex items-center gap-2">
+                                        <ImageIcon size={10} /> Image Resource
+                                    </label>
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="text"
+                                            value={selectedField.imageUrl || ''}
+                                            onChange={(e) => updateField(selectedField.id, { imageUrl: e.target.value })}
+                                            placeholder="https://..."
+                                            className="flex-1 bg-secondary/30 border border-border/50 rounded-xl px-3 py-2.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 min-w-0"
+                                        />
+                                        <label className="px-4 py-2.5 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 rounded-xl text-xs font-black uppercase cursor-pointer flex items-center gap-1.5 transition-all select-none shrink-0">
+                                            {uploadingField === selectedField.id ? (
+                                                <Loader2 size={12} className="animate-spin" />
+                                            ) : (
+                                                <Upload size={12} />
+                                            )}
+                                            {uploadingField === selectedField.id ? '...' : 'Upload'}
+                                            <input 
+                                                type="file" 
+                                                accept="image/*" 
+                                                className="hidden" 
+                                                onChange={(e) => handleUpload(e, selectedField.id, (url) => {
+                                                    updateField(selectedField.id, { imageUrl: url });
+                                                })} 
+                                            />
+                                        </label>
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Width (px)</label>
+                                        <input
+                                            type="number"
+                                            value={selectedField.width || 80}
+                                            onChange={(e) => updateField(selectedField.id, { width: parseInt(e.target.value) || 0 })}
+                                            className="w-full bg-secondary/30 border border-border/50 rounded-xl px-3 py-2.5 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Height (px)</label>
+                                        <input
+                                            type="number"
+                                            value={selectedField.height || 40}
+                                            onChange={(e) => updateField(selectedField.id, { height: parseInt(e.target.value) || 0 })}
+                                            className="w-full bg-secondary/30 border border-border/50 rounded-xl px-3 py-2.5 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                        />
+                                    </div>
+                                </div>
+                            </>
+                        )}
+
+                        {/* Text Fields: Font Size */}
+                        {selectedField.type !== 'image' && (
+                            <div className="space-y-3">
+                                <div className="flex justify-between items-center">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2"><Maximize size={10} /> Font Size</label>
+                                    <span className="font-mono text-xs font-bold">{selectedField.fontSize}px</span>
+                                </div>
+                                <input 
+                                    type="range" min="8" max="120" 
+                                    value={selectedField.fontSize}
+                                    onChange={(e) => updateField(selectedField.id, { fontSize: parseInt(e.target.value) })}
+                                    className="w-full accent-primary"
+                                />
                             </div>
-                            <input 
-                                type="range" min="8" max="120" 
-                                value={selectedField.fontSize}
-                                onChange={(e) => updateField(selectedField.id, { fontSize: parseInt(e.target.value) })}
-                                className="w-full accent-primary"
-                            />
-                        </div>
+                        )}
 
                         {/* Text Alignment */}
                         <div className="space-y-3">
@@ -428,26 +601,28 @@ export default function CertificateDesigner({ template, onBack, onSave }: Certif
                              </div>
                         </div>
 
-                        {/* Color Picker */}
-                        <div className="space-y-3">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2"><Palette size={10} /> Selection Color</label>
-                            <div className="flex flex-wrap gap-2">
-                                {['#111827', '#374151', '#4B5563', '#9CA3AF', '#FFFFFF', '#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6'].map(c => (
-                                    <button 
-                                        key={c}
-                                        onClick={() => updateField(selectedField.id, { color: c })}
-                                        className={`w-8 h-8 rounded-full border-2 transition-transform hover:scale-110 ${selectedField.color === c ? 'border-primary ring-2 ring-primary/20' : 'border-background shadow-lg'}`}
-                                        style={{ backgroundColor: c }}
+                        {/* Text Fields: Color Picker */}
+                        {selectedField.type !== 'image' && (
+                            <div className="space-y-3">
+                                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2"><Palette size={10} /> Selection Color</label>
+                                <div className="flex flex-wrap gap-2">
+                                    {['#111827', '#374151', '#4B5563', '#9CA3AF', '#FFFFFF', '#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6'].map(c => (
+                                        <button 
+                                            key={c}
+                                            onClick={() => updateField(selectedField.id, { color: c })}
+                                            className={`w-8 h-8 rounded-full border-2 transition-transform hover:scale-110 ${selectedField.color === c ? 'border-primary ring-2 ring-primary/20' : 'border-background shadow-lg'}`}
+                                            style={{ backgroundColor: c }}
+                                        />
+                                    ))}
+                                    <input 
+                                        type="color" 
+                                        value={selectedField.color}
+                                        onChange={(e) => updateField(selectedField.id, { color: e.target.value })}
+                                        className="w-8 h-8 bg-transparent border-0 p-0 cursor-pointer"
                                     />
-                                ))}
-                                <input 
-                                    type="color" 
-                                    value={selectedField.color}
-                                    onChange={(e) => updateField(selectedField.id, { color: e.target.value })}
-                                    className="w-8 h-8 bg-transparent border-0 p-0 cursor-pointer"
-                                />
+                                </div>
                             </div>
-                        </div>
+                        )}
 
                         {/* Status Check */}
                         <div className="bg-amber-500/10 border border-amber-500/20 p-4 rounded-2xl flex gap-3">

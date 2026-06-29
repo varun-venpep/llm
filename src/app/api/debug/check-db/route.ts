@@ -3,32 +3,31 @@ import { prisma } from '@/lib/prisma';
 
 export async function GET() {
     try {
-        const course = await prisma.course.findFirst({
-            where: { title: 'AI as code Architect' },
+        const roles = await prisma.jobRole.findMany({
             include: {
-                modules: {
-                    include: {
-                        lessons: true
+                users: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                        role: true
                     }
                 }
             }
         });
-
-        if (!course) return NextResponse.json({ error: 'Course not found' });
-
-        const audit = course.modules.map(mod => ({
-            module: mod.title,
-            lessons: mod.lessons.map(l => ({
-                id: l.id,
-                title: l.title,
-                type: l.type,
-                contentPreview: l.content ? l.content.substring(0, 50) + '...' : 'EMPTY',
-                transcriptPreview: l.transcript ? l.transcript.substring(0, 50) + '...' : 'EMPTY',
-                status: l.transcriptStatus
-            }))
-        }));
-
-        return NextResponse.json({ course: course.title, audit });
+        const teams = await prisma.team.findMany({
+            include: {
+                members: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                        role: true
+                    }
+                }
+            }
+        });
+        return NextResponse.json({ roles, teams });
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }

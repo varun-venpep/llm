@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { transcribeMedia } from '@/lib/ai';
+import { checkSession, requireTenantPermission } from '@/lib/auth';
 
 export async function PUT(
     req: NextRequest,
@@ -8,6 +9,11 @@ export async function PUT(
 ) {
     try {
         const { domain, courseId, moduleId, lessonId } = await context.params;
+        const session = await checkSession(req, domain, ['TENANT_ADMIN', 'SUPER_ADMIN']);
+        if (!session || !requireTenantPermission(session, 'courses.manage')) {
+            return NextResponse.json({ error: 'You do not have permission to update lessons' }, { status: 403 });
+        }
+
         const tenant = await prisma.tenant.findUnique({ where: { subdomain: domain } });
         if (!tenant) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
@@ -81,6 +87,11 @@ export async function DELETE(
 ) {
     const { domain, courseId, moduleId, lessonId } = await context.params;
     try {
+        const session = await checkSession(req, domain, ['TENANT_ADMIN', 'SUPER_ADMIN']);
+        if (!session || !requireTenantPermission(session, 'courses.manage')) {
+            return NextResponse.json({ error: 'You do not have permission to delete lessons' }, { status: 403 });
+        }
+
         console.log(`[DELETE Lesson] domain: ${domain}, courseId: ${courseId}, moduleId: ${moduleId}, lessonId: ${lessonId}`);
         
         const tenant = await prisma.tenant.findUnique({ where: { subdomain: domain } });
@@ -88,6 +99,9 @@ export async function DELETE(
             console.error(`[DELETE Lesson] Tenant not found: ${domain}`);
             return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
         }
+
+        const { searchParams } = new URL(req.url);
+        const force = searchParams.get('force') === 'true';
 
         // Check for learner progress or quiz attempts
         const lessonWithProgress = await prisma.lesson.findUnique({
@@ -110,7 +124,7 @@ export async function DELETE(
             }
         });
 
-        if (lessonWithProgress) {
+        if (lessonWithProgress && !force) {
             const hasProgress = lessonWithProgress._count.progress > 0 || 
                                (lessonWithProgress.quiz && lessonWithProgress.quiz._count.attempts > 0);
             

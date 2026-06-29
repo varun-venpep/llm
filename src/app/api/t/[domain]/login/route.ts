@@ -75,7 +75,8 @@ export async function POST(
             cookieOptions.maxAge = 60 * 60 * 24 * 7; // 1 week
         }
 
-        response.cookies.set('session-token', user.id, cookieOptions);
+        const cookieName = user.role === 'LEARNER' ? 'learner_token' : 'admin_token';
+        response.cookies.set(cookieName, user.id, cookieOptions);
 
         // Audit Log: User Login
         await prisma.activityLog.create({

@@ -161,12 +161,37 @@ export async function POST(
             certificateEnabled, certificateTemplateId
         } = body;
 
+        try {
+            await prisma.$executeRawUnsafe(`
+                ALTER TABLE "Tenant"
+                ADD COLUMN IF NOT EXISTS "courseCreateCount" INTEGER NOT NULL DEFAULT 0
+            `);
+        } catch (e) {
+            console.error('Error ensuring courseCreateCount column in courses:', e);
+        }
+
         const tenant = await prisma.tenant.findUnique({ where: { subdomain: domain } });
         if (!tenant) return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
 
         const session = await checkSession(req, domain, ['TENANT_ADMIN', 'SUPER_ADMIN']);
-        if (!requireTenantPermission(session, 'courses.manage')) {
+        if (!session || !requireTenantPermission(session, 'courses.manage')) {
             return NextResponse.json({ error: 'You do not have permission to create courses' }, { status: 403 });
+        }
+
+        // Check course limit if set
+        const tenantsData = await prisma.$queryRawUnsafe<{ courseCreateCount: number }[]>(
+            'SELECT "courseCreateCount" FROM "Tenant" WHERE "id" = $1 LIMIT 1',
+            tenant.id
+        );
+        const courseCreateCount = tenantsData[0]?.courseCreateCount || 0;
+
+        if (courseCreateCount > 0) {
+            const currentCount = await prisma.course.count({ where: { tenantId: tenant.id } });
+            if (currentCount >= courseCreateCount) {
+                return NextResponse.json({
+                    error: "Your course creation limit has been reached. Please upgrade to the next package to continue creating courses."
+                }, { status: 403 });
+            }
         }
 
         // Rule: exclusive courses cannot appear in the marketplace
@@ -230,7 +255,7 @@ export async function PUT(
         if (!tenant) return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
 
         const session = await checkSession(req, domain, ['TENANT_ADMIN', 'SUPER_ADMIN']);
-        if (!requireTenantPermission(session, 'courses.manage')) {
+        if (!session || !requireTenantPermission(session, 'courses.manage')) {
             return NextResponse.json({ error: 'You do not have permission to update courses' }, { status: 403 });
         }
 

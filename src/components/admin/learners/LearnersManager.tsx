@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
     Users, Plus, Trash2, ShieldCheck, Edit3, BarChart3,
     X, Check, Copy, RefreshCw, Mail, UserCheck,
     Shield, Briefcase, UsersRound, Loader2, Info,
-    BookOpen, Clock
+    BookOpen, Clock, AlertTriangle, Upload, FileSpreadsheet, Download
 } from 'lucide-react';
 import { SearchableSelect } from '../shared/SearchableSelect';
 import { PeopleMultiSelect } from '../shared/PeopleMultiSelect';
@@ -43,7 +43,9 @@ function LearnerSlideOver({
     justCreated,
     resetPassword,
     onResetPassword,
-    isSubmitting
+    isSubmitting,
+    validationErrors,
+    setValidationErrors
 }: {
     isOpen: boolean;
     onClose: () => void;
@@ -58,6 +60,8 @@ function LearnerSlideOver({
     resetPassword?: string;
     onResetPassword?: () => void;
     isSubmitting: boolean;
+    validationErrors: Record<string, string | null>;
+    setValidationErrors: React.Dispatch<React.SetStateAction<Record<string, string | null>>>;
 }) {
     const [formData, setFormData] = useState(learner || {});
     const [confirmDelete, setConfirmDelete] = useState(false);
@@ -68,7 +72,8 @@ function LearnerSlideOver({
             setFormData(learner);
         }
         setConfirmDelete(false);
-    }, [learner, isOpen]);
+        setValidationErrors({});
+    }, [learner, isOpen, setValidationErrors]);
 
     if (!isOpen || !formData) return null;
 
@@ -186,20 +191,40 @@ function LearnerSlideOver({
                                             <label className="text-xs font-bold text-muted-foreground ml-1">Full Name</label>
                                             <input
                                                 value={formData.name || ''}
-                                                onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                                onChange={e => {
+                                                    setFormData({ ...formData, name: e.target.value });
+                                                    if (validationErrors.name) {
+                                                        setValidationErrors(prev => ({ ...prev, name: null }));
+                                                    }
+                                                }}
                                                 placeholder="e.g. Johnathan Doe"
-                                                className="w-full bg-secondary/30 border border-border/50 rounded-xl px-4 py-3 text-sm font-semibold focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all"
+                                                className={`w-full bg-secondary/30 border rounded-xl px-4 py-3 text-sm font-semibold focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all ${validationErrors.name ? 'border-red-500/50' : 'border-border/50'}`}
                                             />
+                                            {validationErrors.name && (
+                                                <span className="text-[10px] font-bold text-red-500 animate-in fade-in slide-in-from-top-1 ml-1 block">
+                                                    {validationErrors.name}
+                                                </span>
+                                            )}
                                         </div>
                                         <div className="space-y-1.5">
                                             <label className="text-xs font-bold text-muted-foreground ml-1">Email Address</label>
                                             <input
                                                 type="email"
                                                 value={formData.email || ''}
-                                                onChange={e => setFormData({ ...formData, email: e.target.value })}
+                                                onChange={e => {
+                                                    setFormData({ ...formData, email: e.target.value });
+                                                    if (validationErrors.email) {
+                                                        setValidationErrors(prev => ({ ...prev, email: null }));
+                                                    }
+                                                }}
                                                 placeholder="john@organization.com"
-                                                className="w-full bg-secondary/30 border border-border/50 rounded-xl px-4 py-3 text-sm font-semibold focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all"
+                                                className={`w-full bg-secondary/30 border rounded-xl px-4 py-3 text-sm font-semibold focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all ${validationErrors.email ? 'border-red-500/50' : 'border-border/50'}`}
                                             />
+                                            {validationErrors.email && (
+                                                <span className="text-[10px] font-bold text-red-500 animate-in fade-in slide-in-from-top-1 ml-1 block">
+                                                    {validationErrors.email}
+                                                </span>
+                                            )}
                                         </div>
                                         {isAdminsMode && (
                                             <div className="space-y-1.5">
@@ -214,12 +239,12 @@ function LearnerSlideOver({
                                                             tenantAdminPermissions
                                                         });
                                                     }}
-                                                    className="w-full bg-secondary/30 border border-border/50 rounded-xl px-4 py-3 text-sm font-semibold focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all"
+                                                    className="w-full bg-background border border-border/50 rounded-xl px-4 py-3 text-sm font-semibold focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all"
                                                 >
-                                                    <option value="TENANT_ADMIN">Domain Admin</option>
-                                                    <option value="PLATFORM_MANAGER">Platform Manager</option>
-                                                    <option value="INSTRUCTOR">Instructor</option>
-                                                    <option value="TEACHER">Teacher</option>
+                                                    <option value="TENANT_ADMIN" className="bg-background text-foreground">Domain Admin</option>
+                                                    <option value="PLATFORM_MANAGER" className="bg-background text-foreground">Platform Manager</option>
+                                                    <option value="INSTRUCTOR" className="bg-background text-foreground">Instructor</option>
+                                                    <option value="TEACHER" className="bg-background text-foreground">Teacher</option>
                                                 </select>
                                             </div>
                                         )}
@@ -256,8 +281,8 @@ function LearnerSlideOver({
                                                         <span className="block text-xs font-bold">{permission.label}</span>
                                                         <span className="block text-[10px] text-muted-foreground">{permission.description}</span>
                                                     </span>
-                                                    <span className={`flex h-5 w-9 shrink-0 items-center rounded-full p-0.5 transition-all ${isEnabled ? 'bg-primary' : 'bg-secondary'}`}>
-                                                        <span className={`h-4 w-4 rounded-full bg-white shadow transition-all ${isEnabled ? 'translate-x-4' : 'translate-x-0'}`} />
+                                                    <span className={`flex h-5 w-9 shrink-0 items-center rounded-full p-0.5 transition-all ${isEnabled ? 'bg-emerald-500' : 'bg-secondary border border-border/40'}`}>
+                                                        <span className={`h-4 w-4 rounded-full bg-white shadow-sm transition-all ${isEnabled ? 'translate-x-4' : 'translate-x-0'}`} />
                                                     </span>
                                                 </button>
                                             );
@@ -340,23 +365,13 @@ function LearnerSlideOver({
                                         <h3 className="text-[10px] font-black uppercase tracking-widest text-red-500/70 flex items-center gap-2">
                                             <Trash2 size={11} /> Danger Zone
                                         </h3>
-                                        {!confirmDelete ? (
-                                            <button
-                                                type="button"
-                                                onClick={() => setConfirmDelete(true)}
-                                                className="w-full py-3 border border-red-500/20 text-red-400 hover:bg-red-500/10 rounded-xl text-xs font-bold transition-all"
-                                            >
-                                                Archive Learner Identity
-                                            </button>
-                                        ) : (
-                                            <div className="p-4 rounded-xl border border-red-500/30 bg-red-500/5 space-y-3 animate-in fade-in zoom-in-95">
-                                                <p className="text-xs font-bold text-red-400">This will permanently remove the learner and all their history. Proceed?</p>
-                                                <div className="flex gap-2">
-                                                    <button onClick={() => setConfirmDelete(false)} className="flex-1 py-2 bg-secondary rounded-lg text-xs font-bold">Cancel</button>
-                                                    <button onClick={() => onDelete(formData.id)} className="flex-1 py-2 bg-red-500 text-white rounded-lg text-xs font-bold">Yes, Delete</button>
-                                                </div>
-                                            </div>
-                                        )}
+                                        <button
+                                            type="button"
+                                            onClick={() => setConfirmDelete(true)}
+                                            className="w-full py-3 border border-red-500/20 text-red-400 hover:bg-red-500/10 rounded-xl text-xs font-bold transition-all"
+                                        >
+                                            Archive Learner Identity
+                                        </button>
                                     </section>
                                 )}
                             </div>
@@ -379,6 +394,60 @@ function LearnerSlideOver({
                     )}
                 </div>
             </div>
+
+            {/* Delete Confirmation Modal */}
+            {confirmDelete && (
+                <>
+                    {/* Modal Backdrop */}
+                    <div
+                        className="fixed inset-0 z-[390] bg-black/85 backdrop-blur-md animate-in fade-in duration-200"
+                        onClick={() => setConfirmDelete(false)}
+                    />
+                    
+                    {/* Modal Content Container */}
+                    <div className="fixed inset-0 z-[400] flex items-center justify-center p-4 pointer-events-none">
+                        <div className="pointer-events-auto w-full max-w-md bg-[#0d0d10] border border-white/5 rounded-[32px] p-10 shadow-2xl flex flex-col items-center text-center animate-in zoom-in-95 duration-200">
+                            
+                            {/* Alert Icon */}
+                            <div className="mb-6">
+                                <svg className="w-20 h-20 text-[#f3bf8e]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2">
+                                    <circle cx="12" cy="12" r="10" />
+                                    <line x1="12" y1="8" x2="12" y2="13" strokeLinecap="round" />
+                                    <circle cx="12" cy="16.5" r="0.6" fill="currentColor" stroke="currentColor" strokeWidth="0.5" />
+                                </svg>
+                            </div>
+
+                            {/* Title */}
+                            <h3 className="text-white text-2xl font-bold tracking-tight mb-3">
+                                Delete {formData.name || 'User'}?
+                            </h3>
+
+                            {/* Description */}
+                            <p className="text-sm text-zinc-400 leading-relaxed max-w-[280px] mb-8">
+                                Are you sure you want to delete this user? All data and history will be affected.
+                            </p>
+
+                            {/* Actions Buttons */}
+                            <div className="flex items-center gap-3 w-full justify-center">
+                                <button
+                                    type="button"
+                                    onClick={() => onDelete(formData.id)}
+                                    className="flex-1 py-3.5 bg-[#e50000] hover:bg-[#ff1a1a] text-white rounded-xl text-xs font-black tracking-wider uppercase transition-colors"
+                                >
+                                    YES, DELETE USER
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setConfirmDelete(false)}
+                                    className="flex-1 py-3.5 bg-[#242429] hover:bg-[#2f2f36] text-zinc-300 rounded-xl text-xs font-black tracking-wider uppercase transition-colors"
+                                >
+                                    CANCEL
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </>
+            )}
         </>
     );
 }
@@ -539,10 +608,18 @@ export function LearnersManager({ domain, addToast, mode = 'learners' }: { domai
     const [resetPassword, setResetPassword] = useState('');
     const [justCreated, setJustCreated] = useState<any>(null);
     const [searchQuery, setSearchQuery] = useState('');
+    const [validationErrors, setValidationErrors] = useState<Record<string, string | null>>({});
 
     // Insights Panel
     const [insightsLearner, setInsightsLearner] = useState<Learner | null>(null);
     const [isInsightsOpen, setIsInsightsOpen] = useState(false);
+
+    // Excel Upload
+    const [isUploading, setIsUploading] = useState(false);
+    const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+    const [uploadDragOver, setUploadDragOver] = useState(false);
+    const excelInputRef = useRef<HTMLInputElement>(null);
+
     const isAdminsMode = mode === 'admins';
     const visibleUsers = learners.filter(user => isAdminsMode ? user.role !== 'LEARNER' : user.role === 'LEARNER');
 
@@ -602,30 +679,25 @@ export function LearnersManager({ domain, addToast, mode = 'learners' }: { domai
     };
 
     const handleSubmit = async (data: any) => {
+        const errors: Record<string, string | null> = {};
         if (!data.name?.trim()) {
-            addToast('Name is required', 'error');
-            return;
+            errors.name = 'Name is required';
         }
         if (!data.email?.trim()) {
-            addToast('Email is required', 'error');
-            return;
+            errors.email = 'Email is required';
+        } else {
+            const targetEmail = data.email.trim().toLowerCase();
+            const emailExists = learners.some(l => l.email.toLowerCase() === targetEmail && (data.isCreating ? true : l.id !== data.id));
+            if (emailExists) {
+                errors.email = isAdminsMode ? 'Admin email already exists in this workspace' : 'Learner email already exists in this workspace';
+            }
         }
 
-        // Email duplicate check
-        const targetEmail = data.email.trim().toLowerCase();
-        if (data.isCreating) {
-            const emailExists = learners.some(l => l.email.toLowerCase() === targetEmail);
-            if (emailExists) {
-                addToast('Learner email already exists in this workspace', 'error');
-                return;
-            }
-        } else {
-            const emailExists = learners.some(l => l.email.toLowerCase() === targetEmail && l.id !== data.id);
-            if (emailExists) {
-                addToast('Learner email already exists in this workspace', 'error');
-                return;
-            }
+        if (Object.keys(errors).length > 0) {
+            setValidationErrors(errors);
+            return;
         }
+        setValidationErrors({});
 
         setIsSubmitting(true);
         try {
@@ -691,7 +763,6 @@ export function LearnersManager({ domain, addToast, mode = 'learners' }: { domai
                 body: JSON.stringify({ learnerId: learner.id, isActive: !learner.isActive })
             });
             if (res.ok) {
-                addToast(`Account ${!learner.isActive ? 'activated' : 'deactivated'}`);
                 fetchData();
             }
         } catch (e) { }
@@ -728,6 +799,69 @@ export function LearnersManager({ domain, addToast, mode = 'learners' }: { domai
         setIsInsightsOpen(true);
     };
 
+    const handleExcelUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        e.target.value = '';
+        if (!file) return;
+        const ext = file.name.split('.').pop()?.toLowerCase();
+        if (ext !== 'xlsx' && ext !== 'xls' && ext !== 'csv') {
+            addToast('Only Excel and CSV files (.xlsx, .xls, .csv) are allowed.', 'error');
+            return;
+        }
+        setIsUploading(true);
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+            const parseRes = await fetch(`/api/t/${domain}/users/parse-file`, { method: 'POST', body: formData });
+            const parseData = await parseRes.json();
+            if (!parseRes.ok || !parseData.users?.length) {
+                addToast(parseData.error || 'No valid records found in file.', 'error');
+                return;
+            }
+            const uploadRes = await fetch(`/api/t/${domain}/users/bulk`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ users: parseData.users })
+            });
+            const uploadData = await uploadRes.json();
+            if (uploadRes.ok) {
+                const success = uploadData.results?.filter((r: any) => r.status === 'success').length ?? parseData.users.length;
+                addToast(`${success} learner(s) imported successfully!`, 'success');
+                fetchData();
+                setIsUploadModalOpen(false);
+            } else {
+                addToast(uploadData.error || 'Upload failed.', 'error');
+            }
+        } catch {
+            addToast('Unexpected error during upload.', 'error');
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
+    const downloadSampleTemplate = () => {
+        // Build CSV content directly — no xlsx needed on client side
+        const headers = ['Full Name', 'Email Address', 'Assigned Roles', 'Assigned Teams'];
+        const samples = [
+            ['John Smith', 'john.smith@company.com', 'Developer', 'Engineering'],
+            ['Sarah Johnson', 'sarah.j@company.com', 'Designer', 'Product'],
+            ['Mike Chen', 'mike.chen@company.com', 'Manager', 'Operations'],
+        ];
+        const csvRows = [headers, ...samples].map(row =>
+            row.map(cell => `"${cell.replace(/"/g, '""')}"`).join(',')
+        );
+        const csvContent = csvRows.join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'learner_import_template.csv';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    };
+
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
             <div className="glassmorphism p-8 rounded-3xl border border-border/50">
@@ -741,12 +875,31 @@ export function LearnersManager({ domain, addToast, mode = 'learners' }: { domai
                             </p>
                         </div>
                     </div>
-                    <button
-                        onClick={handleOnboard}
-                        className="px-6 py-3 bg-primary text-primary-foreground rounded-2xl font-black text-sm uppercase tracking-widest hover:opacity-90 flex items-center gap-2 shadow-xl shadow-primary/20"
-                    >
-                        <Plus size={18} /> {isAdminsMode ? 'Add admin' : 'Add learner'}
-                    </button>
+                    <div className="flex items-center gap-3">
+                        {!isAdminsMode && (
+                            <>
+                                <input
+                                    ref={excelInputRef}
+                                    type="file"
+                                    accept=".xlsx,.xls,.csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv"
+                                    className="hidden"
+                                    onChange={handleExcelUpload}
+                                />
+                                <button
+                                    onClick={() => setIsUploadModalOpen(true)}
+                                    className="px-5 py-3 bg-secondary/70 border border-border/50 text-foreground rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-secondary transition-all flex items-center gap-2"
+                                >
+                                    <Upload size={16} /> Upload File
+                                </button>
+                            </>
+                        )}
+                        <button
+                            onClick={handleOnboard}
+                            className="px-6 py-3 bg-primary text-primary-foreground rounded-2xl font-black text-sm uppercase tracking-widest hover:opacity-90 flex items-center gap-2 shadow-xl shadow-primary/20"
+                        >
+                            <Plus size={18} /> {isAdminsMode ? 'Add admin' : 'Add learner'}
+                        </button>
+                    </div>
                 </div>
 
                 {/* Search & Filters */}
@@ -843,11 +996,11 @@ export function LearnersManager({ domain, addToast, mode = 'learners' }: { domai
                                         </td>
                                         <td className="px-6 py-5 cursor-pointer" onClick={() => handleStatusToggle(l)}>
                                             <div className="flex items-center gap-2">
-                                                <div className={`w-8 h-4 rounded-full p-0.5 transition-all relative ${l.isActive ? 'bg-primary/20' : 'bg-secondary'}`}>
-                                                    <div className={`w-3 h-3 rounded-full shadow-sm transition-all ${l.isActive ? 'translate-x-4 bg-primary' : 'bg-muted-foreground'}`} />
+                                                <div className={`w-8 h-4 rounded-full p-0.5 transition-all relative ${l.isActive ? 'bg-emerald-500' : 'bg-secondary border border-border/40'}`}>
+                                                    <div className={`w-3 h-3 rounded-full shadow-sm transition-all bg-white ${l.isActive ? 'translate-x-4' : 'translate-x-0'}`} />
                                                 </div>
-                                                <span className={`text-[10px] font-black uppercase tracking-widest ${l.isActive ? 'text-primary' : 'text-muted-foreground'}`}>
-                                                    {l.isActive ? 'Active' : 'Locked'}
+                                                <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                                                    {l.isActive ? 'Active' : 'Inactive'}
                                                 </span>
                                             </div>
                                         </td>
@@ -890,12 +1043,125 @@ export function LearnersManager({ domain, addToast, mode = 'learners' }: { domai
                 resetPassword={resetPassword}
                 onResetPassword={handleForceReset}
                 isSubmitting={isSubmitting}
+                validationErrors={validationErrors}
+                setValidationErrors={setValidationErrors}
             />
             <LearnerInsightsSlideOver
                 isOpen={isInsightsOpen}
                 onClose={() => setIsInsightsOpen(false)}
                 learner={insightsLearner}
             />
+
+            {/* ── Upload File Modal ── */}
+            {isUploadModalOpen && (
+                <>
+                    {/* Backdrop */}
+                    <div
+                        className="fixed inset-0 z-[390] bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
+                        onClick={() => !isUploading && setIsUploadModalOpen(false)}
+                    />
+                    <div className="fixed inset-0 z-[400] flex items-center justify-center p-4 pointer-events-none">
+                        <div className="pointer-events-auto w-full max-w-lg max-h-[90vh] flex flex-col bg-background border border-border/60 rounded-3xl shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden">
+
+                            {/* Header */}
+                            <div className="flex items-start justify-between px-8 py-6 border-b border-border/50 bg-gradient-to-r from-primary/5 to-transparent">
+                                <div>
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <Upload className="text-primary w-4 h-4" />
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Bulk Import</p>
+                                    </div>
+                                    <h2 className="text-xl font-black">Upload Learners</h2>
+                                    <p className="text-xs text-muted-foreground mt-0.5">Import multiple learners at once from an Excel file</p>
+                                </div>
+                                <button
+                                    onClick={() => !isUploading && setIsUploadModalOpen(false)}
+                                    className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary transition-all"
+                                >
+                                    <X size={20} />
+                                </button>
+                            </div>
+
+                            <div className="flex-1 overflow-y-auto px-8 py-7 space-y-6">
+                                {/* Drop / Click Zone */}
+                                <label
+                                    htmlFor="modal-excel-input"
+                                    onDragOver={(e) => { e.preventDefault(); setUploadDragOver(true); }}
+                                    onDragLeave={() => setUploadDragOver(false)}
+                                    onDrop={(e) => {
+                                        e.preventDefault();
+                                        setUploadDragOver(false);
+                                        const file = e.dataTransfer.files?.[0];
+                                        if (file) {
+                                            const syntheticEvent = { target: { files: [file], value: '' } } as any;
+                                            handleExcelUpload(syntheticEvent);
+                                        }
+                                    }}
+                                    className={`flex flex-col items-center justify-center gap-4 w-full rounded-2xl border-2 border-dashed py-10 cursor-pointer transition-all ${
+                                        isUploading
+                                            ? 'border-primary/40 bg-primary/5 cursor-not-allowed'
+                                            : uploadDragOver
+                                            ? 'border-primary bg-primary/10 scale-[1.01]'
+                                            : 'border-border/50 bg-secondary/20 hover:border-primary/50 hover:bg-primary/5'
+                                    }`}
+                                >
+                                    {isUploading ? (
+                                        <>
+                                            <Loader2 size={36} className="text-primary animate-spin" />
+                                            <div className="text-center">
+                                                <p className="text-sm font-bold">Processing file...</p>
+                                                <p className="text-xs text-muted-foreground mt-1">Please wait while we import your learners</p>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+                                                <FileSpreadsheet size={28} className="text-emerald-400" />
+                                            </div>
+                                            <div className="text-center">
+                                                <p className="text-sm font-bold">Drop your Excel or CSV file here</p>
+                                                <p className="text-xs text-muted-foreground mt-1">or click to browse — <span className="text-emerald-400 font-bold">.xlsx / .xls / .csv only</span></p>
+                                            </div>
+                                        </>
+                                    )}
+                                    <input
+                                        id="modal-excel-input"
+                                        type="file"
+                                        accept=".xlsx,.xls,.csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv"
+                                        className="hidden"
+                                        disabled={isUploading}
+                                        onChange={handleExcelUpload}
+                                    />
+                                </label>
+
+                                {/* Sample Template Section */}
+                                <div className="rounded-2xl border border-border/40 bg-secondary/10 overflow-hidden">
+                                    <div className="px-5 py-4 flex items-center justify-between">
+                                        <div>
+                                            <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Sample Template</p>
+                                            <p className="text-[11px] text-muted-foreground mt-0.5">Use this format for your Excel file</p>
+                                        </div>
+                                        <button
+                                            onClick={downloadSampleTemplate}
+                                            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary/10 border border-primary/20 text-primary text-[11px] font-black uppercase tracking-widest hover:bg-primary/20 transition-all"
+                                        >
+                                            <Download size={13} /> Download
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Cancel */}
+                                <button
+                                    onClick={() => setIsUploadModalOpen(false)}
+                                    disabled={isUploading}
+                                    className="w-full py-3 bg-secondary/50 text-foreground rounded-xl font-bold text-sm hover:opacity-90 transition-all disabled:opacity-40"
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </>
+            )}
         </div>
     );
 }

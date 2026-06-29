@@ -28,6 +28,7 @@ model Tenant {
   customRevenueCurrency String                @default("USD")
   globalMarketplaceEnabled Boolean            @default(false)
   courseCredits         Int                   @default(0)
+  courseCreateCount     Int                   @default(0)
   openaiKey             String?
   availableLocales      String[]              @default(["en"])
   defaultLocale         String                @default("en")
@@ -102,6 +103,7 @@ model Course {
   certificateTemplate   CertificateTemplate?   @relation("CourseTemplate", fields: [certificateTemplateId], references: [id])
   isGlobal              Boolean                @default(false)
   clonedFromId          String?
+  courseCreateCount     Int                    @default(0)
   marketplaceClaims     MarketplaceClaim[]     @relation("ClaimedCourse")
 }
 

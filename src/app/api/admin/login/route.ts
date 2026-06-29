@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
             cookieOptions.maxAge = 60 * 60 * 24 * 7; // 1 week
         }
 
-        response.cookies.set('session-token', user.id, cookieOptions);
+        response.cookies.set('admin_token', user.id, cookieOptions);
         return response;
 
     } catch (error) {

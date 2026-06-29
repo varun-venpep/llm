@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, Trash2, Shield, Users, Loader2, Pencil, Check, X, ShieldCheck, FileText, BarChart3, AlertCircle } from 'lucide-react';
+import { Plus, Trash2, Shield, Users, Loader2, Pencil, Check, X, ShieldCheck, FileText, BarChart3, AlertCircle, AlertTriangle } from 'lucide-react';
 import { PeopleMultiSelect } from '../shared/PeopleMultiSelect';
 import { GroupInsightsSlideOver } from '../shared/GroupInsightsSlideOver';
 
@@ -17,16 +17,21 @@ interface JobRole {
 // ─────────────────────────────────────────────
 // Slide-over drawer for editing a job role
 // ─────────────────────────────────────────────
-function RoleSlideOver({ editingRole, learners, setEditingRole, onSave, onDelete }: {
+function RoleSlideOver({ editingRole, learners, setEditingRole, onSave, onDelete, validationErrors, setValidationErrors }: {
     editingRole: any;
     learners: any[];
     setEditingRole: (r: any) => void;
     onSave: () => void;
     onDelete: () => void;
+    validationErrors: Record<string, string | null>;
+    setValidationErrors: React.Dispatch<React.SetStateAction<Record<string, string | null>>>;
 }) {
     const [confirmDelete, setConfirmDelete] = useState(false);
 
-    useEffect(() => setConfirmDelete(false), [editingRole?.id]);
+    useEffect(() => {
+        setConfirmDelete(false);
+        setValidationErrors({});
+    }, [editingRole?.id, setValidationErrors]);
 
     const toggleUser = (id: string) => {
         const curr = editingRole.assignedUserIds || [];
@@ -84,19 +89,39 @@ function RoleSlideOver({ editingRole, learners, setEditingRole, onSave, onDelete
                                     <label className="text-xs font-bold text-muted-foreground">Role Name</label>
                                     <input
                                         value={editingRole.name}
-                                        onChange={e => setEditingRole({ ...editingRole, name: e.target.value })}
-                                        className="w-full bg-secondary/30 border border-border/50 rounded-xl px-4 py-3 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all"
+                                        onChange={e => {
+                                            setEditingRole({ ...editingRole, name: e.target.value });
+                                            if (validationErrors.name) {
+                                                setValidationErrors(prev => ({ ...prev, name: null }));
+                                            }
+                                        }}
+                                        className={`w-full bg-secondary/30 border rounded-xl px-4 py-3 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all ${validationErrors.name ? 'border-red-500/50' : 'border-border/50'}`}
                                     />
+                                    {validationErrors.name && (
+                                        <span className="text-[10px] font-bold text-red-500 animate-in fade-in slide-in-from-top-1 ml-1 block">
+                                            {validationErrors.name}
+                                        </span>
+                                    )}
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-xs font-bold text-muted-foreground">Description</label>
                                     <textarea
                                         value={editingRole.description || ''}
-                                        onChange={e => setEditingRole({ ...editingRole, description: e.target.value })}
+                                        onChange={e => {
+                                            setEditingRole({ ...editingRole, description: e.target.value });
+                                            if (validationErrors.description) {
+                                                setValidationErrors(prev => ({ ...prev, description: null }));
+                                            }
+                                        }}
                                         rows={3}
                                         placeholder="Describe what this role involves..."
-                                        className="w-full bg-secondary/30 border border-border/50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all resize-none text-foreground placeholder:text-muted-foreground/40"
+                                        className={`w-full bg-secondary/30 border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all resize-none text-foreground placeholder:text-muted-foreground/40 ${validationErrors.description ? 'border-red-500/50' : 'border-border/50'}`}
                                     />
+                                    {validationErrors.description && (
+                                        <span className="text-[10px] font-bold text-red-500 animate-in fade-in slide-in-from-top-1 ml-1 block">
+                                            {validationErrors.description}
+                                        </span>
+                                    )}
                                 </div>
                             </div>
                         </section>
@@ -118,8 +143,8 @@ function RoleSlideOver({ editingRole, learners, setEditingRole, onSave, onDelete
                                             : 'Learners will lose access to role-exclusive courses if disabled.'}
                                     </p>
                                 </div>
-                                <div className={`w-10 h-5 rounded-full p-1 transition-all relative ${editingRole.isActive ? 'bg-primary' : 'bg-muted-foreground/30'}`}>
-                                    <div className={`w-3 h-3 rounded-full bg-white shadow-sm transition-all ${editingRole.isActive ? 'translate-x-5' : 'translate-x-0'}`} />
+                                <div className={`w-10 h-5 rounded-full p-0.5 transition-all relative flex items-center ${editingRole.isActive ? 'bg-emerald-500' : 'bg-secondary border border-border/40'}`}>
+                                    <div className={`w-4 h-4 rounded-full bg-white shadow-sm transition-all ${editingRole.isActive ? 'translate-x-5' : 'translate-x-0'}`} />
                                 </div>
                             </div>
                         </section>
@@ -140,11 +165,11 @@ function RoleSlideOver({ editingRole, learners, setEditingRole, onSave, onDelete
                         </section>
 
                         {/* Danger zone */}
-                        <section className="pt-4 border-t border-border/30 space-y-3">
-                            <h3 className="text-[10px] font-black uppercase tracking-widest text-red-500/70 flex items-center gap-2">
-                                <Trash2 size={11} /> Danger Zone
-                            </h3>
-                            {!confirmDelete ? (
+                        {editingRole.isEditing && (
+                            <section className="pt-4 border-t border-border/30 space-y-3">
+                                <h3 className="text-[10px] font-black uppercase tracking-widest text-red-500/70 flex items-center gap-2">
+                                    <Trash2 size={11} /> Danger Zone
+                                </h3>
                                 <button
                                     type="button"
                                     onClick={() => setConfirmDelete(true)}
@@ -152,22 +177,8 @@ function RoleSlideOver({ editingRole, learners, setEditingRole, onSave, onDelete
                                 >
                                     <Trash2 size={13} /> Delete this job role
                                 </button>
-                            ) : (
-                                <div className="p-4 rounded-xl border border-red-500/40 bg-red-500/5 space-y-3">
-                                    <p className="text-xs font-bold text-red-400">Are you sure? This role will be removed from all assigned learners. This cannot be undone.</p>
-                                    <div className="flex gap-2">
-                                        <button type="button" onClick={() => setConfirmDelete(false)}
-                                            className="flex-1 py-2.5 bg-secondary text-foreground rounded-xl text-xs font-bold hover:opacity-90">
-                                            Cancel
-                                        </button>
-                                        <button type="button" onClick={onDelete}
-                                            className="flex-1 py-2.5 bg-red-500 text-white rounded-xl text-xs font-bold hover:bg-red-600 transition-colors flex items-center justify-center gap-1.5">
-                                            <Trash2 size={12} /> Yes, Delete
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
-                        </section>
+                            </section>
+                        )}
                     </div>
 
                     {/* ── Sticky Footer ── */}
@@ -183,6 +194,60 @@ function RoleSlideOver({ editingRole, learners, setEditingRole, onSave, onDelete
                     </div>
                 </div>
             </div>
+
+            {/* Delete Confirmation Modal */}
+            {confirmDelete && (
+                <>
+                    {/* Modal Backdrop */}
+                    <div
+                        className="fixed inset-0 z-[390] bg-black/85 backdrop-blur-md animate-in fade-in duration-200"
+                        onClick={() => setConfirmDelete(false)}
+                    />
+                    
+                    {/* Modal Content Container */}
+                    <div className="fixed inset-0 z-[400] flex items-center justify-center p-4 pointer-events-none">
+                        <div className="pointer-events-auto w-full max-w-md bg-[#0d0d10] border border-white/5 rounded-[32px] p-10 shadow-2xl flex flex-col items-center text-center animate-in zoom-in-95 duration-200">
+                            
+                            {/* Alert Icon */}
+                            <div className="mb-6">
+                                <svg className="w-20 h-20 text-[#f3bf8e]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2">
+                                    <circle cx="12" cy="12" r="10" />
+                                    <line x1="12" y1="8" x2="12" y2="13" strokeLinecap="round" />
+                                    <circle cx="12" cy="16.5" r="0.6" fill="currentColor" stroke="currentColor" strokeWidth="0.5" />
+                                </svg>
+                            </div>
+
+                            {/* Title */}
+                            <h3 className="text-white text-2xl font-bold tracking-tight mb-3">
+                                Delete {editingRole.name || 'Role'}?
+                            </h3>
+
+                            {/* Description */}
+                            <p className="text-sm text-zinc-400 leading-relaxed max-w-[280px] mb-8">
+                                Are you sure you want to delete this role? All member assignments will be affected.
+                            </p>
+
+                            {/* Actions Buttons */}
+                            <div className="flex items-center gap-3 w-full justify-center">
+                                <button
+                                    type="button"
+                                    onClick={onDelete}
+                                    className="flex-1 py-3.5 bg-[#e50000] hover:bg-[#ff1a1a] text-white rounded-xl text-xs font-black tracking-wider uppercase transition-colors"
+                                >
+                                    YES, DELETE ROLE
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setConfirmDelete(false)}
+                                    className="flex-1 py-3.5 bg-[#242429] hover:bg-[#2f2f36] text-zinc-300 rounded-xl text-xs font-black tracking-wider uppercase transition-colors"
+                                >
+                                    CANCEL
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </>
+            )}
         </>
     );
 }
@@ -198,6 +263,7 @@ export function RolesManager({ domain, addToast }: { domain: string, addToast: (
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [editingRole, setEditingRole] = useState<any>(null);
     const [searchQuery, setSearchQuery] = useState('');
+    const [validationErrors, setValidationErrors] = useState<Record<string, string | null>>({});
 
     // Insights State
     const [isInsightsOpen, setIsInsightsOpen] = useState(false);
@@ -227,28 +293,35 @@ export function RolesManager({ domain, addToast }: { domain: string, addToast: (
     };
 
     const handleCreateRole = async () => {
+        const errors: Record<string, string | null> = {};
         if (!editingRole?.name?.trim()) {
-            addToast('Role name is required', 'error');
-            return;
+            errors.name = 'Role name is required';
         }
         if (!editingRole?.description?.trim()) {
-            addToast('Description is required', 'error');
-            return;
+            errors.description = 'Description is required';
         }
 
         // Check for duplicate name
-        const targetName = editingRole.name.trim().toLowerCase();
-        if (roles.some(r => r.name.trim().toLowerCase() === targetName)) {
-            addToast('Role name already exists in this workspace', 'error');
-            return;
+        if (editingRole?.name?.trim()) {
+            const targetName = editingRole.name.trim().toLowerCase();
+            if (roles.some(r => r.name.trim().toLowerCase() === targetName)) {
+                errors.name = 'Role name already exists in this workspace';
+            }
         }
 
         // Check for duplicate description
-        const targetDesc = editingRole.description.trim().toLowerCase();
-        if (roles.some(r => r.description?.trim().toLowerCase() === targetDesc)) {
-            addToast('Role description already exists in this workspace', 'error');
+        if (editingRole?.description?.trim()) {
+            const targetDesc = editingRole.description.trim().toLowerCase();
+            if (roles.some(r => r.description?.trim().toLowerCase() === targetDesc)) {
+                errors.description = 'Role description already exists in this workspace';
+            }
+        }
+
+        if (Object.keys(errors).length > 0) {
+            setValidationErrors(errors);
             return;
         }
+        setValidationErrors({});
 
         setIsSubmitting(true);
         try {
@@ -266,7 +339,8 @@ export function RolesManager({ domain, addToast }: { domain: string, addToast: (
                 setEditingRole(null);
                 fetchRoles();
             } else {
-                addToast('Failed to create role', 'error');
+                const data = await res.json().catch(() => ({}));
+                addToast(data.error || 'Failed to create role', 'error');
             }
         } catch (e) {
             addToast('Error creating role', 'error');
@@ -277,28 +351,35 @@ export function RolesManager({ domain, addToast }: { domain: string, addToast: (
 
     const handleUpdateRole = async () => {
         if (!editingRole) return;
+        const errors: Record<string, string | null> = {};
         if (!editingRole.name?.trim()) {
-            addToast('Role name is required', 'error');
-            return;
+            errors.name = 'Role name is required';
         }
         if (!editingRole.description?.trim()) {
-            addToast('Description is required', 'error');
-            return;
+            errors.description = 'Description is required';
         }
 
         // Check for duplicate name
-        const targetName = editingRole.name.trim().toLowerCase();
-        if (roles.some(r => r.name.trim().toLowerCase() === targetName && r.id !== editingRole.id)) {
-            addToast('Role name already exists in this workspace', 'error');
-            return;
+        if (editingRole.name?.trim()) {
+            const targetName = editingRole.name.trim().toLowerCase();
+            if (roles.some(r => r.name.trim().toLowerCase() === targetName && r.id !== editingRole.id)) {
+                errors.name = 'Role name already exists in this workspace';
+            }
         }
 
         // Check for duplicate description
-        const targetDesc = editingRole.description.trim().toLowerCase();
-        if (roles.some(r => r.description?.trim().toLowerCase() === targetDesc && r.id !== editingRole.id)) {
-            addToast('Role description already exists in this workspace', 'error');
+        if (editingRole.description?.trim()) {
+            const targetDesc = editingRole.description.trim().toLowerCase();
+            if (roles.some(r => r.description?.trim().toLowerCase() === targetDesc && r.id !== editingRole.id)) {
+                errors.description = 'Role description already exists in this workspace';
+            }
+        }
+
+        if (Object.keys(errors).length > 0) {
+            setValidationErrors(errors);
             return;
         }
+        setValidationErrors({});
 
         try {
             const res = await fetch(`/api/t/${domain}/roles`, {
@@ -333,7 +414,6 @@ export function RolesManager({ domain, addToast }: { domain: string, addToast: (
                 body: JSON.stringify({ id: role.id, isActive: !role.isActive })
             });
             if (res.ok) {
-                addToast(`Role ${!role.isActive ? 'activated' : 'deactivated'}`, 'success');
                 fetchRoles();
             }
         } catch (e) {
@@ -442,11 +522,11 @@ export function RolesManager({ domain, addToast }: { domain: string, addToast: (
                                             onClick={() => handleStatusToggle(role)}
                                             className="flex items-center gap-2 cursor-pointer group/toggle"
                                         >
-                                            <div className={`w-8 h-4 rounded-full p-0.5 transition-all relative ${role.isActive ? 'bg-primary/20 border border-primary/20' : 'bg-secondary border border-border/40'}`}>
-                                                <div className={`w-3 h-3 rounded-full shadow-sm transition-all ${role.isActive ? 'translate-x-4 bg-primary' : 'translate-x-0 bg-muted-foreground'}`} />
+                                            <div className={`w-8 h-4 rounded-full p-0.5 transition-all relative ${role.isActive ? 'bg-emerald-500' : 'bg-secondary border border-border/40'}`}>
+                                                <div className={`w-3 h-3 rounded-full shadow-sm transition-all bg-white ${role.isActive ? 'translate-x-4' : 'translate-x-0'}`} />
                                             </div>
-                                            <span className={`text-[10px] font-black uppercase tracking-widest ${role.isActive ? 'text-primary' : 'text-muted-foreground'}`}>
-                                                {role.isActive ? 'Enabled' : 'Disabled'}
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                                                {role.isActive ? 'Active' : 'Inactive'}
                                             </span>
                                         </div>
                                     </td>
@@ -489,6 +569,8 @@ export function RolesManager({ domain, addToast }: { domain: string, addToast: (
                 setEditingRole={setEditingRole}
                 onSave={editingRole?.isEditing ? handleUpdateRole : handleCreateRole}
                 onDelete={handleDeleteRole}
+                validationErrors={validationErrors}
+                setValidationErrors={setValidationErrors}
             />
         </div>
     );

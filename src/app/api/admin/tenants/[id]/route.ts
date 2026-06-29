@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import { normalizeTenantAdminPermissions } from '@/lib/permissions';
@@ -10,7 +11,7 @@ export async function PUT(
     const { id: tenantId } = await params;
     try {
         const body = await req.json();
-        const { name, subdomain, isActive, adminEmail, newPassword, aiCredits, customRevenue, customRevenueCurrency, globalMarketplaceEnabled, courseCredits } = body;
+        const { name, subdomain, isActive, adminEmail, newPassword, aiCredits, customRevenue, customRevenueCurrency, globalMarketplaceEnabled, courseCredits, courseCreateCount } = body;
         const tenantAdminPermissions = normalizeTenantAdminPermissions(body.tenantAdminPermissions);
 
         // 1. Update Tenant Basic Info
@@ -28,6 +29,14 @@ export async function PUT(
             }
         });
 
+        if (courseCreateCount !== undefined) {
+            await prisma.$executeRawUnsafe(
+                'UPDATE "Tenant" SET "courseCreateCount" = $1 WHERE "id" = $2',
+                parseInt(String(courseCreateCount), 10),
+                tenantId
+            );
+        }
+
         // 2. Handle Admin User Updates (Email/Password)
         if (adminEmail || newPassword || body.tenantAdminPermissions !== undefined) {
             const adminUser = await prisma.user.findFirst({
@@ -44,14 +53,18 @@ export async function PUT(
                     updateData.password = await bcrypt.hash(newPassword, 10);
                 }
                 if (body.tenantAdminPermissions !== undefined) {
-                    try {
+                    if (tenantAdminPermissions.length > 0) {
                         await prisma.$executeRaw`
                             UPDATE "User"
-                            SET "tenantAdminPermissions" = ${tenantAdminPermissions}::text[]
+                            SET "tenantAdminPermissions" = ARRAY[${Prisma.join(tenantAdminPermissions)}]::TEXT[]
                             WHERE "id" = ${adminUser.id}
                         `;
-                    } catch (error: any) {
-                        if (error?.code !== 'P2010') throw error;
+                    } else {
+                        await prisma.$executeRaw`
+                            UPDATE "User"
+                            SET "tenantAdminPermissions" = ARRAY[]::TEXT[]
+                            WHERE "id" = ${adminUser.id}
+                        `;
                     }
                 }
 

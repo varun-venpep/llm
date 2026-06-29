@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
@@ -34,6 +34,27 @@ export default function AdminLayout({
         logoPrimary: '/lebra_ai_logo_transparent.png',
         logoLight: '/lebra_ai_logo_footer.png'
     });
+
+    const notificationsRef = useRef<HTMLDivElement>(null);
+    const [showNotifications, setShowNotifications] = useState(false);
+    const [notifications, setNotifications] = useState([
+        { id: 1, title: 'Workspace Provisioned', message: 'New workspace "Varun LLM" has been successfully spinoff.', time: '5m ago', read: false },
+        { id: 2, title: 'System Security Audit', message: 'Weekly platform credentials integrity scan completed.', time: '1h ago', read: false },
+        { id: 3, title: 'Database Backup', message: 'Automated database snapshots saved to AWS S3 storage.', time: '6h ago', read: true },
+        { id: 4, title: 'Stripe webhook listener', message: 'Connection established with Stripe Gateway.', time: '1d ago', read: true }
+    ]);
+
+    const unreadCount = notifications.filter(n => !n.read).length;
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (notificationsRef.current && !notificationsRef.current.contains(event.target as Node)) {
+                setShowNotifications(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     useEffect(() => {
         fetch('/api/branding')
@@ -147,10 +168,57 @@ export default function AdminLayout({
                         <div className="text-sm font-bold text-muted-foreground">Admin / <span className="text-foreground">Overview</span></div>
                     </div>
                     <div className="flex items-center gap-4">
-                        <button className="relative p-2 rounded-full hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground">
-                            <Bell className="w-5 h-5" />
-                            <span className="absolute top-1.5 right-2 w-2 h-2 rounded-full bg-blue-500 border-2 border-background" />
-                        </button>
+                        <div className="relative" ref={notificationsRef}>
+                            <button 
+                                onClick={() => setShowNotifications(!showNotifications)}
+                                className={`relative p-2 rounded-full hover:bg-secondary transition-colors transition-all ${showNotifications ? 'bg-secondary text-foreground animate-none' : 'text-muted-foreground hover:text-foreground'}`}
+                            >
+                                <Bell className="w-5 h-5" />
+                                {unreadCount > 0 && (
+                                    <span className="absolute top-1.5 right-2 w-2 h-2 rounded-full bg-blue-500 border-2 border-background" />
+                                )}
+                            </button>
+
+                            {showNotifications && (
+                                <div className="absolute right-0 mt-3 w-80 bg-background border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-300">
+                                    <div className="p-4 border-b border-white/5 bg-secondary/20 flex justify-between items-center">
+                                        <h3 className="font-bold text-xs uppercase tracking-wider text-foreground">Platform Alerts</h3>
+                                        {unreadCount > 0 && (
+                                            <button 
+                                                onClick={() => {
+                                                    setNotifications(notifications.map(n => ({ ...n, read: true })));
+                                                }}
+                                                className="text-[9px] font-black uppercase text-blue-500 hover:text-blue-400 tracking-widest"
+                                            >
+                                                Mark all read
+                                            </button>
+                                        )}
+                                    </div>
+                                    <div className="divide-y divide-white/5 max-h-[300px] overflow-y-auto">
+                                        {notifications.length === 0 ? (
+                                            <div className="p-6 text-center text-xs text-muted-foreground">No alerts found.</div>
+                                        ) : (
+                                            notifications.map(n => (
+                                                <div 
+                                                    key={n.id} 
+                                                    onClick={() => {
+                                                        setNotifications(notifications.map(item => item.id === n.id ? { ...item, read: true } : item));
+                                                    }}
+                                                    className={`p-4 hover:bg-secondary/30 transition-colors cursor-pointer relative ${!n.read ? 'bg-blue-500/5' : ''}`}
+                                                >
+                                                    {!n.read && (
+                                                        <span className="absolute top-4 left-2 w-1.5 h-1.5 rounded-full bg-blue-500" />
+                                                    )}
+                                                    <p className="font-bold text-xs text-foreground pl-1">{n.title}</p>
+                                                    <p className="text-[10px] text-muted-foreground mt-0.5 pl-1 leading-relaxed">{n.message}</p>
+                                                    <span className="text-[9px] text-muted-foreground mt-2 block pl-1">{n.time}</span>
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                         <div className="flex items-center gap-3 pl-4 border-l border-white/10">
                             <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center font-bold text-sm">
                                 SA
