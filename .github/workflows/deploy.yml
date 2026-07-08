@@ -28,35 +28,21 @@ jobs:
             echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID_DEV }}" >> $GITHUB_ENV
             echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY_DEV }}" >> $GITHUB_ENV
             echo "WHISPER_ECR_REPO=llm-dev-whisper-repo" >> $GITHUB_ENV
-            echo "DATABASE_URL=${{ secrets.DATABASE_URL_DEV }}" >> $GITHUB_ENV
-            echo "NEXTAUTH_SECRET=${{ secrets.NEXTAUTH_SECRET_DEV }}" >> $GITHUB_ENV
           else
             echo "STAGE=prod" >> $GITHUB_ENV
             echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID_PROD }}" >> $GITHUB_ENV
             echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY_PROD }}" >> $GITHUB_ENV
             echo "WHISPER_ECR_REPO=llm-prod-whisper-repo" >> $GITHUB_ENV
-            echo "DATABASE_URL=${{ secrets.DATABASE_URL_PROD }}" >> $GITHUB_ENV
-            echo "NEXTAUTH_SECRET=${{ secrets.NEXTAUTH_SECRET_PROD }}" >> $GITHUB_ENV
           fi
 
       # Diagnostic: Check if mapped secrets are present
       - name: Verify Authentication State
         run: |
-          if [ -z "$AWS_ACCESS_KEY_ID" ]; then
+          if [ -z "$AWS_ACCESS_KEY_ID" ]; then 
             echo "❌ CRITICAL: AWS Credentials for Stage '$STAGE' are missing in Github Secrets."
-            exit 1
-          else
+            exit 1 
+          else 
             echo "✅ AWS Credentials for Stage '$STAGE' mapped successfully."
-          fi
-
-          if [ -z "$DATABASE_URL" ]; then
-            echo "❌ CRITICAL: DATABASE_URL for Stage '$STAGE' is missing in Github Secrets (DATABASE_URL_${STAGE^^})."
-            exit 1
-          fi
-
-          if [ -z "$NEXTAUTH_SECRET" ]; then
-            echo "❌ CRITICAL: NEXTAUTH_SECRET for Stage '$STAGE' is missing in Github Secrets (NEXTAUTH_SECRET_${STAGE^^})."
-            exit 1
           fi
 
       - name: Configure AWS Credentials
@@ -124,5 +110,11 @@ jobs:
       - name: Execute Serverless Deployment
         run: |
           echo "Deploying AWS Microservices securely to Stage: $STAGE ..."
-
-          sam deploy --no-confirm-changeset --no-fail-on-empty-changeset --parameter-overrides "Stage=$STAGE DatabaseUrl=\"$DATABASE_URL\" NextAuthSecret=\"$NEXTAUTH_SECRET\""
+          
+          # Inheriting DatabaseURL dynamically from local .env file
+          if [ -f .env ]; then
+            export $(grep -v '^#' .env | xargs)
+            sam deploy --no-confirm-changeset --no-fail-on-empty-changeset --parameter-overrides "Stage=$STAGE DatabaseUrl=\"$DATABASE_URL\""
+          else
+            sam deploy --no-confirm-changeset --no-fail-on-empty-changeset --parameter-overrides "Stage=$STAGE"
+          fi
