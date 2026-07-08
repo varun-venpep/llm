@@ -11,8 +11,16 @@ export async function PUT(
     const { id: tenantId } = await params;
     try {
         const body = await req.json();
-        const { name, subdomain, isActive, adminEmail, newPassword, aiCredits, customRevenue, customRevenueCurrency, globalMarketplaceEnabled, courseCredits, courseCreateCount } = body;
+        const { name, subdomain, isActive, adminEmail, newPassword, aiCredits, customRevenue, customRevenueCurrency, globalMarketplaceEnabled, courseCredits, courseCreateCount, plan } = body;
         const tenantAdminPermissions = normalizeTenantAdminPermissions(body.tenantAdminPermissions);
+
+        let targetPlan: any = undefined;
+        if (plan) {
+            const up = plan.toUpperCase();
+            if (up === 'STARTER' || up === 'PROFESSIONAL' || up === 'ENTERPRISE') {
+                targetPlan = up;
+            }
+        }
 
         // 1. Update Tenant Basic Info
         const updatedTenant = await prisma.tenant.update({
@@ -25,7 +33,8 @@ export async function PUT(
                 customRevenue: customRevenue !== undefined ? parseInt(String(customRevenue), 10) : undefined,
                 customRevenueCurrency: customRevenueCurrency || undefined,
                 globalMarketplaceEnabled: globalMarketplaceEnabled !== undefined ? Boolean(globalMarketplaceEnabled) : undefined,
-                courseCredits: courseCredits !== undefined ? parseInt(String(courseCredits), 10) : undefined
+                courseCredits: courseCredits !== undefined ? parseInt(String(courseCredits), 10) : undefined,
+                ...(targetPlan && { plan: targetPlan })
             }
         });
 

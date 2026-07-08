@@ -34,7 +34,7 @@ export async function GET(
             }
         }
 
-        let announcements = [];
+        let announcements: Awaited<ReturnType<typeof prisma.announcement.findMany>> = [];
         try {
             announcements = await prisma.announcement.findMany({
                 where: { tenantId: tenant.id },

@@ -6,5 +6,5 @@ stack_name = "llm-dev"
 region = "ap-southeast-1"
 confirm_changeset = true
 capabilities = "CAPABILITY_IAM"
-parameter_overrides = "Stage=\"dev\" DatabaseUrl=\"postgresql://accelarateos_usr:Sq9XX4q32WrH82O08UXN@database-1.cp4gosmi85y9.ap-southeast-1.rds.amazonaws.com:5432/lebra_db?sslmode=require\""
+parameter_overrides = "Stage=\"dev\" DatabaseUrl=\"postgresql://accelarateos_usr:Sq9XX4q32WrH82O08UXN@database-1.cp4gosmi85y9.ap-southeast-1.rds.amazonaws.com:5432/lebra_db?sslmode=require\" NextAuthSecret=\"change-me-in-production-1234567890\""
 image_repositories = ["LmsWebFunction=128353492796.dkr.ecr.ap-southeast-1.amazonaws.com/llm-dev-lmsweb-repo"]

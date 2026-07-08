@@ -1,3 +1,4 @@
+import { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowRight, CheckCircle2 } from 'lucide-react';
 import {
@@ -6,6 +7,21 @@ import {
   PillBadge,
   PricingSection,
 } from '@/components/marketing/MarketingLayout';
+
+export const metadata: Metadata = {
+  title: 'LMS Pricing Plans for Training Academies | Lebra.AI',
+  description: 'Compare LMS pricing for AI Learning Platform, Multi-Tenant LMS, enterprise LMS software, Training Academy Software. Compare plans with analytics today now',
+  keywords: [
+    'lms pricing',
+    'Multi-Tenant LMS',
+    'enterprise lms software',
+    'AI Learning Platform',
+    'Training Academy Software'
+  ],
+  alternates: {
+    canonical: 'https://lebra.ai/pricing',
+  },
+};
 
 export default function PricingPage() {
   return (

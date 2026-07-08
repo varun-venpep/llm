@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import { checkSession } from '@/lib/auth';
 import { Role } from '@prisma/client';
+import { getTenantLearnerLimit } from '@/lib/planLimits';
 
 export async function POST(
     req: NextRequest,
@@ -24,6 +25,55 @@ export async function POST(
 
         if (!tenant) {
             return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
+        }
+
+        // Check learner limit for the tenant first
+        const { userLimit, planName } = await getTenantLearnerLimit(tenant.id);
+
+        if (userLimit > 0) {
+            const learnerEmails = users
+                .filter((userData: any) => {
+                    const rawRole = userData.role || '';
+                    const normalizedRole = rawRole.toLowerCase();
+                    let resolvedRole: Role = Role.LEARNER;
+                    if (normalizedRole.includes('admin')) {
+                        resolvedRole = Role.TENANT_ADMIN;
+                    } else if (normalizedRole.includes('manager')) {
+                        resolvedRole = Role.PLATFORM_MANAGER;
+                    } else if (normalizedRole.includes('instructor') || normalizedRole.includes('teacher')) {
+                        resolvedRole = Role.INSTRUCTOR;
+                    }
+                    return resolvedRole === Role.LEARNER && userData.email;
+                })
+                .map((userData: any) => userData.email.toLowerCase());
+
+            const uniqueLearnerEmails = Array.from(new Set(learnerEmails));
+
+            const existingLearnersCount = await prisma.user.count({
+                where: {
+                    tenantId: tenant.id,
+                    role: 'LEARNER'
+                }
+            });
+
+            // Find how many of these unique emails already exist as learners in the database
+            const existingLearnersInDb = await prisma.user.findMany({
+                where: {
+                    tenantId: tenant.id,
+                    role: 'LEARNER',
+                    email: { in: uniqueLearnerEmails }
+                },
+                select: { email: true }
+            });
+
+            const existingEmailsSet = new Set(existingLearnersInDb.map(u => u.email.toLowerCase()));
+            const newLearnersCount = uniqueLearnerEmails.filter(email => !existingEmailsSet.has(email)).length;
+
+            if (existingLearnersCount + newLearnersCount > userLimit) {
+                return NextResponse.json({
+                    error: `Bulk import would exceed the learner limit for your plan (${planName}). You currently have ${existingLearnersCount} learners, and you tried to add ${newLearnersCount} new learners, exceeding the limit of ${userLimit}. Please update your package to import more learners.`
+                }, { status: 400 });
+            }
         }
 
         const results = [];

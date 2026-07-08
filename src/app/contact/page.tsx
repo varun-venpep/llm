@@ -1,7 +1,22 @@
+import { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowRight, CheckCircle2, Send } from 'lucide-react';
 import { MarketingPage, PillBadge } from '@/components/marketing/MarketingLayout';
 import { contactMethods } from '@/components/marketing/marketingData';
+
+export const metadata: Metadata = {
+  title: 'Contact Lebra.AI | LMS Demo & Learning Platform Setup',
+  description: 'Contact Lebra.AI for AI Learning Platform demos, Learning Management System (LMS), employee training, AI course creation, and enterprise LMS support.',
+  keywords: [
+    'Learning Platform Setup',
+    'Employee Training Software',
+    'learning management system demo',
+    'Training Platform Support'
+  ],
+  alternates: {
+    canonical: 'https://lebra.ai/contact',
+  },
+};
 
 export default function ContactPage() {
   return (

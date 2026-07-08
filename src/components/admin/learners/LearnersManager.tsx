@@ -620,6 +620,10 @@ export function LearnersManager({ domain, addToast, mode = 'learners' }: { domai
     const [uploadDragOver, setUploadDragOver] = useState(false);
     const excelInputRef = useRef<HTMLInputElement>(null);
 
+    // Learner limit states
+    const [learnerLimit, setLearnerLimit] = useState<number>(0);
+    const [planName, setPlanName] = useState<string>('Starter');
+
     const isAdminsMode = mode === 'admins';
     const visibleUsers = learners.filter(user => isAdminsMode ? user.role !== 'LEARNER' : user.role === 'LEARNER');
 
@@ -634,7 +638,17 @@ export function LearnersManager({ domain, addToast, mode = 'learners' }: { domai
                 fetch(`/api/t/${domain}/roles`),
                 fetch(`/api/t/${domain}/teams`)
             ]);
-            if (lRes.ok) setLearners(await lRes.json());
+            if (lRes.ok) {
+                setLearners(await lRes.json());
+                const limitHeader = lRes.headers.get('x-learner-limit');
+                const planHeader = lRes.headers.get('x-learner-plan');
+                if (limitHeader) {
+                    setLearnerLimit(parseInt(limitHeader, 10));
+                }
+                if (planHeader) {
+                    setPlanName(planHeader);
+                }
+            }
             if (rRes.ok) setRoles(await rRes.json());
             if (tRes.ok) setTeams(await tRes.json());
         } catch (e) {
@@ -645,6 +659,13 @@ export function LearnersManager({ domain, addToast, mode = 'learners' }: { domai
     };
 
     const handleOnboard = () => {
+        if (!isAdminsMode && learnerLimit > 0) {
+            const currentLearnersCount = learners.filter(u => u.role === 'LEARNER').length;
+            if (currentLearnersCount >= learnerLimit) {
+                addToast(`Learner limit reached (${learnerLimit} users max). Please upgrade your plan (${planName}) to add more learners.`, 'error');
+                return;
+            }
+        }
         const password = Math.random().toString(36).substring(2, 10);
         setEditingLearner({
             name: '',
@@ -803,6 +824,15 @@ export function LearnersManager({ domain, addToast, mode = 'learners' }: { domai
         const file = e.target.files?.[0];
         e.target.value = '';
         if (!file) return;
+
+        if (learnerLimit > 0) {
+            const currentLearnersCount = learners.filter(u => u.role === 'LEARNER').length;
+            if (currentLearnersCount >= learnerLimit) {
+                addToast(`Learner limit reached (${learnerLimit} users max). Please upgrade your plan (${planName}) to add more learners.`, 'error');
+                return;
+            }
+        }
+
         const ext = file.name.split('.').pop()?.toLowerCase();
         if (ext !== 'xlsx' && ext !== 'xls' && ext !== 'csv') {
             addToast('Only Excel and CSV files (.xlsx, .xls, .csv) are allowed.', 'error');
