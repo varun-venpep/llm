@@ -12,6 +12,13 @@ Parameters:
   AppDomain:
     Type: String
     Default: lebra.ai
+  WildcardCertificateArn:
+    Type: String
+    Description: >-
+      ARN of a pre-validated ACM certificate (in ap-southeast-1) covering
+      *.<Stage>.<AppDomain> and <Stage>.<AppDomain>. Request/validate this
+      once via the ACM console or CLI; it is referenced here, not managed
+      by this stack, to avoid DNS-validation record collisions on replacement.
   OpenAiApiKey:
     Type: String
     NoEcho: true
@@ -281,7 +288,7 @@ Resources:
       Port: 443
       Protocol: HTTPS
       Certificates:
-        - CertificateArn: !Ref LmsWildcardCertificate
+        - CertificateArn: !Ref WildcardCertificateArn
       DefaultActions:
         - Type: forward
           TargetGroupArn: !Ref WhisperTargetGroup
@@ -330,25 +337,12 @@ Resources:
     Properties:
       Name: !Ref AppDomain
 
-  LmsWildcardCertificate:
-    Type: AWS::CertificateManager::Certificate
-    Properties:
-      DomainName: !Sub "*.${Stage}.${AppDomain}"
-      SubjectAlternativeNames:
-        - !Sub "${Stage}.${AppDomain}"
-      ValidationMethod: DNS
-      DomainValidationOptions:
-        - DomainName: !Sub "*.${Stage}.${AppDomain}"
-          HostedZoneId: !Ref LmsHostedZone
-        - DomainName: !Sub "${Stage}.${AppDomain}"
-          HostedZoneId: !Ref LmsHostedZone
-
   LmsApiCustomDomain:
     Type: AWS::ApiGatewayV2::DomainName
     Properties:
       DomainName: !Sub "*.${Stage}.${AppDomain}"
       DomainNameConfigurations:
-        - CertificateArn: !Ref LmsWildcardCertificate
+        - CertificateArn: !Ref WildcardCertificateArn
           EndpointType: REGIONAL
 
   LmsRootApiCustomDomain:
@@ -356,7 +350,7 @@ Resources:
     Properties:
       DomainName: !Sub "${Stage}.${AppDomain}"
       DomainNameConfigurations:
-        - CertificateArn: !Ref LmsWildcardCertificate
+        - CertificateArn: !Ref WildcardCertificateArn
           EndpointType: REGIONAL
 
   LmsApiMapping:
