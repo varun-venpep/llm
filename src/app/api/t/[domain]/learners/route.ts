@@ -4,6 +4,7 @@ import bcrypt from 'bcryptjs';
 import { checkSession, requireTenantPermission } from '@/lib/auth';
 import { Prisma, Role } from '@prisma/client';
 import { normalizeTenantAdminPermissions } from '@/lib/permissions';
+import { checkLearnerLimit } from '@/lib/planLimits';
 
 const editableRoles = new Set<Role>([
     Role.LEARNER,
@@ -61,6 +62,15 @@ export async function POST(
                     ? 'You do not have permission to create learners'
                     : 'You do not have permission to manage admins'
             }, { status: 403 });
+        }
+
+        if (role === Role.LEARNER) {
+            const limitCheck = await checkLearnerLimit(tenant.id, 1);
+            if (!limitCheck.allowed) {
+                return NextResponse.json({
+                    error: `You have reached the maximum limit of ${limitCheck.limit} learners for your plan (${limitCheck.planName}). Please update your package to add more learners.`
+                }, { status: 400 });
+            }
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -148,6 +158,10 @@ export async function GET(
 ) {
     try {
         const { domain } = await params;
+        const tenant = await prisma.tenant.findUnique({
+            where: { subdomain: domain },
+            select: { id: true }
+        });
         // BUG-007: Removed ensureTenantAdminPermissionsColumn() — DDL must not run per-request.
         const session = await checkSession(req, domain, ['TENANT_ADMIN', 'SUPER_ADMIN']);
         if (!hasAnyTenantPermission(session, ['learners.manage', 'people.manage'])) {
@@ -228,7 +242,14 @@ export async function GET(
             };
         });
 
-        return NextResponse.json(formattedLearners);
+        const response = NextResponse.json(formattedLearners);
+        if (tenant) {
+            const limitCheck = await checkLearnerLimit(tenant.id, 0);
+            response.headers.set('x-learner-limit', String(limitCheck.limit));
+            response.headers.set('x-learner-plan', limitCheck.planName);
+            response.headers.set('x-learner-count', String(limitCheck.currentCount));
+        }
+        return response;
     } catch (error) {
         console.error('Learners GET Error:', error);
         return NextResponse.json({ error: 'Failed to fetch learners' }, { status: 500 });

@@ -14,7 +14,7 @@ const ensureTenantAdminPermissionsColumn = () => prisma.$executeRaw`
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
-        const { name, adminEmail, adminPassword, globalMarketplaceEnabled, courseCredits, courseCreateCount } = body;
+        const { name, adminEmail, adminPassword, globalMarketplaceEnabled, courseCredits, courseCreateCount, selectedPlanId } = body;
         const subdomain = typeof body.subdomain === 'string' ? body.subdomain.trim().toLowerCase() : '';
         const tenantAdminPermissions = normalizeTenantAdminPermissions(body.tenantAdminPermissions);
         const adminPermissions = tenantAdminPermissions.length > 0 ? tenantAdminPermissions : ALL_TENANT_ADMIN_PERMISSIONS;
@@ -33,6 +33,14 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Subdomain already taken' }, { status: 400 });
         }
 
+        let planValue: any = 'STARTER';
+        if (selectedPlanId) {
+            const up = selectedPlanId.toUpperCase();
+            if (up === 'STARTER' || up === 'PROFESSIONAL' || up === 'ENTERPRISE') {
+                planValue = up;
+            }
+        }
+
         await ensureTenantAdminPermissionsColumn();
 
         // Create Tenant and Admin User in a transaction
@@ -43,7 +51,8 @@ export async function POST(req: NextRequest) {
                     subdomain,
                     primaryColor: '#3b82f6',
                     globalMarketplaceEnabled: globalMarketplaceEnabled || false,
-                    courseCredits: courseCredits || 0
+                    courseCredits: courseCredits || 0,
+                    plan: planValue
                 },
             });
 

@@ -1,3 +1,4 @@
+import { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowRight, CheckCircle2 } from 'lucide-react';
 import {
@@ -10,6 +11,23 @@ import {
   PillBadge,
   RolesSection,
 } from '@/components/marketing/MarketingLayout';
+
+export const metadata: Metadata = {
+  title: 'LMS Features for AI Training Academies | Lebra.AI',
+  description: 'Explore LMS features with AI course creation, learning management software, training management software, learning analytics, and certificates.',
+  keywords: [
+    'lms features',
+    'ai course creation',
+    'training management software',
+    'learning analytics platform',
+    'lms learning management system',
+    'learning management software',
+    'best learning management system'
+  ],
+  alternates: {
+    canonical: 'https://lebra.ai/features',
+  },
+};
 
 export default function FeaturesPage() {
   return (

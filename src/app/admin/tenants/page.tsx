@@ -35,6 +35,7 @@ interface Tenant {
     globalMarketplaceEnabled?: boolean;
     courseCredits?: number;
     courseCreateCount?: number;
+    plan?: string;
 }
 
 const getCurrencySymbol = (currencyCode?: string) => {
@@ -99,6 +100,7 @@ type EditForm = {
     globalMarketplaceEnabled: boolean;
     courseCredits: number;
     courseCreateCount: number;
+    plan: string;
 };
 
 export default function TenantsPage() {
@@ -134,6 +136,7 @@ export default function TenantsPage() {
         globalMarketplaceEnabled: false,
         courseCredits: 0,
         courseCreateCount: 0,
+        plan: 'STARTER',
     });
     const [isUpdating, setIsUpdating] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
@@ -280,6 +283,7 @@ export default function TenantsPage() {
             globalMarketplaceEnabled: tenant.globalMarketplaceEnabled || false,
             courseCredits: tenant.courseCredits || 0,
             courseCreateCount: tenant.courseCreateCount || 0,
+            plan: tenant.plan || 'STARTER',
         });
         setValidationErrors({});
         setIsEditModalOpen(true);
@@ -454,7 +458,12 @@ export default function TenantsPage() {
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 font-medium text-sm text-blue-400">
-                                        /t/{tenant.subdomain}
+                                        <div className="flex flex-col gap-0.5">
+                                            <span>/t/{tenant.subdomain}</span>
+                                            <span className="text-[10px] uppercase font-bold text-muted-foreground">
+                                                Plan: {tenant.plan || 'STARTER'}
+                                            </span>
+                                        </div>
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className="flex flex-col gap-1">
@@ -705,6 +714,7 @@ export default function TenantsPage() {
                                         if (plan) {
                                             setEditForm({
                                                 ...editForm,
+                                                plan: plan.id.toUpperCase(),
                                                 courseCreateCount: plan.courseCreateLimit,
                                                 aiCredits: plan.id === 'starter' ? 100 : plan.id === 'professional' ? 1000 : 9999,
                                                 customRevenue: plan.price.toLowerCase() === 'custom' ? 0 : parseInt(plan.price.replace(/,/g, '')) || 0,
