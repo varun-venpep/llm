@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { checkSession } from '@/lib/auth';
+import { checkSession, requireTenantPermission } from '@/lib/auth';
 
 // GET single course
 export async function GET(
@@ -74,6 +74,11 @@ export async function PUT(
 ) {
     const { domain, courseId } = await params;
     try {
+        const session = await checkSession(req, domain, ['TENANT_ADMIN', 'SUPER_ADMIN']);
+        if (!session || !requireTenantPermission(session, 'courses.manage')) {
+            return NextResponse.json({ error: 'You do not have permission to update courses' }, { status: 403 });
+        }
+
         const body = await req.json();
         const tenant = await prisma.tenant.findUnique({ where: { subdomain: domain } });
         if (!tenant) return NextResponse.json({ error: 'Not found' }, { status: 404 });
@@ -92,7 +97,6 @@ export async function PUT(
         });
 
         // Audit Log: Course Update (Visibility/Details)
-        const session = await checkSession(req, domain);
         if (session) {
             await prisma.activityLog.create({
                 data: {
@@ -116,6 +120,11 @@ export async function DELETE(
 ) {
     const { domain, courseId } = await params;
     try {
+        const deleteSession = await checkSession(req, domain, ['TENANT_ADMIN', 'SUPER_ADMIN']);
+        if (!deleteSession || !requireTenantPermission(deleteSession, 'courses.manage')) {
+            return NextResponse.json({ error: 'You do not have permission to delete courses' }, { status: 403 });
+        }
+
         const tenant = await prisma.tenant.findUnique({ where: { subdomain: domain } });
         if (!tenant) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
@@ -136,12 +145,11 @@ export async function DELETE(
 
         await prisma.course.delete({ where: { id: courseId } });
 
-        // Audit Log: Course Deletion
-        const session = await checkSession(req, domain);
-        if (session) {
+        // Audit Log: Course Deletion (Fixed duplicate session check)
+        if (deleteSession) {
             await prisma.activityLog.create({
                 data: {
-                    userId: session.id,
+                    userId: deleteSession.id,
                     action: 'COURSE_DELETED',
                     metadata: { courseId: course.id, title: course.title }
                 }

@@ -18,6 +18,16 @@ export const config = {
 export default async function middleware(req: NextRequest) {
     const url = req.nextUrl;
 
+    // Normalize explicit /t/[domain] paths to lowercase to avoid DB query casing mismatches
+    if (url.pathname.startsWith('/t/')) {
+        const pathSegments = url.pathname.split('/');
+        const rawDomain = pathSegments[2];
+        if (rawDomain && rawDomain !== rawDomain.toLowerCase()) {
+            const newPathname = url.pathname.replace(`/t/${rawDomain}`, `/t/${rawDomain.toLowerCase()}`);
+            return NextResponse.redirect(new URL(newPathname + url.search, req.url));
+        }
+    }
+
     // 1. Get raw host header (e.g. admin.lvh.me:3000, venpep.lvh.me:3000)
     const hostHeader = req.headers.get('host');
     const forwardedHost = req.headers.get('x-forwarded-host');
@@ -26,7 +36,14 @@ export default async function middleware(req: NextRequest) {
     // 2. The root domain is what we want to strip out to find the subdomain
     // E.g. "lvh.me:3000" or "localhost:3000" or "dev.lebra.ai"
     const configuredRootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'dev.lebra.ai';
-    const rootDomain = configuredRootDomain.split(':')[0];
+    let rootDomain = configuredRootDomain.split(':')[0];
+
+    // Auto-detect local development environments (localhost, lvh.me)
+    if (rawHost.endsWith('.localhost') || rawHost === 'localhost') {
+        rootDomain = 'localhost';
+    } else if (rawHost.endsWith('.lvh.me') || rawHost === 'lvh.me') {
+        rootDomain = 'lvh.me';
+    }
 
     // 3. Normalize the hostname
     let hostname = rawHost.split(',')[0].trim();
@@ -47,14 +64,15 @@ export default async function middleware(req: NextRequest) {
     console.log(`[Middleware] Raw Host: ${rawHost} | Root Domain: ${rootDomain} | Hostname: ${hostname}`);
 
     // --- AUTHENTICATION CHECKS ---
-    const sessionToken = req.cookies.get('session-token')?.value;
+    const adminToken = req.cookies.get('admin_token')?.value || req.cookies.get('session-token')?.value;
+    const learnerToken = req.cookies.get('learner_token')?.value || req.cookies.get('session-token')?.value;
     const isSuperAdminHost = hostname === `admin.${rootDomain}`;
 
     // 1. Super Admin Auth Guard
     // Only protect if on the admin subdomain OR on root domain it specifically starts with /admin
     const isSuperAdminPath = url.pathname.startsWith('/admin') && !url.pathname.endsWith('/login');
     if (isSuperAdminPath && (isSuperAdminHost || isRootHost)) {
-        if (!sessionToken) {
+        if (!adminToken) {
             return NextResponse.redirect(new URL('/admin/login', req.url));
         }
     }
@@ -66,12 +84,15 @@ export default async function middleware(req: NextRequest) {
     const isExplicitTenantPath = url.pathname.startsWith('/t/');
     const pathSubdomain = isExplicitTenantPath ? url.pathname.split('/')[2] : null;
 
-    const isTenantArea = url.pathname.includes('/dashboard') ||
-        (url.pathname.includes('/admin') && !url.pathname.startsWith('/admin')) ||
+    const isAdminArea = (url.pathname.includes('/admin') && !url.pathname.startsWith('/admin')) ||
         (isTenantSubdomain && url.pathname.startsWith('/admin'));
+    const isLearnerArea = url.pathname.includes('/dashboard') ||
+        url.pathname.includes('/course') ||
+        url.pathname.includes('/achievements');
 
-    if (isTenantArea && !url.pathname.endsWith('/login')) {
-        if (!sessionToken) {
+    if ((isAdminArea || isLearnerArea) && !url.pathname.endsWith('/login')) {
+        const requiredToken = isLearnerArea ? (learnerToken || adminToken) : adminToken;
+        if (!requiredToken) {
             let redirectUrl = '/login';
             if (isTenantSubdomain) {
                 redirectUrl = `/login`;
@@ -86,30 +107,37 @@ export default async function middleware(req: NextRequest) {
     }
 
     // 3. Login-to-Dashboard Auto-Jump (Redirect AWAY from login if already authenticated)
-    if (url.pathname.endsWith('/login') && sessionToken && url.searchParams.get('forceLogin') !== '1') {
-        if (url.pathname.startsWith('/admin') && (isSuperAdminHost || isRootHost)) {
-            return NextResponse.redirect(new URL('/admin', req.url));
-        }
+    if (url.pathname.endsWith('/login') && url.searchParams.get('forceLogin') !== '1') {
+        const isSuperAdminLogin = url.pathname.startsWith('/admin') && (isSuperAdminHost || isRootHost);
+        const activeToken = isSuperAdminLogin ? adminToken : (adminToken || learnerToken);
+        const cookieName = activeToken === adminToken ? 'admin_token' : 'learner_token';
 
-        // For tenants, check role via session API
-        try {
-            const isAuthRes = await fetch(`${req.nextUrl.origin}/api/auth/session`, {
-                headers: { Cookie: `session-token=${sessionToken}` }
-            });
-
-            if (isAuthRes.ok) {
-                const { user } = await isAuthRes.json();
-                const targetSubdomain = pathSubdomain || (isTenantSubdomain ? hostname.replace(`.${rootDomain}`, '') : 'varun');
-
-                if (user.role === 'LEARNER') {
-                    return NextResponse.redirect(new URL(`/t/${targetSubdomain}/dashboard`, req.url));
-                } else {
-                    return NextResponse.redirect(new URL(`/t/${targetSubdomain}/admin`, req.url));
-                }
+        if (activeToken) {
+            if (isSuperAdminLogin) {
+                return NextResponse.redirect(new URL('/admin', req.url));
             }
-        } catch (e) {
-            // Fallback to basic dashboard if API check fails
-            return NextResponse.next();
+
+            // For tenants, check role via session API
+            try {
+                const portalName = activeToken === adminToken ? 'admin' : 'learner';
+                const isAuthRes = await fetch(`${req.nextUrl.origin}/api/auth/session?portal=${portalName}`, {
+                    headers: { Cookie: `${cookieName}=${activeToken}` }
+                });
+
+                if (isAuthRes.ok) {
+                    const { user } = await isAuthRes.json();
+                    const targetSubdomain = pathSubdomain || (isTenantSubdomain ? hostname.replace(`.${rootDomain}`, '') : 'varun');
+
+                    if (user.role === 'LEARNER') {
+                        return NextResponse.redirect(new URL(`/t/${targetSubdomain}/dashboard`, req.url));
+                    } else {
+                        return NextResponse.redirect(new URL(`/t/${targetSubdomain}/admin`, req.url));
+                    }
+                }
+            } catch (e) {
+                // Fallback to basic dashboard if API check fails
+                return NextResponse.next();
+            }
         }
     }
 

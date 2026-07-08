@@ -39,6 +39,15 @@ export default function AdminStaffPage() {
     const [formData, setFormData] = useState({ email: '', name: '', role: 'PLATFORM_MANAGER', password: '' });
     const [submitting, setSubmitting] = useState(false);
 
+    // Custom UI States (Delete Confirmation & Toast alerts)
+    const [deletingStaff, setDeletingStaff] = useState<GlobalStaff | null>(null);
+    const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+
+    const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
+        setToast({ message, type });
+        setTimeout(() => setToast(null), 4000);
+    };
+
     useEffect(() => {
         fetchStaff();
         // Close menu on click outside
@@ -70,7 +79,7 @@ export default function AdminStaffPage() {
             const method = editingStaff ? 'PATCH' : 'POST';
 
             const payload: any = { ...formData };
-            if (editingStaff && !payload.password) delete payload.password; // Don't update password if empty during edit
+            if (editingStaff && !payload.password) delete payload.password;
 
             const res = await fetch(url, {
                 method,
@@ -80,16 +89,16 @@ export default function AdminStaffPage() {
 
             const data = await res.json();
             if (res.ok) {
-                alert(editingStaff ? 'Staff updated successfully!' : 'Staff added successfully! Default password is password123');
+                showToast(editingStaff ? 'Staff updated successfully!' : 'Staff added successfully! Default password is password123', 'success');
                 setIsModalOpen(false);
                 setEditingStaff(null);
                 setFormData({ email: '', name: '', role: 'PLATFORM_MANAGER', password: '' });
                 fetchStaff();
             } else {
-                alert(data.error || 'Failed to process request');
+                showToast(data.error || 'Failed to process request', 'error');
             }
         } catch (err) {
-            alert('An error occurred');
+            showToast('An error occurred', 'error');
         } finally {
             setSubmitting(false);
         }
@@ -104,25 +113,34 @@ export default function AdminStaffPage() {
             });
             if (res.ok) {
                 setStaff(staff.map(s => s.id === id ? { ...s, isActive: !currentStatus } : s));
+                showToast(`Staff status updated to ${!currentStatus ? 'Active' : 'Offline'}`, 'info');
             }
         } catch (err) {
             console.error('Toggle failed:', err);
         }
     };
 
-    const handleDelete = async (id: string) => {
-        if (!confirm('Are you sure you want to PERMANENTLY delete this staff account? This action cannot be undone.')) return;
+    const handleDeleteClick = (member: GlobalStaff) => {
+        setDeletingStaff(member);
+        setOpenMenuId(null);
+    };
 
+    const confirmDelete = async () => {
+        if (!deletingStaff) return;
+        const id = deletingStaff.id;
         try {
             const res = await fetch(`/api/admin/users/${id}`, { method: 'DELETE' });
             if (res.ok) {
                 setStaff(staff.filter(s => s.id !== id));
+                showToast('Staff member deleted successfully', 'success');
+                setDeletingStaff(null);
             } else {
                 const data = await res.json();
-                alert(data.error || 'Delete failed');
+                showToast(data.error || 'Delete failed', 'error');
             }
         } catch (err) {
             console.error('Delete failed:', err);
+            showToast('Delete operation failed', 'error');
         }
     };
 
@@ -255,7 +273,7 @@ export default function AdminStaffPage() {
                                                         <UserCheck className="w-4 h-4 text-blue-400" /> Edit Details
                                                     </button>
                                                     <button
-                                                        onClick={() => handleDelete(member.id)}
+                                                        onClick={() => handleDeleteClick(member)}
                                                         className="w-full px-4 py-3 flex items-center gap-2 text-xs font-bold hover:bg-red-500/10 text-red-400 transition-colors text-left border-t border-white/5"
                                                     >
                                                         <UserMinus className="w-4 h-4" /> Delete Account
@@ -275,7 +293,7 @@ export default function AdminStaffPage() {
             {isModalOpen && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-300">
                     <div className="glassmorphism w-full max-w-md rounded-3xl border border-white/10 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
-                        <div className="p-8 border-b border-white/5 bg-gradient-to-br from-amber-600/10 to-transparent">
+                        <div className="p-8 border-b border-white/5 from-amber-600/10 to-transparent">
                             <h2 className="text-xl font-black uppercase tracking-tight">
                                 {editingStaff ? 'Refine Admin Access' : 'Onboard Admin Master'}
                             </h2>
@@ -314,8 +332,8 @@ export default function AdminStaffPage() {
                                         onChange={e => setFormData({ ...formData, role: e.target.value })}
                                         className="w-full bg-secondary/30 border border-white/5 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-amber-500/50 appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22rgba(255,255,255,0.5)%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:1.2em] bg-[right_1rem_center] bg-no-repeat font-bold"
                                     >
-                                        <option value="PLATFORM_MANAGER">Platform Manager (Tenant Creation)</option>
-                                        <option value="SUPER_ADMIN">Super Admin (Full Control)</option>
+                                        <option value="PLATFORM_MANAGER" className="bg-[#0A0A0A] text-foreground">Platform Manager (Tenant Creation)</option>
+                                        <option value="SUPER_ADMIN" className="bg-[#0A0A0A] text-foreground">Super Admin (Full Control)</option>
                                     </select>
                                 </div>
                                 <div className="space-y-1.5">
@@ -352,6 +370,59 @@ export default function AdminStaffPage() {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Custom Delete Confirmation Modal */}
+            {deletingStaff && (
+                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-300">
+                    <div className="swal2-popup swal2-modal rounded-[2rem] border border-border bg-background text-foreground shadow-2xl p-8 swal2-icon-warning swal2-show w-full max-w-sm space-y-6 flex flex-col items-center text-center animate-in zoom-in-95 duration-300">
+                        {/* Exclamation Circle */}
+                        <div className="swal2-icon swal2-warning swal2-icon-show w-20 h-20 rounded-full border-2 border-amber-500/80 flex items-center justify-center text-amber-500 text-4xl font-light">
+                            !
+                        </div>
+
+                        {/* Text Details */}
+                        <div className="space-y-2">
+                            <h3 className="text-xl font-bold tracking-tight text-white">Delete Admin Master?</h3>
+                            <p className="text-sm text-muted-foreground max-w-xs leading-relaxed">
+                                Are you sure you want to permanently delete <strong className="text-white">{deletingStaff.name || deletingStaff.email}</strong>? This action cannot be undone.
+                            </p>
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="flex gap-4 w-full pt-2">
+                            <button
+                                onClick={confirmDelete}
+                                className="flex-1 py-3 px-6 bg-red-600 hover:bg-red-500 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-lg shadow-red-600/20"
+                            >
+                                Confirm Delete
+                            </button>
+                            <button
+                                onClick={() => setDeletingStaff(null)}
+                                className="flex-1 py-3 px-6 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Custom Toast alerts */}
+            {toast && (
+                <div className="fixed bottom-5 right-5 z-[250] flex items-center gap-3 bg-zinc-900 border border-white/10 px-5 py-4 rounded-2xl shadow-2xl animate-fade-up max-w-sm backdrop-blur-xl">
+                    <div className={`p-2 rounded-xl ${toast.type === 'success' ? 'bg-emerald-500/10 text-emerald-400' : toast.type === 'error' ? 'bg-red-500/10 text-red-400' : 'bg-blue-500/10 text-blue-400'}`}>
+                        {toast.type === 'success' ? <CheckCircle2 className="w-5 h-5" /> : toast.type === 'error' ? <ShieldAlert className="w-5 h-5" /> : <Users className="w-5 h-5" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        <h4 className="text-xs font-black uppercase tracking-wider text-white">
+                            {toast.type === 'success' ? 'Success' : toast.type === 'error' ? 'Failed' : 'Notification'}
+                        </h4>
+                        <p className="text-xs text-muted-foreground mt-0.5 font-medium">
+                            {toast.message}
+                        </p>
                     </div>
                 </div>
             )}

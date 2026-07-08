@@ -37,7 +37,7 @@ export default function AchievementsPage() {
 
     useEffect(() => {
         setTenantName(domain.charAt(0).toUpperCase() + domain.slice(1));
-        const storedUserId = localStorage.getItem(`${domain}_userId`);
+        const storedUserId = localStorage.getItem(`${domain}_learner_userId`) || localStorage.getItem(`${domain}_userId`);
         setUserId(storedUserId);
         fetchData(storedUserId);
     }, [domain]);

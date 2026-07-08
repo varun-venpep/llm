@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma';
 
 export async function POST(req: NextRequest) {
     try {
-        const sessionId = req.cookies.get('session-token')?.value;
+        const sessionId = req.cookies.get('admin_token')?.value || req.cookies.get('learner_token')?.value || req.cookies.get('session-token')?.value;
 
         if (!sessionId) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

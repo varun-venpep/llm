@@ -59,7 +59,7 @@ export default function LearnerDashboard() {
     const [profileForm, setProfileForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
     const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
     const [courseFilter, setCourseFilter] = useState<'all' | 'new' | 'inprogress' | 'completed'>('all');
-    
+
     // B2B Manager State
     const [isManager, setIsManager] = useState(false);
     const [activeView, setActiveView] = useState<'learning' | 'manager'>('learning');
@@ -72,17 +72,41 @@ export default function LearnerDashboard() {
         if (storedRead) setReadAnnouncements(JSON.parse(storedRead));
     }, [domain]);
 
-    const markAsRead = (id: string) => {
+    const markAsRead = async (id: string) => {
         if (readAnnouncements.includes(id)) return;
         const newRead = [...readAnnouncements, id];
         setReadAnnouncements(newRead);
         localStorage.setItem(`${domain}_read_announcements`, JSON.stringify(newRead));
+
+        try {
+            await fetch(`/api/t/${domain}/announcements/read`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ announcementId: id })
+            });
+        } catch (e) {
+            console.error('Failed to sync announcement read status:', e);
+        }
     };
 
-    const markAllAsRead = () => {
+    const markAllAsRead = async () => {
         const allIds = announcements.map(a => a.id);
         setReadAnnouncements(allIds);
         localStorage.setItem(`${domain}_read_announcements`, JSON.stringify(allIds));
+
+        try {
+            await Promise.all(
+                allIds.map(id =>
+                    fetch(`/api/t/${domain}/announcements/read`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ announcementId: id })
+                    }).catch(() => {})
+                )
+            );
+        } catch (e) {
+            console.error('Failed to sync all announcements read status:', e);
+        }
     };
 
     const unreadCount = announcements.filter(a => !readAnnouncements.includes(a.id)).length;
@@ -105,7 +129,7 @@ export default function LearnerDashboard() {
     const fetchData = async () => {
         try {
             // VERIFY SESSION FIRST
-            const sessionRes = await fetch('/api/auth/session');
+            const sessionRes = await fetch('/api/auth/session?portal=learner');
             if (!sessionRes.ok) {
                 router.push(`/t/${domain}/login`);
                 return;
@@ -121,10 +145,10 @@ export default function LearnerDashboard() {
                 fetch(`/api/t/${domain}/announcements`),
                 fetch(`/api/t/${domain}/manager/teams`) // Check manager status quietly
             ]);
-            
+
             const [coursesData, announcementsData, managerTeamsData] = await Promise.all([
-                coursesRes.json(), 
-                announcementsRes.json(), 
+                coursesRes.json(),
+                announcementsRes.json(),
                 managerTeamsRes.ok ? managerTeamsRes.json() : []
             ]);
 
@@ -135,7 +159,18 @@ export default function LearnerDashboard() {
 
             const publishedCourses = (Array.isArray(coursesData) ? coursesData : []).filter((c: Course) => c.modules !== undefined);
             setCourses(publishedCourses);
-            setAnnouncements(Array.isArray(announcementsData) ? announcementsData : []);
+            const rawAnnouncements = Array.isArray(announcementsData) ? announcementsData : [];
+            setAnnouncements(rawAnnouncements);
+
+            // Sync database read statuses to local state
+            const dbReadIds = rawAnnouncements.filter((a: any) => a.isRead).map((a: any) => a.id);
+            if (dbReadIds.length > 0) {
+                setReadAnnouncements(prev => {
+                    const combined = Array.from(new Set([...prev, ...dbReadIds]));
+                    localStorage.setItem(`${domain}_read_announcements`, JSON.stringify(combined));
+                    return combined;
+                });
+            }
 
             // Fetch progress for each course
             if (publishedCourses.length > 0) {
@@ -237,7 +272,6 @@ export default function LearnerDashboard() {
                                         </span>
                                     )}
                                 </button>
-                                <ThemeToggle />
 
                                 {/* Notifications Popover */}
                                 {showNotifications && (
@@ -284,6 +318,7 @@ export default function LearnerDashboard() {
                                 )}
                             </div>
                         )}
+                        <ThemeToggle />
                         <div className="flex items-center gap-3">
                             <button
                                 onClick={() => setShowProfileModal(true)}
@@ -294,7 +329,8 @@ export default function LearnerDashboard() {
                             </button>
                             <button
                                 onClick={async () => {
-                                    await fetch(`/api/logout`, { method: 'POST' }).catch(() => {});
+                                    await fetch(`/api/logout`, { method: 'POST' }).catch(() => { });
+                                    localStorage.removeItem(`${domain}_learner_userId`);
                                     localStorage.removeItem(`${domain}_userId`);
                                     router.push(`/t/${domain}/login`);
                                 }}
@@ -317,10 +353,10 @@ export default function LearnerDashboard() {
                                 <p className="text-muted-foreground max-w-md">Continue your learning journey. You have {inProgress} course{inProgress !== 1 ? 's' : ''} in progress.</p>
                                 {inProgress > 0 && (
                                     <button
-                                    onClick={() => { const c = courses.find(c => (progressMap[c.id]?.percentage || 0) > 0 && (progressMap[c.id]?.percentage || 0) < 100); if (c) router.push(`/t/${domain}/course/${c.id}`); }}
-                                    className="mt-2 px-6 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-bold flex items-center gap-2 hover:opacity-90 transition-opacity w-fit">
-                                    <PlayCircle size={16} /> Continue Learning <ChevronRight size={16} />
-                                </button>
+                                        onClick={() => { const c = courses.find(c => (progressMap[c.id]?.percentage || 0) > 0 && (progressMap[c.id]?.percentage || 0) < 100); if (c) router.push(`/t/${domain}/course/${c.id}`); }}
+                                        className="mt-2 px-6 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-bold flex items-center gap-2 hover:opacity-90 transition-opacity w-fit">
+                                        <PlayCircle size={16} /> Continue Learning <ChevronRight size={16} />
+                                    </button>
                                 )}
                             </div>
                             <div className="flex gap-6 shrink-0">
@@ -342,13 +378,13 @@ export default function LearnerDashboard() {
                     {isManager && (
                         <div className="flex justify-center -mt-6 relative z-20">
                             <div className="bg-background/80 backdrop-blur-xl border border-border/50 p-1.5 rounded-full flex gap-1 shadow-2xl">
-                                <button 
+                                <button
                                     onClick={() => setActiveView('learning')}
                                     className={`px-6 py-2 rounded-full text-xs font-black uppercase tracking-widest transition-all ${activeView === 'learning' ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/20' : 'text-muted-foreground hover:bg-secondary'}`}
                                 >
                                     My Learning
                                 </button>
-                                <button 
+                                <button
                                     onClick={() => setActiveView('manager')}
                                     className={`px-6 py-2 rounded-full text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeView === 'manager' ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/20' : 'text-muted-foreground hover:bg-secondary'}`}
                                 >
@@ -363,174 +399,174 @@ export default function LearnerDashboard() {
                             <ManagerHub domain={domain} onBack={() => setActiveView('learning')} />
                         </div>
                     ) : (
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-                        {/* Course Grid */}
-                        <section className="lg:col-span-2 space-y-6">
-                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                                <h2 className="text-xl font-black uppercase tracking-tight flex items-center gap-2">
-                                    <LayoutGrid size={20} className="text-primary" /> My Courses
-                                </h2>
-                                <div className="flex p-1 bg-secondary/20 rounded-xl border border-border/50 w-fit overflow-x-auto">
-                                    {[
-                                        { id: 'all', label: 'All', count: courses.length },
-                                        { id: 'new', label: 'New', count: courses.filter(c => (progressMap[c.id]?.percentage || 0) === 0).length },
-                                        { id: 'inprogress', label: 'In Progress', count: courses.filter(c => { const p = (progressMap[c.id]?.percentage || 0); return p > 0 && p < 100; }).length },
-                                        { id: 'completed', label: 'Completed', count: courses.filter(c => (progressMap[c.id]?.percentage || 0) === 100).length },
-                                    ].map((tab) => (
-                                        <button
-                                            key={tab.id}
-                                            onClick={() => setCourseFilter(tab.id as any)}
-                                            className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap flex items-center gap-2 ${courseFilter === tab.id ? 'bg-primary text-primary-foreground shadow-lg' : 'text-muted-foreground hover:text-foreground hover:bg-border/50'}`}
-                                        >
-                                            {tab.label}
-                                            <span className={`px-1.5 py-0.5 rounded-md text-[9px] ${courseFilter === tab.id ? 'bg-white/20 text-white' : 'bg-secondary text-muted-foreground'}`}>
-                                                {tab.count}
-                                            </span>
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                {loading ? [1, 2, 3, 4].map(i => (
-                                    <div key={i} className="h-64 rounded-2xl bg-secondary/20 animate-pulse border border-border/50" />
-                                )) : courses.filter(c => {
-                                    const pct = progressMap[c.id]?.percentage || 0;
-                                    if (courseFilter === 'new') return pct === 0;
-                                    if (courseFilter === 'inprogress') return pct > 0 && pct < 100;
-                                    if (courseFilter === 'completed') return pct === 100;
-                                    return true;
-                                }).length === 0 ? (
-                                    <div className="col-span-2 py-20 text-center space-y-4 glassmorphism rounded-3xl border border-dashed border-border bg-secondary/5">
-                                        <BookOpen size={40} className="mx-auto text-muted-foreground opacity-30" />
-                                        <p className="text-muted-foreground italic font-medium">
-                                            {courseFilter === 'all' ? 'No courses assigned yet.' : `No ${courseFilter} courses found.`}
-                                        </p>
-                                        <p className="text-xs text-muted-foreground">
-                                            {courseFilter === 'all' ? 'Contact your administrator to get enrolled in a course.' : `Try checking other tabs or continue your learning.`}
-                                        </p>
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+                            {/* Course Grid */}
+                            <section className="lg:col-span-2 space-y-6">
+                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                    <h2 className="text-xl font-black uppercase tracking-tight flex items-center gap-2">
+                                        <LayoutGrid size={20} className="text-primary" /> My Courses
+                                    </h2>
+                                    <div className="flex p-1 bg-secondary/20 rounded-xl border border-border/50 w-fit overflow-x-auto">
+                                        {[
+                                            { id: 'all', label: 'All', count: courses.length },
+                                            { id: 'new', label: 'New', count: courses.filter(c => (progressMap[c.id]?.percentage || 0) === 0).length },
+                                            { id: 'inprogress', label: 'In Progress', count: courses.filter(c => { const p = (progressMap[c.id]?.percentage || 0); return p > 0 && p < 100; }).length },
+                                            { id: 'completed', label: 'Completed', count: courses.filter(c => (progressMap[c.id]?.percentage || 0) === 100).length },
+                                        ].map((tab) => (
+                                            <button
+                                                key={tab.id}
+                                                onClick={() => setCourseFilter(tab.id as any)}
+                                                className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap flex items-center gap-2 ${courseFilter === tab.id ? 'bg-primary text-primary-foreground shadow-lg' : 'text-muted-foreground hover:text-foreground hover:bg-border/50'}`}
+                                            >
+                                                {tab.label}
+                                                <span className={`px-1.5 py-0.5 rounded-md text-[9px] ${courseFilter === tab.id ? 'bg-white/20 text-white' : 'bg-secondary text-muted-foreground'}`}>
+                                                    {tab.count}
+                                                </span>
+                                            </button>
+                                        ))}
                                     </div>
-                                ) : courses.filter(c => {
-                                    const pct = progressMap[c.id]?.percentage || 0;
-                                    if (courseFilter === 'new') return pct === 0;
-                                    if (courseFilter === 'inprogress') return pct > 0 && pct < 100;
-                                    if (courseFilter === 'completed') return pct === 100;
-                                    return true;
-                                }).map(course => {
-                                    const progress = progressMap[course.id];
-                                    const pct = progress?.percentage || 0;
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    {loading ? [1, 2, 3, 4].map(i => (
+                                        <div key={i} className="h-64 rounded-2xl bg-secondary/20 animate-pulse border border-border/50" />
+                                    )) : courses.filter(c => {
+                                        const pct = progressMap[c.id]?.percentage || 0;
+                                        if (courseFilter === 'new') return pct === 0;
+                                        if (courseFilter === 'inprogress') return pct > 0 && pct < 100;
+                                        if (courseFilter === 'completed') return pct === 100;
+                                        return true;
+                                    }).length === 0 ? (
+                                        <div className="col-span-2 py-20 text-center space-y-4 glassmorphism rounded-3xl border border-dashed border-border bg-secondary/5">
+                                            <BookOpen size={40} className="mx-auto text-muted-foreground opacity-30" />
+                                            <p className="text-muted-foreground italic font-medium">
+                                                {courseFilter === 'all' ? 'No courses assigned yet.' : `No ${courseFilter} courses found.`}
+                                            </p>
+                                            <p className="text-xs text-muted-foreground">
+                                                {courseFilter === 'all' ? 'Contact your administrator to get enrolled in a course.' : `Try checking other tabs or continue your learning.`}
+                                            </p>
+                                        </div>
+                                    ) : courses.filter(c => {
+                                        const pct = progressMap[c.id]?.percentage || 0;
+                                        if (courseFilter === 'new') return pct === 0;
+                                        if (courseFilter === 'inprogress') return pct > 0 && pct < 100;
+                                        if (courseFilter === 'completed') return pct === 100;
+                                        return true;
+                                    }).map(course => {
+                                        const progress = progressMap[course.id];
+                                        const pct = progress?.percentage || 0;
+                                        return (
+                                            <div
+                                                key={course.id}
+                                                onClick={() => router.push(`/t/${domain}/course/${course.id}`)}
+                                                className="group relative rounded-2xl overflow-hidden border border-border/50 glassmorphism hover:border-primary/30 transition-all cursor-pointer hover:translate-y-[-4px]"
+                                            >
+                                                <div className="aspect-video bg-gradient-to-br from-secondary to-background relative overflow-hidden flex items-center justify-center">
+                                                    {course.thumbnail ? (
+                                                        <img src={course.thumbnail} alt={course.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                                                    ) : (
+                                                        <BookOpen size={48} className="text-muted-foreground/20 group-hover:scale-110 transition-transform duration-500" />
+                                                    )}
+                                                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end p-4">
+                                                        <span className="text-white text-xs font-bold uppercase tracking-widest flex items-center gap-1">
+                                                            {pct === 0 ? 'Start' : pct === 100 ? 'Review' : 'Continue'} <ChevronRight size={14} />
+                                                        </span>
+                                                    </div>
+                                                    {pct === 100 && (
+                                                        <div className="absolute top-3 right-3 w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center shadow-lg">
+                                                            <CheckCircle2 size={16} className="text-white" />
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div className="p-5 space-y-3">
+                                                    <h3 className="font-bold text-base leading-tight group-hover:text-primary transition-colors">{course.title}</h3>
+                                                    <p className="text-xs text-muted-foreground line-clamp-2">{course.description}</p>
+                                                    {/* Progress Bar */}
+                                                    <div className="space-y-1">
+                                                        <div className="flex justify-between text-[10px] font-bold text-muted-foreground">
+                                                            <span>{progress?.completedCount || 0}/{progress?.totalLessons || '...'} lessons</span>
+                                                            <span className={pct === 100 ? 'text-emerald-400' : 'text-primary'}>{pct}%</span>
+                                                        </div>
+                                                        <div className="w-full h-1.5 bg-secondary/50 rounded-full overflow-hidden">
+                                                            <div className="h-full transition-all duration-700 rounded-full" style={{ width: `${pct}%`, backgroundColor: pct === 100 ? '#10b981' : '#3b82f6' }} />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </section>
+
+                            {/* Announcements Sidebar */}
+                            <section id="announcements-section" className="space-y-6 scroll-mt-24">
+                                <h2 className="text-xl font-black uppercase tracking-tight flex items-center gap-2">
+                                    <Megaphone size={20} className="text-orange-400" /> Announcements
+                                </h2>
+                                {announcements.length === 0 ? (
+                                    <div className="glassmorphism p-6 rounded-2xl border border-border/50 text-center">
+                                        <Bell className="w-10 h-10 mx-auto mb-2 text-muted-foreground opacity-30" />
+                                        <p className="text-sm text-muted-foreground">No announcements yet.</p>
+                                    </div>
+                                ) : (() => {
+                                    const totalPages = Math.ceil(announcements.length / ANNOUNCEMENTS_PER_PAGE);
+                                    const paginatedAnnouncements = announcements.slice((announcementPage - 1) * ANNOUNCEMENTS_PER_PAGE, announcementPage * ANNOUNCEMENTS_PER_PAGE);
                                     return (
-                                        <div
-                                            key={course.id}
-                                            onClick={() => router.push(`/t/${domain}/course/${course.id}`)}
-                                            className="group relative rounded-2xl overflow-hidden border border-border/50 glassmorphism hover:border-primary/30 transition-all cursor-pointer hover:translate-y-[-4px]"
-                                        >
-                                            <div className="aspect-video bg-gradient-to-br from-secondary to-background relative overflow-hidden flex items-center justify-center">
-                                                {course.thumbnail ? (
-                                                    <img src={course.thumbnail} alt={course.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                                                ) : (
-                                                    <BookOpen size={48} className="text-muted-foreground/20 group-hover:scale-110 transition-transform duration-500" />
-                                                )}
-                                                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end p-4">
-                                                    <span className="text-white text-xs font-bold uppercase tracking-widest flex items-center gap-1">
-                                                        {pct === 0 ? 'Start' : pct === 100 ? 'Review' : 'Continue'} <ChevronRight size={14} />
+                                        <div className="space-y-4">
+                                            <div className="space-y-4">
+                                                {paginatedAnnouncements.map(a => (
+                                                    <div
+                                                        key={a.id}
+                                                        onClick={() => { setSelectedAnnouncement(a); markAsRead(a.id); }}
+                                                        className={`glassmorphism p-5 rounded-2xl border transition-all cursor-pointer group space-y-2 relative ${!readAnnouncements.includes(a.id) ? 'border-primary/40 bg-primary/5 shadow-lg shadow-primary/5' : 'border-orange-500/20 bg-orange-500/5 hover:bg-orange-500/10 hover:border-orange-500/40'}`}
+                                                    >
+                                                        {!readAnnouncements.includes(a.id) && (
+                                                            <div className="absolute top-5 right-5 w-2 h-2 rounded-full bg-blue-500 shadow-lg shadow-blue-500/50 animate-pulse" />
+                                                        )}
+                                                        <div className="flex items-start gap-3">
+                                                            <div className="w-8 h-8 rounded-full bg-orange-500/20 flex items-center justify-center shrink-0">
+                                                                <Megaphone size={14} className="text-orange-400 shrink-0" />
+                                                            </div>
+                                                            <div className="flex-1">
+                                                                <p className="font-bold text-sm group-hover:text-orange-400 transition-colors">{a.title}</p>
+                                                                <p className="text-xs text-muted-foreground mt-1 line-clamp-2 leading-relaxed">{a.body}</p>
+                                                                {(a.imageUrl || a.documentUrl) && (
+                                                                    <div className="flex gap-2 mt-2">
+                                                                        {a.imageUrl && <span className="text-[10px] font-bold bg-orange-500/20 text-orange-400 px-2 py-0.5 rounded flex items-center gap-1"><Info size={10} /> Image Attached</span>}
+                                                                        {a.documentUrl && <span className="text-[10px] font-bold bg-orange-500/20 text-orange-400 px-2 py-0.5 rounded flex items-center gap-1"><FileText size={10} /> Doc Attached</span>}
+                                                                    </div>
+                                                                )}
+                                                                <p className="text-[10px] text-muted-foreground mt-3 font-medium uppercase tracking-widest">{new Date(a.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            {totalPages > 1 && (
+                                                <div className="flex justify-center items-center gap-4 mt-6">
+                                                    <button
+                                                        disabled={announcementPage === 1}
+                                                        onClick={() => setAnnouncementPage(p => Math.max(1, p - 1))}
+                                                        className="p-1.5 rounded-lg bg-secondary hover:bg-secondary/80 disabled:opacity-50 transition-all border border-border/50"
+                                                    >
+                                                        <ChevronLeft size={16} />
+                                                    </button>
+                                                    <span className="text-xs font-bold text-muted-foreground tracking-widest uppercase">
+                                                        Page {announcementPage} of {totalPages}
                                                     </span>
+                                                    <button
+                                                        disabled={announcementPage === totalPages}
+                                                        onClick={() => setAnnouncementPage(p => Math.min(totalPages, p + 1))}
+                                                        className="p-1.5 rounded-lg bg-secondary hover:bg-secondary/80 disabled:opacity-50 transition-all border border-border/50"
+                                                    >
+                                                        <ChevronRight size={16} />
+                                                    </button>
                                                 </div>
-                                                {pct === 100 && (
-                                                    <div className="absolute top-3 right-3 w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center shadow-lg">
-                                                        <CheckCircle2 size={16} className="text-white" />
-                                                    </div>
-                                                )}
-                                            </div>
-                                            <div className="p-5 space-y-3">
-                                                <h3 className="font-bold text-base leading-tight group-hover:text-primary transition-colors">{course.title}</h3>
-                                                <p className="text-xs text-muted-foreground line-clamp-2">{course.description}</p>
-                                                {/* Progress Bar */}
-                                                <div className="space-y-1">
-                                                    <div className="flex justify-between text-[10px] font-bold text-muted-foreground">
-                                                        <span>{progress?.completedCount || 0}/{progress?.totalLessons || '...'} lessons</span>
-                                                        <span className={pct === 100 ? 'text-emerald-400' : 'text-primary'}>{pct}%</span>
-                                                    </div>
-                                                    <div className="w-full h-1.5 bg-secondary/50 rounded-full overflow-hidden">
-                                                        <div className="h-full transition-all duration-700 rounded-full" style={{ width: `${pct}%`, backgroundColor: pct === 100 ? '#10b981' : '#3b82f6' }} />
-                                                    </div>
-                                                </div>
-                                            </div>
+                                            )}
                                         </div>
                                     );
-                                })}
-                            </div>
-                        </section>
-
-                        {/* Announcements Sidebar */}
-                        <section id="announcements-section" className="space-y-6 scroll-mt-24">
-                            <h2 className="text-xl font-black uppercase tracking-tight flex items-center gap-2">
-                                <Megaphone size={20} className="text-orange-400" /> Announcements
-                            </h2>
-                            {announcements.length === 0 ? (
-                                <div className="glassmorphism p-6 rounded-2xl border border-border/50 text-center">
-                                    <Bell className="w-10 h-10 mx-auto mb-2 text-muted-foreground opacity-30" />
-                                    <p className="text-sm text-muted-foreground">No announcements yet.</p>
-                                </div>
-                            ) : (() => {
-                                const totalPages = Math.ceil(announcements.length / ANNOUNCEMENTS_PER_PAGE);
-                                const paginatedAnnouncements = announcements.slice((announcementPage - 1) * ANNOUNCEMENTS_PER_PAGE, announcementPage * ANNOUNCEMENTS_PER_PAGE);
-                                return (
-                                    <div className="space-y-4">
-                                        <div className="space-y-4">
-                                            {paginatedAnnouncements.map(a => (
-                                                <div
-                                                    key={a.id}
-                                                    onClick={() => { setSelectedAnnouncement(a); markAsRead(a.id); }}
-                                                    className={`glassmorphism p-5 rounded-2xl border transition-all cursor-pointer group space-y-2 relative ${!readAnnouncements.includes(a.id) ? 'border-primary/40 bg-primary/5 shadow-lg shadow-primary/5' : 'border-orange-500/20 bg-orange-500/5 hover:bg-orange-500/10 hover:border-orange-500/40'}`}
-                                                >
-                                                    {!readAnnouncements.includes(a.id) && (
-                                                        <div className="absolute top-5 right-5 w-2 h-2 rounded-full bg-blue-500 shadow-lg shadow-blue-500/50 animate-pulse" />
-                                                    )}
-                                                    <div className="flex items-start gap-3">
-                                                        <div className="w-8 h-8 rounded-full bg-orange-500/20 flex items-center justify-center shrink-0">
-                                                            <Megaphone size={14} className="text-orange-400 shrink-0" />
-                                                        </div>
-                                                        <div className="flex-1">
-                                                            <p className="font-bold text-sm group-hover:text-orange-400 transition-colors">{a.title}</p>
-                                                            <p className="text-xs text-muted-foreground mt-1 line-clamp-2 leading-relaxed">{a.body}</p>
-                                                            {(a.imageUrl || a.documentUrl) && (
-                                                                <div className="flex gap-2 mt-2">
-                                                                    {a.imageUrl && <span className="text-[10px] font-bold bg-orange-500/20 text-orange-400 px-2 py-0.5 rounded flex items-center gap-1"><Info size={10} /> Image Attached</span>}
-                                                                    {a.documentUrl && <span className="text-[10px] font-bold bg-orange-500/20 text-orange-400 px-2 py-0.5 rounded flex items-center gap-1"><FileText size={10} /> Doc Attached</span>}
-                                                                </div>
-                                                            )}
-                                                            <p className="text-[10px] text-muted-foreground mt-3 font-medium uppercase tracking-widest">{new Date(a.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                        {totalPages > 1 && (
-                                            <div className="flex justify-center items-center gap-4 mt-6">
-                                                <button
-                                                    disabled={announcementPage === 1}
-                                                    onClick={() => setAnnouncementPage(p => Math.max(1, p - 1))}
-                                                    className="p-1.5 rounded-lg bg-secondary hover:bg-secondary/80 disabled:opacity-50 transition-all border border-border/50"
-                                                >
-                                                    <ChevronLeft size={16} />
-                                                </button>
-                                                <span className="text-xs font-bold text-muted-foreground tracking-widest uppercase">
-                                                    Page {announcementPage} of {totalPages}
-                                                </span>
-                                                <button
-                                                    disabled={announcementPage === totalPages}
-                                                    onClick={() => setAnnouncementPage(p => Math.min(totalPages, p + 1))}
-                                                    className="p-1.5 rounded-lg bg-secondary hover:bg-secondary/80 disabled:opacity-50 transition-all border border-border/50"
-                                                >
-                                                    <ChevronRight size={16} />
-                                                </button>
-                                            </div>
-                                        )}
-                                    </div>
-                                );
-                            })()}
-                        </section>
-                    </div>
+                                })()}
+                            </section>
+                        </div>
                     )}
                 </main>
             </div>

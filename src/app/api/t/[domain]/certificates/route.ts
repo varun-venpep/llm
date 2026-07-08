@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { checkSession, requireTenantPermission } from '@/lib/auth';
 
 export async function GET(
     req: NextRequest,
@@ -7,6 +8,12 @@ export async function GET(
 ) {
     const { domain } = await params;
     try {
+        // BUG-003: Require a valid session to view certificates
+        const session = await checkSession(req, domain, ['TENANT_ADMIN', 'SUPER_ADMIN']);
+        if (!session) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
         const tenant = await prisma.tenant.findUnique({
             where: { subdomain: domain }
         });
@@ -38,6 +45,12 @@ export async function POST(
 ) {
     const { domain } = await params;
     try {
+        // BUG-003: Require a valid admin session for creating templates
+        const session = await checkSession(req, domain, ['TENANT_ADMIN', 'SUPER_ADMIN']);
+        if (!session || !requireTenantPermission(session, 'certificates.manage')) {
+            return NextResponse.json({ error: 'Unauthorized — certificates.manage permission required' }, { status: 401 });
+        }
+
         const tenant = await prisma.tenant.findUnique({
             where: { subdomain: domain }
         });

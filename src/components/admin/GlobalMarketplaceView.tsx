@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Globe, BookOpen, Layers, Loader2, CheckCircle, CreditCard, AlertCircle, Search, Filter, ChevronDown, ChevronRight, Video, FileText, HelpCircle, X, Sparkles, ShoppingCart, ArrowRight, RefreshCw } from 'lucide-react';
+import Swal from 'sweetalert2';
 
 interface GlobalCourseForTenant {
     id: string;
@@ -12,6 +13,7 @@ interface GlobalCourseForTenant {
     isClaimed: boolean;
     modules: { id: string; title: string; lessons: { id: string }[] }[];
     _count: { marketplaceClaims: number };
+    courseCreateCount?: number;
 }
 
 interface GlobalMarketplaceViewProps {
@@ -65,10 +67,36 @@ export default function GlobalMarketplaceView({ domain }: GlobalMarketplaceViewP
                 setCourses(prev => prev.map(c => c.id === course.id ? { ...c, isClaimed: true } : c));
                 setTimeout(() => setClaimSuccess(null), 6000);
             } else {
-                alert(data.error || 'Failed to claim course');
+                Swal.fire({
+                    title: 'Failed to Claim',
+                    text: data.error || 'Failed to claim course',
+                    icon: 'error',
+                    background: 'var(--background)',
+                    color: 'var(--foreground)',
+                    customClass: {
+                        popup: 'rounded-[2rem] border border-border bg-background text-foreground shadow-2xl p-8',
+                        title: 'text-lg font-black uppercase tracking-tight text-foreground !m-0 !pt-2 font-sans',
+                        htmlContainer: 'text-sm text-muted-foreground font-medium !mt-2 !mb-6 font-sans',
+                        confirmButton: 'px-6 py-3 bg-primary text-primary-foreground font-black uppercase tracking-widest text-[10px] rounded-xl transition-all cursor-pointer font-sans'
+                    },
+                    buttonsStyling: false
+                });
             }
         } catch (e) {
-            alert('Something went wrong. Please try again.');
+            Swal.fire({
+                title: 'Error',
+                text: 'Something went wrong. Please try again.',
+                icon: 'error',
+                background: 'var(--background)',
+                color: 'var(--foreground)',
+                customClass: {
+                    popup: 'rounded-[2rem] border border-border bg-background text-foreground shadow-2xl p-8',
+                    title: 'text-lg font-black uppercase tracking-tight text-foreground !m-0 !pt-2 font-sans',
+                    htmlContainer: 'text-sm text-muted-foreground font-medium !mt-2 !mb-6 font-sans',
+                    confirmButton: 'px-6 py-3 bg-primary text-primary-foreground font-black uppercase tracking-widest text-[10px] rounded-xl transition-all cursor-pointer font-sans'
+                },
+                buttonsStyling: false
+            });
         } finally {
             setClaimingId(null);
         }
@@ -220,6 +248,9 @@ export default function GlobalMarketplaceView({ domain }: GlobalMarketplaceViewP
                                     <div className="space-y-2">
                                         <div className="flex items-center justify-between">
                                             <span className="text-[10px] font-bold text-primary uppercase tracking-widest">{course.skillLevel}</span>
+                                            {course.courseCreateCount !== undefined && (
+                                                <span className="text-[10px] font-bold text-amber-500 uppercase tracking-widest">Limit: {course.courseCreateCount}</span>
+                                            )}
                                         </div>
                                         <h3 className="text-base font-bold leading-tight group-hover:text-primary transition-colors uppercase tracking-tight">{course.title}</h3>
                                         {course.description && <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed font-medium">{course.description}</p>}

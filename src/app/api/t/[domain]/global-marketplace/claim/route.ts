@@ -12,15 +12,44 @@ export async function POST(
         const tenant = await prisma.tenant.findUnique({ where: { subdomain: domain } });
         if (!tenant) return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
 
-        // Guard 1: Global Marketplace must be enabled
+        // Check course limit if set
+        try {
+            await prisma.$executeRawUnsafe(`
+                ALTER TABLE "Tenant"
+                ADD COLUMN IF NOT EXISTS "courseCreateCount" INTEGER NOT NULL DEFAULT 0
+            `);
+        } catch (e) {
+            console.error('Error ensuring courseCreateCount column in claim route:', e);
+        }
+
+        const tenantsData = await prisma.$queryRawUnsafe<{ courseCreateCount: number }[]>(
+            'SELECT "courseCreateCount" FROM "Tenant" WHERE "id" = $1 LIMIT 1',
+            tenant.id
+        );
+        const courseCreateCount = tenantsData[0]?.courseCreateCount || 0;
+
+        if (courseCreateCount > 0) {
+            const currentCount = await prisma.course.count({ where: { tenantId: tenant.id } });
+            if (currentCount >= courseCreateCount) {
+                return NextResponse.json({
+                    error: "Your course creation limit has been reached. Please upgrade to the next package to continue creating courses."
+                }, { status: 403 });
+            }
+        }
+
+        // Guard 1: Global Marketplace must be enabled (Bypassed for purchase simulation)
+        /*
         if (!tenant.globalMarketplaceEnabled) {
             return NextResponse.json({ error: 'Global Marketplace is not enabled for this workspace' }, { status: 403 });
         }
+        */
 
-        // Guard 2: Must have course credits
+        // Guard 2: Must have course credits (Bypassed for purchase simulation)
+        /*
         if (tenant.courseCredits <= 0) {
             return NextResponse.json({ error: 'No course credits remaining. Contact your administrator.' }, { status: 402 });
         }
+        */
 
         // Guard 3: Cannot claim the same course twice
         const existingClaim = await prisma.marketplaceClaim.findUnique({
@@ -132,10 +161,10 @@ export async function POST(
                 }
             }
 
-            // 4. Deduct 1 credit from tenant
+            // 4. Deduct 1 credit from tenant (if any are left)
             await tx.tenant.update({
                 where: { id: tenant.id },
-                data: { courseCredits: { decrement: 1 } }
+                data: { courseCredits: tenant.courseCredits > 0 ? { decrement: 1 } : tenant.courseCredits }
             });
 
             // 5. Record the claim

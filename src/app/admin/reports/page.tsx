@@ -173,13 +173,14 @@ export default function ReportsPage() {
                     <div className="h-6 w-px bg-white/10 hidden md:block" />
 
                     <select 
-                        className="bg-secondary/50 border border-white/5 rounded-lg px-4 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full md:w-auto"
+                        className="bg-[#0f0f1a] text-white border border-white/10 rounded-lg px-4 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full md:w-auto"
                         value={tenantId}
                         onChange={(e) => setTenantId(e.target.value)}
+                        style={{ colorScheme: 'dark' }}
                     >
-                        <option value="">All Workspaces</option>
+                        <option value="" className="bg-[#0f0f1a] text-white">All Workspaces</option>
                         {tenants.map(t => (
-                            <option key={t.id} value={t.id}>{t.name}</option>
+                            <option key={t.id} value={t.id} className="bg-[#0f0f1a] text-white">{t.name}</option>
                         ))}
                     </select>
 

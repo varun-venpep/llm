@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useTheme } from 'next-themes';
-import { Lock, Mail, ChevronRight, Loader2, Eye, EyeOff } from 'lucide-react';
+import { Lock, Mail, ChevronRight, Loader2, Eye, EyeOff, CheckCircle2, XCircle } from 'lucide-react';
 
 export default function AdminLogin() {
     const router = useRouter();
@@ -16,6 +16,7 @@ export default function AdminLogin() {
     const [rememberMe, setRememberMe] = useState(false);
     const [isChecking, setIsChecking] = useState(true);
     const [error, setError] = useState('');
+    const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
     const [branding, setBranding] = useState({
         name: 'Lebra.Ai',
@@ -73,15 +74,22 @@ export default function AdminLogin() {
             });
 
             if (res.ok) {
-                router.push('/admin');
+                setToast({ message: 'Authentication successful! Redirecting...', type: 'success' });
+                setTimeout(() => {
+                    router.push('/admin');
+                }, 1500);
             } else {
                 const data = await res.json();
                 setError(data.error || 'Invalid admin credentials');
+                setToast({ message: data.error || 'Invalid admin credentials', type: 'error' });
                 setLoading(false);
+                setTimeout(() => setToast(null), 4000);
             }
         } catch {
             setError('System error. Please contact platform support.');
+            setToast({ message: 'System error. Please contact platform support.', type: 'error' });
             setLoading(false);
+            setTimeout(() => setToast(null), 4000);
         }
     };
 
@@ -170,6 +178,22 @@ export default function AdminLogin() {
                     </form>
                 </div>
             </div>
+
+            {toast && (
+                <div className="fixed bottom-5 right-5 z-50 flex items-center gap-3 bg-card border border-border/80 px-5 py-4 rounded-2xl shadow-2xl animate-fade-up max-w-sm backdrop-blur-xl transition-all duration-300">
+                    <div className={`p-2 rounded-xl ${toast.type === 'success' ? 'bg-emerald-500/10 text-emerald-500 dark:text-emerald-400' : 'bg-red-500/10 text-red-500 dark:text-red-400'}`}>
+                        {toast.type === 'success' ? <CheckCircle2 className="w-5 h-5" /> : <XCircle className="w-5 h-5" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        <h4 className="text-xs font-black uppercase tracking-wider text-foreground">
+                            {toast.type === 'success' ? 'Authenticated' : 'Access Denied'}
+                        </h4>
+                        <p className="text-xs text-muted-foreground mt-0.5 font-medium">
+                            {toast.message}
+                        </p>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

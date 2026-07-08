@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { transcribeMedia } from '@/lib/ai';
+import { checkSession, requireTenantPermission } from '@/lib/auth';
 
 // GET lessons in a module
 export async function GET(
     req: NextRequest,
-    { params }: { params: Promise<{ moduleId: string }> }
+    { params }: { params: Promise<{ domain: string; moduleId: string }> }
 ) {
     const { moduleId } = await params;
     try {
@@ -24,10 +25,15 @@ export async function GET(
 // POST create a lesson
 export async function POST(
     req: NextRequest,
-    { params }: { params: Promise<{ moduleId: string }> }
+    { params }: { params: Promise<{ domain: string; moduleId: string }> }
 ) {
-    const { moduleId } = await params;
+    const { domain, moduleId } = await params;
     try {
+        const session = await checkSession(req, domain, ['TENANT_ADMIN', 'SUPER_ADMIN']);
+        if (!session || !requireTenantPermission(session, 'courses.manage')) {
+            return NextResponse.json({ error: 'You do not have permission to create lessons' }, { status: 403 });
+        }
+
         const { title, content, videoUrl, pdfUrl, type = 'TEXT', isActive = true, resources = [] } = await req.json();
         const count = await prisma.lesson.count({ where: { moduleId } });
 

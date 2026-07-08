@@ -2,15 +2,16 @@
 
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useTheme } from 'next-themes';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import {
     LayoutDashboard, BookOpen, Users, Settings, Palette,
     Globe, Plus, XCircle, ChevronRight, ChevronLeft, Save, Upload,
     Trash2, Edit3, CheckCircle2, Megaphone, Loader2,
-    MoreVertical, GripVertical, Eye, EyeOff, Video, FileText, Lock,
+    MoreVertical, GripVertical, Eye, EyeOff, Video, FileText, Lock, RefreshCw,
     BarChart3, Clock, UserCheck, Award, CheckCircle, AlertCircle, Info, Bell, Mic, Archive, LogOut, User, Shield, UsersRound,
-    Filter, TrendingUp, Medal, Calendar, Target, Activity, Users2, Download, ScanSearch, UserCircle, LayoutList, Trash
+    Filter, TrendingUp, Medal, Calendar, Target, Activity, Users2, Download, ScanSearch, UserCircle, LayoutList, Trash, Menu, X,
+    CreditCard
 } from 'lucide-react';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -24,7 +25,7 @@ import CertificateManager from '@/components/admin/certificates/CertificateManag
 import CertificateDesigner from '@/components/admin/certificates/CertificateDesigner';
 import { ALL_TENANT_ADMIN_PERMISSIONS } from '@/lib/permissions';
 
-type Tab = 'overview' | 'courses' | 'learners' | 'admins' | 'announcements' | 'branding' | 'domains' | 'settings' | 'certificates' | 'reports' | 'roles' | 'teams' | 'audit';
+type Tab = 'overview' | 'courses' | 'learners' | 'admins' | 'announcements' | 'branding' | 'domains' | 'settings' | 'certificates' | 'reports' | 'roles' | 'teams' | 'audit' | 'global_users' | 'billing';
 
 // Toast Types
 type ToastType = 'success' | 'error' | 'info';
@@ -60,6 +61,17 @@ const getMetadataLabel = (key: string) => {
     return labels[key] || key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
 };
 
+const getCurrencySymbol = (currencyCode?: string) => {
+    switch (currencyCode) {
+        case 'EUR': return '€';
+        case 'GBP': return '£';
+        case 'INR': return '₹';
+        case 'USD': default: return '$';
+    }
+};
+
+const CHART_COLORS = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#ec4899'];
+
 export default function ClientAdminDashboard() {
     const params = useParams();
     const router = useRouter();
@@ -68,9 +80,21 @@ export default function ClientAdminDashboard() {
     const [mounted, setMounted] = useState(false);
     const [activeTab, setActiveTab] = useState<Tab>('overview');
 
+    const [sidebarOpen, setSidebarOpen] = useState(false);
+
     useEffect(() => {
         setMounted(true);
+        const savedTab = localStorage.getItem('admin_active_tab') as Tab;
+        if (savedTab) {
+            setActiveTab(savedTab);
+        }
     }, []);
+
+    useEffect(() => {
+        if (activeTab) {
+            localStorage.setItem('admin_active_tab', activeTab);
+        }
+    }, [activeTab]);
 
     // Profile State
     const [showProfileModal, setShowProfileModal] = useState(false);
@@ -78,7 +102,21 @@ export default function ClientAdminDashboard() {
     const [userName, setUserName] = useState('Admin');
     const [userEmail, setUserEmail] = useState('');
     const [userId, setUserId] = useState<string | null>(null);
+    const [userRole, setUserRole] = useState<string | null>(null);
     const [adminPermissions, setAdminPermissions] = useState<string[]>(ALL_TENANT_ADMIN_PERMISSIONS);
+    const [globalQuery, setGlobalQuery] = useState('');
+    const [globalSearchError, setGlobalSearchError] = useState<string | null>(null);
+    const [globalResults, setGlobalResults] = useState<any[]>([]);
+    const [isSearchingGlobal, setIsSearchingGlobal] = useState(false);
+    const [selectedGlobalUser, setSelectedGlobalUser] = useState<any | null>(null);
+    const [showTransferModal, setShowTransferModal] = useState(false);
+    const [targetTenantId, setTargetTenantId] = useState('');
+    const [otpSent, setOtpSent] = useState(false);
+    const [demoOtp, setDemoOtp] = useState('');
+    const [transferOtp, setTransferOtp] = useState('');
+    const [availableTenants, setAvailableTenants] = useState<any[]>([]);
+    const [isSendingTransferOtp, setIsSendingTransferOtp] = useState(false);
+    const [isExecutingTransfer, setIsExecutingTransfer] = useState(false);
     const [profileForm, setProfileForm] = useState({
         currentPassword: '',
         newPassword: '',
@@ -95,6 +133,7 @@ export default function ClientAdminDashboard() {
         avgQuizScore: 0
     });
     const [courses, setCourses] = useState<any[]>([]);
+    const [globalMarketplaceCourses, setGlobalMarketplaceCourses] = useState<any[]>([]);
     const [announcements, setAnnouncements] = useState<any[]>([]);
     const [recentActivity, setRecentActivity] = useState<any[]>([]);
     const [coursePerformance, setCoursePerformance] = useState<any[]>([]);
@@ -111,8 +150,8 @@ export default function ClientAdminDashboard() {
     const [availableRoles, setAvailableRoles] = useState<any[]>([]);
     const [availableTeams, setAvailableTeams] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
-    const [branding, setBranding] = useState({ 
-        name: domain.charAt(0).toUpperCase() + domain.slice(1), 
+    const [branding, setBranding] = useState({
+        name: domain.charAt(0).toUpperCase() + domain.slice(1),
         primaryColor: '#3b82f6',
         logoLight: null as string | null,
         logoDark: null as string | null,
@@ -121,16 +160,16 @@ export default function ClientAdminDashboard() {
 
     // Course Builder state
     const [showCourseModal, setShowCourseModal] = useState(false);
-    const [courseFilter, setCourseFilter] = useState<'all' | 'published' | 'draft'>('all');
-    const [courseForm, setCourseForm] = useState({ 
-        title: '', 
-        description: '', 
-        thumbnail: '', 
-        skillLevel: 'All Levels', 
-        languages: 'English', 
-        captions: false, 
-        isMarketplace: false, 
-        exclusiveRoleId: '', 
+    const [courseFilter, setCourseFilter] = useState<'all' | 'published' | 'draft' | 'global_marketplace_course'>('all');
+    const [courseForm, setCourseForm] = useState({
+        title: '',
+        description: '',
+        thumbnail: '',
+        skillLevel: 'All Levels',
+        languages: 'English',
+        captions: false,
+        isMarketplace: false,
+        exclusiveRoleId: '',
         exclusiveTeamId: '',
         certificateEnabled: false,
         certificateTemplateId: ''
@@ -156,34 +195,218 @@ export default function ClientAdminDashboard() {
     const [activeLessonForms, setActiveLessonForms] = useState<Record<string, boolean>>({});
     const [editingLessonIds, setEditingLessonIds] = useState<Record<string, string | null>>({});
     const [editingModuleId, setEditingModuleId] = useState<string | null>(null);
+    const [isSyncing, setIsSyncing] = useState(false);
     const [moduleEditTitle, setModuleEditTitle] = useState('');
     const [courseStats, setCourseStats] = useState<any>(null);
     const [loadingStats, setLoadingStats] = useState(false);
     const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({});
     const [validationErrors, setValidationErrors] = useState<Record<string, any>>({});
 
-    // Toast State
-    const [toasts, setToasts] = useState<Toast[]>([]);
-    const [confirmModal, setConfirmModal] = useState<{
-        title: string;
-        message: string;
-        resolve: (v: boolean) => void;
-        variant?: 'danger' | 'info'
-    } | null>(null);
-
-    const askConfirmation = (title: string, message: string, variant: 'danger' | 'info' = 'danger') => {
-        return new Promise<boolean>((resolve) => {
-            setConfirmModal({ title, message, resolve, variant });
-        });
+    const addToast = async (message: string, type: ToastType = 'success') => {
+        if (typeof window === 'undefined') return;
+        const win = window as any;
+        if (!win.Swal) {
+            // Load CSS
+            if (!document.getElementById('sweetalert2-css')) {
+                const link = document.createElement('link');
+                link.id = 'sweetalert2-css';
+                link.rel = 'stylesheet';
+                link.href = 'https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css';
+                document.head.appendChild(link);
+            }
+            // Load JS
+            await new Promise<void>((resolve) => {
+                const script = document.createElement('script');
+                script.src = 'https://cdn.jsdelivr.net/npm/sweetalert2@11';
+                script.onload = () => resolve();
+                script.onerror = () => resolve();
+                document.body.appendChild(script);
+            });
+        }
+        if (win.Swal) {
+            win.Swal.fire({
+                title: type.charAt(0).toUpperCase() + type.slice(1),
+                text: message,
+                icon: type,
+                background: 'var(--background)',
+                color: 'var(--foreground)',
+                customClass: {
+                    popup: 'rounded-[2rem] border border-border bg-background text-foreground shadow-2xl p-8',
+                    title: 'text-lg font-black uppercase tracking-tight text-foreground !m-0 !pt-2 font-sans',
+                    htmlContainer: 'text-sm text-muted-foreground font-medium !mt-2 !mb-6 font-sans',
+                    confirmButton: 'px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-black uppercase tracking-widest text-[10px] rounded-xl transition-all shadow-xl shadow-indigo-500/20 cursor-pointer font-sans'
+                },
+                buttonsStyling: false
+            });
+        } else {
+            alert(message);
+        }
     };
 
+    const showPurchasePopup = async (courseId?: string) => {
+        if (typeof window === 'undefined') return;
+        const win = window as any;
+        if (!win.Swal) {
+            // Load CSS
+            if (!document.getElementById('sweetalert2-css')) {
+                const link = document.createElement('link');
+                link.id = 'sweetalert2-css';
+                link.rel = 'stylesheet';
+                link.href = 'https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css';
+                document.head.appendChild(link);
+            }
+            // Load JS
+            await new Promise<void>((resolve) => {
+                const script = document.createElement('script');
+                script.src = 'https://cdn.jsdelivr.net/npm/sweetalert2@11';
+                script.onload = () => resolve();
+                script.onerror = () => resolve();
+                document.body.appendChild(script);
+            });
+        }
+        if (win.Swal) {
+            if (courseId) {
+                const result = await win.Swal.fire({
+                    title: 'Purchase Course',
+                    text: 'Would you like to purchase and claim this global curriculum blueprint into your courses?',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Purchase & Claim',
+                    cancelButtonText: 'Cancel',
+                    background: 'var(--background)',
+                    color: 'var(--foreground)',
+                    customClass: {
+                        popup: 'rounded-[2rem] border border-border bg-background text-foreground shadow-2xl p-8',
+                        title: 'text-lg font-black uppercase tracking-tight text-foreground !m-0 !pt-2 font-sans',
+                        htmlContainer: 'text-sm text-muted-foreground font-medium !mt-2 !mb-6 font-sans',
+                        confirmButton: 'px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-black uppercase tracking-widest text-[10px] rounded-xl transition-all shadow-xl shadow-indigo-500/20 cursor-pointer font-sans mr-2',
+                        cancelButton: 'px-6 py-3 bg-secondary hover:bg-secondary/85 text-foreground font-black uppercase tracking-widest text-[10px] rounded-xl transition-all cursor-pointer font-sans ml-2'
+                    },
+                    buttonsStyling: false
+                });
 
-    const addToast = (message: string, type: ToastType = 'success') => {
-        const id = Math.random().toString(36).substring(2, 9);
-        setToasts(prev => [...prev, { id, message, type }]);
-        setTimeout(() => {
-            setToasts(prev => prev.filter(t => t.id !== id));
-        }, 3000);
+                if (result.isConfirmed) {
+                    win.Swal.fire({
+                        title: 'Claiming Blueprint...',
+                        text: 'Please wait while we clone the blueprint and modules...',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            win.Swal.showLoading();
+                        }
+                    });
+
+                    try {
+                        const claimRes = await fetch(`/api/t/${domain}/global-marketplace/claim`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ courseId })
+                        });
+
+                        if (claimRes.ok) {
+                            await win.Swal.fire({
+                                title: 'Success!',
+                                text: 'The course has been purchased and claimed successfully. You can now edit it and build content.',
+                                icon: 'success',
+                                background: 'var(--background)',
+                                color: 'var(--foreground)',
+                                customClass: {
+                                    popup: 'rounded-[2rem] border border-border bg-background text-foreground shadow-2xl p-8',
+                                    title: 'text-lg font-black uppercase tracking-tight text-foreground !m-0 !pt-2 font-sans',
+                                    htmlContainer: 'text-sm text-muted-foreground font-medium !mt-2 !mb-6 font-sans',
+                                    confirmButton: 'px-6 py-3 bg-primary text-primary-foreground font-black uppercase tracking-widest text-[10px] rounded-xl transition-all cursor-pointer font-sans'
+                                },
+                                buttonsStyling: false
+                            });
+                            fetchAll();
+                        } else {
+                            const errData = await claimRes.json();
+                            win.Swal.fire({
+                                title: 'Failed to Claim',
+                                text: errData.error || 'Something went wrong',
+                                icon: 'error',
+                                background: 'var(--background)',
+                                color: 'var(--foreground)',
+                                customClass: {
+                                    popup: 'rounded-[2rem] border border-border bg-background text-foreground shadow-2xl p-8',
+                                    title: 'text-lg font-black uppercase tracking-tight text-foreground !m-0 !pt-2 font-sans',
+                                    htmlContainer: 'text-sm text-muted-foreground font-medium !mt-2 !mb-6 font-sans',
+                                    confirmButton: 'px-6 py-3 bg-primary text-primary-foreground font-black uppercase tracking-widest text-[10px] rounded-xl transition-all cursor-pointer font-sans'
+                                },
+                                buttonsStyling: false
+                            });
+                        }
+                    } catch (e) {
+                        win.Swal.fire('Error', 'An error occurred while claiming.', 'error');
+                    }
+                }
+            } else {
+                win.Swal.fire({
+                    title: 'Purchase Required',
+                    text: 'Please purchase the course package to access this option.',
+                    icon: 'info',
+                    background: 'var(--background)',
+                    color: 'var(--foreground)',
+                    customClass: {
+                        popup: 'rounded-[2rem] border border-border bg-background text-foreground shadow-2xl p-8',
+                        title: 'text-lg font-black uppercase tracking-tight text-foreground !m-0 !pt-2 font-sans',
+                        htmlContainer: 'text-sm text-muted-foreground font-medium !mt-2 !mb-6 font-sans',
+                        confirmButton: 'px-6 py-3 bg-primary text-primary-foreground font-black uppercase tracking-widest text-[10px] rounded-xl transition-all cursor-pointer font-sans'
+                    },
+                    buttonsStyling: false
+                });
+            }
+        } else {
+            alert('Please purchase the course package to access this option.');
+        }
+    };
+
+    const askConfirmation = async (title: string, message: string, variant: 'danger' | 'info' = 'danger'): Promise<boolean> => {
+        if (typeof window === 'undefined') return false;
+        const win = window as any;
+        if (!win.Swal) {
+            // Load CSS
+            if (!document.getElementById('sweetalert2-css')) {
+                const link = document.createElement('link');
+                link.id = 'sweetalert2-css';
+                link.rel = 'stylesheet';
+                link.href = 'https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css';
+                document.head.appendChild(link);
+            }
+            // Load JS
+            await new Promise<void>((resolve) => {
+                const script = document.createElement('script');
+                script.src = 'https://cdn.jsdelivr.net/npm/sweetalert2@11';
+                script.onload = () => resolve();
+                script.onerror = () => resolve();
+                document.body.appendChild(script);
+            });
+        }
+
+        if (win.Swal) {
+            const result = await win.Swal.fire({
+                title,
+                text: message,
+                icon: variant === 'info' ? 'info' : 'warning',
+                showCancelButton: true,
+                confirmButtonText: variant === 'info' ? 'Confirm' : 'Confirm Delete',
+                cancelButtonText: 'Cancel',
+                background: 'var(--background)',
+                color: 'var(--foreground)',
+                customClass: {
+                    popup: 'rounded-[2rem] border border-border bg-background text-foreground shadow-2xl p-8',
+                    title: 'text-lg font-black uppercase tracking-tight text-foreground !m-0 !pt-2 font-sans',
+                    htmlContainer: 'text-sm text-muted-foreground font-medium !mt-2 !mb-6 font-sans',
+                    confirmButton: variant === 'info'
+                        ? 'px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-black uppercase tracking-widest text-[10px] rounded-xl transition-all shadow-xl shadow-indigo-500/20 cursor-pointer font-sans mr-2'
+                        : 'px-6 py-3 bg-red-600 hover:bg-red-500 text-white font-black uppercase tracking-widest text-[10px] rounded-xl transition-all shadow-xl shadow-red-500/20 cursor-pointer font-sans mr-2',
+                    cancelButton: 'px-6 py-3 bg-secondary hover:bg-secondary/80 text-foreground font-black uppercase tracking-widest text-[10px] rounded-xl transition-all cursor-pointer font-sans ml-2'
+                },
+                buttonsStyling: false
+            });
+            return !!result.isConfirmed;
+        } else {
+            return confirm(message);
+        }
     };
 
     const can = useCallback((permission: string) => adminPermissions.length === 0 || adminPermissions.includes(permission), [adminPermissions]);
@@ -215,9 +438,16 @@ export default function ClientAdminDashboard() {
         ['settings', 'Settings', Settings],
         ['certificates', 'Certificates', Award],
         ['reports', 'Reports', BarChart3],
+        ['billing', 'Billing', CreditCard],
         ['admins', 'Manage Admins', Shield],
         ['audit', 'Audit Monitor', Shield],
-    ] as [Tab, string, any][]).filter(([tab]) => !tabPermissions[tab] || can(tabPermissions[tab]!));
+        ['global_users', 'Global Users', Users],
+    ] as [Tab, string, any][]).filter(([tab]) => {
+        if (tab === 'global_users') {
+            return userRole === 'SUPER_ADMIN' || userRole === 'PLATFORM_MANAGER';
+        }
+        return !tabPermissions[tab] || can(tabPermissions[tab]!);
+    });
 
     // Announcement state
     const [showAnnouncementModal, setShowAnnouncementModal] = useState(false);
@@ -225,13 +455,13 @@ export default function ClientAdminDashboard() {
     const [selectedAnnouncement, setSelectedAnnouncement] = useState<any | null>(null);
     const [announcementPage, setAnnouncementPage] = useState(1);
     const ANNOUNCEMENTS_PER_PAGE = 5;
-    
+
     // Audit state
     const [auditLogs, setAuditLogs] = useState<any[]>([]);
     const [auditPagination, setAuditPagination] = useState({ total: 0, pages: 1, currentPage: 1, limit: 20 });
     const [auditLoading, setAuditLoading] = useState(false);
     const [auditSearch, setAuditSearch] = useState('');
-    
+
     // Audit Details State
     const [selectedLogMetadata, setSelectedLogMetadata] = useState<any | null>(null);
     const [insightsUserId, setInsightsUserId] = useState<string | null>(null);
@@ -267,6 +497,7 @@ export default function ClientAdminDashboard() {
     };
 
     const fetchBranding = useCallback(async () => {
+        if (!domain || domain === 'undefined' || domain.includes('[') || domain.includes(']') || domain.includes('%')) return;
         try {
             const res = await fetch(`/api/t/${domain}/admin/branding`);
             if (res.ok) {
@@ -283,9 +514,9 @@ export default function ClientAdminDashboard() {
         formData.append('file', file);
         formData.append('tenantId', domain);
         formData.append('courseId', 'branding');
-        
+
         setUploadProgress(prev => ({ ...prev, [type]: 0 }));
-        
+
         try {
             // Simulate progress for smoother UI since fetch doesn't support ProgressEvent easily without XHR
             const progressInterval = setInterval(() => {
@@ -303,9 +534,9 @@ export default function ClientAdminDashboard() {
                 method: 'POST',
                 body: formData
             });
-            
+
             clearInterval(progressInterval);
-            
+
             if (res.ok) {
                 const data = await res.json();
                 setBranding(prev => ({ ...prev, [type]: data.url }));
@@ -331,7 +562,7 @@ export default function ClientAdminDashboard() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(branding)
             });
-            
+
             if (res.ok) {
                 addToast('Branding settings saved', 'success');
             } else {
@@ -344,6 +575,7 @@ export default function ClientAdminDashboard() {
     };
 
     const fetchAuditLogs = useCallback(async (page = 1, search = '') => {
+        if (!domain || domain === 'undefined' || domain.includes('[') || domain.includes(']') || domain.includes('%')) return;
         setAuditLoading(true);
         try {
             const params = new URLSearchParams();
@@ -406,10 +638,11 @@ export default function ClientAdminDashboard() {
     };
 
     const fetchAll = useCallback(async () => {
+        if (!domain || domain === 'undefined' || domain.includes('[') || domain.includes(']') || domain.includes('%')) return;
         setLoading(true);
         try {
             // VERIFY SESSION FIRST
-            const sessionRes = await fetch('/api/auth/session');
+            const sessionRes = await fetch('/api/auth/session?portal=admin');
             if (!sessionRes.ok) {
                 router.push(`/t/${domain}/login`);
                 return;
@@ -427,6 +660,7 @@ export default function ClientAdminDashboard() {
             setUserId(user.id);
             setUserName(user.name || 'Admin');
             setUserEmail(user.email || '');
+            setUserRole(user.role);
             const permissions = assignedPermissions.length > 0 || (user.role !== 'TENANT_ADMIN' && user.role !== 'SUPER_ADMIN')
                 ? assignedPermissions
                 : ALL_TENANT_ADMIN_PERMISSIONS;
@@ -435,14 +669,18 @@ export default function ClientAdminDashboard() {
                 setActiveTab('overview');
             }
 
-            const [statsRes, coursesRes, annRes, rolesRes, teamsRes, certsRes] = await Promise.all([
+            console.log('[fetchAll] Permissions:', permissions);
+            const [statsRes, coursesRes, globalCoursesRes, annRes, rolesRes, teamsRes, certsRes] = await Promise.all([
                 fetch(`/api/t/${domain}/admin/stats`),
                 permissions.includes('courses.manage') ? fetch(`/api/t/${domain}/courses`) : Promise.resolve(null),
+                permissions.includes('courses.manage') ? fetch(`/api/admin/global-courses`) : Promise.resolve(null),
                 permissions.includes('announcements.manage') ? fetch(`/api/t/${domain}/announcements`) : Promise.resolve(null),
-                permissions.includes('people.manage') ? fetch(`/api/t/${domain}/roles`) : Promise.resolve(null),
-                permissions.includes('people.manage') ? fetch(`/api/t/${domain}/teams`) : Promise.resolve(null),
+                (permissions.includes('people.manage') || permissions.includes('reports.view')) ? fetch(`/api/t/${domain}/roles`) : Promise.resolve(null),
+                (permissions.includes('people.manage') || permissions.includes('reports.view')) ? fetch(`/api/t/${domain}/teams`) : Promise.resolve(null),
                 permissions.includes('certificates.manage') ? fetch(`/api/t/${domain}/certificates`) : Promise.resolve(null)
             ]);
+
+            console.log('[fetchAll] annRes status:', annRes ? annRes.status : 'skipped');
 
             if (statsRes.ok) {
                 const data = await statsRes.json();
@@ -455,13 +693,27 @@ export default function ClientAdminDashboard() {
                 setRoleDistribution(data.roleDistribution || []);
             }
             if (coursesRes?.ok) setCourses(await coursesRes.json());
-            if (annRes?.ok) setAnnouncements(await annRes.json());
+            if (globalCoursesRes?.ok) {
+                setGlobalMarketplaceCourses(await globalCoursesRes.json());
+            } else {
+                setGlobalMarketplaceCourses([]);
+            }
+
+            if (annRes) {
+                if (annRes.ok) {
+                    const annJson = await annRes.json();
+                    console.log('[fetchAll] Loaded announcements count:', annJson.length, annJson);
+                    setAnnouncements(annJson);
+                } else {
+                    console.error('[fetchAll] Failed to fetch announcements. Status:', annRes.status, await annRes.text());
+                }
+            }
             if (rolesRes?.ok) setAvailableRoles(await rolesRes.json());
             if (teamsRes?.ok) setAvailableTeams(await teamsRes.json());
             if (certsRes?.ok) setAvailableTemplates(await certsRes.json());
 
         } catch (e) {
-            console.error(e);
+            console.error('[fetchAll] Error fetching resources:', e);
         } finally {
             setLoading(false);
         }
@@ -473,6 +725,136 @@ export default function ClientAdminDashboard() {
             if (res.ok) setAvailableTemplates(await res.json());
         } catch (e) {
             console.error(e);
+        }
+    };
+
+    const handleGlobalSearch = async (e?: React.FormEvent) => {
+        if (e) e.preventDefault();
+        setGlobalSearchError(null);
+
+        const cleanQuery = globalQuery.trim().replace(/^(uid|UID):\s*/, '');
+        const isUidQuery = globalQuery.trim().toLowerCase().startsWith('uid:') || cleanQuery.length === 25;
+
+        if (!globalQuery.trim() || !isUidQuery) {
+            setGlobalSearchError('Please enter UID');
+            return;
+        }
+
+        setIsSearchingGlobal(true);
+        setSelectedGlobalUser(null);
+        try {
+            const res = await fetch(`/api/admin/users?mode=search&q=${encodeURIComponent(globalQuery)}`);
+            const data = await res.json().catch(() => ({}));
+            if (res.ok) {
+                setGlobalResults(data);
+                if (data.length === 1) {
+                    setSelectedGlobalUser(data[0]);
+                }
+            } else {
+                setGlobalSearchError(data.error || 'Failed to execute scan');
+            }
+        } catch (err) {
+            console.error('Global users search error:', err);
+            setGlobalSearchError('An error occurred during global search');
+        } finally {
+            setIsSearchingGlobal(false);
+        }
+    };
+
+    useEffect(() => {
+        if (activeTab === 'global_users' && !globalQuery.trim()) {
+            setGlobalResults([]);
+            setGlobalSearchError(null);
+        }
+    }, [globalQuery, activeTab]);
+
+    const initiateTransferFlow = async () => {
+        if (!selectedGlobalUser) return;
+        setTargetTenantId('');
+        setOtpSent(false);
+        setDemoOtp('');
+        setTransferOtp('');
+        try {
+            const res = await fetch(`/api/t/${domain}/admin/transfer`);
+            if (res.ok) {
+                const data = await res.json();
+                const others = data.tenants.filter((t: any) => t.id !== selectedGlobalUser.tenantId);
+                setAvailableTenants(others);
+                setShowTransferModal(true);
+            } else {
+                addToast('Failed to fetch companies list', 'error');
+            }
+        } catch (err) {
+            console.error(err);
+            addToast('Error fetching companies list', 'error');
+        }
+    };
+
+    const handleSendOtp = async () => {
+        if (!selectedGlobalUser || !targetTenantId) {
+            addToast('Please select a target company', 'error');
+            return;
+        }
+        setIsSendingTransferOtp(true);
+        try {
+            const res = await fetch(`/api/t/${domain}/admin/transfer`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'send',
+                    userId: selectedGlobalUser.id,
+                    targetTenantId
+                })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                setOtpSent(true);
+                setDemoOtp(data.otp);
+                addToast(`OTP generated. Code: ${data.otp}`, 'success');
+            } else {
+                addToast(data.error || 'Failed to send OTP', 'error');
+            }
+        } catch (err) {
+            console.error(err);
+            addToast('Error sending OTP', 'error');
+        } finally {
+            setIsSendingTransferOtp(false);
+        }
+    };
+
+    const handleVerifyTransfer = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!selectedGlobalUser || !targetTenantId || !transferOtp) {
+            addToast('Missing verification details', 'error');
+            return;
+        }
+        setIsExecutingTransfer(true);
+        try {
+            const res = await fetch(`/api/t/${domain}/admin/transfer`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'verify',
+                    userId: selectedGlobalUser.id,
+                    targetTenantId,
+                    otp: transferOtp
+                })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                addToast(data.message || 'Employee transferred successfully!', 'success');
+                setShowTransferModal(false);
+                setSelectedGlobalUser(null);
+                setGlobalResults([]);
+                setGlobalQuery('');
+            } else {
+                addToast(data.error || 'Failed to complete transfer', 'error');
+            }
+        } catch (err) {
+            console.error(err);
+            addToast('Error verifying transfer', 'error');
+        } finally {
+            setIsExecutingTransfer(false);
         }
     };
 
@@ -501,6 +883,167 @@ export default function ClientAdminDashboard() {
     const [sharingSettings, setSharingSettings] = useState({ allowSelfRegistration: false, supportEmail: '' });
     const [isUploadingThumbnail, setIsUploadingThumbnail] = useState(false);
     const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
+
+    const [settingsState, setSettingsState] = useState<{
+        courseCreateCount: number;
+        plan?: string;
+        customRevenue?: number;
+        customRevenueCurrency?: string;
+    }>({ courseCreateCount: 0, plan: 'STARTER', customRevenue: 0, customRevenueCurrency: 'USD' });
+    const [isSavingSettings, setIsSavingSettings] = useState(false);
+    const [plansList, setPlansList] = useState<any[]>([]);
+
+    // Billing & Payment States
+    const [showPaymentModal, setShowPaymentModal] = useState(false);
+    const [isSavingCard, setIsSavingCard] = useState(false);
+    const [paymentForm, setPaymentForm] = useState({ cardholder: '', number: '', expiry: '', cvv: '' });
+    const [paymentMethod, setPaymentMethod] = useState<{ last4: string; brand: string; cardholder: string; expiry: string } | null>(null);
+    const [isSwitchingPlan, setIsSwitchingPlan] = useState<string | null>(null);
+
+    const DEFAULT_FALLBACK_PLANS = [
+        {
+            id: 'starter',
+            name: 'Starter',
+            description: 'Perfect for small teams getting started with a branded academy.',
+            currency: 'SGD',
+            price: '799',
+            note: 'per workspace / month',
+            features: ['Up to 500 learners', 'Course builder', 'Basic analytics', 'Standard certificates', 'Email support'],
+            userLimit: 500,
+            courseCreateLimit: 5,
+            aiQuizGeneration: false,
+            featured: false
+        },
+        {
+            id: 'professional',
+            name: 'Professional',
+            description: 'For growing learning teams that need AI, branding, and team controls.',
+            currency: 'SGD',
+            price: '1,499',
+            note: 'per workspace / month',
+            features: ['Up to 5,000 learners', 'AI quiz generation', 'Custom branding and domain', 'Teams and roles', 'Priority support'],
+            userLimit: 5000,
+            courseCreateLimit: 50,
+            aiQuizGeneration: true,
+            featured: true
+        },
+        {
+            id: 'enterprise',
+            name: 'Enterprise',
+            description: 'For large organizations, franchises, and multi-tenant learning businesses.',
+            currency: 'SGD',
+            price: 'Custom',
+            note: 'tailored agreement',
+            features: ['Unlimited tenant strategy', 'Custom onboarding', 'Advanced governance', 'Dedicated success support', 'Custom integrations'],
+            userLimit: 0,
+            courseCreateLimit: 0,
+            aiQuizGeneration: true,
+            featured: false
+        }
+    ];
+
+    const handleSwitchPlan = async (planId: string) => {
+        if (!paymentMethod) {
+            setPaymentForm({ cardholder: '', number: '', expiry: '', cvv: '' });
+            setShowPaymentModal(true);
+            return;
+        }
+
+        setIsSwitchingPlan(planId);
+        try {
+            const res = await fetch(`/api/t/${domain}/admin/settings`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    courseCreateCount: planId.toLowerCase() === 'starter' ? 5 : planId.toLowerCase() === 'professional' ? 50 : 0,
+                    plan: planId.toUpperCase()
+                })
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setSettingsState(prev => ({
+                    ...prev,
+                    plan: planId.toUpperCase(),
+                    courseCreateCount: data.data?.courseCreateCount ?? prev.courseCreateCount
+                }));
+                addToast(`Successfully subscribed to the ${planId.charAt(0).toUpperCase() + planId.slice(1)} Plan!`, 'success');
+            } else {
+                addToast('Failed to switch subscription plan', 'error');
+            }
+        } catch (e) {
+            addToast('Error switching plan', 'error');
+        } finally {
+            setIsSwitchingPlan(null);
+        }
+    };
+
+    const fetchSettings = useCallback(async () => {
+        if (!domain || domain === 'undefined' || domain.includes('[') || domain.includes(']') || domain.includes('%')) return;
+        try {
+            const [settingsRes, plansRes] = await Promise.all([
+                fetch(`/api/t/${domain}/admin/settings`),
+                fetch(`/api/admin/billing/plans`)
+            ]);
+            if (settingsRes.ok) {
+                const data = await settingsRes.json();
+                setSettingsState(data);
+            }
+            if (plansRes.ok) {
+                const plansData = await plansRes.json();
+                setPlansList(plansData);
+            }
+        } catch (e) {
+            console.error('Fetch settings/plans error', e);
+        }
+    }, [domain]);
+
+    const handleSaveSettings = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsSavingSettings(true);
+        try {
+            const res = await fetch(`/api/t/${domain}/admin/settings`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(settingsState)
+            });
+            if (res.ok) {
+                localStorage.setItem(`tenant_sharing_settings_${domain}`, JSON.stringify(sharingSettings));
+                addToast('Settings saved successfully', 'success');
+            } else {
+                const err = await res.json();
+                addToast(err.error || 'Failed to save settings', 'error');
+            }
+        } catch (e) {
+            addToast('Unexpected error saving settings', 'error');
+        } finally {
+            setIsSavingSettings(false);
+        }
+    };
+
+    useEffect(() => {
+        const stored = localStorage.getItem(`payment_method_${domain}`);
+        if (stored) {
+            try {
+                setPaymentMethod(JSON.parse(stored));
+            } catch (e) {
+                console.error(e);
+            }
+        }
+        const storedSharing = localStorage.getItem(`tenant_sharing_settings_${domain}`);
+        if (storedSharing) {
+            try {
+                setSharingSettings(JSON.parse(storedSharing));
+            } catch (e) {
+                console.error(e);
+            }
+        }
+    }, [domain]);
+
+    useEffect(() => {
+        if (activeTab === 'settings' || activeTab === 'billing') {
+            fetchSettings();
+        }
+    }, [activeTab, fetchSettings]);
 
     // Multi-level Resource Management
     const [managingResources, setManagingResources] = useState<{ id: string, type: 'COURSE' | 'MODULE', name: string, resources: any[] } | null>(null);
@@ -577,6 +1120,23 @@ export default function ClientAdminDashboard() {
         return () => clearTimeout(timer);
     }, [auditSearch]);
 
+    // Auto-fetch report statistics when filter state updates
+    const isFirstReportLoad = useRef(true);
+    useEffect(() => {
+        if (!mounted || activeTab !== 'reports') {
+            isFirstReportLoad.current = true;
+            return;
+        }
+        if (isFirstReportLoad.current) {
+            isFirstReportLoad.current = false;
+            // Skip initial fetch on reports tab focus if filters are empty
+            if (!reportStartDate && !reportEndDate && !reportTeamId && !reportRoleId) {
+                return;
+            }
+        }
+        fetchReportStats(reportStartDate, reportEndDate, reportTeamId, reportRoleId);
+    }, [reportStartDate, reportEndDate, reportTeamId, reportRoleId, activeTab, mounted, fetchReportStats]);
+
     // Update platform identity (Title & Favicon)
     useEffect(() => {
         if (branding.name) {
@@ -597,7 +1157,6 @@ export default function ClientAdminDashboard() {
         e.preventDefault();
         if (!courseForm.title.trim()) {
             setValidationErrors(prev => ({ ...prev, course: { title: 'Course title is required' } }));
-            addToast('Course title is required', 'error');
             return;
         }
         setValidationErrors(prev => ({ ...prev, course: null }));
@@ -609,15 +1168,15 @@ export default function ClientAdminDashboard() {
             });
             if (res.ok) {
                 setShowCourseModal(false);
-                setCourseForm({ 
-                    title: '', 
-                    description: '', 
-                    thumbnail: '', 
-                    skillLevel: 'All Levels', 
-                    languages: 'English', 
-                    captions: false, 
-                    isMarketplace: false, 
-                    exclusiveRoleId: '', 
+                setCourseForm({
+                    title: '',
+                    description: '',
+                    thumbnail: '',
+                    skillLevel: 'All Levels',
+                    languages: 'English',
+                    captions: false,
+                    isMarketplace: false,
+                    exclusiveRoleId: '',
                     exclusiveTeamId: '',
                     certificateEnabled: false,
                     certificateTemplateId: ''
@@ -626,7 +1185,8 @@ export default function ClientAdminDashboard() {
                 fetchAll();
                 addToast('Course created successfully');
             } else {
-                addToast('Failed to create course', 'error');
+                const data = await res.json();
+                addToast(data.error || 'Failed to create course', 'error');
             }
         } catch (e) {
             console.error(e);
@@ -637,6 +1197,11 @@ export default function ClientAdminDashboard() {
     const updateCourse = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!selectedCourse) return;
+        if (!courseForm.title.trim()) {
+            setValidationErrors(prev => ({ ...prev, course: { title: 'Course title is required' } }));
+            return;
+        }
+        setValidationErrors(prev => ({ ...prev, course: null }));
         try {
             const res = await fetch(`/api/t/${domain}/courses`, {
                 method: 'PUT',
@@ -645,7 +1210,7 @@ export default function ClientAdminDashboard() {
             });
             if (res.ok) {
                 const updated = await res.json();
-                setSelectedCourse({ ...selectedCourse, ...updated });
+                setSelectedCourse({ ...selectedCourse, ...updated.data });
                 setShowCourseModal(false);
                 fetchAll();
                 addToast('Course updated successfully');
@@ -791,7 +1356,7 @@ export default function ClientAdminDashboard() {
         }
 
         try {
-            const data = await uploadFile(file, 
+            const data = await uploadFile(file,
                 { tenantId: domain, courseId: selectedCourse?.id || 'misc' },
                 (percent) => setUploadProgress(prev => ({ ...prev, [`res-${moduleId}`]: percent }))
             );
@@ -838,7 +1403,7 @@ export default function ClientAdminDashboard() {
         }
 
         try {
-            const data = await uploadFile(file, 
+            const data = await uploadFile(file,
                 { tenantId: domain, courseId: selectedCourse?.id || 'misc' },
                 (percent) => setUploadProgress(prev => ({ ...prev, [moduleId]: percent }))
             );
@@ -872,9 +1437,9 @@ export default function ClientAdminDashboard() {
         setIsUploadingTargetResource(true);
 
         try {
-            const uploadData = await uploadFile(file, { 
-                tenantId: domain, 
-                courseId: managingResources?.id || 'misc' 
+            const uploadData = await uploadFile(file, {
+                tenantId: domain,
+                courseId: managingResources?.id || 'misc'
             });
 
             const res = await fetch(`/api/t/${domain}/resources`, {
@@ -953,9 +1518,27 @@ export default function ClientAdminDashboard() {
             const courseId = selectedCourse?.id;
             if (!courseId) throw new Error('No course selected');
 
-            const resDel = await fetch(`/api/t/${domain}/courses/${courseId}/modules/${moduleId}/lessons/${lessonId}`, {
+            let resDel = await fetch(`/api/t/${domain}/courses/${courseId}/modules/${moduleId}/lessons/${lessonId}`, {
                 method: 'DELETE'
             });
+
+            if (resDel.status === 409) {
+                const errorData = await resDel.json();
+                if (errorData.code === 'HAS_PROGRESS') {
+                    const confirmForce = await askConfirmation(
+                        'Force Delete Lesson?',
+                        'This lesson has active learner progress or quiz attempts. Deleting it will permanently erase all student completions, notes, and quiz submissions for this lesson. Are you sure you want to proceed?',
+                        'danger'
+                    );
+                    if (confirmForce) {
+                        resDel = await fetch(`/api/t/${domain}/courses/${courseId}/modules/${moduleId}/lessons/${lessonId}?force=true`, {
+                            method: 'DELETE'
+                        });
+                    } else {
+                        return;
+                    }
+                }
+            }
 
             if (resDel.ok) {
                 addToast('Lesson deleted successfully', 'success');
@@ -963,13 +1546,6 @@ export default function ClientAdminDashboard() {
                 if (res.ok) {
                     const data = await res.json();
                     setSelectedCourse(data);
-                }
-            } else if (resDel.status === 409) {
-                const errorData = await resDel.json();
-                if (await askConfirmation('Deactivate Lesson?', errorData.error + ' Would you like to deactivate it instead to hide it from learners?', 'info')) {
-                    const mod = selectedCourse.modules.find((m: any) => m.id === moduleId);
-                    const lesson = mod?.lessons?.find((l: any) => l.id === lessonId);
-                    if (lesson) toggleLessonStatus(moduleId, lesson);
                 }
             } else {
                 const error = await resDel.json();
@@ -1094,7 +1670,6 @@ export default function ClientAdminDashboard() {
             });
 
             if (!resUpdate.ok) throw new Error();
-            addToast(`Lesson ${!originalStatus ? 'activated' : 'deactivated'}`);
         } catch (e) {
             // Rollback
             if (selectedCourse) {
@@ -1158,7 +1733,23 @@ export default function ClientAdminDashboard() {
         if (!(await askConfirmation('Delete Module?', 'Are you sure you want to delete this module and all its lessons?'))) return;
         const courseId = selectedCourse?.id;
         try {
-            const resDelete = await fetch(`/api/t/${domain}/courses/${courseId}/modules/${moduleId}`, { method: 'DELETE' });
+            let resDelete = await fetch(`/api/t/${domain}/courses/${courseId}/modules/${moduleId}`, { method: 'DELETE' });
+
+            if (resDelete.status === 409) {
+                const data = await resDelete.json();
+                if (data.code === 'HAS_PROGRESS') {
+                    const confirmForce = await askConfirmation(
+                        'Force Delete Module?',
+                        'This module contains lessons with learner progress or quiz attempts. Deleting it will permanently erase all student completions, notes, and quiz submissions for all lessons in this module. Are you sure you want to proceed?',
+                        'danger'
+                    );
+                    if (confirmForce) {
+                        resDelete = await fetch(`/api/t/${domain}/courses/${courseId}/modules/${moduleId}?force=true`, { method: 'DELETE' });
+                    } else {
+                        return;
+                    }
+                }
+            }
 
             if (resDelete.ok) {
                 fetchCourseDetails(courseId);
@@ -1166,14 +1757,7 @@ export default function ClientAdminDashboard() {
                 addToast('Module deleted successfully', 'success');
             } else {
                 const data = await resDelete.json();
-                if (resDelete.status === 409) {
-                    if (await askConfirmation('Deactivate Module?', 'This module cannot be deleted because learners have already started or completed it. Would you like to deactivate it instead to hide it from learners?', 'info')) {
-                        const mod = selectedCourse.modules.find((m: any) => m.id === moduleId);
-                        if (mod) toggleModuleStatus(mod);
-                    }
-                } else {
-                    addToast(data.error || 'Failed to delete module', 'error');
-                }
+                addToast(data.error || 'Failed to delete module', 'error');
             }
         } catch (error) {
             console.error('Delete module failed', error);
@@ -1196,6 +1780,30 @@ export default function ClientAdminDashboard() {
             addToast('Error fetching course', 'error');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const syncCourse = async (courseId: string) => {
+        if (!(await askConfirmation('Sync with Global Course?', 'This will pull new lessons and updates from the original global course. Your local edits to existing lessons will remain intact.'))) return;
+
+        setIsSyncing(true);
+        try {
+            const res = await fetch(`/api/t/${domain}/courses/${courseId}/sync`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const data = await res.json();
+            if (res.ok) {
+                setSelectedCourse(data.course);
+                addToast('Course synced with global catalog successfully!', 'success');
+            } else {
+                addToast(data.error || 'Failed to sync course', 'error');
+            }
+        } catch (e) {
+            console.error(e);
+            addToast('Error syncing course', 'error');
+        } finally {
+            setIsSyncing(false);
         }
     };
 
@@ -1264,6 +1872,23 @@ export default function ClientAdminDashboard() {
         }
         setValidationErrors(prev => ({ ...prev, announcement: null }));
 
+        // Check for duplicates
+        const isDuplicateTitle = announcements.some(
+            (ann) => ann.title.trim().toLowerCase() === announcementForm.title.trim().toLowerCase()
+        );
+        const isDuplicateBody = announcements.some(
+            (ann) => ann.body.trim().toLowerCase() === announcementForm.body.trim().toLowerCase()
+        );
+
+        if (isDuplicateTitle) {
+            addToast('An announcement with this title already exists', 'error');
+            return;
+        }
+        if (isDuplicateBody) {
+            addToast('An announcement with this message content already exists', 'error');
+            return;
+        }
+
         try {
             const res = await fetch(`/api/t/${domain}/announcements`, {
                 method: 'POST',
@@ -1292,14 +1917,36 @@ export default function ClientAdminDashboard() {
 
     return (
         <div className="min-h-screen bg-background flex">
+            {/* Mobile sidebar overlay */}
+            {sidebarOpen && (
+                <div
+                    className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm md:hidden"
+                    onClick={() => setSidebarOpen(false)}
+                />
+            )}
+
             {/* Sidebar */}
-            <aside className="w-64 border-r border-border bg-secondary/10 p-6 flex flex-col gap-8 sticky top-0 h-screen">
+            <aside className={`
+                fixed top-0 left-0 h-screen z-50 w-64 border-r border-border bg-secondary/10 p-6 flex flex-col gap-8
+                transition-transform duration-300 ease-in-out
+                md:sticky md:translate-x-0 md:z-auto
+                ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+            `}>
                 <div className="flex items-center gap-3 px-2">
+                    {/* Close button — mobile only */}
+                    <button
+                        onClick={() => setSidebarOpen(false)}
+                        className="md:hidden absolute top-4 right-4 p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-all"
+                        aria-label="Close sidebar"
+                    >
+                        <X size={18} />
+                    </button>
+
                     {(branding.logoDark || branding.logoLight) ? (
                         <div className="h-14 w-auto min-w-[3rem] flex items-center justify-center bg-transparent">
-                            <img 
-                                src={mounted ? (resolvedTheme === 'dark' ? (branding.logoDark || branding.logoLight!) : (branding.logoLight || branding.logoDark!)) : (branding.logoDark || branding.logoLight!)} 
-                                alt={branding.name} 
+                            <img
+                                src={mounted ? (resolvedTheme === 'dark' ? (branding.logoDark || branding.logoLight!) : (branding.logoLight || branding.logoDark!)) : (branding.logoDark || branding.logoLight!)}
+                                alt={branding.name}
                                 className="h-full w-auto object-contain"
                             />
                         </div>
@@ -1314,9 +1961,9 @@ export default function ClientAdminDashboard() {
                     </div>
                 </div>
 
-                <nav className="space-y-1 flex-1">
+                <nav className="space-y-1 flex-1 overflow-y-auto min-h-0 pr-1 no-scrollbar">
                     {visibleTabs.map(([tab, label, Icon]) => (
-                        <button key={tab} onClick={() => { setActiveTab(tab); setSelectedCourse(null); }}
+                        <button key={tab} onClick={() => { setActiveTab(tab); setSelectedCourse(null); setSidebarOpen(false); }}
                             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === tab ? 'bg-primary/10 text-primary border border-primary/20' : 'text-muted-foreground hover:bg-secondary/50 hover:text-foreground'}`}>
                             <Icon size={18} />
                             {label}
@@ -1331,13 +1978,23 @@ export default function ClientAdminDashboard() {
             </aside>
 
             {/* Main Content */}
-            <main className="flex-1 p-8 overflow-auto">
+            <main className="flex-1 p-4 md:p-8 overflow-auto min-w-0">
                 <header className="flex justify-between items-center mb-8">
-                    <h2 className="text-2xl font-black uppercase tracking-tight">
-                        {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
-                    </h2>
+                    <div className="flex items-center gap-3">
+                        {/* Hamburger — mobile only */}
+                        <button
+                            onClick={() => setSidebarOpen(true)}
+                            className="md:hidden p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-all"
+                            aria-label="Open sidebar"
+                        >
+                            <Menu size={20} />
+                        </button>
+                        <h2 className="text-2xl font-black uppercase tracking-tight">
+                            {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
+                        </h2>
+                    </div>
                     <div className="flex items-center gap-4">
-                        {activeTab === 'courses' && !selectedCourse && (
+                        {activeTab === 'courses' && !selectedCourse && courseFilter !== 'global_marketplace_course' && (
                             <button onClick={() => setShowCourseModal(true)} className="px-4 py-2 bg-primary text-primary-foreground rounded-xl font-bold text-sm flex items-center gap-2 hover:opacity-90 transition-opacity whitespace-nowrap">
                                 <Plus size={16} /> New Course
                             </button>
@@ -1361,7 +2018,8 @@ export default function ClientAdminDashboard() {
                             </button>
                             <button
                                 onClick={async () => {
-                                    await fetch(`/api/logout`, { method: 'POST' }).catch(() => {});
+                                    await fetch(`/api/logout`, { method: 'POST' }).catch(() => { });
+                                    localStorage.removeItem(`${domain}_admin_userId`);
                                     localStorage.removeItem(`${domain}_userId`);
                                     router.push(`/t/${domain}/login`);
                                 }}
@@ -1444,6 +2102,14 @@ export default function ClientAdminDashboard() {
                                         <p className="text-sm text-muted-foreground">{selectedCourse.description}</p>
                                     </div>
                                     <div className="flex flex-wrap gap-2">
+                                        {selectedCourse.clonedFromId && (
+                                            <button onClick={() => syncCourse(selectedCourse.id)}
+                                                disabled={isSyncing}
+                                                className="px-4 py-2 rounded-xl font-bold text-xs bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 hover:bg-indigo-500/20 transition-all flex items-center gap-2 disabled:opacity-50">
+                                                {isSyncing ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+                                                {isSyncing ? 'Syncing...' : 'Sync with Global'}
+                                            </button>
+                                        )}
                                         <button onClick={() => {
                                             setCourseForm({
                                                 title: selectedCourse.title,
@@ -1603,11 +2269,11 @@ export default function ClientAdminDashboard() {
                                                         onClick={(e) => { e.stopPropagation(); toggleModuleStatus(mod); }}
                                                         className="px-3 py-1.5 rounded-lg bg-background border border-border/50 flex items-center gap-2 cursor-pointer hover:bg-secondary/20 transition-all select-none"
                                                     >
-                                                        <div className={`w-8 h-4 rounded-full p-0.5 transition-colors relative ${mod.isActive ? 'bg-emerald-500/20' : 'bg-secondary'}`}>
-                                                            <div className={`w-3 h-3 rounded-full shadow-sm shadow-black/20 transition-all ${mod.isActive ? 'translate-x-4 bg-emerald-400' : 'bg-muted-foreground'}`} />
+                                                        <div className={`w-8 h-4 rounded-full p-0.5 transition-colors relative ${mod.isActive ? 'bg-emerald-500' : 'bg-secondary border border-border/40'}`}>
+                                                            <div className={`w-3 h-3 rounded-full shadow-sm shadow-black/20 transition-all bg-white ${mod.isActive ? 'translate-x-4' : 'translate-x-0'}`} />
                                                         </div>
-                                                        <span className={`text-[9px] font-black uppercase tracking-widest ${mod.isActive ? 'text-emerald-400' : 'text-muted-foreground opacity-50'}`}>
-                                                            {mod.isActive ? 'Module Active' : 'Deactivated'}
+                                                        <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">
+                                                            {mod.isActive ? 'Active' : 'Inactive'}
                                                         </span>
                                                     </div>
                                                     <button
@@ -1667,11 +2333,11 @@ export default function ClientAdminDashboard() {
                                                                 onClick={(e) => { e.stopPropagation(); toggleLessonStatus(mod.id, lesson); }}
                                                                 className="px-3 py-1.5 rounded-lg bg-background border border-border/50 flex items-center gap-2 cursor-pointer hover:bg-secondary/20 transition-all select-none"
                                                             >
-                                                                <div className={`w-8 h-4 rounded-full p-0.5 transition-colors relative ${lesson.isActive ? 'bg-emerald-500/20' : 'bg-secondary'}`}>
-                                                                    <div className={`w-3 h-3 rounded-full shadow-sm shadow-black/20 transition-all ${lesson.isActive ? 'translate-x-4 bg-emerald-400' : 'bg-muted-foreground'}`} />
+                                                                <div className={`w-8 h-4 rounded-full p-0.5 transition-colors relative ${lesson.isActive ? 'bg-emerald-500' : 'bg-secondary border border-border/40'}`}>
+                                                                    <div className={`w-3 h-3 rounded-full shadow-sm shadow-black/20 transition-all bg-white ${lesson.isActive ? 'translate-x-4' : 'translate-x-0'}`} />
                                                                 </div>
-                                                                <span className={`text-[9px] font-black uppercase tracking-widest ${lesson.isActive ? 'text-emerald-400' : 'text-muted-foreground opacity-50'}`}>
-                                                                    {lesson.isActive ? 'Active' : 'Hidden'}
+                                                                <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">
+                                                                    {lesson.isActive ? 'Active' : 'Inactive'}
                                                                 </span>
                                                             </div>
                                                             <button
@@ -1988,16 +2654,21 @@ export default function ClientAdminDashboard() {
                                             { id: 'all', label: 'All Courses', count: courses.length },
                                             { id: 'published', label: 'Published', count: courses.filter(c => c.isPublished).length },
                                             { id: 'draft', label: 'Drafts', count: courses.filter(c => !c.isPublished).length },
+                                            { id: 'global_marketplace_course', label: 'Global Marketplace', count: globalMarketplaceCourses.length },
                                         ].map((tab) => (
                                             <button
                                                 key={tab.id}
-                                                onClick={() => setCourseFilter(tab.id as any)}
+                                                onClick={() => {
+                                                    setCourseFilter(tab.id as any);
+                                                }}
                                                 className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${courseFilter === tab.id ? 'bg-primary text-primary-foreground shadow-lg' : 'text-muted-foreground hover:text-foreground hover:bg-border/50'}`}
                                             >
                                                 {tab.label}
-                                                <span className={`px-1.5 py-0.5 rounded-md text-[10px] ${courseFilter === tab.id ? 'bg-white/20 text-white' : 'bg-secondary text-muted-foreground'}`}>
-                                                    {tab.count}
-                                                </span>
+                                                {tab.count !== null && (
+                                                    <span className={`px-1.5 py-0.5 rounded-md text-[10px] ${courseFilter === tab.id ? 'bg-blue-600 text-white' : 'bg-secondary text-muted-foreground'}`}>
+                                                        {tab.count}
+                                                    </span>
+                                                )}
                                             </button>
                                         ))}
                                     </div>
@@ -2006,67 +2677,124 @@ export default function ClientAdminDashboard() {
                                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                                     {loading ? (
                                         <div className="col-span-3 flex justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-muted-foreground" /></div>
-                                    ) : courses.filter(c => {
+                                    ) : (courseFilter === 'global_marketplace_course' ? globalMarketplaceCourses : courses.filter(c => {
                                         if (courseFilter === 'published') return c.isPublished;
                                         if (courseFilter === 'draft') return !c.isPublished;
                                         return true;
-                                    }).length === 0 ? (
+                                    })).length === 0 ? (
                                         <div className="col-span-3 text-center py-20 border-2 border-dashed border-border/50 rounded-3xl bg-secondary/5">
                                             <BookOpen className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-20" />
-                                            <p className="font-bold text-lg">No {courseFilter === 'all' ? '' : courseFilter} courses</p>
+                                            <p className="font-bold text-lg">No {courseFilter === 'all' ? '' : (courseFilter === 'global_marketplace_course' ? 'global marketplace' : courseFilter)} courses</p>
                                             <p className="text-muted-foreground text-sm">
-                                                {courseFilter === 'all' ? 'Create your first course to get started.' : `You don't have any ${courseFilter} courses yet.`}
+                                                {courseFilter === 'global_marketplace_course'
+                                                    ? 'No global marketplace courses available.'
+                                                    : courseFilter === 'all'
+                                                        ? 'Create your first course to get started.'
+                                                        : `You don't have any ${courseFilter} courses yet.`}
                                             </p>
                                         </div>
                                     ) : (
-                                        courses.filter(c => {
+                                        (courseFilter === 'global_marketplace_course' ? globalMarketplaceCourses : courses.filter(c => {
                                             if (courseFilter === 'published') return c.isPublished;
                                             if (courseFilter === 'draft') return !c.isPublished;
                                             return true;
-                                        }).map((course) => (
-                                            <div key={course.id} className="group rounded-3xl overflow-hidden border border-border/50 glassmorphism hover:border-primary/30 transition-all">
-                                                <div className="aspect-video bg-gradient-to-br from-blue-600/20 to-purple-600/20 border-b border-border/50 flex items-center justify-center relative overflow-hidden">
-                                                    {course.thumbnail ? (
-                                                        <img src={course.thumbnail} alt={course.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                                                    ) : (
-                                                        <BookOpen className="w-12 h-12 text-blue-400 opacity-40 group-hover:scale-110 transition-transform duration-500" />
-                                                    )}
-                                                    <div className="absolute top-3 left-3 flex flex-col gap-1.5 pointer-events-none">
-                                                        {course.exclusiveRole && (
-                                                            <span className="px-2 py-1 text-[10px] font-black uppercase rounded-lg bg-indigo-500/20 border border-indigo-500/30 text-indigo-400 backdrop-blur-md flex items-center gap-1 shadow-2xl">
-                                                                <Lock size={10} /> Exclusive: {course.exclusiveRole.name}
-                                                            </span>
+                                        })).map((course) => {
+                                            const claimedCourse = courseFilter === 'global_marketplace_course'
+                                                ? courses.find(c => c.clonedFromId === course.id)
+                                                : null;
+
+                                            return (
+                                                <div
+                                                    key={course.id}
+                                                    onClick={() => {
+                                                        if (courseFilter === 'global_marketplace_course' && !claimedCourse) {
+                                                            showPurchasePopup(course.id);
+                                                        }
+                                                    }}
+                                                    className={`group rounded-3xl overflow-hidden border border-border/50 glassmorphism hover:border-primary/30 transition-all ${courseFilter === 'global_marketplace_course' && !claimedCourse ? 'cursor-pointer' : ''}`}
+                                                >
+                                                    <div className="aspect-video bg-gradient-to-br from-blue-600/20 to-purple-600/20 border-b border-border/50 flex items-center justify-center relative overflow-hidden">
+                                                        {course.thumbnail ? (
+                                                            <img src={course.thumbnail} alt={course.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                                                        ) : (
+                                                            <BookOpen className="w-12 h-12 text-blue-400 opacity-40 group-hover:scale-110 transition-transform duration-500" />
                                                         )}
-                                                        {course.exclusiveTeam && (
-                                                            <span className="px-2 py-1 text-[10px] font-black uppercase rounded-lg bg-cyan-500/20 border border-cyan-500/30 text-cyan-400 backdrop-blur-md flex items-center gap-1 shadow-2xl">
-                                                                <UsersRound size={10} /> Team: {course.exclusiveTeam.name}
+                                                        <div className="absolute top-3 left-3 flex flex-col gap-1.5 pointer-events-none">
+                                                            {course.exclusiveRole && (
+                                                                <span className="px-2 py-1 text-[10px] font-black uppercase rounded-lg bg-indigo-950/90 border border-indigo-500/50 text-indigo-300 backdrop-blur-md flex items-center gap-1 shadow-2xl">
+                                                                    <Lock size={10} /> Exclusive: {course.exclusiveRole.name}
+                                                                </span>
+                                                            )}
+                                                            {course.exclusiveTeam && (
+                                                                <span className="px-2 py-1 text-[10px] font-black uppercase rounded-lg bg-cyan-950/90 border border-cyan-500/50 text-cyan-300 backdrop-blur-md flex items-center gap-1 shadow-2xl">
+                                                                    <UsersRound size={10} /> Team: {course.exclusiveTeam.name}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <div className="absolute top-3 right-3">
+                                                            <span className={`px-2 py-1 text-[10px] font-black uppercase rounded-full border ${course.isPublished ? 'bg-emerald-500/20 border-emerald-500/30 text-emerald-400' : 'bg-orange-500/20 border-orange-500/30 text-orange-400'}`}>
+                                                                {course.isPublished ? 'Published' : 'Draft'}
                                                             </span>
-                                                        )}
+                                                        </div>
                                                     </div>
-                                                    <div className="absolute top-3 right-3">
-                                                        <span className={`px-2 py-1 text-[10px] font-black uppercase rounded-full border ${course.isPublished ? 'bg-emerald-500/20 border-emerald-500/30 text-emerald-400' : 'bg-orange-500/20 border-orange-500/30 text-orange-400'}`}>
-                                                            {course.isPublished ? 'Published' : 'Draft'}
-                                                        </span>
+                                                    <div className="p-6">
+                                                        <h3 className="font-bold text-lg leading-tight mb-1">{course.title}</h3>
+                                                        <p className="text-sm text-muted-foreground mb-4 line-clamp-2">{course.description || 'No description yet.'}</p>
+                                                        <div className="flex justify-between items-center text-xs text-muted-foreground mb-4">
+                                                            <span>{course.modules?.length || 0} modules · {course.modules?.reduce((s: number, m: any) => s + (m.lessons?.length || 0), 0) || 0} lessons</span>
+                                                            {courseFilter === 'global_marketplace_course' ? (
+                                                                <span className="font-bold text-amber-500 flex items-center gap-1"><Shield size={12} className="text-amber-500/60" /> Limit: {course.courseCreateCount || 0}</span>
+                                                            ) : (
+                                                                <span>{course._count?.enrollments || 0} enrolled</span>
+                                                            )}
+                                                        </div>
+                                                        {courseFilter === 'global_marketplace_course' ? (
+                                                            claimedCourse ? (
+                                                                <div className="flex gap-2">
+                                                                    <button
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            fetchCourseDetails(claimedCourse.id);
+                                                                        }}
+                                                                        className="flex-1 py-2 bg-primary/10 border border-primary/20 text-primary font-bold rounded-lg text-sm hover:bg-primary/20 transition-colors flex items-center justify-center gap-1"
+                                                                    >
+                                                                        <Edit3 size={14} /> Build Content
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            togglePublish(claimedCourse);
+                                                                        }}
+                                                                        className="p-2 rounded-lg border border-border hover:bg-secondary/50 transition-colors text-muted-foreground"
+                                                                    >
+                                                                        {claimedCourse.isPublished ? <EyeOff size={16} /> : <Eye size={16} />}
+                                                                    </button>
+                                                                </div>
+                                                            ) : (
+                                                                <button
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        showPurchasePopup(course.id);
+                                                                    }}
+                                                                    className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-black uppercase tracking-widest text-[10px] rounded-lg transition-colors flex items-center justify-center gap-1.5 shadow-lg shadow-indigo-600/20 cursor-pointer"
+                                                                >
+                                                                    <Plus size={14} /> Purchase to Claim
+                                                                </button>
+                                                            )
+                                                        ) : (
+                                                            <div className="flex gap-2">
+                                                                <button onClick={() => fetchCourseDetails(course.id)} className="flex-1 py-2 bg-primary/10 border border-primary/20 text-primary font-bold rounded-lg text-sm hover:bg-primary/20 transition-colors flex items-center justify-center gap-1">
+                                                                    <Edit3 size={14} /> Build Content
+                                                                </button>
+                                                                <button onClick={() => togglePublish(course)} className="p-2 rounded-lg border border-border hover:bg-secondary/50 transition-colors text-muted-foreground">
+                                                                    {course.isPublished ? <EyeOff size={16} /> : <Eye size={16} />}
+                                                                </button>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </div>
-                                                <div className="p-6">
-                                                    <h3 className="font-bold text-lg leading-tight mb-1">{course.title}</h3>
-                                                    <p className="text-sm text-muted-foreground mb-4 line-clamp-2">{course.description || 'No description yet.'}</p>
-                                                    <div className="flex justify-between items-center text-xs text-muted-foreground mb-4">
-                                                        <span>{course.modules?.length || 0} modules · {course.modules?.reduce((s: number, m: any) => s + (m.lessons?.length || 0), 0) || 0} lessons</span>
-                                                        <span>{course._count?.enrollments || 0} enrolled</span>
-                                                    </div>
-                                                    <div className="flex gap-2">
-                                                        <button onClick={() => fetchCourseDetails(course.id)} className="flex-1 py-2 bg-primary/10 border border-primary/20 text-primary font-bold rounded-lg text-sm hover:bg-primary/20 transition-colors flex items-center justify-center gap-1">
-                                                            <Edit3 size={14} /> Build Content
-                                                        </button>
-                                                        <button onClick={() => togglePublish(course)} className="p-2 rounded-lg border border-border hover:bg-secondary/50 transition-colors text-muted-foreground">
-                                                            {course.isPublished ? <EyeOff size={16} /> : <Eye size={16} />}
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))
+                                            );
+                                        })
                                     )}
                                 </div>
                             </div>
@@ -2158,9 +2886,7 @@ export default function ClientAdminDashboard() {
                     <TeamsManager domain={domain as string} addToast={addToast} />
                 )}
 
-                {activeTab === 'reports' && (() => {
-                    const CHART_COLORS = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#ec4899'];
-                    return (
+                {activeTab === 'reports' && (
                     <div className="space-y-6 animate-in fade-in duration-500 pb-10">
 
                         {/* ── Filter Bar ── */}
@@ -2177,15 +2903,15 @@ export default function ClientAdminDashboard() {
                                     <input type="date" value={reportEndDate} onChange={e => setReportEndDate(e.target.value)}
                                         className="bg-transparent text-sm focus:outline-none w-32" />
                                 </div>
-                                <select value={reportTeamId} onChange={e => { setReportTeamId(e.target.value); setReportRoleId(''); }}
-                                    className="bg-secondary/40 border border-border/50 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50">
-                                    <option value="">All Teams</option>
-                                    {availableTeams.map((t: any) => <option key={t.id} value={t.id}>{t.name}</option>)}
+                                <select value={reportTeamId} onChange={e => setReportTeamId(e.target.value)}
+                                    className="bg-secondary/40 border border-border/50 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50 text-foreground">
+                                    <option value="" className="bg-background text-foreground">All Teams</option>
+                                    {availableTeams.map((t: any) => <option key={t.id} value={t.id} className="bg-background text-foreground">{t.name}</option>)}
                                 </select>
-                                <select value={reportRoleId} onChange={e => { setReportRoleId(e.target.value); setReportTeamId(''); }}
-                                    className="bg-secondary/40 border border-border/50 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50">
-                                    <option value="">All Roles</option>
-                                    {availableRoles.map((r: any) => <option key={r.id} value={r.id}>{r.name}</option>)}
+                                <select value={reportRoleId} onChange={e => setReportRoleId(e.target.value)}
+                                    className="bg-secondary/40 border border-border/50 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50 text-foreground">
+                                    <option value="" className="bg-background text-foreground">All Roles</option>
+                                    {availableRoles.map((r: any) => <option key={r.id} value={r.id} className="bg-background text-foreground">{r.name}</option>)}
                                 </select>
                                 <button onClick={() => fetchReportStats(reportStartDate, reportEndDate, reportTeamId, reportRoleId)}
                                     className="px-4 py-2 bg-primary text-primary-foreground font-bold rounded-xl text-sm hover:opacity-90 transition-all flex items-center gap-2">
@@ -2193,7 +2919,7 @@ export default function ClientAdminDashboard() {
                                     Apply
                                 </button>
                                 {(reportStartDate || reportEndDate || reportTeamId || reportRoleId) && (
-                                    <button onClick={() => { setReportStartDate(''); setReportEndDate(''); setReportTeamId(''); setReportRoleId(''); fetchReportStats('', '', '', ''); }}
+                                    <button onClick={() => { setReportStartDate(''); setReportEndDate(''); setReportTeamId(''); setReportRoleId(''); }}
                                         className="text-xs font-bold text-red-400 hover:text-red-300 px-2">
                                         Clear
                                     </button>
@@ -2406,8 +3132,7 @@ export default function ClientAdminDashboard() {
                         </div>
 
                     </div>
-                    );
-                })()}
+                )}
 
                 {activeTab === 'audit' && (
                     <div className="space-y-6 animate-in fade-in duration-500 pb-20">
@@ -2423,7 +3148,7 @@ export default function ClientAdminDashboard() {
                             </div>
                             <div className="relative w-full md:w-96">
                                 <Filter className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                                <input 
+                                <input
                                     type="text"
                                     placeholder="Search by action, name or email..."
                                     value={auditSearch}
@@ -2462,7 +3187,7 @@ export default function ClientAdminDashboard() {
                                             </tr>
                                         ) : (
                                             auditLogs.map((log) => (
-                                                <tr key={log.id} 
+                                                <tr key={log.id}
                                                     onClick={() => fetchUserDetail(log.user.id)}
                                                     className="hover:bg-primary/5 cursor-pointer transition-colors group">
                                                     <td className="px-6 py-4">
@@ -2486,17 +3211,16 @@ export default function ClientAdminDashboard() {
                                                         </div>
                                                     </td>
                                                     <td className="px-6 py-4">
-                                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black tracking-tight ${
-                                                            log.action.includes('CREATED') ? 'bg-emerald-500/10 text-emerald-500' :
+                                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black tracking-tight ${log.action.includes('CREATED') ? 'bg-emerald-500/10 text-emerald-500' :
                                                             log.action.includes('DELETED') ? 'bg-red-500/10 text-red-500' :
-                                                            log.action.includes('UPDATED') ? 'bg-blue-500/10 text-blue-500' :
-                                                            'bg-secondary text-muted-foreground'
-                                                        }`}>
+                                                                log.action.includes('UPDATED') ? 'bg-blue-500/10 text-blue-500' :
+                                                                    'bg-secondary text-muted-foreground'
+                                                            }`}>
                                                             {log.action}
                                                         </span>
                                                     </td>
                                                     <td className="px-6 py-4 text-right">
-                                                        <button 
+                                                        <button
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
                                                                 setSelectedLogMetadata(log);
@@ -2521,7 +3245,7 @@ export default function ClientAdminDashboard() {
                                         Showing {(auditPagination.currentPage - 1) * auditPagination.limit + 1} - {Math.min(auditPagination.currentPage * auditPagination.limit, auditPagination.total)} of {auditPagination.total} logs
                                     </p>
                                     <div className="flex items-center gap-2">
-                                        <button 
+                                        <button
                                             disabled={auditPagination.currentPage === 1 || auditLoading}
                                             onClick={() => fetchAuditLogs(auditPagination.currentPage - 1, auditSearch)}
                                             className="p-2 rounded-xl bg-background border border-border/50 hover:bg-secondary disabled:opacity-50 transition-all"
@@ -2531,7 +3255,7 @@ export default function ClientAdminDashboard() {
                                         <span className="text-sm font-black px-4">
                                             {auditPagination.currentPage} / {auditPagination.pages}
                                         </span>
-                                        <button 
+                                        <button
                                             disabled={auditPagination.currentPage === auditPagination.pages || auditLoading}
                                             onClick={() => fetchAuditLogs(auditPagination.currentPage + 1, auditSearch)}
                                             className="p-2 rounded-xl bg-background border border-border/50 hover:bg-secondary disabled:opacity-50 transition-all"
@@ -2559,7 +3283,7 @@ export default function ClientAdminDashboard() {
                                     <div className="space-y-1">
                                         <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Platform Display Name</label>
                                         <input type="text" value={branding.name} onChange={e => setBranding({ ...branding, name: e.target.value })}
-                                            className="w-full bg-secondary/50 border border-border/50 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 font-bold" 
+                                            className="w-full bg-secondary/50 border border-border/50 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 font-bold"
                                             placeholder="e.g. Acme Academy" />
                                     </div>
                                 </div>
@@ -2581,7 +3305,7 @@ export default function ClientAdminDashboard() {
                                     </div>
                                     <div className="flex gap-2.5 flex-wrap">
                                         {['#3b82f6', '#8b5cf6', '#ef4444', '#10b981', '#f59e0b', '#ec4899', '#14b8a6', '#000000'].map(c => (
-                                            <button key={c} 
+                                            <button key={c}
                                                 className={`w-9 h-9 rounded-xl border-2 transition-all hover:scale-110 shadow-sm ${branding.primaryColor === c ? 'scale-110 shadow-lg shadow-black/20' : 'opacity-80 hover:opacity-100'}`}
                                                 style={{ backgroundColor: c, borderColor: branding.primaryColor === c ? 'white' : 'transparent' }}
                                                 onClick={() => setBranding({ ...branding, primaryColor: c })} />
@@ -2590,7 +3314,7 @@ export default function ClientAdminDashboard() {
                                 </div>
 
                                 <div className="pt-4 flex gap-4">
-                                    <button 
+                                    <button
                                         onClick={handleSaveBranding}
                                         className="flex-1 flex items-center justify-center gap-3 px-6 py-4 bg-primary text-primary-foreground rounded-[1.25rem] font-black uppercase tracking-widest text-xs hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-primary/20">
                                         <Save size={16} /> Save Platform Changes
@@ -2603,7 +3327,7 @@ export default function ClientAdminDashboard() {
                                     <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2">
                                         <Upload size={14} /> Brand Assets
                                     </h3>
-                                    
+
                                     {/* Asset Grid */}
                                     <div className="space-y-6">
                                         {[
@@ -2618,18 +3342,17 @@ export default function ClientAdminDashboard() {
                                                         <p className="text-[9px] text-muted-foreground font-medium">{asset.sub}</p>
                                                     </div>
                                                 </div>
-                                                
+
                                                 <div className="relative group">
-                                                    <label className={`block w-full cursor-pointer rounded-[1.25rem] border-2 border-dashed transition-all overflow-hidden ${
-                                                        branding[asset.id as keyof typeof branding] 
-                                                            ? 'border-primary/20 bg-primary/5 h-24' 
-                                                            : 'border-border/60 hover:border-primary/40 bg-secondary/10 hover:bg-secondary/20 h-20'
-                                                    }`}>
+                                                    <label className={`block w-full cursor-pointer rounded-[1.25rem] border-2 border-dashed transition-all overflow-hidden ${branding[asset.id as keyof typeof branding]
+                                                        ? 'border-primary/20 bg-primary/5 h-24'
+                                                        : 'border-border/60 hover:border-primary/40 bg-secondary/10 hover:bg-secondary/20 h-20'
+                                                        }`}>
                                                         <input type="file" className="hidden" accept="image/*" onChange={(e) => {
                                                             const file = e.target.files?.[0];
                                                             if (file) handleLogoUpload(file, asset.id as any);
                                                         }} />
-                                                        
+
                                                         {branding[asset.id as keyof typeof branding] ? (
                                                             <div className="w-full h-full flex items-center justify-center p-4">
                                                                 <img src={branding[asset.id as keyof typeof branding]!} alt={asset.label} className="max-w-full max-h-full object-contain" />
@@ -2644,6 +3367,20 @@ export default function ClientAdminDashboard() {
                                                             </div>
                                                         )}
                                                     </label>
+                                                    {branding[asset.id as keyof typeof branding] && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={(e) => {
+                                                                e.preventDefault();
+                                                                e.stopPropagation();
+                                                                setBranding(prev => ({ ...prev, [asset.id]: null }));
+                                                            }}
+                                                            className="absolute top-2.5 right-2.5 z-20 p-1.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white transition-all shadow-sm flex items-center justify-center hover:scale-105 active:scale-95"
+                                                            title="Remove Image"
+                                                        >
+                                                            <X size={12} className="stroke-[3]" />
+                                                        </button>
+                                                    )}
                                                     {uploadProgress[asset.id] !== undefined && (
                                                         <div className="absolute bottom-0 left-0 right-0 h-1 bg-primary/20 rounded-b-[1.25rem] overflow-hidden">
                                                             <div className="h-full bg-primary transition-all duration-300" style={{ width: `${uploadProgress[asset.id]}%` }} />
@@ -2656,10 +3393,10 @@ export default function ClientAdminDashboard() {
                                 </section>
 
                                 {/* Real-time Preview */}
-                                <div className="p-8 rounded-[2rem] border-2 border-dashed bg-secondary/5 relative overflow-hidden" 
+                                <div className="p-8 rounded-[2rem] border-2 border-dashed bg-secondary/5 relative overflow-hidden"
                                     style={{ borderColor: branding.primaryColor + '30' }}>
                                     <div className="absolute -top-12 -right-12 w-32 h-32 rounded-full blur-3xl opacity-20" style={{ backgroundColor: branding.primaryColor }} />
-                                    
+
                                     <div className="flex items-center gap-3 mb-6">
                                         <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-lg" style={{ backgroundColor: branding.primaryColor }}>
                                             <Globe size={14} className="text-white" />
@@ -2678,7 +3415,7 @@ export default function ClientAdminDashboard() {
                                         </div>
                                         <div className="h-2 w-3/4 bg-secondary/50 rounded-full" />
                                         <div className="h-2 w-1/2 bg-secondary/30 rounded-full" />
-                                        <button className="w-full py-2.5 rounded-xl text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-black/5" 
+                                        <button className="w-full py-2.5 rounded-xl text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-black/5"
                                             style={{ backgroundColor: branding.primaryColor }}>
                                             Join Learning Path
                                         </button>
@@ -2725,11 +3462,13 @@ export default function ClientAdminDashboard() {
                 {/* ── SETTINGS ── */}
                 {activeTab === 'settings' && (
                     <div className="max-w-2xl space-y-6 animate-in fade-in duration-500">
-                        <div className="glassmorphism p-8 rounded-3xl border border-border/50 space-y-6">
+                        <form onSubmit={handleSaveSettings} className="glassmorphism p-8 rounded-3xl border border-border/50 space-y-6">
                             <h3 className="font-bold text-lg">Workspace Configuration</h3>
                             <div className="space-y-2">
                                 <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Support Email</label>
                                 <input type="email" placeholder="support@yourcompany.com"
+                                    value={sharingSettings.supportEmail || ''}
+                                    onChange={e => setSharingSettings(prev => ({ ...prev, supportEmail: e.target.value }))}
                                     className="w-full bg-secondary/50 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
                             </div>
                             <div className="flex items-center justify-between p-4 rounded-xl border border-border/50">
@@ -2737,14 +3476,33 @@ export default function ClientAdminDashboard() {
                                     <p className="font-bold text-sm">Allow Learner Self-Registration</p>
                                     <p className="text-xs text-muted-foreground">Learners can sign up without an invite.</p>
                                 </div>
-                                <div className="w-12 h-6 rounded-full bg-secondary border border-border relative">
-                                    <div className="w-4 h-4 rounded-full bg-muted-foreground absolute top-1 left-1" />
+                                <div className="flex items-center gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => setSharingSettings(prev => ({ ...prev, allowSelfRegistration: !prev.allowSelfRegistration }))}
+                                        className={`w-12 h-6 rounded-full border transition-all duration-300 relative focus:outline-none ${
+                                            sharingSettings.allowSelfRegistration ? 'bg-emerald-500 border-emerald-500' : 'bg-zinc-800 border-zinc-700'
+                                        }`}
+                                    >
+                                        <div className={`w-4 h-4 rounded-full transition-all duration-300 absolute top-1 shadow-sm ${
+                                            sharingSettings.allowSelfRegistration ? 'bg-white left-7' : 'bg-zinc-400 left-1'
+                                        }`} />
+                                    </button>
+                                    <span className={`text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${
+                                        sharingSettings.allowSelfRegistration ? 'text-emerald-400' : 'text-muted-foreground/60'
+                                    }`}>
+                                        {sharingSettings.allowSelfRegistration ? 'Active' : 'Inactive'}
+                                    </span>
                                 </div>
                             </div>
-                            <button className="flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-xl font-bold text-sm hover:scale-105 transition-transform">
-                                <Save size={16} /> Save Settings
+                            <button
+                                type="submit"
+                                disabled={isSavingSettings}
+                                className="flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-xl font-bold text-sm hover:scale-105 transition-transform disabled:opacity-50"
+                            >
+                                {isSavingSettings ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />} Save Settings
                             </button>
-                        </div>
+                        </form>
                         <div className="glassmorphism p-8 rounded-3xl border border-red-500/20 bg-red-500/5">
                             <h3 className="font-bold text-red-400 mb-2">Danger Zone</h3>
                             <p className="text-sm text-red-400/70 mb-4">Irreversible workspace actions.</p>
@@ -2755,53 +3513,608 @@ export default function ClientAdminDashboard() {
                     </div>
                 )}
 
+                {/* ── BILLING ── */}
+                {activeTab === 'billing' && (
+                    <div className="space-y-8 animate-in fade-in duration-500 pb-20">
+                        {/* Header & Status Card */}
+                        <div className="glassmorphism p-6 rounded-3xl border border-border/50 bg-gradient-to-r from-primary/5 via-transparent to-transparent flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                            <div className="space-y-1">
+                                <h3 className="text-lg font-bold flex items-center gap-2">
+                                    <CreditCard className="w-5 h-5 text-primary" /> Subscription & Checkout
+                                </h3>
+                                <p className="text-xs text-muted-foreground">Select a pricing plan below. You can change your workspace subscription tier at any time.</p>
+                            </div>
+
+                            {/* Card status details */}
+                            <div className="flex items-center gap-4 bg-secondary/15 p-3 rounded-2xl border border-border/30 w-full md:w-auto">
+                                {paymentMethod ? (
+                                    <>
+                                        <div className="w-10 h-6 bg-zinc-900 rounded border border-white/10 flex items-center justify-center font-bold text-[8px] tracking-wide text-white uppercase font-mono">
+                                            {paymentMethod.brand}
+                                        </div>
+                                        <div className="flex-1 md:flex-none">
+                                            <p className="text-[10px] font-bold text-foreground">•••• {paymentMethod.last4}</p>
+                                            <p className="text-[8px] text-muted-foreground uppercase">Exp: {paymentMethod.expiry}</p>
+                                        </div>
+                                        <button
+                                            onClick={() => {
+                                                setPaymentForm({ cardholder: paymentMethod.cardholder, number: '', expiry: paymentMethod.expiry, cvv: '' });
+                                                setShowPaymentModal(true);
+                                            }}
+                                            className="px-3 py-1.5 bg-primary/10 border border-primary/20 text-primary text-[9px] font-black uppercase rounded-lg hover:bg-primary/20 transition-all ml-auto md:ml-0"
+                                        >
+                                            Update Card
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                localStorage.removeItem(`payment_method_${domain}`);
+                                                setPaymentMethod(null);
+                                                addToast('Payment method removed successfully', 'info');
+                                            }}
+                                            className="px-2 py-1.5 bg-red-500/10 border border-red-500/20 text-red-400 text-[9px] font-black uppercase rounded-lg hover:bg-red-500 hover:text-white transition-all"
+                                        >
+                                            Remove
+                                        </button>
+                                    </>
+                                ) : (
+                                    <>
+                                        <div className="w-8 h-8 rounded-full bg-orange-500/10 border border-orange-500/20 flex items-center justify-center text-orange-400">
+                                            <AlertCircle size={16} />
+                                        </div>
+                                        <div className="flex-1 md:flex-none">
+                                            <p className="text-[10px] font-bold text-orange-400">No payment method on file</p>
+                                            <p className="text-[8px] text-muted-foreground">Add a card to enable upgrades.</p>
+                                        </div>
+                                        <button
+                                            onClick={() => {
+                                                setPaymentForm({ cardholder: '', number: '', expiry: '', cvv: '' });
+                                                setShowPaymentModal(true);
+                                            }}
+                                            className="px-3 py-1.5 bg-primary text-primary-foreground text-[9px] font-black uppercase rounded-lg hover:opacity-90 transition-all ml-auto md:ml-0 shadow-lg"
+                                        >
+                                            Link Card
+                                        </button>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* 3 Plans Grid */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            {(plansList.length > 0 ? plansList : DEFAULT_FALLBACK_PLANS).map((plan) => {
+                                const isCurrent = (settingsState.plan || 'STARTER').toLowerCase() === plan.id.toLowerCase();
+                                const isProfessional = plan.id.toLowerCase() === 'professional';
+                                const hasCustomRate = isCurrent && settingsState.customRevenue && settingsState.customRevenue > 0;
+                                const displayPrice = hasCustomRate ? settingsState.customRevenue : plan.price;
+                                const displayCurrency = hasCustomRate ? settingsState.customRevenueCurrency : plan.currency;
+
+                                return (
+                                    <div
+                                        key={plan.id}
+                                        className={`rounded-3xl border flex flex-col justify-between overflow-hidden transition-all duration-300 relative ${isCurrent
+                                                ? 'bg-gradient-to-br from-primary/10 via-background to-background border-primary/60 shadow-2xl scale-[1.01]'
+                                                : isProfessional
+                                                    ? 'glassmorphism border-primary/30 hover:border-primary/50'
+                                                    : 'glassmorphism border-border/50 hover:border-border/80'
+                                            }`}
+                                    >
+                                        {/* Featured/Current Badge */}
+                                        {isCurrent ? (
+                                            <span className="absolute top-4 right-4 px-2.5 py-0.5 text-[9px] font-black uppercase tracking-widest bg-primary text-primary-foreground rounded-full shadow-lg">
+                                                Current Plan
+                                            </span>
+                                        ) : plan.featured ? (
+                                            <span className="absolute top-4 right-4 px-2.5 py-0.5 text-[9px] font-black uppercase tracking-widest bg-blue-600 text-white rounded-full shadow-lg">
+                                                Featured
+                                            </span>
+                                        ) : null}
+
+                                        <div className="p-8 space-y-6">
+                                            {/* Plan Header */}
+                                            <div className="space-y-2">
+                                                <h4 className="text-lg font-black tracking-tight">{plan.name}</h4>
+                                                <p className="text-xs text-muted-foreground min-h-[32px] leading-relaxed">{plan.description}</p>
+                                            </div>
+
+                                            {/* Price Display */}
+                                            <div className="border-y border-border/30 py-4 flex items-baseline gap-1">
+                                                {displayPrice === 'Custom' ? (
+                                                    <span className="text-2xl font-extrabold text-foreground">Custom pricing</span>
+                                                ) : (
+                                                    <>
+                                                        <span className="text-3xl font-black text-foreground">
+                                                            {getCurrencySymbol(displayCurrency)}{displayPrice}
+                                                        </span>
+                                                        <span className="text-xs text-muted-foreground font-semibold">/mo</span>
+                                                    </>
+                                                )}
+                                            </div>
+
+                                            {/* Inclusions / Limits */}
+                                            <div className="space-y-3.5">
+                                                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Limits & Tier Info</p>
+
+                                                <div className="space-y-2.5">
+                                                    <div className="flex items-center gap-2.5 text-xs">
+                                                        <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />
+                                                        <span>
+                                                            {plan.userLimit === 0 ? 'Unlimited Learners' : `Up to ${plan.userLimit.toLocaleString()} learners`}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex items-center gap-2.5 text-xs">
+                                                        <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />
+                                                        <span>
+                                                            {plan.courseCreateLimit === 0 ? 'Unlimited Courses' : `Up to ${plan.courseCreateLimit} courses`}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex items-center gap-2.5 text-xs">
+                                                        <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />
+                                                        <span>
+                                                            AI Quiz Tools: {plan.aiQuizGeneration ? 'Enabled' : 'Disabled'}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Full Features Checklist */}
+                                            {plan.features && plan.features.length > 0 && (
+                                                <div className="space-y-2 pt-2 border-t border-border/20">
+                                                    <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-1">Key Features</p>
+                                                    {plan.features.map((feature: string, idx: number) => (
+                                                        <div key={idx} className="flex items-center gap-2 text-xs text-muted-foreground">
+                                                            <span className="w-1.5 h-1.5 rounded-full bg-primary/40" />
+                                                            <span className="truncate">{feature}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Action Button */}
+                                        <div className="p-6 border-t border-border/20 bg-secondary/5">
+                                            {isCurrent ? (
+                                                <button
+                                                    disabled
+                                                    className="w-full py-3 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 rounded-xl font-bold text-xs uppercase tracking-widest cursor-default flex items-center justify-center gap-2"
+                                                >
+                                                    <CheckCircle size={14} /> Active Plan
+                                                </button>
+                                            ) : (
+                                                <button
+                                                    onClick={() => handleSwitchPlan(plan.id)}
+                                                    disabled={isSwitchingPlan !== null}
+                                                    className={`w-full py-3 rounded-xl font-bold text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${isProfessional
+                                                            ? 'bg-primary text-primary-foreground hover:opacity-90 shadow-lg shadow-primary/20'
+                                                            : 'bg-secondary hover:bg-secondary/80 border border-border/50 text-foreground'
+                                                        }`}
+                                                >
+                                                    {isSwitchingPlan === plan.id ? (
+                                                        <>
+                                                            <Loader2 size={12} className="animate-spin" /> Provisioning...
+                                                        </>
+                                                    ) : (
+                                                        <>Subscribe Plan</>
+                                                    )}
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                )}
+
                 {activeTab === 'certificates' && (
                     <div className="space-y-6 animate-in fade-in duration-500 pb-20">
                         {editingTemplate ? (
-                            <CertificateDesigner 
+                            <CertificateDesigner
                                 key={editingTemplate.id}
-                                template={editingTemplate} 
+                                template={editingTemplate}
                                 onBack={() => { setEditingTemplate(null); fetchAvailableTemplates(); }}
-                                onSave={async (id, designFields, backgroundImage) => {
+                                onSave={async (id, designFields, backgroundImage, name) => {
                                     try {
-                                        const res = await fetch(`/api/t/${domain}/certificates/${id}`, {
-                                            method: 'PATCH',
+                                        const isNew = id === 'new';
+                                        const url = isNew
+                                            ? `/api/t/${domain}/certificates`
+                                            : `/api/t/${domain}/certificates/${id}`;
+                                        const method = isNew ? 'POST' : 'PATCH';
+
+                                        const res = await fetch(url, {
+                                            method,
                                             headers: { 'Content-Type': 'application/json' },
-                                            body: JSON.stringify({ designFields, backgroundImage })
+                                            body: JSON.stringify({ designFields, backgroundImage, name })
                                         });
+                                        const data = await res.json();
                                         if (res.ok) {
                                             addToast('Design saved successfully.', 'success');
+                                            setEditingTemplate(null);
+                                            fetchAvailableTemplates();
+                                        } else {
+                                            addToast(data.error || 'Failed to save design.', 'error');
                                         }
                                     } catch (e) {
                                         console.error(e);
+                                        addToast('Network error while saving design.', 'error');
                                     }
                                 }}
                             />
                         ) : (
-                            <CertificateManager 
-                                domain={domain as string} 
-                                addToast={addToast} 
+                            <CertificateManager
+                                domain={domain as string}
+                                addToast={addToast}
                                 onEditTemplate={(t) => setEditingTemplate(t)}
+                                askConfirmation={askConfirmation}
                             />
+                        )}
+                    </div>
+                )}
+
+                {/* ── GLOBAL USERS SEARCH ── */}
+                {activeTab === 'global_users' && (
+                    <div className="space-y-6 animate-in fade-in duration-500 pb-20">
+                        <div>
+                            <h1 className="text-2xl font-black tracking-tight uppercase flex items-center gap-3 text-foreground">
+                                <div className="bg-indigo-500/10 p-2 rounded-xl border border-indigo-500/20">
+                                    <Users className="w-7 h-7 text-indigo-500" />
+                                </div>
+                                Global Users Registry
+                            </h1>
+                            <p className="text-muted-foreground text-sm font-medium mt-1">Cross-tenant auditing and platform-wide user discovery.</p>
+                        </div>
+
+                        {selectedGlobalUser ? (
+                            <div className="glassmorphism p-8 rounded-3xl border border-border/50 space-y-6">
+                                <div className="flex justify-between items-start">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 border border-border flex items-center justify-center font-black text-indigo-500 text-xl">
+                                            {selectedGlobalUser.name ? selectedGlobalUser.name.substring(0, 2).toUpperCase() : selectedGlobalUser.email.substring(0, 2).toUpperCase()}
+                                        </div>
+                                        <div>
+                                            <h3 className="text-lg font-bold">{selectedGlobalUser.name || 'Anonymous User'}</h3>
+                                            <p className="text-sm text-muted-foreground">{selectedGlobalUser.email}</p>
+                                            <span className="px-2.5 py-0.5 rounded bg-indigo-500/10 border border-indigo-500/20 text-[10px] font-mono text-indigo-400 mt-1.5 inline-block">
+                                                UID: {selectedGlobalUser.id}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <button
+                                            onClick={() => setSelectedGlobalUser(null)}
+                                            className="px-4 py-2 bg-secondary hover:bg-secondary/80 text-foreground font-bold rounded-xl text-xs uppercase tracking-wider transition-all"
+                                        >
+                                            Back to Search
+                                        </button>
+                                        {selectedGlobalUser.role !== 'SUPER_ADMIN' && (
+                                            <button
+                                                onClick={initiateTransferFlow}
+                                                className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold rounded-xl text-xs uppercase tracking-wider transition-all shadow-lg shadow-indigo-500/20 flex items-center gap-2"
+                                            >
+                                                <Users className="w-3.5 h-3.5" />
+                                                Transfer Employee
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <hr className="border-border/50" />
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="space-y-4">
+                                        <h4 className="font-bold text-xs uppercase tracking-widest text-muted-foreground">Identity Information</h4>
+                                        <div className="space-y-3">
+                                            <div className="bg-secondary/20 p-4 rounded-xl border border-border/50">
+                                                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Assigned Privilege Role</p>
+                                                <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase border tracking-widest ${selectedGlobalUser.role === 'SUPER_ADMIN' ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' : 'bg-blue-500/10 text-blue-400 border-blue-500/20'}`}>
+                                                    {selectedGlobalUser.role?.replace('_', ' ') || 'LEARNER'}
+                                                </span>
+                                            </div>
+                                            <div className="bg-secondary/20 p-4 rounded-xl border border-border/50">
+                                                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Registration Date</p>
+                                                <p className="text-sm font-bold text-foreground">
+                                                    {new Date(selectedGlobalUser.createdAt).toLocaleString()}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-4">
+                                        <h4 className="font-bold text-xs uppercase tracking-widest text-muted-foreground">Workspace / Client Workspace</h4>
+                                        <div className="space-y-3">
+                                            <div className="bg-secondary/20 p-4 rounded-xl border border-border/50">
+                                                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Tenant Name</p>
+                                                <p className="text-sm font-bold text-foreground">{selectedGlobalUser.tenant?.name || 'Central Environment'}</p>
+                                            </div>
+                                            {selectedGlobalUser.tenant?.subdomain && (
+                                                <div className="bg-secondary/20 p-4 rounded-xl border border-border/50">
+                                                    <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">LMS Access Subdomain</p>
+                                                    <p className="font-mono text-xs text-blue-400">
+                                                        {selectedGlobalUser.tenant.subdomain}.lvh.me:3000
+                                                    </p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="glassmorphism rounded-3xl border border-border/50 overflow-hidden shadow-2xl">
+                                <div className="p-8 border-b border-border/50 bg-gradient-to-br from-indigo-500/5 to-transparent">
+                                    <div className="max-w-2xl mx-auto text-center space-y-6">
+                                        <div className="space-y-2">
+                                            <h2 className="text-xl font-bold tracking-tight">Search User Registry</h2>
+                                            <p className="text-sm text-muted-foreground">Search through all isolated workspace instances by email, name, or global ID.</p>
+                                        </div>
+                                        <form onSubmit={handleGlobalSearch} className="relative group">
+                                            <ScanSearch className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-indigo-400" />
+                                            <input
+                                                type="text"
+                                                value={globalQuery}
+                                                onChange={(e) => { setGlobalQuery(e.target.value); setGlobalSearchError(null); }}
+                                                placeholder="Search by email, name, or global UID..."
+                                                className="w-full bg-background/40 border border-border/50 rounded-2xl pl-12 pr-40 py-4 text-sm focus:outline-none focus:border-indigo-500/50"
+                                            />
+                                            <button
+                                                type="submit"
+                                                disabled={isSearchingGlobal}
+                                                className="absolute right-2 top-1/2 -translate-y-1/2 px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all"
+                                            >
+                                                {isSearchingGlobal ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Scan Platform'}
+                                            </button>
+                                        </form>
+                                        {globalSearchError && (
+                                            <p className="text-xs text-red-500 text-left mt-2 pl-4 font-semibold animate-in fade-in duration-200">
+                                                {globalSearchError}
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="min-h-[300px]">
+                                    {isSearchingGlobal ? (
+                                        <div className="flex flex-col items-center justify-center h-64 space-y-4">
+                                            <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
+                                            <p className="text-sm font-bold text-muted-foreground uppercase tracking-widest">Scanning platform...</p>
+                                        </div>
+                                    ) : globalResults.length > 0 ? (
+                                        <div className="overflow-x-auto">
+                                            <table className="w-full text-left">
+                                                <thead>
+                                                    <tr className="bg-secondary/10 border-b border-border/50">
+                                                        <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground">User Identity</th>
+                                                        <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Platform Role</th>
+                                                        <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Workspace</th>
+                                                        <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right">Actions</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-border/30">
+                                                    {globalResults.map((user) => (
+                                                        <tr key={user.id} className="hover:bg-secondary/10 transition-colors group">
+                                                            <td className="px-6 py-4">
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500/20 to-purple-500/20 border border-border flex items-center justify-center font-bold text-xs text-indigo-400">
+                                                                        {user.name ? user.name.substring(0, 2).toUpperCase() : user.email.substring(0, 2).toUpperCase()}
+                                                                    </div>
+                                                                    <div>
+                                                                        <p className="font-bold text-sm text-foreground">{user.name || 'Anonymous User'}</p>
+                                                                        <p className="text-xs text-muted-foreground italic mb-1">{user.email}</p>
+                                                                        <span className="px-2 py-0.5 rounded bg-indigo-500/10 border border-indigo-500/20 text-[9px] font-mono text-indigo-400">
+                                                                            UID: {user.id}
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                            </td>
+                                                            <td className="px-6 py-4">
+                                                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border tracking-wider ${user.role === 'SUPER_ADMIN' ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' : 'bg-blue-500/10 text-blue-400 border-blue-500/20'}`}>
+                                                                    {user.role?.replace('_', ' ') || 'LEARNER'}
+                                                                </span>
+                                                            </td>
+                                                            <td className="px-6 py-4">
+                                                                <div className="flex flex-col">
+                                                                    <span className="text-sm font-bold text-foreground">{user.tenant?.name || 'Central'}</span>
+                                                                    {user.tenant?.subdomain && (
+                                                                        <span className="text-[10px] text-blue-400 font-mono tracking-tighter">
+                                                                            {user.tenant.subdomain}.lvh.me:3000
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                            </td>
+                                                            <td className="px-6 py-4 text-right">
+                                                                <button
+                                                                    onClick={() => setSelectedGlobalUser(user)}
+                                                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-secondary hover:bg-secondary/80 text-[10px] font-bold uppercase transition-all"
+                                                                >
+                                                                    Audit Profile <ChevronRight className="w-3.5 h-3.5" />
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    ) : (
+                                        <div className="flex flex-col items-center justify-center h-64 text-center p-8 opacity-40">
+                                            <ScanSearch className="w-12 h-12 text-muted-foreground/30 mb-2" />
+                                            <p className="text-xs font-bold uppercase tracking-widest">Cross-Tenant Search Ready</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
                         )}
                     </div>
                 )}
             </main>
 
             {/* Modals */}
+            {/* Modals */}
+            {showPaymentModal && (
+                <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/70 backdrop-blur-sm">
+                    <div className="bg-background border border-border w-full max-w-md rounded-3xl p-8 space-y-6 shadow-2xl flex flex-col relative overflow-hidden">
+                        <div className="flex justify-between items-center">
+                            <h3 className="text-xl font-black uppercase tracking-tight">Add Payment Method</h3>
+                            <button
+                                onClick={() => setShowPaymentModal(false)}
+                                className="text-muted-foreground hover:text-foreground"
+                            >
+                                <XCircle size={24} />
+                            </button>
+                        </div>
+
+                        {/* Interactive Card Preview */}
+                        <div className="aspect-[1.58/1] rounded-2xl bg-gradient-to-br from-zinc-800 to-zinc-950 p-6 flex flex-col justify-between text-white shadow-2xl relative overflow-hidden border border-white/10">
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 rounded-full blur-2xl pointer-events-none" />
+                            <div className="flex justify-between items-start relative z-10">
+                                <div className="w-10 h-7 bg-amber-500/80 rounded-md border border-amber-400/30 flex items-center justify-center overflow-hidden animate-pulse">
+                                    {/* chip */}
+                                    <div className="w-6 h-5 border border-amber-300/30 rounded opacity-60 grid grid-cols-3 grid-rows-3 gap-0.5" />
+                                </div>
+                                <span className="font-black italic text-lg tracking-wider text-white/95 uppercase">
+                                    {paymentForm.number.startsWith('4') ? 'Visa' :
+                                        paymentForm.number.startsWith('5') ? 'Mastercard' :
+                                            paymentForm.number.startsWith('3') ? 'Amex' : 'Card'}
+                                </span>
+                            </div>
+                            <div className="space-y-4 relative z-10">
+                                <p className="text-lg font-mono tracking-[0.25em] text-white/90 min-h-[28px]">
+                                    {paymentForm.number || '•••• •••• •••• ••••'}
+                                </p>
+                                <div className="flex justify-between items-end">
+                                    <div>
+                                        <p className="text-[8px] uppercase tracking-widest text-white/40">Cardholder</p>
+                                        <p className="text-xs font-bold font-mono tracking-wide truncate max-w-[180px] uppercase">
+                                            {paymentForm.cardholder || 'Your Full Name'}
+                                        </p>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-[8px] uppercase tracking-widest text-white/40">Expires</p>
+                                        <p className="text-xs font-bold font-mono tracking-wide">
+                                            {paymentForm.expiry || 'MM/YY'}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Payment Form */}
+                        <form
+                            onSubmit={async (e) => {
+                                e.preventDefault();
+                                if (!paymentForm.cardholder || !paymentForm.number || !paymentForm.expiry || !paymentForm.cvv) {
+                                    addToast('All card details are required', 'error');
+                                    return;
+                                }
+                                setIsSavingCard(true);
+                                // Simulate 1.5s card linking
+                                await new Promise(r => setTimeout(r, 1500));
+
+                                const last4 = paymentForm.number.replace(/\s+/g, '').slice(-4) || '4242';
+                                const brand = paymentForm.number.startsWith('4') ? 'Visa' :
+                                    paymentForm.number.startsWith('5') ? 'Mastercard' :
+                                        paymentForm.number.startsWith('3') ? 'Amex' : 'Card';
+                                const cardObj = {
+                                    last4,
+                                    brand,
+                                    cardholder: paymentForm.cardholder,
+                                    expiry: paymentForm.expiry
+                                };
+                                localStorage.setItem(`payment_method_${domain}`, JSON.stringify(cardObj));
+                                setPaymentMethod(cardObj);
+                                setIsSavingCard(false);
+                                setShowPaymentModal(false);
+                                addToast('Payment method linked successfully', 'success');
+                            }}
+                            className="space-y-4"
+                        >
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Cardholder Name</label>
+                                <input
+                                    type="text"
+                                    placeholder="Jane Doe"
+                                    value={paymentForm.cardholder}
+                                    onChange={e => setPaymentForm({ ...paymentForm, cardholder: e.target.value })}
+                                    className="w-full bg-secondary/50 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                                    required
+                                />
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Card Number</label>
+                                <input
+                                    type="text"
+                                    placeholder="4111 2222 3333 4444"
+                                    maxLength={19}
+                                    value={paymentForm.number}
+                                    onChange={e => {
+                                        // auto group card digits by 4
+                                        const cleanVal = e.target.value.replace(/\D/g, '');
+                                        const grouped = cleanVal.match(/.{1,4}/g)?.join(' ') || '';
+                                        setPaymentForm({ ...paymentForm, number: grouped });
+                                    }}
+                                    className="w-full bg-secondary/50 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 font-mono"
+                                    required
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Expiration Date</label>
+                                    <input
+                                        type="text"
+                                        placeholder="MM/YY"
+                                        maxLength={5}
+                                        value={paymentForm.expiry}
+                                        onChange={e => {
+                                            // auto slash expiry month/year
+                                            let val = e.target.value.replace(/\D/g, '');
+                                            if (val.length > 2) {
+                                                val = val.slice(0, 2) + '/' + val.slice(2);
+                                            }
+                                            setPaymentForm({ ...paymentForm, expiry: val });
+                                        }}
+                                        className="w-full bg-secondary/50 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 font-mono"
+                                        required
+                                    />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">CVV / CVC</label>
+                                    <input
+                                        type="password"
+                                        placeholder="•••"
+                                        maxLength={4}
+                                        value={paymentForm.cvv}
+                                        onChange={e => setPaymentForm({ ...paymentForm, cvv: e.target.value.replace(/\D/g, '') })}
+                                        className="w-full bg-secondary/50 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 font-mono"
+                                        required
+                                    />
+                                </div>
+                            </div>
+
+                            <button
+                                type="submit"
+                                disabled={isSavingCard}
+                                className="w-full mt-2 py-4 bg-primary text-primary-foreground rounded-xl font-bold text-xs uppercase tracking-widest hover:opacity-90 transition-all flex items-center justify-center gap-2 shadow-lg disabled:opacity-50"
+                            >
+                                {isSavingCard ? (
+                                    <>
+                                        <Loader2 size={14} className="animate-spin" /> Verifying Card...
+                                    </>
+                                ) : 'Save Payment Method'}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            )}
+
             {showCourseModal && (
                 <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/70 backdrop-blur-sm">
-                    <div className="bg-background border border-border w-full max-w-md rounded-3xl p-8 space-y-6 shadow-2xl">
-                        <div className="flex justify-between items-center">
+                    <div className="bg-background border border-border w-full max-w-2xl max-h-[90vh] rounded-3xl p-8 space-y-6 shadow-2xl flex flex-col">
+                        <div className="flex justify-between items-center shrink-0">
                             <h3 className="text-xl font-black">{selectedCourse && showCourseModal ? 'Edit Course' : 'Create New Course'}</h3>
                             <button onClick={() => { setShowCourseModal(false); if (selectedCourse) setCourseForm({ title: '', description: '', thumbnail: '', skillLevel: 'All Levels', languages: 'English', captions: false, isMarketplace: false, exclusiveRoleId: '', exclusiveTeamId: '', certificateEnabled: false, certificateTemplateId: '' }); }} className="text-muted-foreground hover:text-foreground"><XCircle size={24} /></button>
                         </div>
-                        <form onSubmit={selectedCourse ? updateCourse : createCourse} className="space-y-4">
+                        <form onSubmit={selectedCourse ? updateCourse : createCourse} className="space-y-4 flex-1 overflow-y-auto pr-2 custom-scrollbar">
                             <div className="space-y-1.5">
-                                <div className="flex justify-between items-center">
-                                    <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Course Title</label>
-                                    {validationErrors.course?.title && <span className="text-[10px] font-bold text-red-500 animate-in fade-in slide-in-from-right-1">{validationErrors.course.title}</span>}
-                                </div>
+                                <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Course Title</label>
                                 <input placeholder="e.g. Introduction to Python" value={courseForm.title}
                                     onChange={e => {
                                         setCourseForm({ ...courseForm, title: e.target.value });
@@ -2810,6 +4123,7 @@ export default function ClientAdminDashboard() {
                                         }
                                     }}
                                     className={`w-full bg-secondary/50 border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 transition-all ${validationErrors.course?.title ? 'border-red-500/50 focus:ring-red-500/50' : 'border-border focus:ring-primary/50'}`} />
+                                {validationErrors.course?.title && <span className="text-[10px] font-bold text-red-500 animate-in fade-in slide-in-from-top-1 ml-1 block">{validationErrors.course?.title}</span>}
                             </div>
                             <div className="space-y-1.5">
                                 <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Description</label>
@@ -2850,11 +4164,11 @@ export default function ClientAdminDashboard() {
                                 <div className="space-y-1.5">
                                     <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Skill Level</label>
                                     <select value={courseForm.skillLevel} onChange={e => setCourseForm({ ...courseForm, skillLevel: e.target.value })}
-                                        className="w-full bg-secondary/50 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50">
-                                        <option value="All Levels">All Levels</option>
-                                        <option value="Beginner">Beginner</option>
-                                        <option value="Intermediate">Intermediate</option>
-                                        <option value="Advanced">Advanced</option>
+                                        className="w-full bg-secondary/50 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 text-foreground">
+                                        <option value="All Levels" className="bg-background text-foreground">All Levels</option>
+                                        <option value="Beginner" className="bg-background text-foreground">Beginner</option>
+                                        <option value="Intermediate" className="bg-background text-foreground">Intermediate</option>
+                                        <option value="Advanced" className="bg-background text-foreground">Advanced</option>
                                     </select>
                                 </div>
                                 <div className="space-y-1.5">
@@ -2882,43 +4196,57 @@ export default function ClientAdminDashboard() {
                                     </label>
                                 </div>
                             </div>
-                            
+
                             {courseForm.certificateEnabled && (
                                 <div className="space-y-1.5 animate-in slide-in-from-top-2 duration-300">
                                     <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Select Certificate Template</label>
-                                    <select 
-                                        value={courseForm.certificateTemplateId} 
+                                    <select
+                                        value={courseForm.certificateTemplateId}
                                         onChange={e => setCourseForm({ ...courseForm, certificateTemplateId: e.target.value })}
-                                        className="w-full bg-secondary/50 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                                        className="w-full bg-secondary/50 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 text-foreground"
                                     >
-                                        <option value="">-- Choose Template --</option>
+                                        <option value="" className="bg-background text-foreground">-- Choose Template --</option>
                                         {availableTemplates.map((t: any) => (
-                                            <option key={t.id} value={t.id}>{t.name} {t.isGlobal ? '(Global)' : ''}</option>
+                                            <option key={t.id} value={t.id} className="bg-background text-foreground">{t.name} {t.isGlobal ? '(Global)' : ''}</option>
                                         ))}
                                     </select>
                                 </div>
                             )}
                             {/* Exclusive Role/Team Gating */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-1.5">
-                                    <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Exclusive to Role (Optional)</label>
-                                    <select value={courseForm.exclusiveRoleId} onChange={e => setCourseForm({ ...courseForm, exclusiveRoleId: e.target.value, isMarketplace: (e.target.value || courseForm.exclusiveTeamId) ? false : courseForm.isMarketplace })}
-                                        className="w-full bg-secondary/30 border border-border/50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all">
-                                        <option value="">No Restriction — All Learners</option>
-                                        {availableRoles.map((r: any) => <option key={r.id} value={r.id}>{r.name} Only</option>)}
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Exclusive to Role (Optional)</label>
+                                    <select
+                                        value={courseForm.exclusiveRoleId}
+                                        onChange={e => setCourseForm({ ...courseForm, exclusiveRoleId: e.target.value, isMarketplace: (e.target.value || courseForm.exclusiveTeamId) ? false : courseForm.isMarketplace })}
+                                        className="w-full bg-secondary/50 border border-border/50 rounded-2xl px-5 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all hover:border-primary/30 cursor-pointer font-bold text-foreground"
+                                    >
+                                        <option value="" className="bg-background">No Restriction — All Learners</option>
+                                        {availableRoles.map((r: any) => <option key={r.id} value={r.id} className="bg-background">{r.name} Only</option>)}
                                     </select>
                                 </div>
-                                <div className="space-y-1.5">
-                                    <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Exclusive to Team (Optional)</label>
-                                    <select value={courseForm.exclusiveTeamId} onChange={e => setCourseForm({ ...courseForm, exclusiveTeamId: e.target.value, isMarketplace: (e.target.value || courseForm.exclusiveRoleId) ? false : courseForm.isMarketplace })}
-                                        className="w-full bg-secondary/30 border border-border/50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all">
-                                        <option value="">No Restriction — All Learners</option>
-                                        {availableTeams.map((t: any) => <option key={t.id} value={t.id}>{t.name} Only</option>)}
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Exclusive to Team (Optional)</label>
+                                    <select
+                                        value={courseForm.exclusiveTeamId}
+                                        onChange={e => setCourseForm({ ...courseForm, exclusiveTeamId: e.target.value, isMarketplace: (e.target.value || courseForm.exclusiveRoleId) ? false : courseForm.isMarketplace })}
+                                        className="w-full bg-secondary/50 border border-border/50 rounded-2xl px-5 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all hover:border-primary/30 cursor-pointer font-bold text-foreground"
+                                    >
+                                        <option value="" className="bg-background">No Restriction — All Learners</option>
+                                        {availableTeams.map((t: any) => <option key={t.id} value={t.id} className="bg-background">{t.name} Only</option>)}
                                     </select>
                                 </div>
                             </div>
                             {(courseForm.exclusiveRoleId || courseForm.exclusiveTeamId) && (
-                                <p className="text-[10px] text-amber-600/80 font-bold">⚠ Exclusive courses are hidden from the Marketplace and invisible to learners without this {courseForm.exclusiveRoleId && courseForm.exclusiveTeamId ? 'role and team' : courseForm.exclusiveRoleId ? 'role' : 'team'}.</p>
+                                <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-medium flex items-start gap-3 animate-in slide-in-from-top-2 duration-300">
+                                    <span className="text-base mt-0.5">⚠️</span>
+                                    <div className="space-y-1">
+                                        <p className="font-black uppercase tracking-wider text-[10px] text-amber-400">Exclusive Gating Active</p>
+                                        <p className="text-muted-foreground/80 leading-relaxed font-bold">
+                                            Exclusive courses are hidden from the Marketplace and invisible to learners without this {courseForm.exclusiveRoleId && courseForm.exclusiveTeamId ? 'role and team' : courseForm.exclusiveRoleId ? 'role' : 'team'}.
+                                        </p>
+                                    </div>
+                                </div>
                             )}
                             <button type="submit" className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-bold hover:opacity-90">
                                 {selectedCourse ? 'Save Changes' : 'Create Course'}
@@ -2944,7 +4272,7 @@ export default function ClientAdminDashboard() {
                             <div className="space-y-1.5">
                                 <div className="flex justify-between items-center">
                                     <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-1">Quiz Title</label>
-                                    {validationErrors.quiz?.title && <span className="text-[10px] font-bold text-red-500 animate-in fade-in slide-in-from-right-1 uppercase tracking-tight">{validationErrors.quiz.title}</span>}
+                                    {validationErrors.quiz?.title && <span className="text-[10px] font-bold text-red-500 animate-in fade-in slide-in-from-right-1 uppercase tracking-tight">{validationErrors.quiz?.title}</span>}
                                 </div>
                                 <input
                                     placeholder="e.g. React Fundamentals Mastery"
@@ -3096,7 +4424,7 @@ export default function ClientAdminDashboard() {
                                         <div className="space-y-1">
                                             <div className="flex justify-between items-center px-1">
                                                 <span className="w-8 h-8 rounded-full bg-primary/20 text-primary flex items-center justify-center font-black text-xs">0{qIdx + 1}</span>
-                                                {validationErrors.quiz?.questions?.[qIdx]?.text && <span className="text-[10px] font-bold text-red-500 animate-in fade-in slide-in-from-right-1">{validationErrors.quiz.questions[qIdx].text}</span>}
+                                                {validationErrors.quiz?.questions?.[qIdx]?.text && <span className="text-[10px] font-bold text-red-500 animate-in fade-in slide-in-from-right-1">{validationErrors.quiz?.questions?.[qIdx]?.text}</span>}
                                                 <button
                                                     onClick={() => {
                                                         const newQs = [...quizForm.questions];
@@ -3133,8 +4461,8 @@ export default function ClientAdminDashboard() {
                                                             setQuizForm({ ...quizForm, questions: newQs });
                                                         }}
                                                         className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${(q.type || 'MULTIPLE_CHOICE') === t.value
-                                                                ? 'bg-primary/20 border-primary/40 text-primary'
-                                                                : 'border-border/50 text-muted-foreground hover:border-primary/30'
+                                                            ? 'bg-primary/20 border-primary/40 text-primary'
+                                                            : 'border-border/50 text-muted-foreground hover:border-primary/30'
                                                             }`}
                                                     >
                                                         {t.label}
@@ -3230,7 +4558,7 @@ export default function ClientAdminDashboard() {
                                                                             </button>
                                                                         )}
                                                                     </div>
-                                                                    {validationErrors.quiz?.questions?.[qIdx]?.options?.[oIdx] && <span className="text-[9px] font-bold text-red-500 animate-in fade-in slide-in-from-top-1 ml-1">{validationErrors.quiz.questions[qIdx].options[oIdx]}</span>}
+                                                                    {validationErrors.quiz?.questions?.[qIdx]?.options?.[oIdx] && <span className="text-[9px] font-bold text-red-500 animate-in fade-in slide-in-from-top-1 ml-1">{validationErrors.quiz?.questions?.[qIdx]?.options?.[oIdx]}</span>}
                                                                 </div>
                                                             );
                                                         })}
@@ -3271,16 +4599,16 @@ export default function ClientAdminDashboard() {
 
             {showAnnouncementModal && (
                 <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/70 backdrop-blur-sm">
-                    <div className="bg-background border border-border w-full max-w-md rounded-3xl p-8 space-y-6 shadow-2xl">
-                        <div className="flex justify-between items-center">
+                    <div className="bg-background border border-border w-full max-w-2xl max-h-[90vh] rounded-3xl p-8 space-y-6 shadow-2xl flex flex-col">
+                        <div className="flex justify-between items-center shrink-0">
                             <h3 className="text-xl font-black">Post Announcement</h3>
                             <button onClick={() => setShowAnnouncementModal(false)} className="text-muted-foreground hover:text-foreground"><XCircle size={24} /></button>
                         </div>
-                        <form onSubmit={createAnnouncement} className="space-y-4">
+                        <form onSubmit={createAnnouncement} className="space-y-4 flex-1 overflow-y-auto pr-2 custom-scrollbar">
                             <div className="space-y-1.5">
                                 <div className="flex justify-between items-center">
                                     <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Title</label>
-                                    {validationErrors.announcement?.title && <span className="text-[10px] font-bold text-red-500 animate-in fade-in slide-in-from-right-1">{validationErrors.announcement.title}</span>}
+                                    {validationErrors.announcement?.title && <span className="text-[10px] font-bold text-red-500 animate-in fade-in slide-in-from-right-1">{validationErrors.announcement?.title}</span>}
                                 </div>
                                 <input
                                     placeholder="Important update"
@@ -3296,7 +4624,7 @@ export default function ClientAdminDashboard() {
                             <div className="space-y-1.5">
                                 <div className="flex justify-between items-center">
                                     <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Message</label>
-                                    {validationErrors.announcement?.body && <span className="text-[10px] font-bold text-red-500 animate-in fade-in slide-in-from-right-1">{validationErrors.announcement.body}</span>}
+                                    {validationErrors.announcement?.body && <span className="text-[10px] font-bold text-red-500 animate-in fade-in slide-in-from-right-1">{validationErrors.announcement?.body}</span>}
                                 </div>
                                 <textarea
                                     placeholder="Write your announcement here..."
@@ -3510,8 +4838,8 @@ export default function ClientAdminDashboard() {
 
             {/* ── AUDIT LOG METADATA PANEL ── */}
             {selectedLogMetadata && (
-                <div className="fixed inset-0 z-[500] flex justify-end bg-black/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setSelectedLogMetadata(null)}>
-                    <div className="w-full max-w-lg bg-background border-l border-border/50 h-full flex flex-col shadow-2xl animate-in slide-in-from-right duration-300" onClick={e => e.stopPropagation()}>
+                <div className="fixed inset-0 z-[500] flex items-center justify-center p-6 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setSelectedLogMetadata(null)}>
+                    <div className="w-full max-w-2xl bg-background border border-border/50 max-h-[90vh] rounded-3xl flex flex-col shadow-2xl animate-in zoom-in-95 duration-300" onClick={e => e.stopPropagation()}>
                         <div className="px-8 py-6 border-b border-border/50 flex justify-between items-center bg-secondary/10">
                             <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
@@ -3527,52 +4855,52 @@ export default function ClientAdminDashboard() {
                             </button>
                         </div>
                         <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
-                           <div className="space-y-8">
-                               {/* Human Narrative */}
-                               <div className="p-6 rounded-3xl bg-primary/5 border border-primary/10 relative overflow-hidden group">
-                                   <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
-                                       <Activity size={48} />
-                                   </div>
-                                   <h4 className="text-[10px] font-black uppercase tracking-widest text-primary mb-2">Narrative Context</h4>
-                                   <p className="text-sm font-bold leading-relaxed">
-                                       User <span className="text-primary">{selectedLogMetadata.user.name}</span> performed a <span className="text-primary">{selectedLogMetadata.action.replace(/_/g, ' ')}</span> operation on the workspace entity.
-                                   </p>
-                               </div>
+                            <div className="space-y-8">
+                                {/* Human Narrative */}
+                                <div className="p-6 rounded-3xl bg-primary/5 border border-primary/10 relative overflow-hidden group">
+                                    <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
+                                        <Activity size={48} />
+                                    </div>
+                                    <h4 className="text-[10px] font-black uppercase tracking-widest text-primary mb-2">Narrative Context</h4>
+                                    <p className="text-sm font-bold leading-relaxed">
+                                        User <span className="text-primary">{selectedLogMetadata.user.name}</span> performed a <span className="text-primary">{selectedLogMetadata.action.replace(/_/g, ' ')}</span> operation on the workspace entity.
+                                    </p>
+                                </div>
 
-                               <div className="space-y-4">
-                                   <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                                       <Shield size={12} className="text-primary" /> Authority Context
-                                   </h4>
-                                   <div className="p-5 rounded-2xl bg-secondary/20 border border-border/50 divide-y divide-border/30">
-                                       <div className="flex justify-between items-center py-3">
-                                           <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Action Type</span>
-                                           <span className="text-xs font-black text-primary">{selectedLogMetadata.action}</span>
-                                       </div>
-                                       <div className="flex justify-between items-center py-3">
-                                           <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Timestamp</span>
-                                           <span className="text-[11px] font-bold">{new Date(selectedLogMetadata.createdAt).toLocaleString()}</span>
-                                       </div>
-                                   </div>
-                               </div>
+                                <div className="space-y-4">
+                                    <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                                        <Shield size={12} className="text-primary" /> Authority Context
+                                    </h4>
+                                    <div className="p-5 rounded-2xl bg-secondary/20 border border-border/50 divide-y divide-border/30">
+                                        <div className="flex justify-between items-center py-3">
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Action Type</span>
+                                            <span className="text-xs font-black text-primary">{selectedLogMetadata.action}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center py-3">
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Timestamp</span>
+                                            <span className="text-[11px] font-bold">{new Date(selectedLogMetadata.createdAt).toLocaleString()}</span>
+                                        </div>
+                                    </div>
+                                </div>
 
-                               <div className="space-y-4">
-                                   <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                                       <LayoutList size={12} className="text-primary" /> Resource Properties
-                                   </h4>
-                                   <div className="grid grid-cols-1 gap-3">
-                                       {Object.entries(selectedLogMetadata.metadata || {}).map(([key, value]) => (
-                                           <div key={key} className="p-4 rounded-2xl bg-secondary/10 border border-border/40 hover:border-primary/20 transition-all">
-                                               <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 mb-1">{getMetadataLabel(key)}</p>
-                                               <p className="text-xs font-bold break-all">{typeof value === 'object' ? JSON.stringify(value) : String(value)}</p>
-                                           </div>
-                                       ))}
-                                   </div>
-                               </div>
-                           </div>
+                                <div className="space-y-4">
+                                    <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                                        <LayoutList size={12} className="text-primary" /> Resource Properties
+                                    </h4>
+                                    <div className="grid grid-cols-1 gap-3">
+                                        {Object.entries(selectedLogMetadata.metadata || {}).map(([key, value]) => (
+                                            <div key={key} className="p-4 rounded-2xl bg-secondary/10 border border-border/40 hover:border-primary/20 transition-all">
+                                                <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 mb-1">{getMetadataLabel(key)}</p>
+                                                <p className="text-xs font-bold break-all">{typeof value === 'object' ? JSON.stringify(value) : String(value)}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         <div className="p-8 border-t border-border/50">
-                            <button 
+                            <button
                                 onClick={() => exportAuditLog(selectedLogMetadata)}
                                 className="w-full py-4 bg-primary text-primary-foreground rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] transition-all shadow-lg hover:shadow-primary/20 active:scale-[0.98] flex items-center justify-center gap-2"
                             >
@@ -3585,9 +4913,9 @@ export default function ClientAdminDashboard() {
 
             {/* ── USER INSIGHTS PANEL ── */}
             {insightsUserId && (
-                <div className="fixed inset-0 z-[500] flex justify-end bg-black/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => { setInsightsUserId(null); setInsightsUser(null); }}>
-                    <div className="w-full max-w-xl bg-background border-l border-border/50 h-full flex flex-col shadow-2xl animate-in slide-in-from-right duration-300" onClick={e => e.stopPropagation()}>
-                        
+                <div className="fixed inset-0 z-[500] flex items-center justify-center p-6 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => { setInsightsUserId(null); setInsightsUser(null); }}>
+                    <div className="w-full max-w-xl bg-background border border-border/50 max-h-[90vh] flex flex-col shadow-2xl rounded-3xl animate-in zoom-in-95 duration-300" onClick={e => e.stopPropagation()}>
+
                         {/* Header */}
                         <div className="flex items-start justify-between px-8 py-6 border-b border-border/50 bg-gradient-to-r from-primary/5 to-transparent">
                             <div className="flex items-center gap-4">
@@ -3603,7 +4931,7 @@ export default function ClientAdminDashboard() {
                                 <XCircle size={20} />
                             </button>
                         </div>
-                        
+
                         <div className="flex-1 overflow-y-auto custom-scrollbar">
                             {!isFetchingUserDetail && insightsUser ? (
                                 <div className="p-8 space-y-10">
@@ -3653,9 +4981,9 @@ export default function ClientAdminDashboard() {
                                                                     <span className="text-[10px] font-black text-primary">{en.progressPercentage}%</span>
                                                                 </div>
                                                                 <div className="h-1.5 w-full bg-secondary rounded-full overflow-hidden">
-                                                                    <div 
-                                                                        className="h-full bg-primary transition-all duration-1000" 
-                                                                        style={{ width: `${en.progressPercentage}%` }} 
+                                                                    <div
+                                                                        className="h-full bg-primary transition-all duration-1000"
+                                                                        style={{ width: `${en.progressPercentage}%` }}
                                                                     />
                                                                 </div>
                                                             </div>
@@ -3701,7 +5029,7 @@ export default function ClientAdminDashboard() {
 
                         {/* Footer */}
                         <div className="p-6 border-t border-border/50 bg-background/80 backdrop-blur-sm mt-auto">
-                            <button 
+                            <button
                                 onClick={() => { setInsightsUserId(null); setInsightsUser(null); }}
                                 className="w-full py-4 bg-secondary text-foreground rounded-2xl font-black uppercase tracking-widest text-sm hover:bg-secondary/80 transition-all shadow-lg active:scale-[0.98]"
                             >
@@ -3713,10 +5041,10 @@ export default function ClientAdminDashboard() {
             )}
             {showProfileModal && (
                 <div className="fixed inset-0 z-[400] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md animate-in fade-in duration-300">
-                    <div className="bg-background border border-border/50 w-full max-w-md rounded-[2rem] p-8 space-y-6 shadow-2xl relative overflow-hidden">
-                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-blue-500" />
+                    <div className="bg-background border border-border/50 w-full max-w-md max-h-[90vh] rounded-[2rem] p-8 space-y-6 shadow-2xl relative overflow-hidden flex flex-col">
+                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-blue-500 shrink-0" />
 
-                        <div className="flex justify-between items-center">
+                        <div className="flex justify-between items-center shrink-0">
                             <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
                                     <Settings className="w-6 h-6 text-primary" />
@@ -3728,7 +5056,7 @@ export default function ClientAdminDashboard() {
                             </button>
                         </div>
 
-                        <form onSubmit={handleUpdateProfile} className="space-y-4">
+                        <form onSubmit={handleUpdateProfile} className="space-y-4 flex-1 overflow-y-auto pr-2 custom-scrollbar">
                             <div className="p-4 rounded-2xl bg-secondary/20 border border-border/50 space-y-3">
                                 <div className="flex items-center gap-3">
                                     <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center font-black text-primary border border-primary/20">
@@ -3794,45 +5122,130 @@ export default function ClientAdminDashboard() {
                     </div>
                 </div>
             )}
-            {confirmModal && (
-                <div className="fixed inset-0 z-[300] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md animate-in fade-in duration-300">
-                    <div className="bg-background border border-border/50 w-full max-w-sm rounded-[2rem] p-8 space-y-6 shadow-2xl relative overflow-hidden">
-                        <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${confirmModal.variant === 'info' ? 'from-indigo-500/50 via-indigo-500 to-indigo-500/50' : 'from-red-500/50 via-red-500 to-red-500/50'}`} />
 
-                        <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 ${confirmModal.variant === 'info' ? 'bg-indigo-500/10' : 'bg-red-500/10'}`}>
-                            {confirmModal.variant === 'info' ? <Info className="w-10 h-10 text-indigo-500" /> : <Trash2 className="w-10 h-10 text-red-500" />}
+            {/* ── TRANSFER EMPLOYEE MODAL ── */}
+            {showTransferModal && (
+                <div className="fixed inset-0 z-[600] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md animate-in fade-in duration-300" onClick={() => setShowTransferModal(false)}>
+                    <div className="bg-background border border-indigo-500/20 w-full max-w-lg rounded-[2rem] shadow-2xl shadow-indigo-500/10 relative overflow-hidden" onClick={e => e.stopPropagation()}>
+                        {/* Top accent bar */}
+                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-500" />
+
+                        {/* Header */}
+                        <div className="flex items-start justify-between px-8 pt-8 pb-6 border-b border-border/50">
+                            <div>
+                                <p className="text-[10px] font-black uppercase tracking-widest text-indigo-400 mb-1">Secure Transfer Protocol</p>
+                                <h2 className="text-xl font-black text-foreground">Transfer Employee</h2>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                    Moving <span className="font-bold text-foreground">{selectedGlobalUser?.name || selectedGlobalUser?.email}</span> to another workspace.
+                                </p>
+                            </div>
+                            <button onClick={() => setShowTransferModal(false)} className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary transition-all">
+                                <XCircle size={20} />
+                            </button>
                         </div>
 
-                        <div className="text-center space-y-2">
-                            <h3 className="text-2xl font-black">{confirmModal.title}</h3>
-                            <p className="text-muted-foreground text-sm">
-                                {confirmModal.message}
+                        {/* Body */}
+                        <div className="px-8 py-6 space-y-6">
+                            {/* Info row: current tenant */}
+                            <div className="flex items-center gap-3 p-4 rounded-2xl bg-secondary/20 border border-border/50">
+                                <div className="w-9 h-9 rounded-full bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center font-black text-indigo-400 text-sm">
+                                    {selectedGlobalUser?.name?.[0]?.toUpperCase() || '?'}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-xs font-bold truncate">{selectedGlobalUser?.name || 'User'}</p>
+                                    <p className="text-[10px] text-muted-foreground truncate">
+                                        Currently at: <span className="text-indigo-400 font-bold">{selectedGlobalUser?.tenant?.name || 'Unknown'}</span>
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Target Tenant Selection */}
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Transfer Destination</label>
+                                <select
+                                    value={targetTenantId}
+                                    onChange={e => setTargetTenantId(e.target.value)}
+                                    disabled={otpSent}
+                                    className="w-full bg-secondary/30 border border-border/50 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/40 transition-all text-foreground disabled:opacity-50"
+                                >
+                                    <option value="" className="bg-background text-foreground">-- Select Target Company --</option>
+                                    {availableTenants.map((t: any) => (
+                                        <option key={t.id} value={t.id} className="bg-background text-foreground">{t.name} ({t.subdomain})</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* Send OTP Button */}
+                            {!otpSent ? (
+                                <button
+                                    onClick={handleSendOtp}
+                                    disabled={!targetTenantId || isSendingTransferOtp}
+                                    className="w-full py-3.5 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white font-black uppercase tracking-widest text-xs rounded-2xl transition-all shadow-lg shadow-indigo-500/20 disabled:opacity-50 flex items-center justify-center gap-2"
+                                >
+                                    {isSendingTransferOtp ? (
+                                        <><Loader2 className="w-4 h-4 animate-spin" /> Generating OTP...</>
+                                    ) : (
+                                        'Send Verification OTP'
+                                    )}
+                                </button>
+                            ) : (
+                                <form onSubmit={handleVerifyTransfer} className="space-y-4 animate-in slide-in-from-bottom-2 duration-300">
+                                    {/* Demo OTP display */}
+                                    {demoOtp && (
+                                        <div className="p-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/20 space-y-1">
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-emerald-500/70">Demo OTP (Test Mode)</p>
+                                            <p className="font-mono text-2xl font-black text-emerald-400 tracking-[0.4em]">{demoOtp}</p>
+                                            <p className="text-[10px] text-muted-foreground">This OTP was also printed to the server console. Valid for 10 minutes.</p>
+                                        </div>
+                                    )}
+
+                                    {/* OTP Input */}
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Enter OTP Code</label>
+                                        <input
+                                            type="text"
+                                            maxLength={6}
+                                            value={transferOtp}
+                                            onChange={e => setTransferOtp(e.target.value.replace(/\D/g, ''))}
+                                            placeholder="000000"
+                                            className="w-full bg-secondary/30 border border-border/50 rounded-2xl px-4 py-3 text-center text-lg font-mono font-black tracking-[0.5em] focus:outline-none focus:ring-2 focus:ring-indigo-500/40 transition-all"
+                                        />
+                                    </div>
+
+                                    <div className="flex gap-3">
+                                        <button
+                                            type="button"
+                                            onClick={() => { setOtpSent(false); setDemoOtp(''); setTransferOtp(''); }}
+                                            className="flex-1 py-3 bg-secondary hover:bg-secondary/80 text-foreground font-black uppercase tracking-widest text-xs rounded-2xl transition-all"
+                                        >
+                                            Resend OTP
+                                        </button>
+                                        <button
+                                            type="submit"
+                                            disabled={transferOtp.length !== 6 || isExecutingTransfer}
+                                            className="flex-[2] py-3 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white font-black uppercase tracking-widest text-xs rounded-2xl transition-all shadow-lg shadow-emerald-500/20 disabled:opacity-50 flex items-center justify-center gap-2"
+                                        >
+                                            {isExecutingTransfer ? (
+                                                <><Loader2 className="w-4 h-4 animate-spin" /> Transferring...</>
+                                            ) : (
+                                                'Verify & Transfer'
+                                            )}
+                                        </button>
+                                    </div>
+                                </form>
+                            )}
+                        </div>
+
+                        {/* Footer warning */}
+                        <div className="px-8 pb-6">
+                            <p className="text-[10px] text-muted-foreground/60 text-center">
+                                ⚠ This action will move the employee to the selected workspace. All completed courses and certificates are preserved.
                             </p>
-                        </div>
-
-                        <div className="flex gap-4 pt-4">
-                            <button
-                                onClick={() => {
-                                    confirmModal.resolve(false);
-                                    setConfirmModal(null);
-                                }}
-                                className="flex-1 py-4 bg-secondary hover:bg-secondary/80 rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={() => {
-                                    confirmModal.resolve(true);
-                                    setConfirmModal(null);
-                                }}
-                                className={`flex-1 py-4 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-lg hover:scale-[1.02] transition-all ${confirmModal.variant === 'info' ? 'bg-indigo-600 shadow-indigo-500/20' : 'bg-red-500 shadow-red-500/20'}`}
-                            >
-                                {confirmModal.variant === 'info' ? 'Confirm' : 'Confirm Delete'}
-                            </button>
                         </div>
                     </div>
                 </div>
             )}
+
         </div>
     );
 }

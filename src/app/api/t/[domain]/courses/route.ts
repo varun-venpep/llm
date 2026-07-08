@@ -14,6 +14,7 @@ export async function GET(
 
         const { searchParams } = new URL(req.url);
         const view = searchParams.get('view');
+        let sessionUser: any = null;
 
         if (view !== 'learner') {
             const session = await checkSession(req, domain, ['TENANT_ADMIN', 'SUPER_ADMIN']);
@@ -26,6 +27,7 @@ export async function GET(
         let visibilityFilter = {};
         if (view === 'learner') {
             const session = await checkSession(req, domain);
+            sessionUser = session;
             if (session) {
                 const user = await prisma.user.findUnique({
                     where: { id: session.id },
@@ -90,7 +92,55 @@ export async function GET(
             },
             orderBy: { createdAt: 'desc' }
         });
-        return NextResponse.json(courses);
+        const session = sessionUser;
+        let completedLessonIds = new Set<string>();
+
+        if (session) {
+            const userProgress = await prisma.lessonProgress.findMany({
+                where: {
+                    userId: session.id,
+                    completed: true,
+                    lesson: {
+                        module: {
+                            course: {
+                                tenantId: tenant.id
+                            }
+                        }
+                    }
+                },
+                select: {
+                    lessonId: true
+                }
+            });
+            completedLessonIds = new Set(userProgress.map((p: { lessonId: string }) => p.lessonId));
+        }
+
+        const coursesWithStatus = courses.map(course => {
+            if (view !== 'learner') return course;
+
+            const allLessons = course.modules.flatMap(m => m.lessons.filter(l => l.isActive));
+            const totalLessons = allLessons.length;
+            
+            if (totalLessons === 0) {
+                return { ...course, status: 'NEW', progressPercentage: 0 };
+            }
+
+            const completedCount = allLessons.filter(l => completedLessonIds.has(l.id)).length;
+            const progressPercentage = Math.round((completedCount / totalLessons) * 100);
+
+            let status = 'NEW';
+            if (completedCount > 0) {
+                status = completedCount === totalLessons ? 'COMPLETED' : 'IN_PROGRESS';
+            }
+
+            return {
+                ...course,
+                status,
+                progressPercentage
+            };
+        });
+
+        return NextResponse.json(coursesWithStatus);
     } catch (e) {
         console.error('Failed to fetch courses:', e);
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
@@ -111,12 +161,37 @@ export async function POST(
             certificateEnabled, certificateTemplateId
         } = body;
 
+        try {
+            await prisma.$executeRawUnsafe(`
+                ALTER TABLE "Tenant"
+                ADD COLUMN IF NOT EXISTS "courseCreateCount" INTEGER NOT NULL DEFAULT 0
+            `);
+        } catch (e) {
+            console.error('Error ensuring courseCreateCount column in courses:', e);
+        }
+
         const tenant = await prisma.tenant.findUnique({ where: { subdomain: domain } });
         if (!tenant) return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
 
         const session = await checkSession(req, domain, ['TENANT_ADMIN', 'SUPER_ADMIN']);
-        if (!requireTenantPermission(session, 'courses.manage')) {
+        if (!session || !requireTenantPermission(session, 'courses.manage')) {
             return NextResponse.json({ error: 'You do not have permission to create courses' }, { status: 403 });
+        }
+
+        // Check course limit if set
+        const tenantsData = await prisma.$queryRawUnsafe<{ courseCreateCount: number }[]>(
+            'SELECT "courseCreateCount" FROM "Tenant" WHERE "id" = $1 LIMIT 1',
+            tenant.id
+        );
+        const courseCreateCount = tenantsData[0]?.courseCreateCount || 0;
+
+        if (courseCreateCount > 0) {
+            const currentCount = await prisma.course.count({ where: { tenantId: tenant.id } });
+            if (currentCount >= courseCreateCount) {
+                return NextResponse.json({
+                    error: "Your course creation limit has been reached. Please upgrade to the next package to continue creating courses."
+                }, { status: 403 });
+            }
         }
 
         // Rule: exclusive courses cannot appear in the marketplace
@@ -149,7 +224,11 @@ export async function POST(
             });
         }
 
-        return NextResponse.json(course, { status: 201 });
+        return NextResponse.json({
+            success: true,
+            message: 'Course created successfully',
+            data: course
+        }, { status: 201 });
     } catch (e) {
         console.error('Failed to create course:', e);
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
@@ -176,7 +255,7 @@ export async function PUT(
         if (!tenant) return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
 
         const session = await checkSession(req, domain, ['TENANT_ADMIN', 'SUPER_ADMIN']);
-        if (!requireTenantPermission(session, 'courses.manage')) {
+        if (!session || !requireTenantPermission(session, 'courses.manage')) {
             return NextResponse.json({ error: 'You do not have permission to update courses' }, { status: 403 });
         }
 
@@ -211,7 +290,11 @@ export async function PUT(
             });
         }
 
-        return NextResponse.json(course);
+        return NextResponse.json({
+            success: true,
+            message: 'Course updated successfully',
+            data: course
+        });
     } catch (e) {
         console.error('Failed to update course:', e);
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

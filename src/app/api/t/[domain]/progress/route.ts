@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { checkSession } from '@/lib/auth';
 
 // GET progress for a user in a specific course
 export async function GET(
@@ -8,14 +9,26 @@ export async function GET(
 ) {
     const { domain } = await params;
     const { searchParams } = new URL(req.url);
-    const userId = searchParams.get('userId');
+    const queryUserId = searchParams.get('userId');
     const courseId = searchParams.get('courseId');
 
-    if (!userId || !courseId) {
-        return NextResponse.json({ error: 'userId and courseId required' }, { status: 400 });
+    if (!courseId) {
+        return NextResponse.json({ error: 'courseId is required' }, { status: 400 });
     }
 
     try {
+        const session = await checkSession(req, domain);
+        if (!session) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        const userId = queryUserId || session.id;
+
+        // Security check: Learners can only fetch their own progress
+        if (session.role === 'LEARNER' && userId !== session.id) {
+            return NextResponse.json({ error: 'You do not have permission to view this user\'s progress' }, { status: 403 });
+        }
+
         const course = await prisma.course.findUnique({
             where: { id: courseId },
             include: {
@@ -74,7 +87,19 @@ export async function POST(
 ) {
     try {
         const { domain } = await params;
-        const { userId, lessonId, completed } = await req.json();
+        const { userId: bodyUserId, lessonId, completed } = await req.json();
+
+        const session = await checkSession(req, domain);
+        if (!session) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        const userId = bodyUserId || session.id;
+
+        // Security check: Learners can only update their own progress
+        if (session.role === 'LEARNER' && userId !== session.id) {
+            return NextResponse.json({ error: 'You do not have permission to update this user\'s progress' }, { status: 403 });
+        }
 
         // 1. Ensure the user is actually enrolled in the database
         const lesson = await prisma.lesson.findUnique({

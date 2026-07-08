@@ -11,8 +11,10 @@ export async function GET(
         const tenant = await prisma.tenant.findUnique({ where: { subdomain: domain } });
         if (!tenant) return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
 
-        const session = await checkSession(req, domain, 'TENANT_ADMIN');
-        if (!requireTenantPermission(session, 'people.manage')) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        const session = await checkSession(req, domain, ['TENANT_ADMIN', 'SUPER_ADMIN']);
+        if (!requireTenantPermission(session, 'people.manage') && !requireTenantPermission(session, 'reports.view')) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
 
         const teams = await prisma.team.findMany({
             where: { tenantId: tenant.id },
@@ -39,7 +41,7 @@ export async function POST(
         const tenant = await prisma.tenant.findUnique({ where: { subdomain: domain } });
         if (!tenant) return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
 
-        const session = await checkSession(req, domain, 'TENANT_ADMIN');
+        const session = await checkSession(req, domain, ['TENANT_ADMIN', 'SUPER_ADMIN']);
         if (!requireTenantPermission(session, 'people.manage')) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
         const { name, description, managerIds = [], memberIds = [], isActive = true } = await req.json();
@@ -92,7 +94,7 @@ export async function PUT(
         const tenant = await prisma.tenant.findUnique({ where: { subdomain: domain } });
         if (!tenant) return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
 
-        const session = await checkSession(req, domain, 'TENANT_ADMIN');
+        const session = await checkSession(req, domain, ['TENANT_ADMIN', 'SUPER_ADMIN']);
         if (!requireTenantPermission(session, 'people.manage')) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
         const { id, name, description, isActive, managerIds = [], memberIds = [] } = await req.json();
@@ -166,7 +168,7 @@ export async function DELETE(
         const tenant = await prisma.tenant.findUnique({ where: { subdomain: domain } });
         if (!tenant) return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
 
-        const session = await checkSession(req, domain, 'TENANT_ADMIN');
+        const session = await checkSession(req, domain, ['TENANT_ADMIN', 'SUPER_ADMIN']);
         if (!requireTenantPermission(session, 'people.manage')) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
         const id = req.nextUrl.searchParams.get('id');

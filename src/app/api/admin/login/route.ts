@@ -34,7 +34,9 @@ export async function POST(req: NextRequest) {
 
         const response = NextResponse.json({
             success: true,
-            user: { id: user.id, name: user.name, email: user.email, role: user.role }
+            message: 'Login successful',
+            user: { id: user.id, name: user.name, email: user.email, role: user.role },
+            token: user.id
         });
 
         // Set session cookie for auth persistence
@@ -49,7 +51,7 @@ export async function POST(req: NextRequest) {
             cookieOptions.maxAge = 60 * 60 * 24 * 7; // 1 week
         }
 
-        response.cookies.set('session-token', user.id, cookieOptions);
+        response.cookies.set('admin_token', user.id, cookieOptions);
         return response;
 
     } catch (error) {

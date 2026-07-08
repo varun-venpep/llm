@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Download, FileText, ImageIcon, ChevronLeft, Loader2, Printer, ShieldCheck, Share2 } from 'lucide-react';
+import { Download, FileText, ImageIcon, ChevronLeft, Loader2, Printer, ShieldCheck, Share2, XCircle } from 'lucide-react';
 import { toJpeg, toPng } from 'html-to-image';
 import { jsPDF } from 'jspdf';
 
@@ -17,9 +17,10 @@ export default function CertificateViewPage() {
     const [downloading, setDownloading] = useState<'pdf' | 'jpeg' | null>(null);
     const certRef = useRef<HTMLDivElement>(null);
     const [userId, setUserId] = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        const uid = localStorage.getItem(`${domain}_userId`);
+        const uid = localStorage.getItem(`${domain}_learner_userId`) || localStorage.getItem(`${domain}_userId`);
         setUserId(uid);
         if (uid) {
             fetchCertificate(uid);
@@ -42,11 +43,15 @@ export default function CertificateViewPage() {
                     // Also need the background image from the inline style
                     const bgUrl = (container as HTMLElement).style.backgroundImage.slice(5, -2);
                     setBgImage(bgUrl);
+                } else {
+                    setError('Certificate container structure not found');
                 }
             } else {
+                setError('Certificate not found or not yet generated.');
                 console.error('Certificate not found');
             }
-        } catch (e) {
+        } catch (e: any) {
+            setError(e.message || 'An error occurred while fetching the certificate');
             console.error(e);
         } finally {
             setLoading(false);
@@ -95,6 +100,27 @@ export default function CertificateViewPage() {
             <div className="min-h-screen bg-black flex flex-col items-center justify-center space-y-4">
                 <Loader2 className="w-12 h-12 animate-spin text-primary/50" />
                 <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground animate-pulse">Forging Achievement Record...</p>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="min-h-screen bg-[#0a0a0a] text-white flex flex-col items-center justify-center space-y-6 p-6 text-center font-sans">
+                <div className="w-16 h-16 bg-red-500/10 border border-red-500/20 rounded-full flex items-center justify-center text-red-500">
+                    <XCircle className="w-8 h-8" />
+                </div>
+                <div className="space-y-2 max-w-md">
+                    <h1 className="text-2xl font-black uppercase tracking-tight">Certificate Error</h1>
+                    <p className="text-sm text-neutral-400 font-medium leading-relaxed">{error}</p>
+                </div>
+                <button
+                    onClick={() => router.back()}
+                    className="flex items-center gap-3 px-6 py-3 bg-white/5 hover:bg-white/10 rounded-2xl border border-white/10 text-xs font-black uppercase tracking-widest transition-all"
+                >
+                    <ChevronLeft size={16} />
+                    Go Back
+                </button>
             </div>
         );
     }

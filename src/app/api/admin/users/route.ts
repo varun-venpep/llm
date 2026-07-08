@@ -2,18 +2,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 
-// Helper to check if the user is a Super Admin
 async function isSuperAdmin(req: NextRequest) {
-    const sessionId = req.cookies.get('session-token')?.value;
+    const sessionId = req.cookies.get('admin_token')?.value || req.cookies.get('session-token')?.value;
     if (!sessionId) return false;
-
     try {
         const user = await prisma.user.findUnique({
             where: { id: sessionId },
             select: { role: true }
         });
-        return user?.role === 'SUPER_ADMIN';
-    } catch (e) {
+        return user?.role === 'SUPER_ADMIN' || user?.role === 'PLATFORM_MANAGER';
+    } catch {
         return false;
     }
 }
@@ -23,16 +21,20 @@ export async function GET(req: NextRequest) {
     const mode = searchParams.get('mode') || 'stats';
     const query = searchParams.get('q') || '';
 
-    // Secure the API: Only Super Admins or Platform Managers can access global registry
-    const sessionId = req.cookies.get('session-token')?.value;
+    const sessionId = req.cookies.get('admin_token')?.value || req.cookies.get('session-token')?.value;
     if (!sessionId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const currentUser = await prisma.user.findUnique({
         where: { id: sessionId },
-        select: { role: true }
+        select: { role: true, id: true, email: true }
     });
 
-    if (!currentUser || (currentUser.role !== 'SUPER_ADMIN' && currentUser.role !== 'PLATFORM_MANAGER')) {
+    try {
+        const fs = require('fs');
+        fs.writeFileSync('scratch/debug_user.json', JSON.stringify(currentUser, null, 2));
+    } catch (e) {}
+
+    if (!currentUser || (currentUser.role !== 'SUPER_ADMIN' && currentUser.role !== 'PLATFORM_MANAGER' && currentUser.role !== 'TENANT_ADMIN')) {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -40,9 +42,7 @@ export async function GET(req: NextRequest) {
         if (mode === 'stats') {
             const stats = await prisma.user.groupBy({
                 by: ['role'],
-                _count: {
-                    id: true
-                }
+                _count: { id: true }
             });
 
             const formattedStats = {
@@ -52,7 +52,6 @@ export async function GET(req: NextRequest) {
                 LEARNER: stats.find((s: any) => s.role === 'LEARNER')?._count.id || 0,
                 INSTRUCTOR: stats.find((s: any) => s.role === 'INSTRUCTOR')?._count.id || 0,
             };
-
             return NextResponse.json(formattedStats);
         }
 
@@ -77,29 +76,41 @@ export async function GET(req: NextRequest) {
         }
 
         if (mode === 'search') {
-            if (!query) return NextResponse.json([]);
+            const cleanQuery = query.trim().replace(/^(uid|UID):\s*/, '');
+
+            if (currentUser.role === 'TENANT_ADMIN') {
+                const isUidQuery = query.trim().toLowerCase().startsWith('uid:') || cleanQuery.length === 25;
+                if (!isUidQuery || !cleanQuery) {
+                    return NextResponse.json({ error: 'please Enter UID' }, { status: 400 });
+                }
+                const users = await prisma.user.findMany({
+                    where: { id: cleanQuery },
+                    include: {
+                        tenant: {
+                            select: { id: true, name: true, subdomain: true }
+                        }
+                    },
+                    take: 1
+                });
+                return NextResponse.json(users);
+            }
 
             const users = await prisma.user.findMany({
-                where: {
+                where: query.trim() ? {
                     OR: [
                         { email: { contains: query, mode: 'insensitive' } },
                         { name: { contains: query, mode: 'insensitive' } },
-                        { id: { equals: query } }
+                        { id: { equals: cleanQuery } }
                     ]
-                },
+                } : {},
                 include: {
                     tenant: {
-                        select: {
-                            id: true,
-                            name: true,
-                            subdomain: true
-                        }
+                        select: { id: true, name: true, subdomain: true }
                     }
                 },
                 orderBy: { createdAt: 'desc' },
                 take: 50
             });
-
             return NextResponse.json(users);
         }
 
@@ -112,36 +123,19 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
     if (!(await isSuperAdmin(req))) {
-        return NextResponse.json({ error: 'Forbidden: Super Admin access required' }, { status: 403 });
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
-
     try {
         const body = await req.json();
         const { email, name, role } = body;
+        if (!email || !role) return NextResponse.json({ error: 'Missing fields' }, { status: 400 });
 
-        if (!email || !role) {
-            return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
-        }
+        const existing = await prisma.user.findFirst({ where: { email } });
+        if (existing) return NextResponse.json({ error: 'User already exists' }, { status: 400 });
 
-        // 1. Check if user already exists
-        const existing = await prisma.user.findFirst({
-            where: { email }
-        });
+        const systemTenant = await prisma.tenant.findFirst({ where: { subdomain: 'admin-system' } });
+        if (!systemTenant) return NextResponse.json({ error: 'System tenant mismatch' }, { status: 500 });
 
-        if (existing) {
-            return NextResponse.json({ error: 'User already exists with this email' }, { status: 400 });
-        }
-
-        // 2. Identify System Tenant
-        const systemTenant = await prisma.tenant.findFirst({
-            where: { subdomain: 'admin-system' }
-        });
-
-        if (!systemTenant) {
-            return NextResponse.json({ error: 'System architecture mismatch (admin-system tenant not found)' }, { status: 500 });
-        }
-
-        // 3. Create User
         const hashedPassword = await bcrypt.hash('password123', 10);
         const newUser = await prisma.user.create({
             data: {
@@ -154,14 +148,8 @@ export async function POST(req: NextRequest) {
             }
         });
 
-        return NextResponse.json({
-            success: true,
-            message: 'Platform staff created successfully',
-            user: { id: newUser.id, email: newUser.email, role: newUser.role }
-        });
-
+        return NextResponse.json({ success: true, user: newUser });
     } catch (error) {
-        console.error('Staff creation error:', error);
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
 }

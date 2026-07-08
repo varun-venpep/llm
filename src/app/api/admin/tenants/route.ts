@@ -14,7 +14,7 @@ const ensureTenantAdminPermissionsColumn = () => prisma.$executeRaw`
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
-        const { name, adminEmail, adminPassword, globalMarketplaceEnabled, courseCredits } = body;
+        const { name, adminEmail, adminPassword, globalMarketplaceEnabled, courseCredits, courseCreateCount } = body;
         const subdomain = typeof body.subdomain === 'string' ? body.subdomain.trim().toLowerCase() : '';
         const tenantAdminPermissions = normalizeTenantAdminPermissions(body.tenantAdminPermissions);
         const adminPermissions = tenantAdminPermissions.length > 0 ? tenantAdminPermissions : ALL_TENANT_ADMIN_PERMISSIONS;
@@ -47,6 +47,14 @@ export async function POST(req: NextRequest) {
                 },
             });
 
+            // Set courseCreateCount using a raw query to prevent errors if the generated client is out of sync
+            const targetCount = courseCreateCount !== undefined ? parseInt(String(courseCreateCount), 10) : 0;
+            await tx.$executeRawUnsafe(
+                'UPDATE "Tenant" SET "courseCreateCount" = $1 WHERE "id" = $2',
+                targetCount,
+                tenant.id
+            );
+
             const hashedPassword = await bcrypt.hash(adminPassword, 10);
 
             const user = await tx.user.create({
@@ -62,11 +70,19 @@ export async function POST(req: NextRequest) {
             return { tenant, user };
         });
 
-        await prisma.$executeRaw`
-            UPDATE "User"
-            SET "tenantAdminPermissions" = ARRAY[${Prisma.join(adminPermissions)}]::TEXT[]
-            WHERE "id" = ${result.user.id}
-        `;
+        if (adminPermissions.length > 0) {
+            await prisma.$executeRaw`
+                UPDATE "User"
+                SET "tenantAdminPermissions" = ARRAY[${Prisma.join(adminPermissions)}]::TEXT[]
+                WHERE "id" = ${result.user.id}
+            `;
+        } else {
+            await prisma.$executeRaw`
+                UPDATE "User"
+                SET "tenantAdminPermissions" = ARRAY[]::TEXT[]
+                WHERE "id" = ${result.user.id}
+            `;
+        }
 
         const createdTenant = await prisma.tenant.findUnique({
             where: { id: result.tenant.id },
@@ -84,9 +100,13 @@ export async function POST(req: NextRequest) {
             tenant: createdTenant
         });
 
-    } catch (error) {
+    } catch (error: any) {
         console.error('Tenant creation error:', error);
-        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+        return NextResponse.json({ 
+            error: error?.message || 'Internal server error',
+            details: String(error),
+            stack: error?.stack 
+        }, { status: 500 });
     }
 }
 

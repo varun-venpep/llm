@@ -38,7 +38,7 @@ export default async function VerifyCertificatePage({ params }: { params: Promis
         <div className="min-h-screen bg-background flex flex-col items-center py-20 px-6 relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-96 bg-gradient-to-b from-blue-500/5 via-purple-500/5 to-transparent -z-10" />
 
-            <div className="w-full max-w-3xl glassmorphism rounded-[2rem] border border-border/50 p-10 md:p-16 relative shadow-2xl overflow-hidden mt-10">
+            <div className="w-full max-w-2xl glassmorphism rounded-[2rem] border border-border/50 p-10 md:p-16 relative shadow-2xl overflow-hidden mt-10">
                 <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-500 via-purple-500 to-amber-500" />
                 <div className="absolute -top-32 -right-32 w-64 h-64 bg-amber-500/10 blur-[80px] rounded-full" />
 

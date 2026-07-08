@@ -9,16 +9,17 @@ interface Template {
     backgroundImage: string;
     isGlobal: boolean;
     designFields?: any;
-    createdAt: string;
+    createdAt?: string;
 }
 
 interface CertificateManagerProps {
     domain: string;
-    addToast: (toast: any) => void;
+    addToast: (message: string, type?: 'success' | 'error' | 'info') => void;
     onEditTemplate: (template: Template) => void;
+    askConfirmation?: (title: string, message: string, variant?: 'danger' | 'info') => Promise<boolean>;
 }
 
-export default function CertificateManager({ domain, addToast, onEditTemplate }: CertificateManagerProps) {
+export default function CertificateManager({ domain, addToast, onEditTemplate, askConfirmation }: CertificateManagerProps) {
     const [templates, setTemplates] = useState<Template[]>([]);
     const [loading, setLoading] = useState(true);
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -38,60 +39,77 @@ export default function CertificateManager({ domain, addToast, onEditTemplate }:
                 console.error('API Error: Expected array but received', data);
                 setTemplates([]);
                 if (data.error) {
-                    addToast({ title: 'Notice', message: data.error, type: 'error' });
+                    addToast(data.error, 'error');
                 }
             }
         } catch (e) {
             console.error(e);
-            addToast({ title: 'Error', message: 'Failed to sync certificate library.', type: 'error' });
+            addToast('Failed to sync certificate library.', 'error');
             setTemplates([]);
         } finally {
             setLoading(false);
         }
     };
 
-    const duplicateTemplate = async (template: Template) => {
+    const duplicateTemplate = async (template: Template, shouldEdit: boolean = true) => {
         try {
+            const isBlank = !template.id;
             const res = await fetch(`/api/t/${domain}/certificates`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    name: `${template.name} (Copy)`,
+                    name: isBlank ? template.name : `${template.name} (Copy)`,
                     backgroundImage: template.backgroundImage,
-                    isDuplicateOf: template.id
+                    isDuplicateOf: template.id || undefined
                 })
             });
             const newT = await res.json();
             if (res.ok) {
                 setTemplates(prev => [newT, ...(Array.isArray(prev) ? prev : [])]);
-                addToast({ title: 'Success', message: 'Template duplicated to your local library.', type: 'success' });
+                addToast(isBlank ? 'Blank template created.' : 'Template duplicated to your local library.', 'success');
+                if (shouldEdit) {
+                    onEditTemplate(newT);
+                }
             } else {
-                addToast({ title: 'Error', message: newT.error || 'Failed to duplicate template.', type: 'error' });
+                addToast(newT.error || 'Failed to duplicate template.', 'error');
             }
         } catch (e) {
             console.error(e);
-            addToast({ title: 'Error', message: 'Network error while duplicating template.', type: 'error' });
+            addToast('Network error while duplicating template.', 'error');
         }
     };
 
+    const createBlankTemplate = () => {
+        onEditTemplate({
+            id: 'new',
+            name: 'New Custom Template',
+            backgroundImage: '',
+            isGlobal: false,
+            designFields: { fields: [] }
+        });
+    };
+
     const deleteTemplate = async (id: string) => {
-        if (!confirm('Are you sure you want to delete this local template?')) return;
+        const confirmed = askConfirmation
+            ? await askConfirmation('Delete Template?', 'Are you sure you want to delete this local template?')
+            : confirm('Are you sure you want to delete this local template?');
+        if (!confirmed) return;
         try {
             const res = await fetch(`/api/t/${domain}/certificates/${id}`, { method: 'DELETE' });
             if (res.ok) {
                 setTemplates(prev => (Array.isArray(prev) ? prev : []).filter(t => t.id !== id));
-                addToast({ title: 'Success', message: 'Template removed.', type: 'success' });
+                addToast('Template removed.', 'success');
             } else {
                 const data = await res.json();
-                addToast({ title: 'Error', message: data.error || 'Failed to delete template.', type: 'error' });
+                addToast(data.error || 'Failed to delete template.', 'error');
             }
-        } catch (e) { 
-            console.error(e); 
-            addToast({ title: 'Error', message: 'Network error while deleting template.', type: 'error' });
+        } catch (e) {
+            console.error(e);
+            addToast('Network error while deleting template.', 'error');
         }
     };
 
-    const filteredTemplates = templates.filter(t => 
+    const filteredTemplates = templates.filter(t =>
         t.name.toLowerCase().includes(search.toLowerCase())
     );
 
@@ -104,22 +122,22 @@ export default function CertificateManager({ domain, addToast, onEditTemplate }:
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                 <div className="relative w-full md:w-96 flex-shrink-0">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <input 
-                        type="text" 
+                    <input
+                        type="text"
                         placeholder="Search our certificate library..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         className="w-full bg-secondary/40 border border-border/50 rounded-2xl pl-12 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
                     />
                 </div>
-                
+
                 <div className="flex items-center gap-3 w-full md:w-auto">
                     <div className="flex p-1 bg-secondary/30 rounded-xl border border-border/50">
                         <button onClick={() => setViewMode('grid')} className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-background text-primary shadow-lg' : 'text-muted-foreground hover:text-foreground'}`}><Grid size={16} /></button>
                         <button onClick={() => setViewMode('list')} className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-background text-primary shadow-lg' : 'text-muted-foreground hover:text-foreground'}`}><ListIcon size={16} /></button>
                     </div>
-                    <button 
-                        onClick={() => duplicateTemplate({ name: 'New Custom Template', backgroundImage: '', id: '', isGlobal: false, createdAt: '' })}
+                    <button
+                        onClick={createBlankTemplate}
                         className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3 bg-primary text-primary-foreground font-black uppercase tracking-widest text-[10px] rounded-2xl hover:scale-105 transition-all shadow-xl shadow-primary/20"
                     >
                         <Plus size={14} /> Create Blank
@@ -138,9 +156,9 @@ export default function CertificateManager({ domain, addToast, onEditTemplate }:
                     <div className="space-y-4">
                         <div className="flex items-center gap-3 ml-2">
                             <div className="w-2 h-2 rounded-full bg-primary" />
-                            <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground">My Custom Templates</h2>
+                            <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground">Custom Templates</h2>
                         </div>
-                        
+
                         {localTemplates.length === 0 ? (
                             <div className="p-12 text-center border-2 border-dashed border-border/30 rounded-[2.5rem] bg-secondary/5">
                                 <User className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-20" />
@@ -162,7 +180,7 @@ export default function CertificateManager({ domain, addToast, onEditTemplate }:
                             <div className="w-2 h-2 rounded-full bg-indigo-500" />
                             <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground">Global Template Library</h2>
                         </div>
-                        
+
                         {globalTemplates.length === 0 ? (
                             <div className="text-center py-12 text-muted-foreground italic text-sm">No global templates available.</div>
                         ) : (
@@ -179,10 +197,10 @@ export default function CertificateManager({ domain, addToast, onEditTemplate }:
     );
 }
 
-function TemplateCard({ template, mode, onDelete, onEdit, onDuplicate }: { 
-    template: Template, 
-    mode: 'grid' | 'list', 
-    onDelete?: (id: string) => void, 
+function TemplateCard({ template, mode, onDelete, onEdit, onDuplicate }: {
+    template: Template,
+    mode: 'grid' | 'list',
+    onDelete?: (id: string) => void,
     onEdit?: (t: Template) => void,
     onDuplicate?: (t: Template) => void
 }) {
@@ -190,7 +208,12 @@ function TemplateCard({ template, mode, onDelete, onEdit, onDuplicate }: {
         return (
             <div className="flex items-center gap-6 p-4 glassmorphism rounded-[1.5rem] border border-border/50 hover:border-primary/30 transition-all group">
                 <div className="w-24 aspect-[1.414/1] bg-secondary/30 rounded-xl overflow-hidden flex-shrink-0">
-                    <img src={template.backgroundImage || 'https://images.unsplash.com/photo-1544391682-17fe04257eb0?w=800&auto=format&fit=crop&q=60'} alt={template.name} className="w-full h-full object-cover" />
+                    <img
+                        src={template.backgroundImage || '/placeholder-cert.svg'}
+                        alt={template.name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => { (e.target as HTMLImageElement).src = '/placeholder-cert.svg'; }}
+                    />
                 </div>
                 <div className="flex-1">
                     <h3 className="font-bold text-sm tracking-tight uppercase">{template.name}</h3>
@@ -215,7 +238,12 @@ function TemplateCard({ template, mode, onDelete, onEdit, onDuplicate }: {
     return (
         <div className="group glassmorphism rounded-[2.5rem] border border-border/50 overflow-hidden hover:border-primary/30 transition-all shadow-2xl relative">
             <div className="aspect-[1.414/1] bg-secondary/20 relative overflow-hidden flex items-center justify-center border-b border-border/50">
-                <img src={template.backgroundImage || 'https://images.unsplash.com/photo-1544391682-17fe04257eb0?w=800&auto=format&fit=crop&q=60'} alt={template.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                <img
+                    src={template.backgroundImage || '/placeholder-cert.svg'}
+                    alt={template.name}
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                    onError={(e) => { (e.target as HTMLImageElement).src = '/placeholder-cert.svg'; }}
+                />
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center gap-3">
                     {!template.isGlobal ? (
                         <button onClick={() => onEdit?.(template)} className="px-6 py-2.5 bg-primary text-primary-foreground font-black uppercase tracking-widest text-[10px] rounded-2xl hover:scale-110 transition-all shadow-xl shadow-primary/20 flex items-center gap-2">
@@ -237,7 +265,7 @@ function TemplateCard({ template, mode, onDelete, onEdit, onDuplicate }: {
             <div className="p-6 flex justify-between items-start">
                 <div>
                     <h3 className="font-bold text-lg tracking-tight uppercase leading-none mb-1.5">{template.name}</h3>
-                    <p className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">{new Date(template.createdAt).toLocaleDateString()}</p>
+                    <p className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">{template.createdAt ? new Date(template.createdAt).toLocaleDateString() : 'N/A'}</p>
                 </div>
                 {!template.isGlobal && (
                     <button onClick={() => onDelete?.(template.id)} className="p-2.5 rounded-xl hover:bg-red-500/10 text-muted-foreground hover:text-red-500 transition-all opacity-0 group-hover:opacity-100">

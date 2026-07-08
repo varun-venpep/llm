@@ -1,12 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
+export const dynamic = 'force-dynamic';
+
 type Params = { params: Promise<{ id: string }> };
+
+const ensureCourseCreateCountColumn = async () => {
+    try {
+        await prisma.$executeRawUnsafe(`
+            ALTER TABLE "Course"
+            ADD COLUMN IF NOT EXISTS "courseCreateCount" INTEGER NOT NULL DEFAULT 0
+        `);
+    } catch (e) {
+        console.error('Error ensuring courseCreateCount column on Course:', e);
+    }
+};
 
 // GET a single global course with full details
 export async function GET(req: NextRequest, { params }: Params) {
     const { id } = await params;
     try {
+        await ensureCourseCreateCountColumn();
         const course = await prisma.course.findFirst({
             where: { id, isGlobal: true },
             include: {
@@ -28,7 +42,16 @@ export async function GET(req: NextRequest, { params }: Params) {
             }
         });
         if (!course) return NextResponse.json({ error: 'Global course not found' }, { status: 404 });
-        return NextResponse.json(course);
+
+        const courseData = await prisma.$queryRawUnsafe<{ courseCreateCount: number }[]>(
+            'SELECT "courseCreateCount" FROM "Course" WHERE "id" = $1 LIMIT 1',
+            course.id
+        );
+
+        return NextResponse.json({
+            ...course,
+            courseCreateCount: courseData[0]?.courseCreateCount || 0
+        });
     } catch (e) {
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
@@ -38,7 +61,8 @@ export async function GET(req: NextRequest, { params }: Params) {
 export async function PUT(req: NextRequest, { params }: Params) {
     const { id } = await params;
     try {
-        const { title, description, thumbnail, skillLevel, languages, captions, isPublished } = await req.json();
+        await ensureCourseCreateCountColumn();
+        const { title, description, thumbnail, skillLevel, languages, captions, isPublished, courseCreateCount } = await req.json();
         const course = await prisma.course.update({
             where: { id },
             data: {
@@ -51,7 +75,19 @@ export async function PUT(req: NextRequest, { params }: Params) {
                 ...(isPublished !== undefined && { isPublished })
             }
         });
-        return NextResponse.json(course);
+
+        if (courseCreateCount !== undefined) {
+            await prisma.$executeRawUnsafe(
+                'UPDATE "Course" SET "courseCreateCount" = $1 WHERE "id" = $2',
+                parseInt(String(courseCreateCount), 10),
+                id
+            );
+        }
+
+        return NextResponse.json({
+            ...course,
+            courseCreateCount: courseCreateCount !== undefined ? parseInt(String(courseCreateCount), 10) : 0
+        });
     } catch (e) {
         console.error('Failed to update global course:', e);
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
