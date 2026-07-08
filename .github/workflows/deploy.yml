@@ -28,11 +28,13 @@ jobs:
             echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID_DEV }}" >> $GITHUB_ENV
             echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY_DEV }}" >> $GITHUB_ENV
             echo "WHISPER_ECR_REPO=llm-dev-whisper-repo" >> $GITHUB_ENV
+            echo "WILDCARD_CERTIFICATE_ARN=${{ secrets.WILDCARD_CERTIFICATE_ARN_DEV }}" >> $GITHUB_ENV
           else
             echo "STAGE=prod" >> $GITHUB_ENV
             echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID_PROD }}" >> $GITHUB_ENV
             echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY_PROD }}" >> $GITHUB_ENV
             echo "WHISPER_ECR_REPO=llm-prod-whisper-repo" >> $GITHUB_ENV
+            echo "WILDCARD_CERTIFICATE_ARN=${{ secrets.WILDCARD_CERTIFICATE_ARN_PROD }}" >> $GITHUB_ENV
           fi
 
       # Diagnostic: Check if mapped secrets are present
@@ -43,6 +45,11 @@ jobs:
             exit 1
           else
             echo "✅ AWS Credentials for Stage '$STAGE' mapped successfully."
+          fi
+
+          if [ -z "$WILDCARD_CERTIFICATE_ARN" ]; then
+            echo "❌ CRITICAL: WILDCARD_CERTIFICATE_ARN for Stage '$STAGE' is missing in Github Variables (WILDCARD_CERTIFICATE_ARN_${STAGE^^})."
+            exit 1
           fi
 
       - name: Configure AWS Credentials
@@ -114,7 +121,7 @@ jobs:
           # Inheriting DatabaseURL dynamically from local .env file
           if [ -f .env ]; then
             export $(grep -v '^#' .env | xargs)
-            sam deploy --no-confirm-changeset --no-fail-on-empty-changeset --parameter-overrides "Stage=$STAGE DatabaseUrl=\"$DATABASE_URL\""
+            sam deploy --no-confirm-changeset --no-fail-on-empty-changeset --parameter-overrides "Stage=$STAGE DatabaseUrl=\"$DATABASE_URL\" WildcardCertificateArn=\"$WILDCARD_CERTIFICATE_ARN\""
           else
-            sam deploy --no-confirm-changeset --no-fail-on-empty-changeset --parameter-overrides "Stage=$STAGE"
+            sam deploy --no-confirm-changeset --no-fail-on-empty-changeset --parameter-overrides "Stage=$STAGE WildcardCertificateArn=\"$WILDCARD_CERTIFICATE_ARN\""
           fi
