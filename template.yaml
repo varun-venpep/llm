@@ -12,9 +12,6 @@ Parameters:
   AppDomain:
     Type: String
     Default: lebra.ai
-  NextAuthSecret:
-    Type: String
-    NoEcho: true
   OpenAiApiKey:
     Type: String
     NoEcho: true
@@ -177,8 +174,6 @@ Resources:
           NEXT_PUBLIC_ROOT_DOMAIN: !Sub ${Stage}.${AppDomain}
           ROOT_DOMAIN: !Sub ${Stage}.${AppDomain}
           NODE_TLS_REJECT_UNAUTHORIZED: "0"
-          NEXTAUTH_SECRET: !Ref NextAuthSecret
-          NEXTAUTH_URL: !Sub https://${Stage}.${AppDomain}
           OPENAI_API_KEY: !Ref OpenAiApiKey
           SMTP_HOST: !Ref SmtpHost
           SMTP_PORT: !Ref SmtpPort

@@ -38,10 +38,10 @@ jobs:
       # Diagnostic: Check if mapped secrets are present
       - name: Verify Authentication State
         run: |
-          if [ -z "$AWS_ACCESS_KEY_ID" ]; then 
+          if [ -z "$AWS_ACCESS_KEY_ID" ]; then
             echo "❌ CRITICAL: AWS Credentials for Stage '$STAGE' are missing in Github Secrets."
-            exit 1 
-          else 
+            exit 1
+          else
             echo "✅ AWS Credentials for Stage '$STAGE' mapped successfully."
           fi
 
